@@ -8,8 +8,6 @@ Arduino firebase database client libraly for ESP32 mcu (cloud messaging is not y
  
 ## Features
 
-### Get
-
 Get, set, push and stream data in int, float, boolean, String and JSON object from/to defined firebase database.
 Supported functions
 
