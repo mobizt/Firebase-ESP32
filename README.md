@@ -68,9 +68,7 @@ JsonVariant getPayloadData() ;
 **Example**
 
 ```c++
-Firebase.stream("/temp/ch01",streamCallback) {
-  
-});
+Firebase.stream("/temp/ch01",streamCallback);
 
 void streamCallback(streamResult event){
 if (event.eventType() == "put" && event.path() == "/Sensorvalue") {
