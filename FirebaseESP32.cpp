@@ -156,7 +156,8 @@ void FirebaseESP32::stream(String path, StreamCallback callback) {
 	
 	xTaskCreatePinnedToCore([](void* param) {
 		for (;;) {
-			delay(5); // Disable WDT
+			
+			delay(5);
 				
 			if (!streamHttpClient.connected()) {
 				streamHttpClient.end();
@@ -174,14 +175,14 @@ void FirebaseESP32::stream(String path, StreamCallback callback) {
 			if (!streamWiFiClient) continue;
 			
 			if (streamWiFiClient->available()) {
-				String line = streamWiFiClient->readStringUntil(0x0A);
-				if (line.startsWith("event:")) {
-					streamEventType = line.substring(7, line.length());
+				String result = streamWiFiClient->readStringUntil(0x0A);
+				if (result.startsWith("event:")) {
+					streamEventType = result.substring(7, result.length());
 					streamEventType.trim();
-				} else if (line.startsWith("data:")) {
-					streamJsonData = line.substring(6, line.length());
+				} else if (result.startsWith("data:")) {
+					streamJsonData = result.substring(6, result.length());
 					streamJsonData.trim();
-				} else if (line.length() == 0) {
+				} else if (result.length() == 0) {
 					if (stramCallback) stramCallback(streamResult(streamEventType, streamJsonData));
 				}
 			}
