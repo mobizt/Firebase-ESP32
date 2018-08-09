@@ -36,7 +36,7 @@ void stopStream() ;
 ```
 
 
-**Usage**
+##Usage
 
 ```c++
 Firebase.stream("/temp/ch01",streamCallback);
