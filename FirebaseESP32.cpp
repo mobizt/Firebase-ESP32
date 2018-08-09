@@ -129,11 +129,11 @@ String FirebaseESP32::push(String path, JsonVariant value) {
 }
 
 String FirebaseESP32::pushJSON(String path, String data) {
-	String rosJson = firebaseSendHttpRequest(path, "POST", data);
+	String jsonString = firebaseSendHttpRequest(path, "POST", data);
 	if (failed()) return String();
 	
 	StaticJsonBuffer<JSON_BUFFER_PUSH_RETURN_SIZE> jsonBuffer;
-	JsonObject& root = jsonBuffer.parseObject(rosJson);
+	JsonObject& root = jsonBuffer.parseObject(jsonString);
 	if (!root.success()) {
 		_errCode = 1;
 		_errMsg = "Error, parsing result";
