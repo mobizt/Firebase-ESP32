@@ -165,7 +165,7 @@ void FirebaseESP32::stream(String path, StreamCallback callback) {
 				streamHttpClient.addHeader("Accept", "text/event-stream");
 				int httpCode = streamHttpClient.GET();
 				if (httpCode != HTTP_CODE_OK) {
-					Serial.println("Error !, Firebase stream fail: " + String(httpCode));
+					Serial.println("Error !, Firebase stream was failed: " + String(httpCode));
 					continue;
 				}
 				streamWiFiClient = streamHttpClient.getStreamPtr();
