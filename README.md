@@ -71,7 +71,9 @@ JsonVariant getPayloadData() ;
 Firebase.stream("/temp/ch01",streamCallback);
 
 void streamCallback(streamResult event){
-  if (event.eventType() == "put" && event.path() == "/sensorValue") {
+  String eventType = event.eventType();
+  eventType.toLowerCase();
+  if (eventType == "put" && event.path() == "/sensorValue") {
     Serial.println(event.getFloat());
   }
 }
