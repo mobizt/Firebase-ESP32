@@ -1,5 +1,5 @@
 # Firebase-ESP32
-Arduino firebase database client libralies for ESP32 mcu (cloud messaging is not yet implemented)
+Arduino firebase database client libraly for ESP32 mcu (cloud messaging is not yet implemented)
 ## Device Support
 
  * SparkfunESP32 Thing
