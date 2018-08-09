@@ -77,7 +77,4 @@ if (event.eventType() == "put" && event.path() == "/sensorValue") {
 }
 ```
 
-## License
 
-
- * vibrologic@gmail.com
