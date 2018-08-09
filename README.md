@@ -16,11 +16,11 @@ Cloud messaging was not implemented yet.
 **Supported functions**
 
 ```c++
-int getInt(String path) ;
-float getFloat(String path) ;
-String getString(String path) ;
-bool getBool(String path) ;
-JsonVariant get(String path) ;
+int getInt(String path);
+float getFloat(String path);
+String getString(String path);
+bool getBool(String path);
+JsonVariant get(String path);
 
 void setInt(String path, int value);
 void setFloat(String path, float value);
@@ -34,7 +34,7 @@ String pushBool(String path, bool value);
 String pushString(String path, String value);
 String push(String path, JsonVariant value);
 
-void stream(String path, StreamCallback callback) ;
+void stream(String path, StreamCallback callback);
 void stopStream() ;
 
 ```
