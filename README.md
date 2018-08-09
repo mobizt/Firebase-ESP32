@@ -1,6 +1,6 @@
 # Firebase-ESP32
 Arduino firebase database client libraly for ESP32 mcu.
-## Tested Device
+## Tested Devices
 
 This library works well in the following tested devices.
 
@@ -40,7 +40,7 @@ void stopStream() ;
 ```
 
 
-## Usage
+## Usages
 
 ```c++
 Firebase.stream("/temp/ch01",streamCallback);
