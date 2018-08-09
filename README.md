@@ -1,6 +1,8 @@
 # Firebase-ESP32
-Arduino firebase database client libraly for ESP32 mcu (cloud messaging is not yet implemented)
-## Device Support
+Arduino firebase database client libraly for ESP32 mcu.
+## Tested Device
+
+This library works well in the following tested devices.
 
  * Sparkfun ESP32 Thing
  * NodeMCU-32
@@ -9,7 +11,9 @@ Arduino firebase database client libraly for ESP32 mcu (cloud messaging is not y
 ## Features
 
 Get, set, push and stream data in int, float, boolean, String and JSON object from/to defined firebase database.
-Supported functions
+Cloud messaging was not implemented yet.
+
+**Supported functions**
 
 ```c++
 int getInt(String path) ;
