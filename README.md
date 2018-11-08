@@ -1,5 +1,13 @@
 # Firebase-ESP32
-Arduino firebase database client libraly for ESP32 mcu.
+
+Google's Firebase real time database - ESP32 library for Arduino
+
+This library provides ESP32 to post, get, put and stream data to Google's Firebase database through REST API. 
+
+The library was test and work well with ESP32s based module with no certificate or fingerprint verification.
+
+Copyright (c) 2018 K. Suwatchai (Mobizt).
+
 ## Tested Devices
 
 This library works well in the following tested devices.
