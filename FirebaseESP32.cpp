@@ -192,7 +192,7 @@ void FirebaseESP32::stream(String path, StreamCallback callback) {
 			
 			if (!streamHttpClient.connected()) {
 				streamHttpClient.end();
-				streamHttp.setReuse(true);
+				streamHttpClient.setReuse(true);
 				streamHttpClient.begin(streamUrl);
 				streamHttpClient.setTimeout(5000);				
 				streamHttpClient.addHeader("Accept", "text/event-stream");
