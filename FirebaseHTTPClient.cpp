@@ -27,39 +27,138 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
+#ifndef FirebaseHTTPClient_CPP
+#define FirebaseHTTPClient_CPP
 
-#ifndef FirebaseHTTPClient_H_
-#define FirebaseHTTPClient_H_
 
-#include <HTTPClient.h>
-#include <Arduino.h>
-#include <WiFiClient.h>
-#include <WiFiClientSecure.h>
+#include "FirebaseHTTPClient.h"
 
-class FirebaseHTTPClient:public HTTPClient
+class TransportTraits
 {
   public:
-    FirebaseHTTPClient();
-    ~FirebaseHTTPClient();
-    
-    bool http_begin(const char* host, uint16_t port, const char* uri, const char* CAcert);
-    bool http_connected(void);
-    int http_sendRequest(const char* header, const char* payload);
-    WiFiClient* http_getStreamPtr(void);
-    uint16_t tcpTimeout = HTTPCLIENT_DEFAULT_TCP_TIMEOUT;
+    virtual ~TransportTraits(){}
 
+    virtual std::unique_ptr<WiFiClient> create()
+    {
+      return std::unique_ptr<WiFiClient>(new WiFiClient());
+    }
+
+    virtual bool verify(WiFiClient& client, const char* host)
+    {
+      return true;
+    }
+};
+
+class TLSTraits : public TransportTraits
+{
+  public:
+    TLSTraits(const char* CAcert, const char* clicert = nullptr, const char* clikey = nullptr):
+      _cacert(CAcert), _clicert(clicert), _clikey(clikey){}
+
+    std::unique_ptr<WiFiClient> create() override
+    {
+      return std::unique_ptr<WiFiClient>(new WiFiClientSecure());
+    }
+
+    bool verify(WiFiClient& client, const char* host) override
+    {
+      WiFiClientSecure& wcs = static_cast<WiFiClientSecure&>(client);
+      wcs.setCACert(_cacert);
+      wcs.setCertificate(_clicert);
+      wcs.setPrivateKey(_clikey);
+      return true;
+    }
 
   protected:
-    bool http_connect(void);
-    bool http_sendHeader(const char* header);
-    TransportTraitsPtr http_transportTraits;
-    std::unique_ptr<WiFiClient> _tcp;
-
-    char _host[200];
-    char _uri[200];
-    uint16_t _port = 0;
+    const char* _cacert;
+    const char* _clicert;
+    const char* _clikey;
 };
 
 
+FirebaseHTTPClient::FirebaseHTTPClient()
+{
+}
 
-#endif /* FirebaseHTTPClient_H_ */
+FirebaseHTTPClient::~FirebaseHTTPClient()
+{
+  if (_tcp) _tcp->stop();
+}
+
+bool FirebaseHTTPClient::http_begin(const char* host, uint16_t port, const char* uri, const char* CAcert)
+{
+  http_transportTraits.reset(nullptr);
+  memset(_host, 0, sizeof _host);
+  strcpy(_host, host);
+  _port = port;
+  memset(_uri, 0, sizeof _uri);
+  strcpy(_uri, uri);
+  http_transportTraits = TransportTraitsPtr(new TLSTraits(CAcert));
+  return true;
+}
+
+
+bool FirebaseHTTPClient::http_connected()
+{
+  if (_tcp) return ((_tcp->available() > 0) || _tcp->connected());
+  return false;
+}
+
+
+bool FirebaseHTTPClient::http_sendHeader(const char* header)
+{
+  if (!http_connected())return false;
+  return (_tcp->write(header, strlen(header)) == strlen(header));
+}
+
+int FirebaseHTTPClient::http_sendRequest(const char* header, const char* payload)
+{
+  size_t size = strlen(payload);
+  if (!http_connect()) return HTTPC_ERROR_CONNECTION_REFUSED;
+  if (!http_sendHeader(header))return HTTPC_ERROR_SEND_HEADER_FAILED;
+  if (size > 0)
+    if (_tcp->write(&payload[0], size) != size)
+      return HTTPC_ERROR_SEND_PAYLOAD_FAILED;
+  return 0;
+}
+
+
+WiFiClient* FirebaseHTTPClient::http_getStreamPtr(void)
+{
+  if (http_connected())
+    return _tcp.get();
+  return nullptr;
+}
+
+bool FirebaseHTTPClient::http_connect(void)
+{
+  if (http_connected()) {
+    log_d("already http_connected, try reuse!");
+    while (_tcp->available() > 0)
+      _tcp->read();
+    return true;
+  }
+
+  if (!http_transportTraits) {
+    log_d("FirebaseHTTPClient::begin was not called or returned error");
+    return false;
+  }
+
+  _tcp = http_transportTraits->create();
+
+  if (!http_transportTraits->verify(*_tcp, _host)) {
+    log_d("transport level verify failed");
+    _tcp->stop();
+    return false;
+  }
+
+  if (!_tcp->connect(_host, _port)) {
+    log_d("failed http_connect to %s:%u", _host, _port);
+    return false;
+  }
+
+  log_d(" http_connected to %s:%u", _host, _port);
+ 
+  return http_connected();
+}
+#endif
