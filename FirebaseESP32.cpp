@@ -155,7 +155,6 @@ bool FirebaseESP32::beginStream(FirebaseData &dataObj, const String path) {
 }
 
 bool FirebaseESP32::readStream(FirebaseData &dataObj) {
-  //return true;
   if (dataObj._streamStop) return true;
   return getServerStreamResponse(dataObj);
 }
