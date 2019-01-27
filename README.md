@@ -18,8 +18,11 @@ This library works well in the following tested devices.
  
 ## Features
 Complete Firebase's REST API requests.
+
 Able to PUT, POST, STREAM, PATCH, DELETE data using set, push, stream, update and delete functions.
+
 Support integer, float, String and raw JSON String data types.
+
 Able to set multiple stream path (require more RAM) and single stream path (swap between stream and other set/get/push). 
 
 **Supported functions**
