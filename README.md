@@ -6,7 +6,7 @@ This library provides ESP32 to complete working with Google's Firebase database 
 
 The library was test and work well with ESP32s based module.
 
-Copyright (c) 2018 K. Suwatchai (Mobizt).
+Copyright (c) 2019 K. Suwatchai (Mobizt).
 
 ## Tested Devices
 
