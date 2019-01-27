@@ -65,7 +65,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool pushInt(FirebaseData &dataObj, const String path, int intValue);
 	
-	/**
+   /**
    * Post or append/create new child node float data.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Parent node path to be append.
@@ -77,7 +77,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool pushFloat(FirebaseData &dataObj, const String path, float floatValue);
 	
-	/**
+   /**
    * Post or append/create new child node String data.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Parent node path to be append.
@@ -89,7 +89,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool pushString(FirebaseData &dataObj, const String path, const String stringValue);
 	
-	/**
+   /**
    * Post or append/create new node JSON data.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Parent node path to be append.
@@ -101,7 +101,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool pushJSON(FirebaseData &dataObj, const String path, const String jsonString);
 	
-	/**
+   /**
    * Put or set integer data to child node at the specified path.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Node path to be set value.
@@ -113,7 +113,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool setInt(FirebaseData &dataObj, const String path, int intValue);
 	
-	/**
+   /**
    * Put or set float data to node at the specified path.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Node path to be set value.
@@ -125,7 +125,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool setFloat(FirebaseData &dataObj, const String path, float floatValue);
 	
-	/**
+   /**
    * Put or set String data to child node at the specified path.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Node path to be set value.
@@ -137,7 +137,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool setString(FirebaseData &dataObj, const String path, const String stringValue);
 	
-	/**
+   /**
    * Put or set JSON data to child node at the specified path.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Node path to be set value.
@@ -149,7 +149,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool setJSON(FirebaseData &dataObj, const String path, const String jsonString);
 	
-	/**
+   /**
    * Patch or update JSON data to child node at the specified path.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Node path to be update the value.
@@ -161,7 +161,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool updateNode(FirebaseData &dataObj, const String path, const String jsonString);
 	
-	/**
+   /**
    * Get the integer data from child node at the specified path.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Node path to be read the value.
@@ -174,7 +174,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool getInt(FirebaseData &dataObj, String path);
 	
-	/**
+   /**
    * Get the float data from child node at the specified path.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Node path to be read the value.
@@ -186,7 +186,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool getFloat(FirebaseData &dataObj, String path);
 	
-	/**
+   /**
    * Get the String data from child node at the specified path.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \param path - Node path to be read the value.
@@ -236,7 +236,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool readStream(FirebaseData &dataObj);
 	
-	/**
+   /**
    * End the stream operation at specified path. Can be start stream again by call beginStream once.
    * \param dataObj - FirebaseData object that requred for internal works.
    * \return The operating status. True for success operation and False for failed operation.
@@ -244,9 +244,12 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    */
     bool endStream(FirebaseData &dataObj);
 	
-	For FirebaseData object call
+
+
+ For FirebaseData object call
+
 	
-	/**
+   /**
    * Get the WiFi ssl client pointer.
    */
     WiFiClient* getHTTPClient();
