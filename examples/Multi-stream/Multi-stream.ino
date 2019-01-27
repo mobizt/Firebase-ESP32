@@ -1,7 +1,6 @@
 
 #include <WiFi.h>
 #include "FirebaseESP32.h"
-#include <ArduinoJson.h>
 
 #define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
 #define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
