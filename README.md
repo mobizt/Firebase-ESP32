@@ -357,7 +357,7 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
    * #define FIREBASE_RESPONSE_SIZE xxxx
    * #define FIREBASE_DATA_SIZE xxxx
    */
-	bool bufferOverflow();
+   bool bufferOverflow();
 
 ```
 
