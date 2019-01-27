@@ -198,7 +198,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const char* path, cons
     return HTTP_CODE_BAD_REQUEST;
   }
   //build requested uri
-  char payloadStr[strlen(payload) + 2];
+  char payloadStr[strlen(payload) + 10];
   memset(payloadStr, 0, sizeof payloadStr);
   char uri[200];
   memset(uri, 0, sizeof uri);
