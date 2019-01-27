@@ -7,7 +7,7 @@
  * The library was test and work well with ESP32s based module and add support for multiple stream event path.
  * 
  * The MIT License (MIT)
- * Copyright (c) 2018 K. Suwatchai (Mobizt)
+ * Copyright (c) 2019 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
