@@ -1,4 +1,4 @@
-# Firebase-ESP32
+# Firebase Arduino Client Library for ESP32
 
 Google's Firebase real time database - ESP32 library for Arduino
 
