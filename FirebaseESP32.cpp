@@ -198,7 +198,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const char* path, cons
     return HTTP_CODE_BAD_REQUEST;
   }
   //build requested uri
-  char payloadStr[strlen(payload) + 10];
+  char payloadStr[strlen(payload) + 2];
   memset(payloadStr, 0, sizeof payloadStr);
   char uri[200];
   memset(uri, 0, sizeof uri);
@@ -411,7 +411,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj) {
               memset(res, 0, sizeof res);
               strncpy(res, response + p1, len);
 
-              //Parses for headers and payload
+              //Pareses for headers and payload
               if (strpos(response, "Content-Type", 0) != -1 && strpos(res, "text/event-stream", 0) != -1) isStream = true;
               else if (strpos(response, "Connection", 0) != -1) {
                 if (strpos(res, "keep-alive", 0) != -1) dataObj._keepAlive = true;

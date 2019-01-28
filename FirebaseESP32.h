@@ -33,7 +33,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include "FirebaseHTTPClient.h"
+#include "HTTPClientEx.h"
 
 
 #define  FIEBASE_PORT 443
@@ -433,6 +433,8 @@ class FirebaseData {
    * #define FIREBASE_DATA_SIZE xxxx
    */
 	bool bufferOverflow();
+	
+	HTTPClientEx _http;
 
 
 
@@ -467,7 +469,7 @@ class FirebaseData {
     unsigned long _streamMillis;
     unsigned long _streamResetMillis;
 
-    FirebaseHTTPClient _http;
+    
 
     friend FirebaseESP32;
 
