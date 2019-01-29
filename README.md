@@ -362,7 +362,7 @@ https://github.com/mobizt/HTTPClientESP32Ex
 	
    /**
    * Check the http code return from all calls.
-   * \return The integer data of http response.
+   * \return The http status code from Firebase's call response.
    */
     int httpCode();
 	
@@ -375,7 +375,7 @@ https://github.com/mobizt/HTTPClientESP32Ex
    bool bufferOverflow();
 
 ```
-## Install
+## Installing
 
 Click on Clone or download dropdown at the top of repository, select Download ZIP and save zip file to your computer.
 
