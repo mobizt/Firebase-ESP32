@@ -415,7 +415,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj) {
               memset(res, 0, sizeof res);
               strncpy(res, response + p1, len);
 
-              //Pareses for headers and payload
+              //Parses for headers and payload
               if (strpos(response, "Content-Type", 0) != -1 && strpos(res, "text/event-stream", 0) != -1) isStream = true;
               else if (strpos(response, "Connection", 0) != -1) {
                 if (strpos(res, "keep-alive", 0) != -1) dataObj._keepAlive = true;
