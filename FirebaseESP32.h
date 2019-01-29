@@ -33,7 +33,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include "HTTPClientEx.h"
+#include <HTTPClientESP32Ex.h>
 
 
 #define  FIEBASE_PORT 443
@@ -324,10 +324,15 @@ class FirebaseData {
 
   public:
     FirebaseData();
+  
    /**
-   * Get the WiFi ssl client pointer.
-   */
-    WiFiClient* getHTTPClient();
+   * Pause/Unpause WiFi client from current Firebase call this allows you
+   * to use shared WiFi client.
+   * \param pause True for pause and False for unpause
+   * \return The operating status. True for success operation and False for failed operation.
+   * Use FirebaseData._http to get shared WIFi client.
+   */   
+   bool pauseFirebase(bool pause);
 	
    /**
    * Return the actual data type that return as payload from get/set/push calls.
@@ -434,7 +439,7 @@ class FirebaseData {
    */
 	bool bufferOverflow();
 	
-	HTTPClientEx _http;
+	HTTPClientESP32Ex http;
 
 
 
@@ -451,6 +456,7 @@ class FirebaseData {
     bool _interruptRequest;
     bool _mismatchDataType;
     bool _pathNotExist;
+	bool _pause;
     uint8_t _dataType;
     uint8_t _dataType2;
     uint8_t _connectionStatus;
