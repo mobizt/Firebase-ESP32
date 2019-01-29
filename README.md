@@ -2,6 +2,9 @@
 
 Google's Firebase real time database - ESP32 library for Arduino
 
+This is not the official Firebase Arduino library from Google, unless introduce some similar and extra features with 
+difference core functions.
+
 This library provides ESP32 to complete working with Google's Firebase database through the REST API. 
 
 The library was test and work well with ESP32s based module.
@@ -19,11 +22,15 @@ This library works well in the following tested devices.
 ## Features
 Complete Firebase's REST API requests.
 
+Introduce the FirebaseData object that keeps the information and http client to be work and reused.
+
 Able to PUT, POST, STREAM, PATCH, DELETE data using set, push, stream, update and delete functions.
 
 Support integer, float, String and raw JSON String data types.
 
-Able to set multiple stream path (require more RAM) and single stream path (swap between stream and other set/get/push). 
+Able to set multiple stream path (require more RAM) and single stream path (swap between stream and other set/get/push).
+
+Able to pause all Firebase calls to perform other http connections.
 
 ## Dependencies
 Required HTTPClientESP32Ex library to be installed. 
