@@ -163,7 +163,7 @@ bool FirebaseESP32::endStream(FirebaseData &dataObj) {
   bool flag = false;
   memset(dataObj._streamPath, 0, sizeof dataObj._streamPath);
   forceEndHTTP(dataObj);
-  flag = dataObj._http.http_connected();
+  flag = dataObj.http.http_connected();
   if (!flag) {
     dataObj._isStream = false;
     dataObj._streamStop = true;
@@ -192,7 +192,9 @@ void FirebaseESP32::firebaseBegin(const char* host, const char* auth, uint16_t p
 
 
 int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const char* path, const uint8_t method, uint8_t dataType, const char* payload) {
-
+  
+  if (dataObj._pause) return 0;
+  
   if (strlen(path) == 0 || strlen(_host) == 0 || strlen(_auth) == 0) {
     dataObj._httpCode = HTTP_CODE_BAD_REQUEST;
     return HTTP_CODE_BAD_REQUEST;
@@ -219,7 +221,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const char* path, cons
     //stream path change? reset the current (keep alive) connection
     if (strcmp(path, dataObj._streamPath) != 0) dataObj._streamPathChanged = true;
     if (!dataObj._isStream || dataObj._streamPathChanged) {
-      if (dataObj._http.http_connected())
+      if (dataObj.http.http_connected())
         forceEndHTTP(dataObj);
     }
 
@@ -236,9 +238,9 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const char* path, cons
   }
 
   if (strlen(_rootCA) > 0)
-    dataObj._http.http_begin(_host, _port, uri, (const char*)_rootCA);
+    dataObj.http.http_begin(_host, _port, uri, (const char*)_rootCA);
   else
-    dataObj._http.http_begin(_host, _port, uri, (const char*)NULL);
+    dataObj.http.http_begin(_host, _port, uri, (const char*)NULL);
 
   //Prepare for string and JSON payloads
   if (strlen(payload) > 0) {
@@ -257,7 +259,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const char* path, cons
 
 
   //Send request w/wo payload
-  int httpCode = dataObj._http.http_sendRequest(header, payloadStr);
+  int httpCode = dataObj.http.http_sendRequest(header, payloadStr);
 
   return httpCode;
 }
@@ -266,7 +268,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const char* path, const u
 
   bool flag = false;
 
-
+  if (dataObj._pause) return true;
 
   if (strlen(path) == 0 || strlen(_host) == 0 || strlen(_auth) == 0) {
     dataObj._httpCode = HTTP_CODE_BAD_REQUEST;
@@ -286,7 +288,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const char* path, const u
 
   //Get the current WiFi client from current firebase data
   //Check for connection status
-  WiFiClient*tcp = dataObj._http.http_getStreamPtr();
+  WiFiClient*tcp = dataObj.http.http_getStreamPtr();
   if (tcp) {
     if (tcp->connected()) dataObj._httpConnected = true;
     else dataObj._httpConnected = false;
@@ -303,10 +305,10 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const char* path, const u
         dataObj._streamMillis = millis() + 50;
         dataObj._interruptRequest = true;
         delay(20);
-        if (dataObj._http.http_connected()) {
+        if (dataObj.http.http_connected()) {
           delay(20);
           forceEndHTTP(dataObj);
-          if (dataObj._http.http_connected()) return false;
+          if (dataObj.http.http_connected()) return false;
         }
         dataObj._httpConnected = false;
       }
@@ -350,12 +352,14 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const char* path, const u
 }
 bool FirebaseESP32::getServerResponse(FirebaseData &dataObj) {
 
+  if (dataObj._pause) return true;
+  
   if (WiFi.status() != WL_CONNECTED) {
     dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
     return false;
   }
 
-  WiFiClient* tcp = dataObj._http.http_getStreamPtr();
+  WiFiClient* tcp = dataObj.http.http_getStreamPtr();
   if (!tcp || dataObj._interruptRequest) return cancelCurrentResponse(dataObj);
   if (!handleTCPNotConnected(dataObj) || !dataObj._httpConnected) return false;
 
@@ -381,13 +385,13 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj) {
   unsigned long dataTime = millis();
 
   if (!dataObj._isStream)
-    while (tcp->connected() && !tcp->available() && millis() - dataTime < dataObj._http.tcpTimeout) delay(1);
+    while (tcp->connected() && !tcp->available() && millis() - dataTime < dataObj.http.tcpTimeout) delay(1);
 
 
   dataTime = millis();
   if (tcp->connected() && tcp->available()) {
 
-    while (tcp->available() &&  millis() - dataTime < dataObj._http.tcpTimeout) {
+    while (tcp->available() &&  millis() - dataTime < dataObj.http.tcpTimeout) {
       if (dataObj._interruptRequest) return cancelCurrentResponse(dataObj);
       c = tcp->read();
       if (count < FIREBASE_RESPONSE_SIZE - 1 && c != '\n') {
@@ -440,7 +444,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj) {
       }
     }
 
-    if (millis() - dataTime > dataObj._http.tcpTimeout)
+    if (millis() - dataTime > dataObj.http.tcpTimeout)
       dataObj._httpCode = HTTPC_ERROR_READ_TIMEOUT;
 
     if (dataObj._httpCode == HTTP_CODE_OK) {
@@ -560,7 +564,9 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj) {
   return flag;
 }
 bool FirebaseESP32::firebaseConnectStream(FirebaseData &dataObj, const char* path) {
-
+  
+  if (dataObj._pause) return true;
+  
   dataObj._streamStop = false;
 
   if (dataObj._isStream && strcmp(path, dataObj._streamPath) == 0) return true;
@@ -581,6 +587,8 @@ bool FirebaseESP32::firebaseConnectStream(FirebaseData &dataObj, const char* pat
 
 bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj) {
 
+  if (dataObj._pause) return true;
+  
   if (dataObj._streamStop) return true;
 
   unsigned long ml = millis();
@@ -616,7 +624,7 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj) {
     dataObj._httpConnected = true;
     resetFirebasedataFlag(dataObj);
     memset(dataObj._data, 0, sizeof dataObj._data);
-    WiFiClient* tcp = dataObj._http.http_getStreamPtr();
+    WiFiClient* tcp = dataObj.http.http_getStreamPtr();
     if (tcp) {
       if (tcp->connected() && !dataObj._isStream) forceEndHTTP(dataObj);
       if ( !tcp->connected()) {
@@ -631,7 +639,7 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj) {
   }
 }
 void FirebaseESP32::forceEndHTTP(FirebaseData &dataObj) {
-  WiFiClient* tcp = dataObj._http.http_getStreamPtr();
+  WiFiClient* tcp = dataObj.http.http_getStreamPtr();
   if (tcp) {
     if (tcp->available() > 0) {
       tcp->flush();
@@ -733,7 +741,7 @@ void FirebaseESP32::resetFirebasedataFlag(FirebaseData &dataObj) {
   memset(dataObj._pushName, 0, sizeof dataObj._pushName);
 }
 bool FirebaseESP32::handleTCPNotConnected(FirebaseData &dataObj) {
-  if (!dataObj._http.http_connected()) {
+  if (!dataObj.http.http_connected()) {
     dataObj._contentLength = -1;
     dataObj._dataType = FirebaseDataType::NULL_;
     dataObj._httpCode = HTTPC_ERROR_NOT_CONNECTED;
@@ -906,8 +914,30 @@ char* FirebaseESP32::replace_char(char* str, char in, char out) {
 
 FirebaseData::FirebaseData() {}
 
-WiFiClient* FirebaseData::getHTTPClient() {
-  return _http.http_getStreamPtr();
+
+bool FirebaseData::pauseFirebase(bool pause) {
+
+  if (http.http_connected() && pause != _pause) {
+	
+	WiFiClient* tcp = http.http_getStreamPtr();
+	
+    if (tcp->available() > 0) {
+      tcp->flush();
+      delay(50);
+    }
+    tcp->stop();
+    delay(50);
+    if (!http.http_connected()) {
+      _pause = pause;
+      return true;
+    }
+    return false;
+  } else {
+    _pause = pause;
+    return true;
+  }
+
+
 }
 
 String FirebaseData::dataType() {
