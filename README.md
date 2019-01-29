@@ -26,7 +26,7 @@ Support integer, float, String and raw JSON String data types.
 Able to set multiple stream path (require more RAM) and single stream path (swap between stream and other set/get/push). 
 
 ## Dependencies
-Required HTTPClientESP32Ex library
+Required HTTPClientESP32Ex library to be installed. 
 https://github.com/mobizt/HTTPClientESP32Ex
 
 
