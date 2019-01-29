@@ -2,7 +2,7 @@
 
 Google's Firebase real time database - ESP32 library for Arduino
 
-This is not the official Firebase Arduino library from Google, unless introduce some similar and extra features with 
+This is not the official Firebase Arduino library from Google, unless this introduces some similar and extra features with 
 difference core functions.
 
 This library provides ESP32 to complete working with Google's Firebase database through the REST API. 
