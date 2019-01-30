@@ -26,7 +26,7 @@ Introduce the FirebaseData object that keeps the information and http client to 
 
 Able to GET, PUT, POST, STREAM, PATCH, DELETE data using get, set, push, stream, update and delete functions.
 
-Support integer, float, String and raw JSON String data types. Boolean data type was removed due to I implement the feature that can return the actual data type after Firebase calls. You can use int or float data type and use non-zero value for True and zero value for false instead. 
+Support integer, float, String and raw JSON String data types. Boolean data type was removed due to I implement the feature that can return the actual data type after Firebase calls. You can use int or float data type and use non-zero value for True and zero value for False instead. 
 
 Able to set multiple stream path (require more RAM) and single stream path (swap between stream and other set/get/push).
 
