@@ -35,7 +35,7 @@ Able to pause all Firebase calls to perform other http connections.
 ## Dependencies
 Required HTTPClientESP32Ex library to be installed. The library can be found here https://github.com/mobizt/HTTPClientESP32Ex
 
-Once the implementation of Firebase Arduino library using WiFiClientSecure library works very well for ESP8266 but make the unreliable operation in ESP32 when connection was sucessfully made for few minutes and then always failed in SSL handshake which mbedTLS returns some random errors. 
+Once the implementation of Firebase Arduino library using WiFiClientSecure library works very well for ESP8266 but make the unreliable operation in ESP32 when connection was sucessfully made for few minutes and then always failed in SSL handshake which mbedTLS returns some random errors, customized http client library HTTPClientESP32Ex will be used in this case.
 
 
 ## Supported functions
