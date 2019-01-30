@@ -33,8 +33,9 @@ Able to set multiple stream path (require more RAM) and single stream path (swap
 Able to pause all Firebase calls to perform other http connections.
 
 ## Dependencies
-Required HTTPClientESP32Ex library to be installed. 
-https://github.com/mobizt/HTTPClientESP32Ex
+Required HTTPClientESP32Ex library to be installed. The library can be found here https://github.com/mobizt/HTTPClientESP32Ex
+
+Once the implementation of Firebase Arduino library using WiFiClientSecure library works very well for ESP8266 but make the unreliable operation in ESP32 when connection was sucessfully made for few minutes and then always failed in SSL handshake which mbedTLS returns some random errors. 
 
 
 ## Supported functions
