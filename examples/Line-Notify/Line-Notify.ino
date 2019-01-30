@@ -14,11 +14,6 @@
 #include "LineNotifyESP32.h"
 
 
-//Include for use in this demo only
-#include "image.h"
-
-
-
 
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
