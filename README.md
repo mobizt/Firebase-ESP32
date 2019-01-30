@@ -26,7 +26,7 @@ Introduces the FirebaseData object that keeps the information and http client to
 
 Able to GET, PUT, POST, STREAM, PATCH, DELETE data using get, set, push, stream, update and delete functions.
 
-Supports integer, float, String and raw JSON String data types. Boolean data type was removed due to I implement the feature that can return the actual data type after Firebase calls. You can use int or float data type and use non-zero value for True and zero value for False instead. 
+Supports integer, float, String and raw JSON String data types. Boolean data type was removed due to I implement the feature that can return the actual data type after Firebase calls. You can use int or float data type and use non-zero value for True and zero value for False instead.  For JSON string data type, you need to include the external JSON library like ArduinoJson to parse raw JSON string as the object.
 
 Auto resume streaming when connection was timeout. Call FirebaseData.streamTimeout() to check the stream timeout status.
 
