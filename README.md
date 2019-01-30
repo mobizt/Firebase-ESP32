@@ -28,6 +28,8 @@ Able to GET, PUT, POST, STREAM, PATCH, DELETE data using get, set, push, stream,
 
 Supports integer, float, String and raw JSON String data types. Boolean data type was removed due to I implement the feature that can return the actual data type after Firebase calls. You can use int or float data type and use non-zero value for True and zero value for False instead. 
 
+Auto resume streaming when connection was timeout. Call FirebaseData.streamTimeout() to check the stream timeout condition.
+
 Able to set multiple stream paths which may use more memory and single stream path which can be switch between stream monitoring call and other set/get/push calls in the same Loop function or in difference CPU core tasks functions using the same or difference FirebaseData object.  For multi-tasking, while using the same FirebaseData object, the current Firebase call will force the previous unfinished Firebase call to stop. The normal get/set/push/update/delete calls will have the same priority and have higher priority than stream event call.  
 
 Able to pause all Firebase calls to perform other http connections.
