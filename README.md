@@ -20,13 +20,13 @@ This library works well in the following tested devices.
  * WEMOS LOLIN32
  
 ## Features
-Perform Firebase's REST API requests.
+Performs Firebase's REST API requests.
 
-Introduce the FirebaseData object that keeps the information and http client to work and reused.
+Introduces the FirebaseData object that keeps the information and http client to work and reused.
 
 Able to GET, PUT, POST, STREAM, PATCH, DELETE data using get, set, push, stream, update and delete functions.
 
-Support integer, float, String and raw JSON String data types. Boolean data type was removed due to I implement the feature that can return the actual data type after Firebase calls. You can use int or float data type and use non-zero value for True and zero value for False instead. 
+Supports integer, float, String and raw JSON String data types. Boolean data type was removed due to I implement the feature that can return the actual data type after Firebase calls. You can use int or float data type and use non-zero value for True and zero value for False instead. 
 
 Able to set multiple stream paths which may use more memory and single stream path which can be switch between stream monitoring call and other set/get/push calls in the same Loop function or in difference CPU core tasks functions using the same or difference FirebaseData object.  For multi-tasking, while using the same FirebaseData object, the current Firebase call will force the previous unfinished Firebase call to stop. The normal get/set/push/update/delete calls will have the same priority and have higher priority than stream event call.  
 
@@ -35,7 +35,7 @@ Able to pause all Firebase calls to perform other http connections.
 ## Dependencies
 Required HTTPClientESP32Ex library to be installed. The library can be found here https://github.com/mobizt/HTTPClientESP32Ex
 
-Once the implementation of Firebase Arduino library using WiFiClientSecure library works very well for ESP8266 but make the unreliable operation in ESP32 when connection was sucessfully made for few minutes and then always failed in SSL handshake which mbedTLS returns some random errors, customized http client library HTTPClientESP32Ex will be used in this case.
+Once the implementation of Firebase Arduino library using WiFiClientSecure library works very well for ESP8266 but make the unreliable operation in ESP32 when connection was sucessfully made for few minutes and then always failed in SSL handshake which mbedTLS returns some random errors even root certificate was provided, then customized http client library HTTPClientESP32Ex will be used in this case.
 
 
 ## Supported functions
