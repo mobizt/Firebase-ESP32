@@ -7,7 +7,7 @@ difference core functions.
 
 This library provides ESP32 to complete working with Google's Firebase database through the REST API. 
 
-The library was test and work well with ESP32s based module.
+The library was test and work well with ESP32s based module. For ESP8266 please try my ESP8266 Arduino library here https://github.com/mobizt/Firebase-ESP8266
 
 Copyright (c) 2019 K. Suwatchai (Mobizt).
 
