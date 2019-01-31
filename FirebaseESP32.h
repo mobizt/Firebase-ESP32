@@ -287,7 +287,7 @@ class FirebaseESP32 {
 	/**
    * Use in FirebaseData class
    */
-    char* replace_char(char* str, char in, char out);
+    void replace_char(char* str, char in, char out);
     void errorToString(int httpCode, char* buf);
 
 
@@ -474,6 +474,8 @@ class FirebaseData {
     unsigned long _dataMillis;
     unsigned long _streamMillis;
     unsigned long _streamResetMillis;
+    
+    void removeDQ(char* str);
 
     
 
