@@ -244,14 +244,13 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const char* path, cons
 
   //Prepare for string and JSON payloads
   if (strlen(payload) > 0) {
+    memset(payloadStr, 0, sizeof payloadStr);
     if (dataType == FirebaseDataType::STRING) strcpy(payloadStr, "\"");
-    if (dataType == FirebaseDataType::JSON)
-      strcat(payloadStr, replace_char((char*)payload, '\\', '\0'));
-    else
-      strcat(payloadStr, payload);
+    strcat(payloadStr, payload);  
     if (dataType == FirebaseDataType::STRING) strcat(payloadStr, "\"");
   }
 
+	
   //Prepare request header
   char header[FIREBASE_REQ_BUFFER_SIZE];
   buildFirebaseRequest(dataObj, _host, method, path, _auth,  payloadStr, header);
@@ -970,8 +969,9 @@ float FirebaseData::floatData() {
 
 String FirebaseData::stringData() {
   char buf[FIREBASE_DATA_SIZE];
-  memset(buf, 0, sizeof buf);
-  strcat(buf, Firebase.replace_char((char*)_data, '"', '\0'));
+  memset(buf, 0, sizeof buf);  
+  strcpy(buf, _data);
+  removeDQ(buf);
   if (strlen(_data) > 0  && _dataType == FirebaseESP32::FirebaseDataType::STRING) return String(buf);
   else return String();
 }
@@ -1036,6 +1036,16 @@ String FirebaseData::errorReason() {
 
 int FirebaseData::httpCode() {
   return _httpCode;
+}
+
+void FirebaseData::removeDQ(char* str) {
+  char buf[strlen(str)];
+  memset(buf,0, sizeof buf);
+  for(int i=1;i<strlen(str)-1;i++)
+    buf[i-1]=str[i];
+
+  memset(str,0, sizeof str);
+  strcpy(str,buf);
 }
 
 FirebaseESP32 Firebase = FirebaseESP32();
