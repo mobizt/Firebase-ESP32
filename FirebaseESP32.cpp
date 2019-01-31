@@ -900,14 +900,23 @@ next:;
   }
   return 0;
 }
-char* FirebaseESP32::replace_char(char* str, char in, char out) {
-  char * p = str;
-  while (p != '\0') {
-    if (*p == in)
-      *p == out;
-    ++p;
+
+void FirebaseESP32::replace_char(char* str, char in, char out) {
+  char buf[strlen(str)];
+  memset(buf,0, sizeof buf);
+  int k=0; 
+  if(out !='\0'){
+    for(int i=0;i<strlen(str);i++)
+      if(str[i]==in) str[i]=out;
+  }else{
+    for(int i=0;i<strlen(str);i++)
+      if(str[i]!=in) {
+        buf[k] = str[i];
+	k++;
+      }
+    memset(str,0, sizeof str);
+    strcpy(str,buf);	  
   }
-  return str;
 }
 
 
