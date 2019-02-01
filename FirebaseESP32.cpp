@@ -275,7 +275,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const char* path, const u
   }
 	
   if ((method == FirebaseMethod::PUT || method == FirebaseMethod::POST || method == FirebaseMethod::PATCH) && strlen(payload)==0 && dataType!=FirebaseDataType::STRING) { 
-    dataObj._httpCode = _HTTP_CODE_BAD_REQUEST;
+    dataObj._httpCode = HTTP_CODE_BAD_REQUEST;
     return false;
   }
 
