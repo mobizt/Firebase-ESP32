@@ -388,12 +388,9 @@ Go to menu Files -> Examples -> Firebase-ESP32-master and choose one from exampl
 
 ## Usages
 
-```c++
-
 Recommend to call updateNode instead of push which has more convenient when you need to assign your own parent node key/name yourself instead of Firebase generated random key/name from push call.
 
 Just assign the path parameter that never existed to updateNode call, Firebase will create child nodes under that assigned path automatically.
 
 See the examples folder for the usage sketch.
 
-```
