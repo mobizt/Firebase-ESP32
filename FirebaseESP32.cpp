@@ -716,7 +716,7 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
         memset(dataObj._path2, 0, sizeof dataObj._path2);
         dataObj._dataAvailable = false;
         dataObj._isStreamTimeout = false;
-        //delay(50);
+        if(dataObj._index ==-1) delay(50);
         return true;
     }
 
