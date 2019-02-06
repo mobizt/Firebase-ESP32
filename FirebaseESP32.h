@@ -301,10 +301,16 @@ public:
   void setStreamCallback(FirebaseData &dataObj, StreamEventCallback callback);
 
   /**
+   * Remove stream callback function from FirebaseData object.
+   * \param dataObj - FirebaseData object that requred for internal works.
+   */
+   void removeStreamCallback(FirebaseData &dataObj);
+
+   /**
    * Use in FirebaseData class
    */
-  void  replace_char(char *str, char in, char out);
-  void errorToString(int httpCode, char *buf);
+   void replace_char(char *str, char in, char out);
+   void errorToString(int httpCode, char *buf);
 
 protected:
   void firebaseBegin(const char *host, const char *auth, uint16_t port);
