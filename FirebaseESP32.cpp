@@ -1044,7 +1044,7 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
                 cb(streamData(firebaseDataObject[id].get().streamPath(), firebaseDataObject[id].get().dataPath(), firebaseDataObject[id].get().payload(), firebaseDataObject[id].get().dataType(), firebaseDataObject[id].get()._dataTypeNum));
             }
             yield();
-            vTaskDelay(100);
+            vTaskDelay(30);
         }
 
         vTaskDelete(NULL);
