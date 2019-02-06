@@ -1053,6 +1053,21 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
     xTaskCreatePinnedToCore(taskCode, taskName.c_str(), 32768, NULL, 3, &dataObj._handle, 1);
 }
 
+void FirebaseESP32::removeStreamCallback(FirebaseData &dataObj)
+{
+    int index = dataObj._index;
+   
+    if (index != -1)
+    {
+        if (dataObj._handle)
+            vTaskDelete(dataObj._handle);
+        dataObj._handle = NULL;
+        dataObj._index = -1;
+        dataObj._callback = NULL;
+        firebaseDataObject.erase(firebaseDataObject.begin() + index);
+    }
+}
+
 void FirebaseESP32::strcat_c(char *str, char c)
 {
     for (; *str; str++)
