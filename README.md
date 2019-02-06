@@ -30,7 +30,9 @@ Supports integer, float, String and raw JSON String data types. Boolean data typ
 
 Auto resume streaming when connection was timeout. Call FirebaseData.streamTimeout() to check the stream timeout status.
 
-Able to set multiple stream paths which may use more memory and single stream path which can be switch between stream monitoring call and other set/get/push calls in the same Loop function or in difference CPU core tasks functions using the same or difference FirebaseData object.  For multi-tasking, while using the same FirebaseData object, the current Firebase call will force the previous unfinished Firebase call to stop. The normal get/set/push/update/delete calls will have the same priority and have higher priority than stream event call.  
+Able to set multiple stream paths which may use more memory and single stream path which can be switch between stream monitoring call and other set/get/push calls in the same Loop function or in difference CPU core tasks functions using the same or difference FirebaseData object.  For multi-tasking, while using the same FirebaseData object, the current Firebase call will force the previous unfinished Firebase call to stop. The normal get/set/push/update/delete calls will have the same priority and have higher priority than stream event call.
+
+Able to set stream calback and remove stream callback functions.
 
 Able to pause all Firebase calls to perform other http connections.
 
@@ -261,6 +263,23 @@ Once the implementation of Firebase Arduino library using WiFiClientSecure libra
    * To get error reason, call FirebaseData.errorReason().
    */
     bool endStream(FirebaseData &dataObj);
+    
+   /**
+   * Set the stream callback function to FirebaseData object when new event stream data is available or 
+   * the stream event call parameter was changes (stream path or switch from get/set/push/update/delete call).
+   * \param dataObj - FirebaseData object that requred for internal works.
+   * \param callback - Callback function that get streamData parameter from stream event.
+   * To get the stream data call streamData.intData(), streamData.floatData, streamData.stringData, streamData.jsonData.
+   * To get actual data type from stream call streamData.dataType which returns int, float, string or json String.
+   * setStreamCallback can call before or after Firebase.beginStream.
+   */
+   void setStreamCallback(FirebaseData &dataObj, StreamEventCallback callback);
+
+  /**
+   * Remove stream callback function from FirebaseData object.
+   * \param dataObj - FirebaseData object that requred for internal works.
+   */
+   void removeStreamCallback(FirebaseData &dataObj);
 	
 
 
