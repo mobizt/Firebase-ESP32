@@ -1043,14 +1043,14 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
                 StreamEventCallback cb = firebaseDataObject[id].get()._callback;
                 cb(streamData(firebaseDataObject[id].get().streamPath(), firebaseDataObject[id].get().dataPath(), firebaseDataObject[id].get().payload(), firebaseDataObject[id].get().dataType(), firebaseDataObject[id].get()._dataTypeNum));
             }
-            vTaskDelay(10);
+            vTaskDelay(50);
         }
 
         vTaskDelete(NULL);
         firebaseDataObject[id].get()._handle = NULL;
     };
 
-    xTaskCreatePinnedToCore(taskCode, taskName.c_str(), 32768, NULL, 3, &dataObj._handle, 1);
+    xTaskCreatePinnedToCore(taskCode, taskName.c_str(), 10000, NULL, 3, &dataObj._handle, 1);
 }
 
 void FirebaseESP32::removeStreamCallback(FirebaseData &dataObj)
