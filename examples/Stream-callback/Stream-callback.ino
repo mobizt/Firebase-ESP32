@@ -11,7 +11,6 @@
 #define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
 #define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
 
-
 //Use multiple FirebaseData may lead to low memory and reboot from exception error
 
 //Define FirebaseESP32 data object
@@ -47,6 +46,10 @@ void streamCallback1(streamData data)
   Serial.println();
 }
 
+void streamTimeoutCallback1(){
+  Serial.println("Stream 1 timeout, resume streaming...");
+}
+
 void streamCallback2(streamData data)
 {
 
@@ -64,6 +67,10 @@ void streamCallback2(streamData data)
   else if (data.dataType() == "json")
     Serial.println(data.jsonData());
   Serial.println();
+}
+
+void streamTimeoutCallback2(){
+  Serial.println("Stream 2 timeout, resume streaming...");
 }
 
 void setup()
@@ -86,7 +93,7 @@ void setup()
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
 
-  Firebase.setStreamCallback(firebaseData1, streamCallback1);
+  
 
   if (!Firebase.beginStream(firebaseData1, "/test/data1"))
   {
@@ -94,9 +101,10 @@ void setup()
     Serial.println("REASON: " + firebaseData1.errorReason());
     Serial.println();
   }
-  
 
-  Firebase.setStreamCallback(firebaseData2, streamCallback2);
+  Firebase.setStreamCallback(firebaseData1, streamCallback1,streamTimeoutCallback1);
+  //Firebase.setStreamCallback(firebaseData1, streamCallback1);
+ 
 
   if (!Firebase.beginStream(firebaseData2, "/test/data2"))
   {
@@ -104,8 +112,11 @@ void setup()
     Serial.println("REASON: " + firebaseData2.errorReason());
     Serial.println();
   }
+  
+  Firebase.setStreamCallback(firebaseData2, streamCallback2, streamTimeoutCallback2);
+  //Firebase.setStreamCallback(firebaseData2, streamCallback2);
 
- 
+
 }
 
 void loop()
