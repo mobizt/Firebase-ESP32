@@ -58,6 +58,8 @@ class FirebaseData;
 class streamData;
 
 typedef void (*StreamEventCallback)(streamData);
+typedef void (*StreamTimeoutCallback)();
+
 static std::vector<std::reference_wrapper<FirebaseData>> firebaseDataObject;
 static uint8_t streamIndex = 0;
 
@@ -293,24 +295,25 @@ public:
    * Set the stream callback function to FirebaseData object when new event stream data is available or 
    * the stream event call parameter was changes (stream path or switch from get/set/push/update/delete call).
    * \param dataObj - FirebaseData object that requred for internal works.
-   * \param callback - Callback function that get streamData parameter from stream event.
+   * \param dataAvailablecallback - Callback function that get streamData parameter when stream data are available.
+   * \param timeoutCallback - Callback function that call when stream connection is timeout (optional).
    * To get the stream data call streamData.intData(), streamData.floatData, streamData.stringData, streamData.jsonData.
    * To get actual data type from stream call streamData.dataType which returns int, float, string or json String.
    * setStreamCallback can call before or after Firebase.beginStream.
    */
-  void setStreamCallback(FirebaseData &dataObj, StreamEventCallback callback);
+  void setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL);
 
   /**
    * Remove stream callback function from FirebaseData object.
    * \param dataObj - FirebaseData object that requred for internal works.
    */
-   void removeStreamCallback(FirebaseData &dataObj);
+  void removeStreamCallback(FirebaseData &dataObj);
 
-   /**
+      /**
    * Use in FirebaseData class
    */
-   void replace_char(char *str, char in, char out);
-   void errorToString(int httpCode, char *buf);
+      void replace_char(char *str, char in, char out);
+  void errorToString(int httpCode, char *buf);
 
 protected:
   void firebaseBegin(const char *host, const char *auth, uint16_t port);
@@ -464,7 +467,8 @@ public:
 
   HTTPClientESP32Ex http;
 
-  StreamEventCallback _callback = NULL;
+  StreamEventCallback _dataAvailableCallback = NULL;
+  StreamTimeoutCallback _timeoutCallback = NULL;
   TaskHandle_t _handle = NULL;
   int _index = -1;
   uint8_t _dataTypeNum;
