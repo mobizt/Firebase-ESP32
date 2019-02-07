@@ -3,7 +3,8 @@
  * This shows how to pause the Firbase call and send LINE Notify message using the same shared SSL WiFi client.
  * 1. Install HTTPClientESP32Ex library from https://github.com/mobizt/HTTPClientESP32Ex
  * 2. Install Line notify Arduino library for ESP32 https://github.com/mobizt/LINE-Notify-ESP32
- * 
+ *
+ * More about Line Notify service https://notify-bot.line.me/en/
  */
 
 
