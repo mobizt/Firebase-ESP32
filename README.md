@@ -268,12 +268,14 @@ Once the implementation of Firebase Arduino library using WiFiClientSecure libra
    * Set the stream callback function to FirebaseData object when new event stream data is available or 
    * the stream event call parameter was changes (stream path or switch from get/set/push/update/delete call).
    * \param dataObj - FirebaseData object that requred for internal works.
-   * \param callback - Callback function that get streamData parameter from stream event.
+   * \param dataAvailablecallback - Callback function that get streamData parameter when stream data are available.
+   * \param timeoutCallback - Callback function that call when stream connection is timeout (optional).
    * To get the stream data call streamData.intData(), streamData.floatData, streamData.stringData, streamData.jsonData.
    * To get actual data type from stream call streamData.dataType which returns int, float, string or json String.
    * setStreamCallback can call before or after Firebase.beginStream.
    */
-   void setStreamCallback(FirebaseData &dataObj, StreamEventCallback callback);
+   void setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL);
+
 
   /**
    * Remove stream callback function from FirebaseData object.
