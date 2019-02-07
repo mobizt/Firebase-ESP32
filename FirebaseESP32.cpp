@@ -1036,12 +1036,16 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
         int id = streamIndex - 1;
         for (;;)
         {
-            Firebase.readStream(firebaseDataObject[id]);
+           if (!firebaseDataObject[id].get().httpConnected()) {
 
-            if (firebaseDataObject[id].get().streamAvailable())
-            {
-                StreamEventCallback cb = firebaseDataObject[id].get()._callback;
-                cb(streamData(firebaseDataObject[id].get().streamPath(), firebaseDataObject[id].get().dataPath(), firebaseDataObject[id].get().payload(), firebaseDataObject[id].get().dataType(), firebaseDataObject[id].get()._dataTypeNum));
+              Firebase.readStream(firebaseDataObject[id].get());
+
+              if (firebaseDataObject[id].get().streamAvailable())
+              {
+                 StreamEventCallback cb = firebaseDataObject[id].get()._callback;
+                 cb(streamData(firebaseDataObject[id].get().streamPath(), firebaseDataObject[id].get().dataPath(), firebaseDataObject[id].get().payload(), firebaseDataObject[id].get().dataType(), firebaseDataObject[id].get()._dataTypeNum));
+              }
+
             }
             yield();
             vTaskDelay(30);
