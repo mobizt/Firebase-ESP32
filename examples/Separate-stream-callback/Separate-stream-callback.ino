@@ -19,10 +19,8 @@ FirebaseData firebaseData2;
 
 
 unsigned long sendDataPrevMillis1;
-unsigned long sendDataPrevMillis2;
 
 uint16_t count1;
-uint16_t count2;
 
 String json;
 
