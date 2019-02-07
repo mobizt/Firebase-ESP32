@@ -32,7 +32,7 @@ Auto resume streaming when connection was timeout. Call FirebaseData.streamTimeo
 
 Able to set multiple stream paths which may use more memory and single stream path which can be switch between stream monitoring call and other set/get/push calls in the same Loop function or in difference CPU core tasks functions using the same or difference FirebaseData object.  For multi-tasking, while using the same FirebaseData object, the current Firebase call will force the previous unfinished Firebase call to stop. The normal get/set/push/update/delete calls will have the same priority and have higher priority than stream event call.
 
-Able to set stream calback and remove stream callback functions.
+Able to set/remove stream data available or stream connection timeout calback functions.
 
 Able to pause all Firebase calls to perform other http connections.
 
