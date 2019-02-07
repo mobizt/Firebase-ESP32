@@ -47,7 +47,9 @@ void streamCallback1(streamData data)
 }
 
 void streamTimeoutCallback1(){
+  Serial.println();
   Serial.println("Stream 1 timeout, resume streaming...");
+  Serial.println();
 }
 
 void streamCallback2(streamData data)
@@ -70,7 +72,9 @@ void streamCallback2(streamData data)
 }
 
 void streamTimeoutCallback2(){
+  Serial.println();
   Serial.println("Stream 2 timeout, resume streaming...");
+  Serial.println();
 }
 
 void setup()
