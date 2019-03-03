@@ -105,7 +105,7 @@ __Read, Store, Update, Delete, Backup and Restore Data__
 
 
 
-`get<Data Type>` function returned boolean value for success of operation. The success of operation determined from
+`get<<Data Type>>` function returned boolean value for success of operation. The success of operation determined from
 
 payload that Firebase server returned back to client. The http status and matching between data type request and response were determined to set the success status.
 
@@ -148,11 +148,11 @@ Here is the example usage to read integer from defined database path "/test/int"
 
 
 
-**To store the data, use `set<Data Type>` functions i.e. setInt, setFlot, setString, setJSON, setBlob and setFile.**
+**To store the data, use `set<<Data Type>>` functions i.e. setInt, setFlot, setString, setJSON, setBlob and setFile.**
 
 
 
-The `set<Data Type>` function returned boolean value for success of operation. The success of operation determined from
+The `set<<Data Type>>` function returned boolean value for success of operation. The success of operation determined from
 
 payload that Firebase server returned back to client. The http status and matching between data type request and response.
 
@@ -191,7 +191,7 @@ if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
 ```
 
 
-**To append new data to database, `push<Data Type>` should be called e.g. pushInt, pushFloat, pushString, pushJSON, pushBlob and pushFile.**
+**To append new data to database, `push<<Data Type>>` should be called e.g. pushInt, pushFloat, pushString, pushJSON, pushBlob and pushFile.**
 
 
 With push operation, server will return payload (key or name of newly appended node) to client.
@@ -883,7 +883,7 @@ return *`Boolean`* type status indicates the success of operation.
 Call [FirebaseData object].dataType to determine what type of data that successfully
 stores in database. 
     
-Call [FirebaseData object].blobData will return the dynamic array of unsigned 8-bit data (i.e. `std::vector<uint8_t>`) of
+Call [FirebaseData object].blobData will return the dynamic array of unsigned 8-bit data (i.e. `std::vector<<uint8_t>>`) of
 payload returned from server.
 
 If the payload returned from server is not blob type, 
@@ -1148,7 +1148,7 @@ String jsonData();
 
 **Return the blob data (uint8_t) array of server returned payload.**
 
-return *Dynamic array* of 8-bit unsigned integer i.e. `std::vector<uint8_t>`.
+return *Dynamic array* of 8-bit unsigned integer i.e. `std::vector<<uint8_t>>`.
 
 ```C++
 std::vector<uint8_t> blobData();
