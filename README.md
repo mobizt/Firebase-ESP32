@@ -111,11 +111,11 @@ payload that Firebase server returned back to client. The http status and matchi
 
 To read the payload data, one of theses functions can be called i.e. intData, floatData, stringData, jsonData and blobData.
 
-fileData function was not implemented becase data was handled as file stream.
+Normally BLOB or binary data type is not supported by Firebase, this library working with binary data by encode the data into string before send to server, then getBlob and getFile functions will read the encoded string data from database and decoded back to binary data at the client.
 
-getBlob and getFile will read the binary data that stored in database. Actually BLOB or binary data type is not supported by Firebase, this library will encode all bytes of data into appopiated format string before send to Firebase's server.
+Encoding binary to string is using base64 binary-to-text encoding schemes, the encoded string length will larger than the original data by 30%.
 
-Any binary data that store to database and read from database called BlOB which is binary data in RAM, while binary data from file that being read from or write to SD card, called File stream.
+The terms used in this library and documents, Blob data is byte array in memory that encoded to string to store or decoded when read from database, while file stream is binary  data that being write to SD card which obtained from decoded string that read from database or binary data that being read from SD card and encoded to string to store in database.
 
 getBlob will read data from server and decoded it to byte array in memory. getFile will read data from server, decoded and save it to SD card.
 
