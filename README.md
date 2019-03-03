@@ -196,7 +196,9 @@ if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
 
 With push operation, Firebase server will return payload contains only key or name of newly appended node.
 
-JSON data is another special case where it contains the key and value pairs structured data. New key and its value will be created or replace old data at defined database path and also created child nodes in case of nested JSON data.  While in pushJSON, all keys and their values will be appended to the defined database path as new created node.
+Working with JSON data will read or store many data in database under the defined path due to JSON data contains key and value pairs, each value can be array and nested objects.
+
+Function setJSON will create a new key and its value or replace the old key's data at the same database path and also created child nodes for the nested object.  While in function pushJSON, all keys and their values will be appended to the defined database path as new node.
 
 Below is the example for appending new data (using JSON) to the path "/test/append.
 
