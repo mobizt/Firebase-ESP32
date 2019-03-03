@@ -307,9 +307,9 @@ __Global functions__
 
 **Store Firebase's authentication credentials.**
 
-param *host* - Your Firebase database project host without http:// or https:// protocol e.g. Your_ProjectID.firebaseio.com.
+param *`host`* - Your Firebase database project host without http:// or https:// protocol e.g. Your_ProjectID.firebaseio.com.
 
-param *auth* - Your database secret.
+param *`auth`* - Your database secret.
 
 ```C++
 void begin(const String &host, const String &auth);
