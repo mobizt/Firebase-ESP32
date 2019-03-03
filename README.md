@@ -87,7 +87,10 @@ ___
 
 __Read, Store, Update, Delete, Backup and Restore Data__
 
+
 > To read the data, use get<Data Type> functions i.e. getInt, getFlot, getString, getJSON, getBlob and getFile.
+
+
 
 get<Data Type> function returned boolean value for success of operation. The success of operation determined from
 
@@ -130,7 +133,11 @@ Here is the example usage to read integer from defined database path "/test/int"
 
 ```
 
+
+
 > To store the data, use set<Data Type> functions i.e. setInt, setFlot, setString, setJSON, setBlob and setFile.
+
+
 
 set<Data Type> function returned boolean value for success of operation. The success of operation determined from
 
@@ -171,7 +178,10 @@ if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
 
 ```
 
+
 > To append new data to database, push<Data Type> should be called e.g. pushInt, pushFloat, pushString, pushJSON, pushBlob and pushFile.
+
+
 
 With push operation, Firebase server will return payload contains only key or name of newly appended node.
 
@@ -206,6 +216,7 @@ if (Firebase.pushJSON(firebaseData, "/test/append", jsonData)) {
 }
 
 ```
+
 
 
 > To update database at defined path and its child nodes, updateNode or updateNodeSilent should be called.
@@ -248,6 +259,8 @@ if (Firebase.updateNode(firebaseData, "/test/update", updateData)) {
 
 ```
 
+
+
 > To delete the data in database, just call deleteNode function.
 
 Below example will delete data and its child nodes at "/test/append"
@@ -264,6 +277,8 @@ ___
 
 
 __Data changes monitoring__
+
+
 
 > The Firebase Real Time Database update or change event was sent to client through the HTTP stream connection. The connection was keep alive as long as no network communication interruption.
 
@@ -339,6 +354,8 @@ ___
 __Database Backup and Restore__
 
 
+
+
 > The backup and restore are very easy, no need to specify the filename, just defined the database path to backup or restore and the folder or path on SD card to save the backup data.
 
 The downloaded backup file is actually JSON text file with .json extension. The file name is constructed from the defined database path,
@@ -393,7 +410,13 @@ See [full examples](https://github.com/mobizt/Firebase-ESP32/tree/master/example
 
 ## All Supported Functions
 
+
+
+
 > These are all functions available from the library and the descriptions.
+
+
+
 
 __Global functions__
 
