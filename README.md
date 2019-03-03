@@ -60,7 +60,9 @@ Required [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex
 
 __Declaration and Initialization__
 
-> The first thing to do to use this library
+
+
+**The first thing to do to use this library.**
 
 ```C++
 
@@ -407,15 +409,10 @@ See [full examples](https://github.com/mobizt/Firebase-ESP32/tree/master/example
 
 
 
-
-
 ## All Supported Functions
 
 
-
-
 **These are all functions available from the library and the descriptions.**
-
 
 
 __Global functions__
