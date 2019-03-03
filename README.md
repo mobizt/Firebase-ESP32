@@ -96,16 +96,16 @@ Any binary data that store to database and read from database called BlOB which 
 
 getBlob will read data from server and decoded it to byte array in memory. getFile will read data from server, decoded and save it to SD card.
 
-Here is the example usage to read integer from defined database path "/test/data".
+Here is the example usage to read integer from defined database path "/test/int".
 
 
 ```C++
 
-//Read integer from "/test/data"
+//Read integer from "/test/int"
 
   int val = 0;
 
-  if (Firebase.getInt(firebaseData, "/test/data")) {
+  if (Firebase.getInt(firebaseData, "/test/int")) {
 
     //Success, then read the payload value
 
@@ -139,9 +139,8 @@ Below is the example usage to store or set file data from SD card, "/test.txt" t
 
 ```C++
 
-//Store integer from "/test/data"
+//Store file content "/test.txt" on SD card to database at "/test/file_data".
 
-int val = 0;
 
 if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
 
