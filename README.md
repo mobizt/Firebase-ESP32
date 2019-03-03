@@ -194,11 +194,11 @@ if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
 **To append new data to database, push<Data Type> should be called e.g. pushInt, pushFloat, pushString, pushJSON, pushBlob and pushFile.**
 
 
-With push operation, Firebase server will return payload contains only key or name of newly appended node.
+With push operation, server will return payload (key or name of newly appended node) to client.
 
-Working with JSON data will read or store many data in database under the defined path due to JSON data contains key and value pairs, each value can be array and nested objects.
+Working with JSON data allow us to read or store multiple data at once because JSON data can store many key/value pairs, array of object and nested objects.
 
-Function setJSON will create a new key and its value or replace the old key's data at the same database path and also created child nodes for the nested object.  While in function pushJSON, all keys and their values will be appended to the defined database path as new node.
+Function setJSON will set/replace value at defined database path with value in JSON data, and also create child nodes.  While in function pushJSON, all key/value in JSON data  will be appended to the defined database path as new node.
 
 Below is the example for appending new data (using JSON) to the path "/test/append.
 
@@ -234,11 +234,11 @@ if (Firebase.pushJSON(firebaseData, "/test/append", jsonData)) {
 
 **To update database at defined path and its child nodes, updateNode or updateNodeSilent should be called.**
 
-JSON data is needed, and passed to these functions. The result from update operation will be partialy, completed update the data which keys at or under defined database path are matched to the keys existed in JSON data (at the same node level). 
+JSON data is needed, and passed to these functions. The result from update operation, the database data at defined path will be partialy or completed update depending on the keys in JSON data. 
 
-If any key provided in JSON data was not existed in database at the same node level, new key and its value will be created at that node level.
+If any key provided in JSON data was not existed in database at the path, new key will be created.
 
-Everytime you call updateNode, the payload that exactly the same JSON data you sent will return from server. Update database with large JSON will consume much as double network data. The function, dataupdateNodeSilent will be used to reduce the network data usage.
+Everytime you call updateNode, the payload that exactly the JSON data you sent will return back from server. Update database with large JSON will consume as much as double network data. Function dataupdateNodeSilent can reduce the network data usage for this case.
 
 Below is the example for database update at "/test" using JSON data.
 
