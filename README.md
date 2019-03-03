@@ -117,7 +117,7 @@ Encoding binary to string is using base64 binary-to-text encoding schemes, the e
 
 The terms used in this library and documents, Blob data is byte array in memory that encoded to string to store or decoded when read from database, while file stream is binary  data that being write to SD card which obtained from decoded string that read from database or binary data that being read from SD card and encoded to string to store in database.
 
-Then getBlob function reads data in database and decoded it into byte array, while getFile read data in database, then decoded and save it to SD card.
+Then getBlob function reads data in database and decoded it into byte array, while getFile reads data in database, then decoded and save it to SD card.
 
 Here is the example usage to read integer from defined database path "/test/int".
 
