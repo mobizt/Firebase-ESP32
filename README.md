@@ -53,6 +53,240 @@ This following devices were tested and work well.
 
 Required [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) to be installed. The HTTPClientESP32Ex library was the customized HTTPClient wrapper used for making SSL connection.
 
+## Usages
+
+__Declaration and Initialization__
+
+
+```C++
+
+//1. Include Firebase ESP32 library
+
+#include "FirebaseESP32.h"
+
+//2. Declare the Firebase Data object in global scope
+
+FirebaseData firebaseData;
+
+//3. Setup Firebase credential in setup()
+
+Firebase.begin("yout_project_id.firebaseio.com", "your_Firebase_database_secret");
+
+//4. Optional, setup AP reconnection in setup()
+
+Firebase.reconnectWiFi(true);
+
+```
+
+__Read, Store, Update, Delete, Backup and Restore Data__
+
+To read the data, use get<Data Type> functions i.e. getInt, getFlot, getString, getJSON, getBlob and getFile.
+
+get<Data Type> function returned boolean value for success of operation. The success of operation determined from
+
+payload that Firebase server returned back to client. The http status and matching between data type request and response.
+
+To read the payload data, one of theses functions can be called i.e. intData, floatData, stringData, jsonData and blobData.
+
+fileData function was not implemented becase data was handled as file stream.
+
+getBlob and getFile will read the binary data that stored in database. Actually BLOB or binary data type is not supported by Firebase, this library will encode all bytes of data into appopiated format string before send to Firebase's server.
+
+Any binary data that store to database and read from database called BlOB which is binary data in RAM, while binary data from file that being read from or write to SD card, called File stream.
+
+getBlob will read data from server and decoded it to byte array in memory. getFile will read data from server, decoded and save it to SD card.
+
+Here is the example usage to read integer from defined database path "/test/data".
+
+
+```C++
+
+//Read integer from "/test/data"
+
+  int val = 0;
+
+  if (Firebase.getInt(firebaseData, "/test/data")) {
+
+    //Success, then read the payload value
+
+    //Make sure payload value returned from server is integer
+    //This prevent you to get garbage data
+    if (firebaseData.dataType() == "int")) {
+      val = firebaseData.intData();
+      Serial.println(val);
+    }
+
+  } else {
+    //Failed, then print out the error detail
+    Serial.println(firebaseData.errorReason()));
+  }
+
+```
+
+To store the data, use set<Data Type> functions i.e. setInt, setFlot, setString, setJSON, setBlob and setFile.
+
+set<Data Type> function returned boolean value for success of operation. The success of operation determined from
+
+payload that Firebase server returned back to client. The http status and matching between data type request and response.
+
+Only setBlob and setFile functions that make a silent request to Firebase server, thus no payload response is returned. 
+
+The success operation for setBlob and setFile determined only from http status "No Content".
+
+
+Below is the example usage to store or set file data from SD card, "/test.txt" to defined database path "/test/file_data".
+
+
+```C++
+
+//Store integer from "/test/data"
+
+int val = 0;
+
+if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
+
+  //Success, data was downloaded and saved then open the file.
+  //Print out all file content.
+
+  File file = SD.open("/test.txt", FILE_READ);
+
+  while (file.available())
+  {     
+    Serial.print(file.read(), HEX);     
+  }    
+  file.close();
+  Serial.println();
+
+} else {
+  //Failed, then print out the error detail for file transfer error.
+  //Use firebaseData.fileTransferError instead of firebaseData.errorReason() in case of working with file.
+  Serial.println(firebaseData.fileTransferError()));
+}
+
+```
+
+__Data changes monitoring__
+
+The Firebase Real Time Database update or change event was sent to client through the HTTP stream connection. The connection was keep alive as long as no network communication interruption.
+
+The function to handle the update and change event monitoring are beginStream, setStreamCallback and readStream.
+
+To subscribe, monitor or follow the data change on defined database path, the function beginStream must be called first.
+
+To handle the data that will be received when database at that path updates or changes, the function readStream should be called in loop,
+otherwise callback function is need to assigned using setStreamCallback.
+
+When no callback is assigned, the data that return from stream should be routinely veriy inside the loop function. To determine the stream data is available, function streamAvailable should be called. The function streamAvailable returned true when stream data was received in buffer. 
+
+Then stream data can be accessed directly by calling intData, floatData, stringData, jsonData and blobData.
+
+If stream callback function was assigned, it should accept StreamData as parameter which is a class that contains all data from stream, included streamPath, dataPath, dataType and value changes at defined streaming path.
+
+Here is the example use of stream to handle the changes or updates at "/test/data".
+
+```C++
+
+//In setup(), set the stream callback function to handle data
+//streamCallback is the function that called when database data changes or updates occurred
+//streamTimeoutCallback is the function that called when connection between server and client was timeout during HTTP stream
+
+Firebase.setStreamCallback(firebaseData, streamCallback, streamTimeoutCallback);
+
+//In setup(), set the streaming path to "/test/data" and begin stream connection
+
+if (!Firebase.beginStream(firebaseData, "/test/data"))
+{
+  //Could not begin stream connection, then print out the error detail
+  Serial.println(firebaseData.errorReason());
+}
+
+  
+  //Global function that handle stream data
+void streamCallback(StreamData data)
+{
+
+  //Print out all information
+
+  Serial.println("Stream Data...");
+  Serial.println(data.streamPath());
+  Serial.println(data.dataPath());
+  Serial.println(data.dataType());
+
+  //Print out value
+  //Stream data can be many types which can be determined from function dataType
+
+  if (data.dataType() == "int")
+    Serial.println(data.intData());
+  else if (data.dataType() == "float")
+    Serial.println(data.floatData());
+  else if (data.dataType() == "string")
+    Serial.println(data.stringData());
+  else if (data.dataType() == "json")
+    Serial.println(data.jsonData());
+
+}
+
+//Global function that notify when stream connection lost
+//The library will resume the stream connection automatically
+void streamTimeoutCallback()
+{
+  Serial.println("Stream timeout, resume streaming...");
+}
+
+```
+
+__Database Backup and Restore__
+
+The backup and restore are very easy, no need to specify the filename, just defined the database path to backup or restore and
+the folder or path on SD card to save the backup data.
+
+The downloaded backup file is actually JSON text file with .json extension. The file name is constructed from the defined database path,
+e.g. "/root.json" for "/" or "/mydb.backup.data.json" for "/mydb/backup/data".
+
+The database restoration returned completed status only when Firebase server completely update the data. Any failed operation will not affected the database (no updates or changes).
+
+Here is the usage example to back up all database at root path "/" and restore it back to database.
+
+```C++
+
+ String backupFilePath = "";
+
+ //Begin backup whole database and download to "/myBackup" on SD card
+ if (!Firebase.backup(firebaseData, "/", "/myBackup"))
+ {
+   //Error when backup database, then print out file transfer error detail
+   Serial.println(firebaseData.fileTransferError());
+ }
+ else
+ {
+   //Successfull backup, print out the file path and size
+   Serial.println(firebaseData.getBackupFilename());
+   Serial.println(String(firebaseData.getBackupFileSize()));
+
+   backupFilePath = firebaseData.getBackupFilename();
+  }
+
+
+  //Begin restore backed dup data back to database
+
+  if (!Firebase.restore(firebaseData, "/", backupFilePath))
+  {
+    //Database restoration failed, printout the error detail
+    Serial.println(firebaseData.fileTransferError());
+  }
+  else
+  {
+    //Database restoration success, printout the filename that used for restore
+    Serial.println(firebaseData.getBackupFilename());
+  }
+
+```
+
+
+
+See [full examples](https://github.com/mobizt/Firebase-ESP32/tree/master/examples) for all features usages.
+
+
 
 ## Supported functions
 
@@ -65,7 +299,7 @@ param *host* - Your Firebase database project host without http:// or https:// p
 
 param *auth* - Your database secret.
 
-```
+```C++
 void begin(const String &host, const String &auth);
 ```
 
@@ -79,7 +313,7 @@ param *auth* - Your database secret.
 
 param *rootCA* - Base64 encoded root certificate string.
 
-```
+```C++
 void begin(const String &host, const String &auth, const char *rootCA);
 ```
 
@@ -89,7 +323,7 @@ void begin(const String &host, const String &auth, const char *rootCA);
 
 param *reconnect* - The boolean to set/unset WiFi AP reconnection.
 
-```
+```C++
 void reconnectWiFi(bool reconnect);
 ```
 
@@ -104,7 +338,7 @@ param *path* - Database path to be checked.
 return - *Boolean* type result indicates whether the defined database
 path was existed or not.
 
-```
+```C++
 bool pathExist(FirebaseData &dataObj, const String &path);
 ```
 
@@ -123,7 +357,7 @@ return *Boolean* type status indicates the success of operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```
+```C++
 bool pushInt(FirebaseData &dataObj, const String &path, int intValue);
 ```
 
@@ -142,7 +376,7 @@ return *Boolean* type status indicates the success of operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```
+```C++
 bool pushFloat(FirebaseData &dataObj, const String &path, float floatValue);
 ```
 
@@ -161,7 +395,7 @@ return *Boolean* type status indicates the success of operation.
 The new appended node's key stored in Firebase Data object, 
 which can be accessed via function [FirebaseData object].pushName().
 
-```
+```C++
 bool pushString(FirebaseData &dataObj, const String &path, const String &stringValue);
 ```
 
@@ -180,7 +414,7 @@ return *Boolean* type status indicates the success of operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```
+```C++
 bool pushJSON(FirebaseData &dataObj, const String &path, const String &jsonString);
 ```
 
@@ -201,7 +435,7 @@ return *Boolean* type status indicates the success of operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```
+```C++
 bool pushBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size);
 ```
 
@@ -221,7 +455,7 @@ return *Boolean* type status indicates the success of operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```
+```C++
 bool pushFile(FirebaseData &dataObj, const String &path, const String &fileName);
 ```
 
@@ -244,7 +478,7 @@ stores in database.
 Call [FirebaseData object].intData will return the integer value of
 payload returned from server.
 
-```
+```C++
 bool setInt(FirebaseData &dataObj, const String &path, int intValue);
 ```
 
@@ -266,7 +500,7 @@ stores in database.
 Call [FirebaseData object].floatData will return the float value of
 payload returned from server.
 
-```
+```C++
 bool setFloat(FirebaseData &dataObj, const String &path, float floatValue);
 ```
 
@@ -288,7 +522,7 @@ stores in database.
 Call [FirebaseData object].stringData will return the string value of
 payload returned from server.
 
-```
+```C++
 bool setString(FirebaseData &dataObj, const String &path, const String &stringValue);
 ```
 
@@ -313,7 +547,7 @@ stores in database.
 Call [FirebaseData object].jsonData will return the JSON string value of
 payload returned from server.
 
-```
+```C++
 bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString);
 ```
 
@@ -336,7 +570,7 @@ return *Boolean* type status indicates the success of operation.
 
 No payload returned from server.
 
-```
+```C++
 bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size);
 ```
 
@@ -354,7 +588,7 @@ return *Boolean* type status indicates the success of operation.
 
 No payload returned from server.
 
-```
+```C++
 bool setFile(FirebaseData &dataObj, const String &path, const String &fileName);
 ```
 
@@ -379,7 +613,7 @@ payload returned from server.
 
 To reduce the network data usage, use updateNodeSilent instead.
 
-```
+```C++
 bool updateNode(FirebaseData &dataObj, const String &path, const String &jsonString);
 ```
 
@@ -398,7 +632,7 @@ return *Boolean* type status indicates the success of operation.
 Owing to the objective of this function to reduce the netwok data usage, 
 no payload will be returned from server.
 
-```
+```C++
 bool updateNodeSilent(FirebaseData &dataObj, const String &path, const String &jsonString);
 ```
 
@@ -425,7 +659,7 @@ the function [FirebaseData object].intData will return zero (0).
 If the payload returned from server is float type, 
 the function [FirebaseData object].intData will return rounded integer value.
 
-```
+```C++
 bool getInt(FirebaseData &dataObj, String &path);
 ```
 
@@ -448,7 +682,7 @@ payload returned from server.
 If the payload returned from server is not integer or float type, 
 the function [FirebaseData object].intData will return zero (0).
 
-```
+```C++
 bool getFloat(FirebaseData &dataObj, String &path);
 ```
 
@@ -471,7 +705,7 @@ payload returned from server.
 If the payload returned from server is not string type, 
 the function [FirebaseData object].stringData will return empty string (String object).
 
-```
+```C++
 bool getString(FirebaseData &dataObj, String &path);
 ```
 
@@ -496,7 +730,7 @@ payload returned from server.
 If the payload returned from server is not json type, 
 the function [FirebaseData object].jsonData will return empty string (String object).
 
-```
+```C++
 bool getJSON(FirebaseData &dataObj, String &path);
 ```
 
@@ -520,7 +754,7 @@ payload returned from server.
 If the payload returned from server is not blob type, 
 the function [FirebaseData object].blobData will return empty array.
 
-```
+```C++
 bool getBlob(FirebaseData &dataObj, String &path);
 ```
 
@@ -540,7 +774,7 @@ param *fileName* - File name (full path) to save in SD card.
 
 return *Boolean* type status indicates the success of operation.
 
-```
+```C++
 bool getFile(FirebaseData &dataObj, const String &nodePath, const String &fileName);
 ```
 
@@ -555,7 +789,7 @@ param *path* - Database path to be deleted.
 
 return *Boolean* type status indicates the success of operation.*
 
-```
+```C++
 bool deleteNode(FirebaseData &dataObj, const String &path);
 ```
 
@@ -569,7 +803,7 @@ param *path* - Database path being monitor.
 
 return *Boolean* type status indicates the success of operation.*
 
-```
+```C++
 bool beginStream(FirebaseData &dataObj, const String &path);
 ```
 
@@ -589,7 +823,7 @@ with read, store, update, delete will break or quit the current stream connectio
     
 The stream will be resumed or reconnected automatically when calling readStream.
 
-```
+```C++
 bool readStream(FirebaseData &dataObj);
 ```
 
@@ -603,7 +837,7 @@ param *dataObj* - Firebase Data Object to hold data and instances.
 
 return *Boolean* type status indicates the success of operation.
  
-```
+```C++
 bool endStream(FirebaseData &dataObj);
 ```
 
@@ -630,7 +864,7 @@ stores in database.
 Call [streamData object].xxxData will return the appropiated data type of
 payload returned from server.
 
-```
+```C++
 void setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL);
 ```
 
@@ -640,7 +874,7 @@ void setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablec
 
 param *dataObj* - Firebase Data Object to hold data and instances.
 
-```
+```C++
 void removeStreamCallback(FirebaseData &dataObj);
 ```
 
@@ -658,7 +892,7 @@ return *Boolean* type status indicates the success of operation.
 
 The backup .json filename is constructed from the database path by replace slash (/) with dot (.).
 
-```
+```C++
 bool backup(FirebaseData &dataObj, const String &nodePath, const String &dirPath);
 ```
 
@@ -674,7 +908,7 @@ param *dirPath* - Path/Folder in SD card that the backup file was saved.
 
 return *Boolean* type status indicates the success of operation.
 
-```
+```C++
 bool restore(FirebaseData &dataObj, const String &nodePath, const String &dirPath);
 ```
 
@@ -687,7 +921,7 @@ param *pause* True for pause and False for unpause.
 
 return *Boolean* type status indicates the success of operation.
 
-```
+```C++
 bool pauseFirebase(bool pause);
 ```
 
@@ -697,7 +931,7 @@ bool pauseFirebase(bool pause);
 
 return *The one of these data type e.g. integer, float, string, json and blob.*
 
-```
+```C++
 String dataType();
 ```
 
@@ -707,7 +941,7 @@ String dataType();
 
 return *The database streaming path.*
 
-```
+```C++
 String streamPath();
 ```
 
@@ -720,7 +954,7 @@ return *The database path which belong to server's returned payload.*
 The database path returned from this function in case of stream, also changed up on the child or parent's stream
 value changes.
 
-```
+```C++
 String dataPath();
 ```
 
@@ -730,7 +964,7 @@ String dataPath();
 
 return *The error description string (String object).*
 
-```
+```C++
 String errorReason();
 ```
 
@@ -740,7 +974,7 @@ String errorReason();
 
 return *Integer value.*
 
-```
+```C++
 int intData();
 ```
 
@@ -750,7 +984,7 @@ int intData();
 
 return *Float value.*
 
-```
+```C++
 float floatData();
 ```
 
@@ -760,7 +994,7 @@ float floatData();
 
 return *String (String object).*
 
-```
+```C++
 String stringData();
 ```
 
@@ -770,7 +1004,7 @@ String stringData();
 
 return *String (String object).*
 
-```
+```C++
 String jsonData();
 ```
 
@@ -779,9 +1013,9 @@ String jsonData();
 
 **Return the blob data (uint8_t) array of server returned payload.**
 
-return *Dynamic array* of 8-bit unsigned integer i.e. std::vector<uint8_t>.
+return *Dynamic array* of 8-bit unsigned integer i.e. `std::vector<uint8_t>`.
 
-```
+```C++
 std::vector<uint8_t> blobData();
 ```
 
@@ -792,7 +1026,7 @@ std::vector<uint8_t> blobData();
 
 return *String (String object).*
 
-```
+```C++
 String pushName();
 ```
 
@@ -802,7 +1036,7 @@ String pushName();
 
 return *Boolean* type status indicates whether the Firebase Data object is working with stream or not.
 
-```
+```C++
 bool isStream();
 ```
 
@@ -812,7 +1046,7 @@ bool isStream();
 
 return *Boolean* type status indicates whether the Firebase Data object is connected to server or not.
 
-```
+```C++
 bool httpConnected();
 ```
 
@@ -824,7 +1058,7 @@ Nothing to do when stream connection timeout, the stream connection will be auto
 
 return *Boolean* type status indicates whether the stream was timeout or not.
 
-```
+```C++
 bool streamTimeout();
 ```
 
@@ -834,7 +1068,7 @@ bool streamTimeout();
 
 return *Boolean* type status indicates whether the server return back the new payload or not.
 
-```
+```C++
 bool dataAvailable();
 ```
 
@@ -845,7 +1079,7 @@ bool dataAvailable();
 return *Boolean* type status indicates whether the server return back the stream event-data 
 payload or not.
 
-```
+```C++
 bool streamAvailable();
 ```
 
@@ -856,7 +1090,7 @@ bool streamAvailable();
 return *Boolean* type status indicates whether the type of data being get from/store to database 
 and server's returned payload are matched or not.
 
-```
+```C++
 bool mismatchDataType();
 ```
 
@@ -866,7 +1100,7 @@ bool mismatchDataType();
 
 return *integer* number of HTTP status.
 
-```
+```C++
 int httpCode();
 ```
 
@@ -876,7 +1110,7 @@ int httpCode();
 
 return *String* (String object) of file name that store on SD card after backup operation.
 
-```
+```C++
 String getBackupFilename();
 ```
 
@@ -886,7 +1120,7 @@ String getBackupFilename();
 
 return *Size* of backup file in byte after backup operation.
 
-```
+```C++
 size_t getBackupFileSize();
 ```
 
@@ -894,7 +1128,7 @@ size_t getBackupFileSize();
 
 **Clear or empty data in Firebase Data object.**
 
-```
+```C++
 void clear();
 ```
 
@@ -904,7 +1138,7 @@ void clear();
 
 return *Error description string* (String object).
 
-```
+```C++
 String fileTransferError();
 ```
 
@@ -914,7 +1148,7 @@ String fileTransferError();
 
 return *Payload string* (String object).
 
-```
+```C++
 String payload();
 ```
 
@@ -926,15 +1160,6 @@ Click on **Clone or download** dropdown at the top of repository, select **Downl
 From Arduino IDE, goto menu **Sketch** -> **Include Library** -> **Add .ZIP Library...** and choose **Firebase-ESP32-master.zip** that previously downloaded.
 
 Go to menu **Files** -> **Examples** -> **Firebase-ESP32-master** and choose one from examples
-
-
-## Usages
-
-Recommend to use **updateNode** function instead of **Push** in case you want to create new node which may contains set of data inside and need to assign that new node data path yourself.  Using **Push** will append your data to new random name or key.
-
-Just assign the path parameter that never existed to **updateNode** function, Firebase will create child nodes under that assigned path automatically.
-
-See the [examples folder](https://github.com/mobizt/Firebase-ESP32/tree/master/examples) for completed usages.
 
 
 ## To do
