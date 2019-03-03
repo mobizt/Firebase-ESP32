@@ -54,6 +54,15 @@ This following devices were tested and work well.
 Required [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) to be installed. The HTTPClientESP32Ex library was the customized HTTPClient wrapper used for making SSL connection.
 
 
+## Installing
+
+
+Click on **Clone or download** dropdown at the top of repository, select **Download ZIP** and save file on your computer.
+
+From Arduino IDE, goto menu **Sketch** -> **Include Library** -> **Add .ZIP Library...** and choose **Firebase-ESP32-master.zip** that previously downloaded.
+
+Go to menu **Files** -> **Examples** -> **Firebase-ESP32-master** and choose one from examples
+
 
 ## Usages
 
@@ -1276,15 +1285,6 @@ return *Payload string* (String object).
 ```C++
 String payload();
 ```
-
-
-## Installing
-
-Click on **Clone or download** dropdown at the top of repository, select **Download ZIP** and save file on your computer.
-
-From Arduino IDE, goto menu **Sketch** -> **Include Library** -> **Add .ZIP Library...** and choose **Firebase-ESP32-master.zip** that previously downloaded.
-
-Go to menu **Files** -> **Examples** -> **Firebase-ESP32-master** and choose one from examples
 
 
 ## To do
