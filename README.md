@@ -169,6 +169,96 @@ if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
 }
 
 ```
+
+To append new data to database, push<Data Type> should be called e.g. pushInt, pushFloat, pushString, pushJSON, pushBlob and pushFile.
+
+With push operation, Firebase server will return payload contains only key or name of newly appended node.
+
+JSON data is another special case where it contains the key and value pairs structured data. New key and its value will be created or replace old data at defined database path and also created child nodes in case of nested JSON data.  While in pushJSON, all keys and their values will be appended to the defined database path as new created node.
+
+Below is the example for appending new data (using JSON) to the path "/test/append.
+
+
+```C++
+
+//Append many data (multiple keys included nest data) to the database at "/test/append"
+
+String jsonData = "{\"parent_001\":\"parent 001 text\", \"parent 002\":{\"child_of_002\":123.456}}";
+
+if (Firebase.pushJSON(firebaseData, "/test/append", jsonData)) {
+
+  //Success, then read the payload value
+
+  //Database path to be appended
+  Serial.println(firebaseData.dataPath()); //Should be "/test/append"
+
+  //New created key/name
+  Serial.println(firebaseData.pushName());
+
+  //Absolute path of new appended data
+    Serial.println(firebaseData.dataPath() + "/"+ firebaseData.pushName());
+
+
+} else {
+  //Failed, then print out the error detail
+  Serial.println(firebaseData.errorReason()));
+}
+
+```
+
+
+To update database at defined path and its child nodes, updateNode or updateNodeSilent should be called.
+
+JSON data is needed, and passed to these functions. The result from update operation will be partialy, completed update the data which keys at or under defined database path are matched to the keys existed in JSON data (at the same node level). 
+
+If any key provided in JSON data was not existed in database at the same node level, new key and its value will be created at that node level.
+
+Everytime you call updateNode, the payload that exactly the same JSON data you sent will return from server. Update database with large JSON will consume much as double network data. The function, dataupdateNodeSilent will be used to reduce the network data usage.
+
+Below is the example for database update at "/test" using JSON data.
+
+
+```C++
+
+//Append many data (multiple keys included nest data) to the database at "/test/update"
+
+String updateData = "{\"data1\":\"value1\", \"data2\":{\"_data2\":\"_value2\"}}";
+
+if (Firebase.updateNode(firebaseData, "/test/update", updateData)) {
+
+  //Success, then try to read the payload value
+
+  //Database path that updated
+  Serial.println(firebaseData.dataPath());
+
+  //Data type at updated database path
+  Serial.println(firebaseData.dataType()); //Should be "json"
+
+  //Print the JSON string payload that returned from server
+  Serial.println(firebaseData.jsonData()); //Should mathes the value in updateData variable
+
+  //Actual sent payload JSON data
+  Serial.println(updateData);
+
+} else {
+  //Failed, then print out the error detail
+  Serial.println(firebaseData.errorReason()));
+}
+
+```
+
+To delete the data in database, just call deleteNode function.
+
+Below example will delete data and its child nodes at "/test/append"
+
+```C++
+
+Firebase.deleteNode(firebaseData, "/test/append");
+
+```
+
+
+
 ___
 
 
