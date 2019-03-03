@@ -105,7 +105,7 @@ __Read, Store, Update, Delete, Backup and Restore Data__
 
 
 
-`get<Data Type>` function returned boolean value for success of operation. The success of operation determined from
+The `get<Data Type>` function returned boolean value for success of operation. The success of operation determined from
 
 payload that Firebase server returned back to client. The http status and matching between data type request and response were determined to set the success status.
 
