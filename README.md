@@ -181,7 +181,7 @@ The function to handle the update and change event monitoring are beginStream, s
 To subscribe, monitor or follow the data change on defined database path, the function beginStream must be called first.
 
 To handle the data that will be received when database at that path updates or changes, the function readStream should be called in loop,
-otherwise callback function is need to assigned using setStreamCallback.
+otherwise callback function is required and assigned through the function setStreamCallback.
 
 When no callback is assigned, the data that return from stream should be routinely veriy inside the loop function. To determine the stream data is available, function streamAvailable should be called. The function streamAvailable returned true when stream data was received in buffer. 
 
