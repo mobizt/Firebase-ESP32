@@ -90,7 +90,7 @@ To read the data, use get<Data Type> functions i.e. getInt, getFlot, getString, 
 
 get<Data Type> function returned boolean value for success of operation. The success of operation determined from
 
-payload that Firebase server returned back to client. The http status and matching between data type request and response.
+payload that Firebase server returned back to client. The http status and matching between data type request and response were determined to set the success status.
 
 To read the payload data, one of theses functions can be called i.e. intData, floatData, stringData, jsonData and blobData.
 
