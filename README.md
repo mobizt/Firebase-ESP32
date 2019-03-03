@@ -238,7 +238,7 @@ JSON data is needed, and passed to these functions. The result from update opera
 
 If any key provided in JSON data was not existed in database at the path, new key will be created.
 
-Everytime you call updateNode, the payload that exactly the JSON data you sent will return back from server. Update database with large JSON will consume as much as double network data. Function dataupdateNodeSilent can reduce the network data usage for this case.
+Everytime you call updateNode, the payload that exactly the JSON data you sent will return back from server. Update database with large JSON will consume as much as double network data. Function updateNodeSilent can reduce the network data usage in this case.
 
 Below is the example for database update at "/test" using JSON data.
 
