@@ -101,7 +101,7 @@ ___
 __Read, Store, Update, Delete, Backup and Restore Data__
 
 
-**To read the data, use `get<Data Type>` functions i.e. getInt, getFlot, getString, getJSON, getBlob and getFile.**
+**To read the data, use `get<<Data Type>>` functions i.e. getInt, getFlot, getString, getJSON, getBlob and getFile.**
 
 
 
