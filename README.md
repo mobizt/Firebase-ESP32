@@ -117,14 +117,14 @@ Encoding binary to string is using base64 binary-to-text encoding schemes, the e
 
 The terms used in this library and documents, Blob data is byte array in memory that encoded to string to store or decoded when read from database, while file stream is binary  data that being write to SD card which obtained from decoded string that read from database or binary data that being read from SD card and encoded to string to store in database.
 
-getBlob will read data from server and decoded it to byte array in memory. getFile will read data from server, decoded and save it to SD card.
+Then getBlob function reads data in database and decoded it into byte array, while getFile read data in database, then decoded and save it to SD card.
 
 Here is the example usage to read integer from defined database path "/test/int".
 
 
 ```C++
 
-//Read integer from "/test/int"
+//Read integer value from database at "/test/int" 
 
   int val = 0;
 
@@ -167,7 +167,6 @@ Below is the example usage to store or set file data from SD card, "/test.txt" t
 ```C++
 
 //Store file content "/test.txt" on SD card to database at "/test/file_data".
-
 
 if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
 
