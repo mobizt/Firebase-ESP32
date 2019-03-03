@@ -53,7 +53,10 @@ This following devices were tested and work well.
 
 Required [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) to be installed. The HTTPClientESP32Ex library was the customized HTTPClient wrapper used for making SSL connection.
 
+
+
 ## Usages
+
 
 __Declaration and Initialization__
 
@@ -77,6 +80,9 @@ Firebase.begin("yout_project_id.firebaseio.com", "your_Firebase_database_secret"
 Firebase.reconnectWiFi(true);
 
 ```
+
+___
+
 
 __Read, Store, Update, Delete, Backup and Restore Data__
 
@@ -163,6 +169,8 @@ if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
 }
 
 ```
+___
+
 
 __Data changes monitoring__
 
@@ -234,6 +242,9 @@ void streamTimeoutCallback()
 
 ```
 
+___
+
+
 __Database Backup and Restore__
 
 The backup and restore are very easy, no need to specify the filename, just defined the database path to backup or restore and
@@ -287,7 +298,9 @@ See [full examples](https://github.com/mobizt/Firebase-ESP32/tree/master/example
 
 
 
-## Supported functions
+
+
+## All Supported Functions
 
 __Global functions__
 
