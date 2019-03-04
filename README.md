@@ -111,6 +111,9 @@ payload that Firebase server returned back to client. The http status and matchi
 
 To read the payload data, one of theses functions can be called i.e. intData, floatData, stringData, jsonData and blobData.
 
+The data you read from returned payload will tell actual data type store or exist in data base, not the modification data type e.g.
+data "1.5" stored in database, can be read only from stringData, reading from intData, floatData, JsonData will return zero and empty string. This allow you t better know what data type stored and how to manage it instead of return all in string (int -> string or float -> string).
+
 Normally BLOB or binary data type is not supported by Firebase, this library working with binary data by encode the data into string before send to server, then getBlob and getFile functions will read the encoded string data from database and decoded back to binary data at the client.
 
 Encoding binary to string is using base64 binary-to-text encoding schemes, the encoded string length will larger than the original data by 30%.
@@ -1084,7 +1087,7 @@ String streamPath();
 
 **Determine the current data path.**
 
-return *The database path which belong to server's returned payload.*
+return *The database path which belong to server' s returned payload.*
 
 The database path returned from this function in case of stream, also changed up on the child or parent's stream
 value changes.
