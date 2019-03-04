@@ -111,8 +111,7 @@ payload that Firebase server returned back to client. The http status and matchi
 
 To read the payload data, one of theses functions can be called i.e. intData, floatData, stringData, jsonData and blobData.
 
-The data you read from returned payload will tell actual data type store or exist in data base, not the modification data type e.g.
-data "1.5" stored in database, can be read only from stringData, reading from intData, floatData, JsonData will return zero and empty string. This allow you t better know what data type stored and how to manage it instead of return all in string (int -> string or float -> string).
+The data you read from returned payload will tell actual data type stored or existed in data base, not the modification version data type e.g.data "1.5" stored in database, can be read only from stringData, reading from intData, floatData, JsonData will return zero and empty string. This allow you t better know what data type stored and how to manage it instead of return all in string (int -> string or float -> string).
 
 Normally BLOB or binary data type is not supported by Firebase, this library working with binary data by encode the data into string before send to server, then getBlob and getFile functions will read the encoded string data from database and decoded back to binary data at the client.
 
