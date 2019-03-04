@@ -117,7 +117,7 @@ BLOB and file stream daya types were only implemented by this library.
 
 Normally BLOB or any binary data type is not supported by Firebase, this library working with binary data by encoding the data into string before sending to server, then getBlob and getFile functions will read the encoded string from database and decoded it back to binary data before return data to client.
 
-Encoding binary to string in this libraary is using base64 binary-to-text encoding schemes, the encoded string length will larger than the original data by 30% plus some header string ("file,base64," and "blob,base64,") for data type manipulation.
+Encoding binary to string in this libraary is using base64 binary-to-text encoding schemes, the encoded string will be prefixed with some header string ("file,base64," and "blob,base64,") for data type manipulation. The encoded string length will larger than the original binary data by 30%.
 
 The terms used in this document and library, Blob data is byte array in memory that encoded to string to store or decoded when read from database, while file stream is binary  data that being write to SD card which obtained from decoded string that read from database or binary data that being read from SD card and encoded to string to store in database.
 
