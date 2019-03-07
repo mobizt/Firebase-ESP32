@@ -1,7 +1,7 @@
 /*
- * Google's Firebase Real Time Database Arduino Library for ESP32, version 2.3.0
+ * Google's Firebase Real Time Database Arduino Library for ESP32, version 2.3.1
  * 
- * March 1, 2019
+ * March 7, 2019
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -62,10 +62,6 @@ struct FirebaseESP32::FirebaseMethod
 
 FirebaseESP32::FirebaseESP32()
 {
-  memset(_dtable, 0x80, 256);
-  for (size_t i = 0; i < sizeof(ESP32_FIREBASE_base64_table) - 1; i++)
-    _dtable[ESP32_FIREBASE_base64_table[i]] = (unsigned char)i;
-  _dtable['='] = 0;
 }
 
 FirebaseESP32::~FirebaseESP32()
@@ -99,6 +95,7 @@ void FirebaseESP32::begin(const String &host, const String &auth, const char *ro
 void FirebaseESP32::reconnectWiFi(bool reconnect)
 {
   _reconnectWiFi = reconnect;
+  WiFi.setAutoReconnect(reconnect);
 }
 
 bool FirebaseESP32::pathExist(FirebaseData &dataObj, const String &path)
@@ -111,18 +108,24 @@ bool FirebaseESP32::pathExist(FirebaseData &dataObj, const String &path)
 
 bool FirebaseESP32::pushInt(FirebaseData &dataObj, const String &path, int intValue)
 {
-  char buf[50];
-  memset(buf, 0, sizeof buf);
+  size_t bufSize = 50;
+  char *buf = new char[bufSize];
+  memset(buf, 0, bufSize);
   itoa(intValue, buf, 10);
-  return sendRequest(dataObj, path.c_str(), FirebaseMethod::POST, FirebaseDataType::INTEGER, buf);
+  bool res = sendRequest(dataObj, path.c_str(), FirebaseMethod::POST, FirebaseDataType::INTEGER, buf);
+  delete[] buf;
+  return res;
 }
 
 bool FirebaseESP32::pushFloat(FirebaseData &dataObj, const String &path, float floatValue)
 {
-  char buf[50];
-  memset(buf, 0, sizeof buf);
+  size_t bufSize = 50;
+  char *buf = new char[bufSize];
+  memset(buf, 0, bufSize);
   dtostrf(floatValue, 7, 6, buf);
-  return sendRequest(dataObj, path.c_str(), FirebaseMethod::POST, FirebaseDataType::FLOAT, buf);
+  bool res = sendRequest(dataObj, path.c_str(), FirebaseMethod::POST, FirebaseDataType::FLOAT, buf);
+  delete[] buf;
+  return res;
 }
 
 bool FirebaseESP32::pushString(FirebaseData &dataObj, const String &path, const String &stringValue)
@@ -156,18 +159,24 @@ bool FirebaseESP32::pushFile(FirebaseData &dataObj, const String &path, const St
 
 bool FirebaseESP32::setInt(FirebaseData &dataObj, const String &path, int intValue)
 {
-  char buf[50];
-  memset(buf, 0, sizeof buf);
+  size_t bufSize = 50;
+  char *buf = new char[bufSize];
+  memset(buf, 0, bufSize);
   itoa(intValue, buf, 10);
-  return sendRequest(dataObj, path.c_str(), FirebaseMethod::PUT, FirebaseDataType::INTEGER, buf);
+  bool res = sendRequest(dataObj, path.c_str(), FirebaseMethod::PUT, FirebaseDataType::INTEGER, buf);
+  delete[] buf;
+  return res;
 }
 
 bool FirebaseESP32::setFloat(FirebaseData &dataObj, const String &path, float floatValue)
 {
-  char buf[50];
-  memset(buf, 0, sizeof buf);
+  size_t bufSize = 50;
+  char *buf = new char[bufSize];
+  memset(buf, 0, bufSize);
   dtostrf(floatValue, 7, 6, buf);
-  return sendRequest(dataObj, path.c_str(), FirebaseMethod::PUT, FirebaseDataType::FLOAT, buf);
+  bool res = sendRequest(dataObj, path.c_str(), FirebaseMethod::PUT, FirebaseDataType::FLOAT, buf);
+  delete[] buf;
+  return res;
 }
 
 bool FirebaseESP32::setString(FirebaseData &dataObj, const String &path, const String &stringValue)
@@ -267,6 +276,10 @@ bool FirebaseESP32::readStream(FirebaseData &dataObj)
 {
   if (dataObj._streamStop)
     return true;
+
+  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
+    WiFi.reconnect();
+
   return getServerStreamResponse(dataObj);
 }
 
@@ -303,7 +316,8 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
   }
 
   size_t bufSize = 32;
-  char buf[32];
+  char *buf = new char[bufSize];
+
   int len = 0;
   size_t toRead = 0;
   bool httpConnected = false;
@@ -313,16 +327,23 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
   std::string header = "";
   std::string uri = "";
 
-  if (path[0] != '/')
-    uri = ESP32_FIREBASE_STR_1;
+  if (dataObj._redirectURL == "")
+  {
+    if (path[0] != '/')
+      uri = ESP32_FIREBASE_STR_1;
 
-  uri += path;
+    uri += path;
 
-  if (method == FirebaseMethod::PATCH || method == FirebaseMethod::PATCH_SILENT || method == FirebaseMethod::RESTORE)
-    uri += ESP32_FIREBASE_STR_1;
+    if (method == FirebaseMethod::PATCH || method == FirebaseMethod::PATCH_SILENT || method == FirebaseMethod::RESTORE)
+      uri += ESP32_FIREBASE_STR_1;
 
-  uri += ESP32_FIREBASE_STR_2;
-  uri += _auth;
+    uri += ESP32_FIREBASE_STR_2;
+    uri += _auth;
+  }
+  else
+  {
+    uri = dataObj._redirectURL;
+  }
 
   //init the firebase data
   resetFirebasedataFlag(dataObj);
@@ -552,6 +573,8 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     endFileTransfer(dataObj);
   }
 
+  delete[] buf;
+
   std::string().swap(payloadStr);
   std::string().swap(header);
   std::string().swap(uri);
@@ -634,6 +657,9 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
 
   dataObj._httpConnected = true;
   dataObj._interruptRequest = false;
+  dataObj._redirectURL = "";
+  dataObj._r_method = method;
+  dataObj._r_dataType = dataType;
 
   int httpCode = firebaseConnect(dataObj, path, method, dataType, payload);
 
@@ -711,12 +737,10 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
   if (!handleTCPNotConnected(dataObj) || !dataObj._httpConnected)
     return false;
 
-  char header[7];
-  memset(header, 0, sizeof header);
-
   bool flag = false;
   std::string lineBuf = "";
   std::string eventType = "";
+
   char c;
   int p1, p2;
   bool isStream = false;
@@ -727,6 +751,8 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
   bool hasEvent = false;
   bool hasEventData = false;
   bool hasBlob = false;
+  bool redirect = false;
+
   size_t lfCount = 0;
   size_t charPos = 0;
 
@@ -783,6 +809,23 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           p2 = lineBuf.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
           if (p2 != std::string::npos)
             dataObj._httpCode = atoi(lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
+        }
+
+        if (dataObj._httpCode == HTTP_CODE_TEMPORARY_REDIRECT)
+        {
+
+          p1 = lineBuf.find(ESP32_FIREBASE_STR_95);
+          if (p1 != std::string::npos)
+          {
+            dataObj._redirectURL = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_95));
+
+            int res = firebaseConnect(dataObj, dataObj._redirectURL, dataObj._r_method, dataObj._r_dataType, "");
+
+            if (res == 0)
+              return getServerResponse(dataObj);
+
+            return true;
+          }
         }
 
         if (dataObj._httpCode == HTTP_CODE_NO_CONTENT)
@@ -902,6 +945,9 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
             {
               dataObj._isStreamTimeout = false;
               dataObj._dataMillis = millis();
+
+              if (dataObj._timeoutCallback)
+                dataObj._timeoutCallback(false);
             }
           }
         }
@@ -1024,7 +1070,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
   dataObj._httpCode = -1000;
   char c = 0;
   size_t bufSize = 1024;
-  char buf[bufSize + 1];
+  char *buf = new char[bufSize + 1];
 
   std::string lineBuf = "";
   std::string contentType = "";
@@ -1180,6 +1226,8 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
     }
   }
 
+  delete[] buf;
+
   std::string().swap(lineBuf);
   std::string().swap(contentType);
   std::string().swap(contentDisposition);
@@ -1320,6 +1368,7 @@ bool FirebaseESP32::firebaseConnectStream(FirebaseData &dataObj, const std::stri
 
   if (millis() - dataObj._streamResetMillis > 50)
     delay(50);
+
   bool flag;
   flag = dataObj._streamPath.length() == 0;
   flag |= firebaseConnect(dataObj, path, FirebaseMethod::STREAM, FirebaseDataType::STRING, "") == 0;
@@ -1362,14 +1411,29 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
 
     dataObj._streamMillis = ml;
     std::string path = "";
-    //Stream time out
+
+    //Stream timeout
     if (dataObj._dataMillis > 0 && millis() - dataObj._dataMillis > KEEP_ALIVE_TIMEOUT)
     {
       dataObj._dataMillis = millis();
       dataObj._isStreamTimeout = true;
       path = dataObj._streamPath;
+
+      if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
+      {
+        uint8_t tryCount = 0;
+        WiFi.reconnect();
+        while (WiFi.status() != WL_CONNECTED)
+        {
+          tryCount++;
+          delay(50);
+          if (tryCount > 60)
+            break;
+        }
+      }
+
       firebaseConnectStream(dataObj, path);
-      return false;
+      return getServerResponse(dataObj);
     }
 
     //last connection was not close
@@ -1420,8 +1484,8 @@ void FirebaseESP32::forceEndHTTP(FirebaseData &dataObj)
 void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t method, const std::string &path, const std::string &auth, int payloadLength, std::string &request)
 {
 
-  char contentLength[20];
-  memset(contentLength, 0, sizeof contentLength);
+  char *contentLength = new char[20];
+  memset(contentLength, 0, 20);
   request.clear();
   if (method == FirebaseMethod::STREAM)
   {
@@ -1510,6 +1574,8 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   }
   request += ESP32_FIREBASE_STR_21;
   request += ESP32_FIREBASE_STR_21;
+
+  delete[] contentLength;
 }
 
 bool FirebaseESP32::cancelCurrentResponse(FirebaseData &dataObj)
@@ -1693,15 +1759,16 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
   int index = dataObj._index;
 
   std::string taskName = ESP32_FIREBASE_STR_72;
-  char idx[20];
-  memset(idx, 0, sizeof idx);
+  size_t idxSize = 20;
+  char *idx = new char[idxSize];
+  memset(idx, 0, idxSize);
 
   if (index != -1)
   {
     if (dataObj._handle)
       vTaskDelete(dataObj._handle);
     dataObj._handle = NULL;
-    memset(idx, 0, sizeof idx);
+    memset(idx, 0, idxSize);
     itoa(index, idx, 10);
     taskName += idx;
     dataObj._dataAvailableCallback = dataAvailablecallback;
@@ -1710,7 +1777,7 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
   }
   else
   {
-    memset(idx, 0, sizeof idx);
+    memset(idx, 0, idxSize);
     itoa(streamIndex, idx, 10);
     taskName += idx;
     dataObj._index = streamIndex;
@@ -1721,18 +1788,20 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
     streamIndex++;
   }
 
+  delete[] idx;
+
   TaskFunction_t taskCode = [](void *param) {
     int id = streamIndex - 1;
 
     for (;;)
     {
-      if (!firebaseDataObject[id].get().httpConnected() && (firebaseDataObject[id].get()._dataAvailableCallback || firebaseDataObject[id].get()._timeoutCallback))
+      if ((firebaseDataObject[id].get()._dataAvailableCallback || firebaseDataObject[id].get()._timeoutCallback))
       {
 
         Firebase.readStream(firebaseDataObject[id].get());
 
         if (firebaseDataObject[id].get().streamTimeout() && firebaseDataObject[id].get()._timeoutCallback)
-          firebaseDataObject[id].get()._timeoutCallback();
+          firebaseDataObject[id].get()._timeoutCallback(true);
 
         if (firebaseDataObject[id].get().streamAvailable() && firebaseDataObject[id].get()._dataAvailableCallback)
         {
@@ -1933,19 +2002,20 @@ void FirebaseESP32::send_base64_encode_file(WiFiClient *tcp, const std::string &
     return;
 
   size_t chunkSize = 512;
+  size_t fbufSize = 3;
   size_t byteAdd = 0;
   size_t byteSent = 0;
 
-  unsigned char buf[chunkSize];
-  memset(buf, 0, sizeof buf);
+  unsigned char *buf = new unsigned char[chunkSize];
+  memset(buf, 0, chunkSize);
 
   size_t len = file.size();
   size_t fbufIndex = 0;
-  unsigned char fbuf[3];
+  unsigned char *fbuf = new unsigned char[3];
 
   while (file.available())
   {
-    memset(fbuf, 0, sizeof fbuf);
+    memset(fbuf, 0, fbufSize);
     if (len - fbufIndex >= 3)
     {
       file.read(fbuf, 3);
@@ -1961,7 +2031,7 @@ void FirebaseESP32::send_base64_encode_file(WiFiClient *tcp, const std::string &
         {
           byteSent += byteAdd;
           tcp->write(buf, byteAdd);
-          memset(buf, 0, sizeof buf);
+          memset(buf, 0, chunkSize);
           byteAdd = 0;
         }
       }
@@ -1994,7 +2064,7 @@ void FirebaseESP32::send_base64_encode_file(WiFiClient *tcp, const std::string &
   if (len - fbufIndex > 0)
   {
 
-    memset(buf, 0, sizeof buf);
+    memset(buf, 0, chunkSize);
     byteAdd = 0;
 
     buf[byteAdd++] = ESP32_FIREBASE_base64_table[fbuf[0] >> 2];
@@ -2012,11 +2082,20 @@ void FirebaseESP32::send_base64_encode_file(WiFiClient *tcp, const std::string &
 
     tcp->write(buf, byteAdd);
   }
+
+  delete[] buf;
+  delete[] fbuf;
 }
 
 bool FirebaseESP32::base64_decode_string(const std::string src, std::vector<uint8_t> &out)
 {
-  unsigned char block[4];
+  unsigned char *dtable = new unsigned char[256];
+  memset(dtable, 0x80, 256);
+  for (size_t i = 0; i < sizeof(ESP32_FIREBASE_base64_table) - 1; i++)
+    dtable[ESP32_FIREBASE_base64_table[i]] = (unsigned char)i;
+  dtable['='] = 0;
+
+  unsigned char *block = new unsigned char[4];
   unsigned char tmp;
   size_t i, count;
   int pad = 0;
@@ -2027,7 +2106,7 @@ bool FirebaseESP32::base64_decode_string(const std::string src, std::vector<uint
 
   for (i = 0; i < len; i++)
   {
-    if (_dtable[src[i]] != 0x80)
+    if (dtable[src[i]] != 0x80)
       count++;
   }
 
@@ -2046,7 +2125,7 @@ bool FirebaseESP32::base64_decode_string(const std::string src, std::vector<uint
     else
       val = src[i];
 
-    tmp = _dtable[val];
+    tmp = dtable[val];
 
     if (tmp == 0x80)
       continue;
@@ -2077,12 +2156,21 @@ bool FirebaseESP32::base64_decode_string(const std::string src, std::vector<uint
     }
   }
 
+  delete[] block;
+  delete[] dtable;
+
   return true;
 }
 
 bool FirebaseESP32::base64_decode_file(File &file, const char *src, size_t len)
 {
-  unsigned char block[4];
+  unsigned char *dtable = new unsigned char[256];
+  memset(dtable, 0x80, 256);
+  for (size_t i = 0; i < sizeof(ESP32_FIREBASE_base64_table) - 1; i++)
+    dtable[ESP32_FIREBASE_base64_table[i]] = (unsigned char)i;
+  dtable['='] = 0;
+
+  unsigned char *block = new unsigned char[4];
   unsigned char tmp;
   size_t i, count;
   int pad = 0;
@@ -2092,7 +2180,7 @@ bool FirebaseESP32::base64_decode_file(File &file, const char *src, size_t len)
 
   for (i = 0; i < len; i++)
   {
-    if (_dtable[src[i]] != 0x80)
+    if (dtable[src[i]] != 0x80)
       count++;
   }
 
@@ -2111,7 +2199,7 @@ bool FirebaseESP32::base64_decode_file(File &file, const char *src, size_t len)
       val = '=';
     else
       val = src[i];
-    tmp = _dtable[val];
+    tmp = dtable[val];
     if (tmp == 0x80)
       continue;
 
@@ -2139,6 +2227,9 @@ bool FirebaseESP32::base64_decode_file(File &file, const char *src, size_t len)
       }
     }
   }
+
+  delete[] block;
+  delete[] dtable;
 
   return true;
 }

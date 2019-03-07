@@ -1,7 +1,7 @@
 /*
- * Google's Firebase Real Time Database Arduino Library for ESP32, version 2.3.0
+ * Google's Firebase Real Time Database Arduino Library for ESP32, version 2.3.1
  * 
- * March 1, 2019
+ * March 7, 2019
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -141,6 +141,7 @@ static const char ESP32_FIREBASE_STR_91[] PROGMEM = "blob";
 static const char ESP32_FIREBASE_STR_92[] PROGMEM = "\"blob,base64,";
 static const char ESP32_FIREBASE_STR_93[] PROGMEM = "\"file,base64,";
 static const char ESP32_FIREBASE_STR_94[] PROGMEM = "http connection was used by other process";
+static const char ESP32_FIREBASE_STR_95[] PROGMEM = "Location: ";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -148,7 +149,7 @@ class FirebaseData;
 class StreamData;
 
 typedef void (*StreamEventCallback)(StreamData);
-typedef void (*StreamTimeoutCallback)();
+typedef void (*StreamTimeoutCallback)(bool);
 
 static std::vector<std::reference_wrapper<FirebaseData>> firebaseDataObject;
 static uint8_t streamIndex = 0;
@@ -696,7 +697,6 @@ protected:
   std::string _host = "";
   std::string _auth = "";
   std::vector<const char *> _rootCA = std::vector<const char *>();
-  unsigned char _dtable[256];
 
   uint16_t _port;
   bool _reconnectWiFi;
@@ -932,6 +932,9 @@ protected:
   uint8_t _dataType2;
   uint8_t _connectionStatus;
 
+  uint8_t _r_method = 0;
+  uint8_t _r_dataType;
+
   std::string _path = "";
   std::string _path2 = "";
   std::string _data = "";
@@ -940,6 +943,7 @@ protected:
   std::string _pushName = "";
   std::string _file_transfer_error = "";
   std::string _fileName = "";
+  std::string _redirectURL = "";
   std::vector<uint8_t> _blob = std::vector<uint8_t>();
 
   int _httpCode;
