@@ -358,9 +358,12 @@ void streamCallback(StreamData data)
 
 //Global function that notify when stream connection lost
 //The library will resume the stream connection automatically
-void streamTimeoutCallback()
+void streamTimeoutCallback(bool timeout)
 {
-  Serial.println("Stream timeout, resume streaming...");
+  if(timeout){
+    //Stream timeout occurred
+    Serial.println("Stream timeout, resume streaming...");
+  }  
 }
 
 ```
