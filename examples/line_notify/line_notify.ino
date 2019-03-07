@@ -7,14 +7,11 @@
  * More about Line Notify service https://notify-bot.line.me/en/
  */
 
-
 #include <WiFi.h>
 #include "FS.h"
 #include "SPIFFS.h"
 #include "FirebaseESP32.h"
 #include "LineNotifyESP32.h"
-
-
 
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
@@ -176,10 +173,13 @@ void loop()
     Serial.println();
   }
 
-  if (firebaseData.streamTimeout())
+  if (firebaseData.streamTimeout(bool timeout))
   {
-    Serial.println("Stream timeout, resume streaming...");
-    Serial.println();
+    if (timeout)
+    {
+      Serial.println("Stream timeout, resume streaming...");
+      Serial.println();
+    }
   }
 
   if (firebaseData.streamAvailable())

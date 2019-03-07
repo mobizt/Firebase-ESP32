@@ -4,7 +4,6 @@
 
 //Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
-
 #include <WiFi.h>
 #include "FirebaseESP32.h"
 
@@ -12,8 +11,6 @@
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 #define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com" //Do not include https:// in FIREBASE_HOST
 #define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
-
-
 
 //Define Firebase Data objects
 FirebaseData firebaseData1;
@@ -48,11 +45,14 @@ void streamCallback1(StreamData data)
   Serial.println();
 }
 
-void streamTimeoutCallback1()
+void streamTimeoutCallback1(bool timeout)
 {
-  Serial.println();
-  Serial.println("> Stream 1 timeout, resume streaming...");
-  Serial.println();
+  if (timeout)
+  {
+    Serial.println();
+    Serial.println("> Stream 1 timeout, resume streaming...");
+    Serial.println();
+  }
 }
 
 void streamCallback2(StreamData data)
@@ -74,11 +74,14 @@ void streamCallback2(StreamData data)
   Serial.println();
 }
 
-void streamTimeoutCallback2()
+void streamTimeoutCallback2(bool timeout)
 {
-  Serial.println();
-  Serial.println(">> Stream 2 timeout, resume streaming...");
-  Serial.println();
+  if (timeout)
+  {
+    Serial.println();
+    Serial.println(">> Stream 2 timeout, resume streaming...");
+    Serial.println();
+  }
 }
 
 void setup()
@@ -131,7 +134,9 @@ void setup()
     Serial.println(">> FAILED");
     Serial.println(">> REASON: " + firebaseData2.errorReason());
     Serial.println();
-  } else {
+  }
+  else
+  {
     Serial.println(">> PASSED");
     Serial.println("------------------------------------");
     Serial.println();
