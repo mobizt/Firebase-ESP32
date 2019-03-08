@@ -12,7 +12,7 @@ env:
 install:
 - if [ "$CXX" = "g++" ]; then export CXX="g++-4.8" CC="gcc-4.8"; fi
 - ( cd ${HOME} && wget https://downloads.arduino.cc/arduino-${ARDUINO_VERSION}-linux64.tar.xz && tar xf arduino-${ARDUINO_VERSION}-linux64.tar.xz )
-- ( LIB=HTTPClientESP32Ex VERSION=${LIB_HTTPCLIENTESP32EX_VERSION} && cd ${HOME} && wget ttps://github.com/mobizt/HTTPClientESP32Ex/archive/${VERSION}.zip -q -O ${LIB}.zip && unzip -q ${LIB}.zip && rm ${LIB}.zip && mv ${LIB}-* ${LIB} )
+- ( LIB=HTTPClientESP32Ex VERSION=${LIB_HTTPCLIENTESP32EX_VERSION} && cd ${HOME} && wget https://github.com/mobizt/HTTPClientESP32Ex/archive/${VERSION}.zip -q -O ${LIB}.zip && unzip -q ${LIB}.zip && rm ${LIB}.zip && mv ${LIB}-* ${LIB} )
 - git clone --branch ${ARDUINO_ESP32_VERSION} https://github.com/espressif/arduino-esp32.git ${ARDUINO_ESP32_ROOT}
 - git submodule init && git submodule update
 - ( cd ${ARDUINO_ESP32_ROOT}/tools && python get.py )
