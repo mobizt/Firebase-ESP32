@@ -38,6 +38,7 @@
 #include <HTTPClientESP32Ex.h>
 #include <functional>
 #include <SD.h>
+#include <vector>
 
 #define FIEBASE_PORT 443
 
