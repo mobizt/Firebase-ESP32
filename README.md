@@ -1017,15 +1017,15 @@ return *`Boolean`* type status indicates the success of operation.
 
 Available query parameters for filtering the data are the following.
 
-*`QueryFilter.orderBy`* -       Required parameter to specify which data used for data filtering included child key, key and value.
+*`QueryFilter.orderBy`* - Required parameter to specify which data used for data filtering included child key, key and value.
 
-                            Use "$key" for filtering data by keys of all nodes at the defined database path.
+Use "$key" for filtering data by keys of all nodes at the defined database path.
 
-                            Use "$value" for filtering data by value of all nodes at the defined database path.
+Use "$value" for filtering data by value of all nodes at the defined database path.
 
-                            Use "$priority" for filtering data by "virtual child" named .priority of all nodes.
+Use "$priority" for filtering data by "virtual child" named .priority of all nodes.
 
-                            Use  any child key to filter by that key.
+Use any child key to filter by that key.
 
 
 *`QueryFilter.limitToFirst`* -  The total children (number) to filter from the first child.
