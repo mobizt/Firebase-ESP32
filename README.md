@@ -38,7 +38,9 @@ This following devices were tested and work well.
 
 * Supports **Data Filtering** through the orderBy, limitToFirst, limitToLast, startAt, endAt, and equalTo query parameters.
 
-* Supports integer, float, string and JSON string data types. Boolean data is actually not supported by Firebase, unless using integer or float to determine its non-zero and zero values for boolean.  For JSON string data type, parsing as an object required external JSON parser library e.g. [**ArduinoJson**](https://github.com/bblanchon/ArduinoJson).
+* Supports integer, float, string and JSON string data types. Boolean data is actually not supported by Firebase, unless using integer or float to determine its non-zero and zero values for boolean.  
+
+For JSON string data type, parsing as an object required external JSON parser library e.g. [**ArduinoJson**](https://github.com/bblanchon/ArduinoJson).
 
 * Supports **automatic stream resuming** when the stream connection was timeout. 
 
@@ -115,15 +117,27 @@ payload that Firebase server returned back to client. The http status and matchi
 
 To read the payload data, one of theses functions can be called i.e. intData, floatData, stringData, jsonData and blobData.
 
-The data you read from returned payload will tell actual data type stored or existed in database, not the modification version data type e.g. string "1.5" stored in database, can be read only from stringData as it returned from server, any attempt to read integer from intData, float from floatData, and JSON from JsonData will return zero and empty string. This allow you to know what exactly type of data stored in database and how to manage it instead of cast all data as string (int -> string or float -> string) or as number. You can call getDataType to determine what type of data returned to be manipulated.
+The data you read from returned payload will tell actual data type stored or existed in database, not the modification version data type e.g. string "1.5" stored in database, can be read only from stringData as it returned from server.
+
+Any attempt to read integer from intData, float from floatData, and JSON from JsonData will return zero and empty string. 
+
+This allow you to know what exactly type of data stored in database and how to manage it instead of cast all data as string (int -> string or float -> string) or as number. 
+
+You can call getDataType to determine what type of data returned to be manipulated.
 
 BLOB and file stream daya types were only implemented by this library.
 
-Normally BLOB or any binary data type is not supported by Firebase, this library working with binary data by encoding the data into string before sending to server, then getBlob and getFile functions will read the encoded string from database and decoded it back to binary data before return data to client.
+Normally BLOB or any binary data type is not supported by Firebase, this library working with binary data by encoding the data into string before sending to server.
 
-Encoding binary to string in this libraary is using base64 binary-to-text encoding schemes, the encoded string will be prefixed with some header string ("file,base64," and "blob,base64,") for data type manipulation. The encoded string length will larger than the original binary data by 30%.
+Then getBlob and getFile functions will read the encoded string from database and decoded it back to binary data before return data to client.
 
-The terms used in this document and library, Blob data is byte array in memory that encoded to string to store or decoded when read from database, while file stream is binary  data that being write to SD card which obtained from decoded string that read from database or binary data that being read from SD card and encoded to string to store in database.
+Encoding binary to string in this libraary is using base64 binary-to-text encoding schemes, the encoded string will be prefixed with some header string ("file,base64," and "blob,base64,") for data type manipulation. 
+
+The encoded string length will larger than the original binary data by 30%.
+
+The terms used in this document and library, Blob data is byte array in memory that encoded to string to store or decoded when read from database.
+
+While file stream is binary data that being write to SD card which obtained from decoded string that read from database or binary data that being read from SD card and encoded to string to store in database.
 
 Then getBlob function reads data in database and decoded it into byte array, while getFile reads data in database, then decoded and save it to SD card.
 
@@ -206,7 +220,9 @@ With push operation, server will return payload (key or name of newly appended n
 
 Working with JSON data allow us to read or store multiple data at once because JSON data can store many key/value pairs, array of object and nested objects.
 
-Function setJSON will set/replace value at defined database path with value in JSON data, and also create child nodes.  While in function pushJSON, all key/value in JSON data  will be appended to the defined database path as new node.
+Function setJSON will set/replace value at defined database path with value in JSON data, and also create child nodes.  
+
+While in function pushJSON, all key/value in JSON data  will be appended to the defined database path as new node.
 
 Below is the example for appending new data (using JSON) to the path "/test/append.
 
@@ -246,7 +262,9 @@ JSON data is needed, and passed to these functions. The result from update opera
 
 If any key provided in JSON data was not existed in database at the path, new key will be created.
 
-Everytime you call updateNode, the payload that exactly the JSON data you sent will return back from server. Update database with large JSON will consume as much as double network data. Function updateNodeSilent can reduce the network data usage in this case.
+Everytime you call updateNode, the payload that exactly the JSON data you sent will return back from server. 
+
+Update database with large JSON will consume as much as double network data. Function updateNodeSilent can reduce the network data usage in this case.
 
 Below is the example for database update at "/test" using JSON data.
 
@@ -299,14 +317,20 @@ The quey parameters that be set through the QueryFilter class.
 These parameters are `orderBy`, `limitToFirst`, `limitToLast`, `startAt`, `endAt`, and `equalTo`.
 
 To filter data, parameter `orderBy` should be assigned which you can assign "$key" for filtering all nodes under defined database path
-using their keys, assign "$value" for filtering all nodes under defined database path using their values, assign specific node key or name for filtering the specified child node under defined database path using their key, and assign "$priority" for filtering all nodes under defined database path using their "virtual child" named .priority.
+using their keys, assign "$value" for filtering all nodes under defined database path using their values. 
+
+Assign specific node key or name for filtering the specified child node under defined database path using their key, and assign "$priority" for filtering all nodes under defined database path using their "virtual child" named .priority.
 
 And using the follower query properties to limit the queries.
 
 `QueryFilter.limitToFirst` -  The total children (number) to filter from the first child.
+
 `QueryFilter.limitToLast` -   The total last children (number) to filter. 
+
 `QueryFilter.startAt` -       Starting value of range (number or string) of query upon orderBy param.
+
 `QueryFilter.endAt` -         Ending value of range (number or string) of query upon orderBy param.
+
 `QueryFilter.equalTo` -       Value (number or string) matches the orderBy param
 
 
@@ -369,7 +393,9 @@ To subscribe, monitor or follow the data change on defined database path, the fu
 To handle the data that will be received when database at that path updates or changes, the function readStream should be called in loop,
 otherwise callback function is required and assigned through the function setStreamCallback.
 
-When no callback is assigned, the data that return from stream should be routinely veriy inside the loop function. To determine the stream data is available, function streamAvailable should be called. The function streamAvailable returned true when stream data was received in buffer. 
+When no callback is assigned, the data that return from stream should be routinely veriy inside the loop function. To determine the stream data is available, function streamAvailable should be called. 
+
+The function streamAvailable returned true when stream data was received in buffer. 
 
 Then stream data can be accessed directly by calling intData, floatData, stringData, jsonData and blobData.
 
@@ -444,7 +470,9 @@ __Database Backup and Restore__
 The downloaded backup file is actually JSON text file with .json extension. The file name is constructed from the defined database path,
 e.g. "/root.json" for "/" or "/mydb.backup.data.json" for "/mydb/backup/data".
 
-The database restoration returned completed status only when Firebase server completely update the data. Any failed operation will not affected the database (no updates or changes).
+The database restoration returned completed status only when Firebase server completely update the data. 
+
+Any failed operation will not affected the database (no updates or changes).
 
 Here is the usage example to back up all database at root path "/" and restore it back to database.
 
@@ -990,16 +1018,24 @@ return *`Boolean`* type status indicates the success of operation.
 Available query parameters for filtering the data are the following.
 
 *`QueryFilter.orderBy`* -       Required parameter to specify which data used for data filtering included child key, key and value.
+
                             Use "$key" for filtering data by keys of all nodes at the defined database path.
+
                             Use "$value" for filtering data by value of all nodes at the defined database path.
+
                             Use "$priority" for filtering data by "virtual child" named .priority of all nodes.
+
                             Use  any child key to filter by that key.
 
 
 *`QueryFilter.limitToFirst`* -  The total children (number) to filter from the first child.
+
 *`QueryFilter.limitToLast`* -   The total last children (number) to filter. 
+
 *`QueryFilter.startAt`* -       Starting value of range (number or string) of query upon orderBy param.
+
 *`QueryFilter.endAt`* -         Ending value of range (number or string) of query upon orderBy param.
+
 *`QueryFilter.equalTo`* -       Value (number or string) matches the orderBy param
 
 
