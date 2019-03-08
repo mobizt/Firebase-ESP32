@@ -1,7 +1,7 @@
 /*
- * Google's Firebase Real Time Database Arduino Library for ESP32, version 2.3.1
+ * Google's Firebase Real Time Database Arduino Library for ESP32, version 2.3.2
  * 
- * March 7, 2019
+ * March 8, 2019
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -142,17 +142,53 @@ static const char ESP32_FIREBASE_STR_92[] PROGMEM = "\"blob,base64,";
 static const char ESP32_FIREBASE_STR_93[] PROGMEM = "\"file,base64,";
 static const char ESP32_FIREBASE_STR_94[] PROGMEM = "http connection was used by other process";
 static const char ESP32_FIREBASE_STR_95[] PROGMEM = "Location: ";
+static const char ESP32_FIREBASE_STR_96[] PROGMEM = "&orderBy=";
+static const char ESP32_FIREBASE_STR_97[] PROGMEM = "&limitToFirst=";
+static const char ESP32_FIREBASE_STR_98[] PROGMEM = "&limitToLast=";
+static const char ESP32_FIREBASE_STR_99[] PROGMEM = "&startAt=";
+static const char ESP32_FIREBASE_STR_100[] PROGMEM = "&endAt=";
+static const char ESP32_FIREBASE_STR_101[] PROGMEM = "&equalTo=";
+static const char ESP32_FIREBASE_STR_102[] PROGMEM = "\"error\" : ";
+static const char ESP32_FIREBASE_STR_103[] PROGMEM = "/.settings/rules";
+static const char ESP32_FIREBASE_STR_104[] PROGMEM = "{\"status\":\"ok\"}";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 class FirebaseData;
 class StreamData;
+class FirebaseESP32;
 
 typedef void (*StreamEventCallback)(StreamData);
 typedef void (*StreamTimeoutCallback)(bool);
 
 static std::vector<std::reference_wrapper<FirebaseData>> firebaseDataObject;
 static uint8_t streamIndex = 0;
+
+class QueryFilter
+{
+public:
+  QueryFilter();
+  ~QueryFilter();
+  void orderBy(const String &);
+  void limitToFirst(int);
+  void limitToLast(int);
+  void startAt(int);
+  void endAt(int);
+  void startAt(const String &);
+  void endAt(const String &);
+  void equalTo(int);
+  void equalTo(const String &);
+  void clear();
+  friend FirebaseESP32;
+
+protected:
+  std::string _orderBy = "";
+  std::string _limitToFirst = "";
+  std::string _limitToLast = "";
+  std::string _startAt = "";
+  std::string _endAt = "";
+  std::string _equalTo = "";
+};
 
 class FirebaseESP32
 {
@@ -189,6 +225,30 @@ public:
 
    */
   void reconnectWiFi(bool reconnect);
+
+  /*
+    Read the database rules.
+    
+    @param dataObj - Firebase Data Object to hold data and instances.
+
+    @return - Boolean type status indicates the success of operation.
+
+    Call [FirebaseData object].jsonData will return the JSON string value of
+    database rules returned from server.
+
+   */
+  bool getRules(FirebaseData &dataObj);
+
+  /*
+    Write the database rules.
+    
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param rules - Database rules in jSON String format.
+
+    @return - Boolean type status indicates the success of operation.
+
+   */
+  bool setRules(FirebaseData &dataObj, const String &rules);
 
   /*
     Determine whether defined database path is existed or not.
@@ -456,7 +516,7 @@ public:
     the function [FirebaseData object].intData will return rounded integer value.
 
    */
-  bool getInt(FirebaseData &dataObj, String &path);
+  bool getInt(FirebaseData &dataObj, const String &path);
 
   /*
     Read the float value at the defined database path.
@@ -476,7 +536,7 @@ public:
     the function [FirebaseData object].intData will return zero (0).
 
    */
-  bool getFloat(FirebaseData &dataObj, String &path);
+  bool getFloat(FirebaseData &dataObj, const String &path);
 
   /*
     Read the string or text at the defined database path.
@@ -496,7 +556,7 @@ public:
     the function [FirebaseData object].stringData will return empty string (String object).
 
    */
-  bool getString(FirebaseData &dataObj, String &path);
+  bool getString(FirebaseData &dataObj, const String &path);
 
   /*
     Read the JSON string at the defined database path.
@@ -517,7 +577,47 @@ public:
     the function [FirebaseData object].jsonData will return empty string (String object).
 
    */
-  bool getJSON(FirebaseData &dataObj, String &path);
+  bool getJSON(FirebaseData &dataObj, const String &path);
+
+  /*
+    Read the JSON string at the defined database path.
+    The returned payload JSON string represents the child nodes and their value.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the string value is being read.
+    @param query - QueryFilter class to set query parameters to filter data.
+
+    @return - Boolean type status indicates the success of operation.
+
+    Available query parameters for filtering the data are the following.
+
+    QueryFilter.orderBy -       Required parameter to specify which data used for data filtering included child key, key and value.
+                                Use "$key" for filtering data by keys of all nodes at the defined database path.
+                                Use "$value" for filtering data by value of all nodes at the defined database path.
+                                Use "$priority" for filtering data by "virtual child" named .priority of all nodes.
+                                Use  any child key to filter by that key.
+
+
+    QueryFilter.limitToFirst -  The total children (number) to filter from the first child.
+    QueryFilter.limitToLast -   The total last children (number) to filter. 
+    QueryFilter.startAt -       Starting value of range (number or string) of query upon orderBy param.
+    QueryFilter.endAt -         Ending value of range (number or string) of query upon orderBy param.
+    QueryFilter.equalTo -       Value (number or string) matches the orderBy param
+
+    
+    Call [FirebaseData object].dataType to determine what type of data that successfully
+    stores in database. 
+    
+    Call [FirebaseData object].jsonData will return the JSON string value of
+    payload returned from server.
+
+    If the payload returned from server is not json type, 
+    the function [FirebaseData object].jsonData will return empty string (String object).
+
+    [FirebaseData object].jsonData will return null when the filtered data is empty.
+
+   */
+  bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &query);
 
   /*
     Read the blob (binary data) at the defined database path.
@@ -537,7 +637,7 @@ public:
     the function [FirebaseData object].blobData will return empty array.
 
    */
-  bool getBlob(FirebaseData &dataObj, String &path);
+  bool getBlob(FirebaseData &dataObj, const String &path);
 
   /*
     Download file data in database at defined database path and save to SD card.
@@ -904,6 +1004,8 @@ public:
 
   HTTPClientESP32Ex http;
 
+  QueryFilter queryFilter;
+
   friend FirebaseESP32;
 
 protected:
@@ -944,6 +1046,7 @@ protected:
   std::string _file_transfer_error = "";
   std::string _fileName = "";
   std::string _redirectURL = "";
+  std::string _firebaseError = "";
   std::vector<uint8_t> _blob = std::vector<uint8_t>();
 
   int _httpCode;

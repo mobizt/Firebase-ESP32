@@ -1,6 +1,6 @@
 # Firebase Real Time Database Arduino Client Library for ESP32
 
-Google's Firebase Real Time Database Arduino Library for ESP32 v 2.3.1
+Google's Firebase Real Time Database Arduino Library for ESP32 v 2.3.2
 
 This client library provides the most reliable operations for read, store, update, delete, backup and restore the database data.
 
@@ -32,7 +32,11 @@ This following devices were tested and work well.
 
 * **Delete data** at the defined database path (include all child nodes) through **deleteNode** function.
 
+* **Read and write database rules** through **getRules** and **setRules** functions.
+
 * Using **Firebase Data object** that holds all data and instances.
+
+* Supports **Data Filtering** through the orderBy, limitToFirst, limitToLast, startAt, endAt, and equalTo query parameters.
 
 * Supports integer, float, string and JSON string data types. Boolean data is actually not supported by Firebase, unless using integer or float to determine its non-zero and zero values for boolean.  For JSON string data type, parsing as an object required external JSON parser library e.g. [**ArduinoJson**](https://github.com/bblanchon/ArduinoJson).
 
@@ -288,6 +292,65 @@ Firebase.deleteNode(firebaseData, "/test/append");
 
 ```
 
+**Data Filtering via query parameters**
+
+The quey parameters that be set through the QueryFilter class.
+
+These parameters are `orderBy`, `limitToFirst`, `limitToLast`, `startAt`, `endAt`, and `equalTo`.
+
+To filter data, parameter `orderBy` should be assigned which you can assign "$key" for filtering all nodes under defined database path
+using their keys, assign "$value" for filtering all nodes under defined database path using their values, assign specific node key or name for filtering the specified child node under defined database path using their key, and assign "$priority" for filtering all nodes under defined database path using their "virtual child" named .priority.
+
+And using the follower query properties to limit the queries.
+
+`QueryFilter.limitToFirst` -  The total children (number) to filter from the first child.
+`QueryFilter.limitToLast` -   The total last children (number) to filter. 
+`QueryFilter.startAt` -       Starting value of range (number or string) of query upon orderBy param.
+`QueryFilter.endAt` -         Ending value of range (number or string) of query upon orderBy param.
+`QueryFilter.equalTo` -       Value (number or string) matches the orderBy param
+
+
+
+Below example show how to using queries parameter in QueryFilter class to filter the data at database path "/test/data"
+
+```C++
+
+//Assume that children that have key "sensor" are under "/test/data"
+
+//Instantiate the QueryFilter class
+QueryFilter query;
+
+//Build query using specified child node key "sensor" under "/test/data"
+query.orderBy("sensor");
+
+//Query any child that its value is begin with 2 (number), assumed that its data type is float or integer
+query.startAt(2);
+
+//Query any child that its value is end with 8 (number), assumed that its data type is float or integer
+query.endAt(8);
+
+//Limit the maximum query result to return only the last 5 nodes
+query.limitToLast(5);
+
+
+if (Firebase.getJSON(firebaseData, "/test/data", query))
+{
+  //Success, then try to read the JSON payload value
+  Serial.println(firebaseData.jsonData());
+}
+else
+{
+  //Failed to get JSON data at defined database path, print out the error reason
+  Serial.println(firebaseData.errorReason());
+}
+
+//Clear all query parameters
+query.clear();
+
+
+
+```
+
 
 
 ___
@@ -468,6 +531,38 @@ param *`reconnect`* - The boolean to set/unset WiFi AP reconnection.
 ```C++
 void reconnectWiFi(bool reconnect);
 ```
+
+
+
+
+
+**Read the database rules.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+return - return *`Boolean`* type status indicates the success of operation.
+
+```C++
+bool getRules(FirebaseData &dataObj);
+```
+
+
+
+
+
+**Write the database rules.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`rules`* - Database rules in jSON String format.
+
+return - return *`Boolean`* type status indicates the success of operation.
+
+```C++
+bool setRules(FirebaseData &dataObj, const String &rules);
+```
+
+
 
 
 
@@ -802,7 +897,7 @@ If the payload returned from server is float type,
 the function [FirebaseData object].intData will return rounded integer value.
 
 ```C++
-bool getInt(FirebaseData &dataObj, String &path);
+bool getInt(FirebaseData &dataObj, const String &path);
 ```
 
 
@@ -825,7 +920,7 @@ If the payload returned from server is not integer or float type,
 the function [FirebaseData object].intData will return zero (0).
 
 ```C++
-bool getFloat(FirebaseData &dataObj, String &path);
+bool getFloat(FirebaseData &dataObj, const String &path);
 ```
 
 
@@ -848,7 +943,7 @@ If the payload returned from server is not string type,
 the function [FirebaseData object].stringData will return empty string (String object).
 
 ```C++
-bool getString(FirebaseData &dataObj, String &path);
+bool getString(FirebaseData &dataObj, const String &path);
 ```
 
 
@@ -873,8 +968,56 @@ If the payload returned from server is not json type,
 the function [FirebaseData object].jsonData will return empty string (String object).
 
 ```C++
-bool getJSON(FirebaseData &dataObj, String &path);
+bool getJSON(FirebaseData &dataObj, const String &path);
 ```
+
+
+
+
+
+**Read the JSON string with data filtering at the defined database path.**
+
+The returned payload JSON string represents the child nodes and their value.
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the string value is being read.
+
+param *`query`* - QueryFilter class to set query parameters to filter data.
+
+return *`Boolean`* type status indicates the success of operation.
+
+Available query parameters for filtering the data are the following.
+
+*`QueryFilter.orderBy`* -       Required parameter to specify which data used for data filtering included child key, key and value.
+                            Use "$key" for filtering data by keys of all nodes at the defined database path.
+                            Use "$value" for filtering data by value of all nodes at the defined database path.
+                            Use "$priority" for filtering data by "virtual child" named .priority of all nodes.
+                            Use  any child key to filter by that key.
+
+
+*`QueryFilter.limitToFirst`* -  The total children (number) to filter from the first child.
+*`QueryFilter.limitToLast`* -   The total last children (number) to filter. 
+*`QueryFilter.startAt`* -       Starting value of range (number or string) of query upon orderBy param.
+*`QueryFilter.endAt`* -         Ending value of range (number or string) of query upon orderBy param.
+*`QueryFilter.equalTo`* -       Value (number or string) matches the orderBy param
+
+
+Call [FirebaseData object].dataType to determine what type of data that successfully
+stores in database. 
+
+Call [FirebaseData object].jsonData will return the JSON string value of
+payload returned from server.
+
+If the payload returned from server is not json type, 
+the function [FirebaseData object].jsonData will return empty string (String object).
+
+[FirebaseData object].jsonData will return null when the filtered data is empty.
+
+```C++
+bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &quer);
+```
+
 
 
 
@@ -897,7 +1040,7 @@ If the payload returned from server is not blob type,
 the function [FirebaseData object].blobData will return empty array.
 
 ```C++
-bool getBlob(FirebaseData &dataObj, String &path);
+bool getBlob(FirebaseData &dataObj, const String &path);
 ```
 
 
