@@ -380,7 +380,7 @@ query.clear();
 ___
 
 
-__Data changes monitoring__
+__Data changes monitoring (Stream)__
 
 
 
