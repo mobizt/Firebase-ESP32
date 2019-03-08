@@ -1,12 +1,12 @@
-# Firebase Real Time Database Arduino Client Library for ESP32
+# Firebase Realtime Database Arduino Client Library for ESP32
 
-Google's Firebase Real Time Database Arduino Library for ESP32 v 2.3.2
+Google's Firebase Realtime Database Arduino Library for ESP32 v 2.3.2
 
 This client library provides the most reliable operations for read, store, update, delete, backup and restore the database data.
 
 In addition, the library allows you to read and store binary data from/to device's memory or external SD memory.
 
-This library comunicated with Google Firebase Real Time Database through the REST API. 
+This library comunicated with Google Firebase Realtime Database through the REST API. 
 
 The library supports all ESP32 MCU based modules. For ESP8266 please try [ESP8266 Firebase Arduino library]( https://github.com/mobizt/Firebase-ESP8266)
 
@@ -360,7 +360,7 @@ __Data changes monitoring__
 
 
 
-**The Firebase Real Time Database update or change event was sent to client through the HTTP stream connection. The connection was keep alive as long as no network communication interruption.**
+**The Firebase Realtime Database update or change event was sent to client through the HTTP stream connection. The connection was keep alive as long as no network communication interruption.**
 
 The function to handle the update and change event monitoring are beginStream, setStreamCallback and readStream.
 

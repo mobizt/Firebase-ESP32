@@ -1,5 +1,5 @@
 /*
- * Google's Firebase Real Time Database Arduino Library for ESP32, version 2.3.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.2
  * 
  * March 8, 2019
  * 
