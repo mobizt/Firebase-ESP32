@@ -19,7 +19,3 @@ install:
 before_script:
 - mkdir -p ${ARDUINO_HOME}/libraries
 - ( cd ${ARDUINO_HOME}/libraries && ln -s ${TRAVIS_BUILD_DIR} firebase-arduino && ln -s ${HOME}/HTTPClientESP32Ex ./)
-script:
-- ( cd contrib/test && make check )
-- ( cd contrib/test/modem/ && make test )
-- contrib/test/travis/check_all_examples_use_standard_init.sh
