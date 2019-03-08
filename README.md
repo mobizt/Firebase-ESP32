@@ -312,7 +312,7 @@ Firebase.deleteNode(firebaseData, "/test/append");
 
 **Data Filtering via query parameters**
 
-The quey parameters that be set through the QueryFilter class.
+The quey parameters that can set through the QueryFilter class.
 
 These parameters are `orderBy`, `limitToFirst`, `limitToLast`, `startAt`, `endAt`, and `equalTo`.
 
