@@ -551,6 +551,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
           createDirs(folder);
 
         file = SD.open(dataObj._fileName.c_str(), FILE_WRITE);
+        std::string().swap(folder);
       }
 
       if (!file)

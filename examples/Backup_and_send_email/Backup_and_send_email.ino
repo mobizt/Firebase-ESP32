@@ -99,7 +99,7 @@ void setup()
       smtpData.setMessage("<div style=\"color:#cc3399;font-size:14px;\">Firebase Database Backup File<br/><br/>Sent from ESP32</div>", true);
 
       //Add recipients, can add more than one recipient
-      smtpData.addRecipient("k_suwatchai@hotmail.com");
+      smtpData.addRecipient("someone@somemail.com");
 
       //Add attachment file (backup file) from SD card
       smtpData.addAttachFile(firebaseData.getBackupFilename());

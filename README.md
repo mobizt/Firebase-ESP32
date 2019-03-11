@@ -6,7 +6,7 @@ This client library provides the most reliable operations for read, store, updat
 
 In addition, the library allows you to read and store binary data from/to device's memory or external SD memory.
 
-This library comunicated with Google Firebase Realtime Database through the REST API. 
+This library comunicated with Google Firebase Realtime Database using the REST API. 
 
 The library supports all ESP32 MCU based modules. For ESP8266 please try [ESP8266 Firebase Arduino library]( https://github.com/mobizt/Firebase-ESP8266)
 
@@ -22,21 +22,21 @@ This following devices were tested and work well.
  
 ## Features
 
-* **Read data** at the defined database path through get functions e.g. **getInt**, **getFloat**, **getString**, **getJSON**, **getBlob** and **getFile**.
+* **Read data** at the defined database path using get functions e.g. **getInt**, **getFloat**, **getString**, **getJSON**, **getBlob** and **getFile**.
 
-* **Store data** at the defined database path through set functions e.g. **setInt**, **setFloat**, **setString**, **setJSON**, **setBlob** and **setFile**.
+* **Store data** at the defined database path using set functions e.g. **setInt**, **setFloat**, **setString**, **setJSON**, **setBlob** and **setFile**.
 
-* **Append data** to the defined database path through push functions e.g. **pushInt**, **pushFloat**, **pushString**, **pushJSON**, **pushBlob** and **pushFile**.
+* **Append data** to the defined database path using push functions e.g. **pushInt**, **pushFloat**, **pushString**, **pushJSON**, **pushBlob** and **pushFile**.
 
-* **Update data** at the defined database path through **updateNode** and **updateNodeSilent** functions.
+* **Update data** at the defined database path using **updateNode** and **updateNodeSilent** functions.
 
-* **Delete data** at the defined database path (include all child nodes) through **deleteNode** function.
+* **Delete data** at the defined database path (include all child nodes) using **deleteNode** function.
 
-* **Read and write database rules** through **getRules** and **setRules** functions.
+* **Read and write database rules** using **getRules** and **setRules** functions.
 
 * Using **Firebase Data object** that holds all data and instances.
 
-* Supports **Data Filtering** through the orderBy, limitToFirst, limitToLast, startAt, endAt, and equalTo query parameters.
+* Supports **Data Filtering** using the orderBy, limitToFirst, limitToLast, startAt, endAt, and equalTo query parameters.
 
 * Supports integer, float, string and JSON string data types. Boolean data is actually not supported by Firebase, unless using integer or float to determine its non-zero and zero values for boolean.  
 
@@ -44,7 +44,7 @@ For JSON string data type, parsing as an object required external JSON parser li
 
 * Supports **automatic stream resuming** when the stream connection was timeout. 
 
-* Supports **multiple streaming paths** through multiple Firebase Data objects. 
+* Supports **multiple streaming paths** using multiple Firebase Data objects. 
 
 * Supports set and remove **stream event callbacks**.
 
@@ -312,7 +312,7 @@ Firebase.deleteNode(firebaseData, "/test/append");
 
 **Data Filtering via query parameters**
 
-The quey parameters that can set through the QueryFilter class.
+The quey parameters that can set using the QueryFilter class.
 
 These parameters are `orderBy`, `limitToFirst`, `limitToLast`, `startAt`, `endAt`, and `equalTo`.
 
@@ -384,14 +384,14 @@ __Data changes monitoring (Stream)__
 
 
 
-**The Firebase Realtime Database update or change event was sent to client through the HTTP stream connection. The connection was keep alive as long as no network communication interruption.**
+**The Firebase Realtime Database update or change event was sent to client using the HTTP stream connection. The connection was keep alive as long as no network communication interruption.**
 
 The function to handle the update and change event monitoring are beginStream, setStreamCallback and readStream.
 
 To subscribe, monitor or follow the data change on defined database path, the function beginStream must be called first.
 
 To handle the data that will be received when database at that path updates or changes, the function readStream should be called in loop,
-otherwise callback function is required and assigned through the function setStreamCallback.
+otherwise callback function is required and assigned using the function setStreamCallback.
 
 When no callback is assigned, the data that return from stream should be routinely veriy inside the loop function. To determine the stream data is available, function streamAvailable should be called. 
 
@@ -568,7 +568,7 @@ void reconnectWiFi(bool reconnect);
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
 
-return - return *`Boolean`* type status indicates the success of operation.
+return - *`Boolean`* type status indicates the success of operation.
 
 ```C++
 bool getRules(FirebaseData &dataObj);
@@ -584,7 +584,7 @@ param *`dataObj`* - Firebase Data Object to hold data and instances.
 
 param *`rules`* - Database rules in jSON String format.
 
-return - return *`Boolean`* type status indicates the success of operation.
+return - *`Boolean`* type status indicates the success of operation.
 
 ```C++
 bool setRules(FirebaseData &dataObj, const String &rules);
