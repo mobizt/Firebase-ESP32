@@ -2391,6 +2391,8 @@ FirebaseData ::~FirebaseData()
   clear();
 }
 
+
+
 void FirebaseData::clear()
 {
   std::string().swap(_path);

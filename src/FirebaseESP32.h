@@ -1061,6 +1061,7 @@ protected:
   std::string _backupDir = "";
   std::string _backupFilename = "";
   size_t _backupzFileSize = 0;
+  
 
   bool getServerStreamResponse();
   bool getServerResponse();
