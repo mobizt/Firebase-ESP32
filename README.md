@@ -1,5 +1,6 @@
 # Firebase Realtime Database Arduino Client Library for ESP32
 
+
 Google's Firebase Realtime Database Arduino Library for ESP32 v 2.3.2
 
 This client library provides the most reliable operations for read, store, update, delete, backup and restore the database data.
@@ -8,9 +9,16 @@ In addition, the library allows you to read and store binary data from/to device
 
 This library comunicated with Google Firebase Realtime Database using the REST API. 
 
-The library supports all ESP32 MCU based modules. For ESP8266 please try [ESP8266 Firebase Arduino library]( https://github.com/mobizt/Firebase-ESP8266)
+This library supports all ESP32 MCU based modules. For ESP8266 please try [ESP8266 Firebase Arduino library]( https://github.com/mobizt/Firebase-ESP8266)
+
 
 Copyright (c) 2019 K. Suwatchai (Mobizt).
+
+
+
+
+
+
 
 ## Tested Devices
 
@@ -19,10 +27,17 @@ This following devices were tested and work well.
  * Sparkfun ESP32 Thing
  * NodeMCU-32
  * WEMOS LOLIN32
+
+ 
+
+
+
+
+
  
 ## Features
 
-* Not required **fingerprint** or **certificate data** to connect.
+* **Not required fingerprint** or **certificate data** to connect.
 
 * **Read data** at the defined database path using get functions e.g. **getInt**, **getFloat**, **getString**, **getJSON**, **getBlob** and **getFile**.
 
@@ -54,32 +69,60 @@ This following devices were tested and work well.
 
 * Supports data **backup and restore** that working with SD card. 
 
-* Supports **`blob`** or binary data from memory and **File stream** from SD card.
+* Supports **blob** or binary data from memory and **File stream** from SD card.
+
+
+
+
+
 
 
 ## Dependencies
 
-Required [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) to be installed. The HTTPClientESP32Ex library was the customized HTTPClient wrapper used for making SSL connection.
+
+This library required [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) to be installed. The HTTPClientESP32Ex library was the customized HTTPClient wrapper used for making SSL connection.
+
+
+
+
 
 
 ## Installing
 
 
+### Using Library Manager
+
+
+At Arduino IDE goto menu **Sketch** -> **Include Library** -> **Manage Libraries...**
+
+
+In Library Manager Window, search **"firebase"** in the search form then select **"Firebase ESP32 Client"** and click **"Install"** button.
+
+
+
+### Manual installing
+
+
 Click on **Clone or download** dropdown at the top of repository, select **Download ZIP** and save file on your computer.
+
 
 From Arduino IDE, goto menu **Sketch** -> **Include Library** -> **Add .ZIP Library...** and choose **Firebase-ESP32-master.zip** that previously downloaded.
 
+
 Go to menu **Files** -> **Examples** -> **Firebase-ESP32-master** and choose one from examples
+
+
+
+
 
 
 ## Usages
 
 
-__Declaration and Initialization__
+### Declaration and Initialization
 
 
-
-**The first thing to do to use this library.**
+#### The first thing to do to use this library.
 
 ```C++
 
@@ -106,7 +149,7 @@ Firebase.reconnectWiFi(true);
 ___
 
 
-__Read, Store, Update, Delete, Backup and Restore Data__
+### Read, Store, Update, Delete, Backup and Restore Data
 
 
 **To read the data, use `get<Data Type>` functions i.e. getInt, getFlot, getString, getJSON, getBlob and getFile.**
@@ -143,7 +186,7 @@ While file stream is binary data that being write to SD card which obtained from
 
 Then getBlob function reads data in database and decoded it into byte array, while getFile reads data in database, then decoded and save it to SD card.
 
-Here is the example usage to read integer from defined database path "/test/int".
+Here is the example usage to read integer value from defined database path "/test/int".
 
 
 ```C++
@@ -382,7 +425,7 @@ query.clear();
 ___
 
 
-__Data changes monitoring (Stream)__
+### Data changes monitoring (Stream)
 
 
 
@@ -462,7 +505,7 @@ void streamTimeoutCallback(bool timeout)
 ___
 
 
-__Database Backup and Restore__
+### Database Backup and Restore
 
 
 
@@ -525,7 +568,7 @@ See [full examples](https://github.com/mobizt/Firebase-ESP32/tree/master/example
 **These are all functions available from the library and the descriptions.**
 
 
-__Global functions__
+### Global functions
 
 
 **Store Firebase's authentication credentials.**
@@ -537,6 +580,10 @@ param *`auth`* - Your database secret.
 ```C++
 void begin(const String &host, const String &auth);
 ```
+
+
+
+
 
 
 
@@ -554,6 +601,10 @@ void begin(const String &host, const String &auth, const char *rootCA);
 
 
 
+
+
+
+
 **Reconnect WiFi if lost connection.**
 
 param *`reconnect`* - The boolean to set/unset WiFi AP reconnection.
@@ -561,6 +612,8 @@ param *`reconnect`* - The boolean to set/unset WiFi AP reconnection.
 ```C++
 void reconnectWiFi(bool reconnect);
 ```
+
+
 
 
 
@@ -575,6 +628,8 @@ return - *`Boolean`* type status indicates the success of operation.
 ```C++
 bool getRules(FirebaseData &dataObj);
 ```
+
+
 
 
 
@@ -596,6 +651,8 @@ bool setRules(FirebaseData &dataObj, const String &rules);
 
 
 
+
+
 **Determine whether defined database path is existed or not.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -608,6 +665,10 @@ path was existed or not.
 ```C++
 bool pathExist(FirebaseData &dataObj, const String &path);
 ```
+
+
+
+
 
 
 
@@ -630,6 +691,10 @@ bool pushInt(FirebaseData &dataObj, const String &path, int intValue);
 
 
 
+
+
+
+
 **Append new float value to the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -646,6 +711,10 @@ which its value can be accessed via function [FirebaseData object].pushName().
 ```C++
 bool pushFloat(FirebaseData &dataObj, const String &path, float floatValue);
 ```
+
+
+
+
 
 
 
@@ -668,6 +737,10 @@ bool pushString(FirebaseData &dataObj, const String &path, const String &stringV
 
 
 
+
+
+
+
 **Append new child nodes's key and value (using JSON data) to the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -684,6 +757,10 @@ which its value can be accessed via function [FirebaseData object].pushName().
 ```C++
 bool pushJSON(FirebaseData &dataObj, const String &path, const String &jsonString);
 ```
+
+
+
+
 
 
 
@@ -709,6 +786,9 @@ bool pushBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t s
 
 
 
+
+
+
 **Append new binary data from file stores on SD card to the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -725,6 +805,9 @@ which its value can be accessed via function [FirebaseData object].pushName().
 ```C++
 bool pushFile(FirebaseData &dataObj, const String &path, const String &fileName);
 ```
+
+
+
 
 
 
@@ -751,6 +834,10 @@ bool setInt(FirebaseData &dataObj, const String &path, int intValue);
 
 
 
+
+
+
+
 **Set float data at the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -773,6 +860,10 @@ bool setFloat(FirebaseData &dataObj, const String &path, float floatValue);
 
 
 
+
+
+
+
 **Set string (text) at the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -792,6 +883,10 @@ payload returned from server.
 ```C++
 bool setString(FirebaseData &dataObj, const String &path, const String &stringValue);
 ```
+
+
+
+
 
 
 
@@ -821,6 +916,9 @@ bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString
 
 
 
+
+
+
 **Set blob (binary data) at the defined database path.**
 
 This will replace any child nodes inside the defined path with blob or binary data.
@@ -843,6 +941,10 @@ bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t si
 
 
 
+
+
+
+
 **Set binary data from file stores on SD card to the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -858,6 +960,9 @@ No payload returned from server.
 ```C++
 bool setFile(FirebaseData &dataObj, const String &path, const String &fileName);
 ```
+
+
+
 
 
 
@@ -886,6 +991,10 @@ bool updateNode(FirebaseData &dataObj, const String &path, const String &jsonStr
 
 
 
+
+
+
+
 **Update child nodes's key or exising key's value (using JSON data) under the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -902,6 +1011,9 @@ no payload will be returned from server.
 ```C++
 bool updateNodeSilent(FirebaseData &dataObj, const String &path, const String &jsonString);
 ```
+
+
+
 
 
 
@@ -932,6 +1044,10 @@ bool getInt(FirebaseData &dataObj, const String &path);
 
 
 
+
+
+
+
 **Read the float value at the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -952,6 +1068,10 @@ the function [FirebaseData object].intData will return zero (0).
 ```C++
 bool getFloat(FirebaseData &dataObj, const String &path);
 ```
+
+
+
+
 
 
 
@@ -978,6 +1098,10 @@ bool getString(FirebaseData &dataObj, const String &path);
 
 
 
+
+
+
+
 **Read the JSON string at the defined database path.**
 
 The returned payload JSON string represents the child nodes and their value.
@@ -1000,6 +1124,9 @@ the function [FirebaseData object].jsonData will return empty string (String obj
 ```C++
 bool getJSON(FirebaseData &dataObj, const String &path);
 ```
+
+
+
 
 
 
@@ -1060,6 +1187,8 @@ bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &quer);
 
 
 
+
+
 **Read the blob (binary data) at the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -1080,6 +1209,10 @@ the function [FirebaseData object].blobData will return empty array.
 ```C++
 bool getBlob(FirebaseData &dataObj, const String &path);
 ```
+
+
+
+
 
 
 
@@ -1104,6 +1237,10 @@ bool getFile(FirebaseData &dataObj, const String &nodePath, const String &fileNa
 
 
 
+
+
+
+
 **Delete all child nodes at the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -1118,6 +1255,10 @@ bool deleteNode(FirebaseData &dataObj, const String &path);
 
 
 
+
+
+
+
 **Start monitoring the value changes at the defined path and its children.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -1129,6 +1270,10 @@ return *`Boolean`* type status indicates the success of operation.*
 ```C++
 bool beginStream(FirebaseData &dataObj, const String &path);
 ```
+
+
+
+
 
 
 
@@ -1152,6 +1297,10 @@ bool readStream(FirebaseData &dataObj);
 
 
 
+
+
+
+
 **End the stream connection at defined path.**
 
 Can be restart again by calling beginStream.
@@ -1163,6 +1312,10 @@ return *`Boolean`* type status indicates the success of operation.
 ```C++
 bool endStream(FirebaseData &dataObj);
 ```
+
+
+
+
 
 
 
@@ -1193,6 +1346,10 @@ void setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablec
 
 
 
+
+
+
+
 **Remove stream callback functions.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -1200,6 +1357,10 @@ param *`dataObj`* - Firebase Data Object to hold data and instances.
 ```C++
 void removeStreamCallback(FirebaseData &dataObj);
 ```
+
+
+
+
 
 
 
@@ -1221,6 +1382,10 @@ bool backup(FirebaseData &dataObj, const String &nodePath, const String &dirPath
 
 
 
+
+
+
+
 **Restore database at defined path usin backup file saved on SD card.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -1236,7 +1401,12 @@ bool restore(FirebaseData &dataObj, const String &nodePath, const String &dirPat
 ```
 
 
-__Firebase Data object functions__
+
+
+
+
+
+### Firebase Data object functions
 
 **Pause/Unpause WiFiClient from all Firebase operations.**
 
@@ -1250,6 +1420,10 @@ bool pauseFirebase(bool pause);
 
 
 
+
+
+
+
 **Determine the data type of payload returned from server.**
 
 return *The one of these data type e.g. integer, float, string, json and blob.*
@@ -1260,6 +1434,10 @@ String dataType();
 
 
 
+
+
+
+
 **Determine the current stream path.**
 
 return *The database streaming path.*
@@ -1267,6 +1445,10 @@ return *The database streaming path.*
 ```C++
 String streamPath();
 ```
+
+
+
+
 
 
 
@@ -1283,6 +1465,10 @@ String dataPath();
 
 
 
+
+
+
+
 **Determine the error reason String from process.**
 
 return *The error description string (String object).*
@@ -1290,6 +1476,10 @@ return *The error description string (String object).*
 ```C++
 String errorReason();
 ```
+
+
+
+
 
 
 
@@ -1303,6 +1493,10 @@ int intData();
 
 
 
+
+
+
+
 **Return the float data of server returned payload.**
 
 return *Float value.*
@@ -1310,6 +1504,10 @@ return *Float value.*
 ```C++
 float floatData();
 ```
+
+
+
+
 
 
 
@@ -1323,6 +1521,10 @@ String stringData();
 
 
 
+
+
+
+
 **Return the JSON String data of server returned payload.**
 
 return *String (String object).*
@@ -1330,6 +1532,9 @@ return *String (String object).*
 ```C++
 String jsonData();
 ```
+
+
+
 
 
 
@@ -1345,6 +1550,9 @@ std::vector<uint8_t> blobData();
 
 
 
+
+
+
 **Return the new appended node's name or key of server returned payload when calling pushXXX function.**
 
 return *`String`* (String object).
@@ -1352,6 +1560,10 @@ return *`String`* (String object).
 ```C++
 String pushName();
 ```
+
+
+
+
 
 
 
@@ -1365,6 +1577,10 @@ bool isStream();
 
 
 
+
+
+
+
 **Determine the server connection status.**
 
 return *`Boolean`* type status indicates whether the Firebase Data object is connected to server or not.
@@ -1372,6 +1588,10 @@ return *`Boolean`* type status indicates whether the Firebase Data object is con
 ```C++
 bool httpConnected();
 ```
+
+
+
+
 
 
 
@@ -1387,6 +1607,10 @@ bool streamTimeout();
 
 
 
+
+
+
+
 **Determine the availability of data or paylaod returned from server.**
 
 return *`Boolean`* type status indicates whether the server return back the new payload or not.
@@ -1394,6 +1618,10 @@ return *`Boolean`* type status indicates whether the server return back the new 
 ```C++
 bool dataAvailable();
 ```
+
+
+
+
 
 
 
@@ -1408,6 +1636,10 @@ bool streamAvailable();
 
 
 
+
+
+
+
 **Determine the matching between data type that intend to get from/store to database and the server's return payload data type.**
 
 return *`Boolean`* type status indicates whether the type of data being get from/store to database 
@@ -1416,6 +1648,10 @@ and server's returned payload are matched or not.
 ```C++
 bool mismatchDataType();
 ```
+
+
+
+
 
 
 
@@ -1429,6 +1665,10 @@ int httpCode();
 
 
 
+
+
+
+
 **Determine the name (full path) of backup file in SD card.**
 
 return *`String`* (String object) of file name that store on SD card after backup operation.
@@ -1436,6 +1676,10 @@ return *`String`* (String object) of file name that store on SD card after backu
 ```C++
 String getBackupFilename();
 ```
+
+
+
+
 
 
 
@@ -1449,11 +1693,19 @@ size_t getBackupFileSize();
 
 
 
+
+
+
+
 **Clear or empty data in Firebase Data object.**
 
 ```C++
 void clear();
 ```
+
+
+
+
 
 
 
@@ -1467,6 +1719,10 @@ String fileTransferError();
 
 
 
+
+
+
+
 **Return the server's payload data.**
 
 return *Payload string* (String object).
@@ -1476,10 +1732,16 @@ String payload();
 ```
 
 
+
+
+
+
+
 ## To do
 
 
-* Add support to upload/download backup data to/from Google cloud storage (in the same Firebase project bucket).
+* Add support to upload/download backup data to/from Google cloud storage (in the Firebase projectID Bucket).
 
 * Add support to Cloud messaging
+
 
