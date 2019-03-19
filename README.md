@@ -89,6 +89,8 @@ This library required [HTTPClientESP32Ex library](https://github.com/mobizt/HTTP
 
 ## Installing
 
+This library rely on [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) which needs to install it manually as it is the helper library and not available from Library Manager.
+
 
 ### Using Library Manager
 
@@ -112,16 +114,31 @@ Or at **PIO Home** -> **Library** -> **Registry** then search **Firebase ESP32 C
 
 
 
+
 ### Manual installing
 
 
-Click on **Clone or download** dropdown at the top of repository, select **Download ZIP** and save file on your computer.
+For Arduino IDE, click on **Clone or download** dropdown at the top of repository, select **Download ZIP** and save file on your computer.
 
 
 From Arduino IDE, goto menu **Sketch** -> **Include Library** -> **Add .ZIP Library...** and choose **Firebase-ESP32-master.zip** that previously downloaded.
 
 
-Go to menu **Files** -> **Examples** -> **Firebase-ESP32-master** and choose one from examples
+Go to menu **Files** -> **Examples** -> **Firebase-ESP32-master** and choose one from examples.
+
+
+For PlatformIO, create folder "Firebase-ESP32" under your project root directory and store [there two files](https://github.com/mobizt/Firebase-ESP32/tree/master/src) in it.
+
+
+
+### Dependent Library Installing
+
+Go to [HTTPClientESP32Ex Github repository](https://github.com/mobizt/HTTPClientESP32Ex) and click on **Clone or download** dropdown at the top of repository, select **Download ZIP** and save file on your computer.
+
+For Arduino IDE, goto menu **Sketch** -> **Include Library** -> **Add .ZIP Library...** and choose **HTTPClientESP32Ex-master.zip** that previously downloaded.
+
+
+For PlatformIO IDE, create folder "HTTPClientESP32Ex" under your project root directory and store HTTPClientESP32Ex.h and HTTPClientESP32Ex.cpp which extracted from HTTPClientESP32Ex-master.zip in created folder.
 
 
 
