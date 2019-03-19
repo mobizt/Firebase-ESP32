@@ -99,6 +99,17 @@ At Arduino IDE goto menu **Sketch** -> **Include Library** -> **Manage Libraries
 In Library Manager Window, search **"firebase"** in the search form then select **"Firebase ESP32 Client"** and click **"Install"** button.
 
 
+For PlatformIO IDE, using the following command.
+
+**pio lib install "Firebase ESP32 Client"**
+
+
+Or at PIO Home -> Library -> Registry then search **Firebase ESP32 Client**.
+
+
+[More on PlatformIO...](https://platformio.org/lib/show/6217/Firebase%20ESP32%20Client/examples)
+
+
 
 ### Manual installing
 
