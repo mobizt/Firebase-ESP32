@@ -180,6 +180,10 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println();
   }
+
+  //Quit Firebase and release all resources
+  Firebase.end(firebaseData);
+  
 }
 
 void loop()

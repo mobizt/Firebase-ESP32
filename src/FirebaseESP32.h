@@ -1,7 +1,7 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.3
  * 
- * March 8, 2019
+ * March 20, 2019
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -219,6 +219,15 @@ public:
 
    */
   void begin(const String &host, const String &auth, const char *rootCA);
+
+  /*
+    Stop Firebase and release all resources.
+    
+    @param dataObj - Firebase Data Object to hold data and instances.
+
+   */
+  void end(FirebaseData &dataObj);
+
 
   /*
     Reconnect WiFi if lost connection.
@@ -787,7 +796,13 @@ protected:
   bool cancelCurrentResponse(FirebaseData &dataObj);
   void setDataType(FirebaseData &dataObj, const std::string &data);
 
+  /*
+  //Remove as response buffer already screened by cr and lf
+  //https://github.com/mobizt/Firebase-ESP32/issues/12
+
   inline std::string trim(std::string &str);
+  */
+
   bool sdTest();
   void createDirs(std::string dirs);
   bool replace(std::string &str, const std::string &from, const std::string &to);

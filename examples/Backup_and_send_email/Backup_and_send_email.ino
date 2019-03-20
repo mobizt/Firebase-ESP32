@@ -120,6 +120,8 @@ void setup()
 
   }
 
+  //Quit Firebase and release all resources
+  Firebase.end(firebaseData);
 }
 
 void loop()

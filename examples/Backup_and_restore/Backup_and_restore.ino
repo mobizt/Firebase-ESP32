@@ -1,6 +1,5 @@
 //This example shows how to backup and restore database data
 
-
 #include <WiFi.h>
 #include "FirebaseESP32.h"
 
@@ -41,16 +40,15 @@ void setup()
 
   Serial.println("------------------------------------");
   Serial.println("Backup test...");
-  
+
   //Download and save data at defined database path to SD card.
   //{TARGET_NODE_PATH} is the full path of database to backup and restore.
-
 
   if (!Firebase.backup(firebaseData, "/{TARGET_NODE_PATH}", "/{PATH_IN_SD_CARD}"))
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + firebaseData.fileTransferError());
-	Serial.println("------------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
   else
@@ -58,7 +56,7 @@ void setup()
     Serial.println("PASSED");
     Serial.println("BACKUP FILE: " + firebaseData.getBackupFilename());
     Serial.println("FILE SIZE: " + String(firebaseData.getBackupFileSize()));
-	Serial.println("------------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
 
@@ -72,16 +70,20 @@ void setup()
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + firebaseData.fileTransferError());
-	Serial.println("------------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
   else
   {
     Serial.println("PASSED");
     Serial.println("BACKUP FILE: " + firebaseData.getBackupFilename());
-	Serial.println("------------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
+
+  //Quit Firebase and release all resources
+  Firebase.end(firebaseData);
+  
 }
 
 void loop()

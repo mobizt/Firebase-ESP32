@@ -116,6 +116,10 @@ void setup()
 
   //Clear all query parameters
   query.clear();
+
+  //Quit Firebase and release all resources
+  Firebase.end(firebaseData);
+  
 }
 
 void loop()

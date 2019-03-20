@@ -205,6 +205,9 @@ void setup() {
     Serial.println();
   }
 
+  //Quit Firebase and release all resources
+  Firebase.end(firebaseData);
+  
 }
 
 

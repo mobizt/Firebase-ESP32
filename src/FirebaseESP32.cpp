@@ -1,7 +1,7 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.3
  * 
- * March 8, 2019
+ * March 20, 2019
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -92,6 +92,14 @@ void FirebaseESP32::begin(const String &host, const String &auth, const char *ro
   _rootCA.clear();
   if (strlen(rootCA) > 0)
     _rootCA.push_back((char *)rootCA);
+}
+
+void FirebaseESP32::end(FirebaseData &dataObj)
+{
+  endStream(dataObj);
+  WiFiClient *tcp = dataObj.http.http_getStreamPtr();
+  tcp->~WiFiClient();
+  dataObj.clear();
 }
 
 void FirebaseESP32::reconnectWiFi(bool reconnect)
@@ -314,6 +322,7 @@ bool FirebaseESP32::deleteNode(FirebaseData &dataObj, const String &path)
 
 bool FirebaseESP32::beginStream(FirebaseData &dataObj, const String &path)
 {
+  dataObj._pause = false;
   return firebaseConnectStream(dataObj, path.c_str());
 }
 
@@ -330,9 +339,27 @@ bool FirebaseESP32::readStream(FirebaseData &dataObj)
 
 bool FirebaseESP32::endStream(FirebaseData &dataObj)
 {
+  dataObj._pause = true;
   bool flag = false;
+  dataObj._streamStop = true;
+
+  WiFiClient *tcp = dataObj.http.http_getStreamPtr();
+  if (tcp)
+  {
+    if (tcp->available() > 0)
+    {
+      tcp->flush();
+      delay(50);
+      tcp->stop();
+    }
+  }
+
   dataObj._streamPath.clear();
-  forceEndHTTP(dataObj);
+  if (dataObj._handle)
+    vTaskDelete(dataObj._handle);
+
+  dataObj._handle = NULL;
+
   flag = dataObj.http.http_connected();
   if (!flag)
   {
@@ -832,7 +859,10 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
       c = tcp->read();
 
       if (!hasBlob)
-        lineBuf.append(1, c);
+      {
+        if (c != '\r' && c != '\n')
+          lineBuf.append(1, c);
+      }
       else
       {
 
@@ -862,7 +892,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           jsonRes += lineBuf;
 
         dataTime = millis();
-        trim(lineBuf);
+        //trim(lineBuf);
 
         p1 = lineBuf.find(ESP32_FIREBASE_STR_5);
         if (p1 != std::string::npos)
@@ -1189,7 +1219,8 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
       if (!beginPayload)
       {
         c = tcp->read();
-        lineBuf.append(1, c);
+        if (c != '\r' && c != '\n')
+          lineBuf.append(1, c);
       }
       else
       {
@@ -1251,7 +1282,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
       {
 
         dataTime = millis();
-        trim(lineBuf);
+        //trim(lineBuf);
 
         p1 = lineBuf.find(ESP32_FIREBASE_STR_5);
         if (p1 != std::string::npos)
@@ -1388,12 +1419,13 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
 
       c = tcp->read();
 
-      lineBuf.append(1, c);
+      if (c != '\r' && c != '\n')
+        lineBuf.append(1, c);
 
       if (c == '\n' && !beginPayload)
       {
         dataTime = millis();
-        trim(lineBuf);
+        //trim(lineBuf);
 
         p1 = lineBuf.find(ESP32_FIREBASE_STR_102);
         if (p1 != std::string::npos)
@@ -2023,14 +2055,19 @@ bool FirebaseESP32::restore(FirebaseData &dataObj, const String &nodePath, const
   return flag;
 }
 
+/*
+//Remove as response buffer already screened by cr and lf
+//https://github.com/mobizt/Firebase-ESP32/issues/12
+
 inline std::string FirebaseESP32::trim(std::string &str)
 {
   str.erase(0, str.find_first_not_of(' ')); //prefixing spaces
   str.erase(str.find_last_not_of(' ') + 1); //surfixing spaces
-  str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
-  str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+  //str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
+  //str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
   return str;
 }
+*/
 
 bool FirebaseESP32::sdTest()
 {
@@ -2390,8 +2427,6 @@ FirebaseData ::~FirebaseData()
 {
   clear();
 }
-
-
 
 void FirebaseData::clear()
 {

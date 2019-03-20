@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Client Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 2.3.2
+Google's Firebase Realtime Database Arduino Library for ESP32 v 2.3.3
 
 This client library provides the most reliable operations for read, store, update, delete, backup and restore the database data.
 
@@ -39,6 +39,8 @@ This following devices were tested and work well.
 
 * **Not required fingerprint** or **certificate data** to connect.
 
+* Using **Firebase Data object** that holds all data and instances.
+
 * **Read data** at the defined database path using get functions e.g. **getInt**, **getFloat**, **getString**, **getJSON**, **getBlob** and **getFile**.
 
 * **Store data** at the defined database path using set functions e.g. **setInt**, **setFloat**, **setString**, **setJSON**, **setBlob** and **setFile**.
@@ -51,7 +53,7 @@ This following devices were tested and work well.
 
 * **Read and write database rules** using **getRules** and **setRules** functions.
 
-* Using **Firebase Data object** that holds all data and instances.
+* **Quit and release all resources** which belong to Firbase data using **end** function.
 
 * Supports **Data Filtering** using the orderBy, limitToFirst, limitToLast, startAt, endAt, and equalTo query parameters.
 
@@ -475,6 +477,8 @@ Then stream data can be accessed directly by calling intData, floatData, stringD
 
 If stream callback function was assigned, it should accept StreamData as parameter which is a class that contains all data from stream, included streamPath, dataPath, dataType and value changes at defined streaming path.
 
+To end the stream, call endStream. 
+
 Here is the example use of stream to handle the changes or updates at "/test/data".
 
 ```C++
@@ -587,6 +591,26 @@ Here is the usage example to back up all database at root path "/" and restore i
 
 
 
+___
+
+
+### Quit and release all resources
+
+
+
+
+**To quit and release all resources that used by Firebase Data object included WiFi client, call end function**
+
+After end was called, all resources in Firebase Data object included callbacks and WiFi client will be deleted and released, re-initialize is need when reuse the Firebase Data object.
+
+```C++
+
+ Firebase.end(firebaseData);
+
+```
+
+
+
 See [full examples](https://github.com/mobizt/Firebase-ESP32/tree/master/examples) for all features usages.
 
 
@@ -628,6 +652,18 @@ param *`rootCA`* - Base64 encoded root certificate string.
 void begin(const String &host, const String &auth, const char *rootCA);
 ```
 
+
+
+
+
+
+**Stop Firebase and release all resources.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+```C++
+void end(FirebaseData &dataObj);
+```
 
 
 
