@@ -96,10 +96,15 @@ void FirebaseESP32::begin(const String &host, const String &auth, const char *ro
 
 void FirebaseESP32::end(FirebaseData &dataObj)
 {
+  
   endStream(dataObj);
+
+  removeStreamCallback(dataObj);
+
   WiFiClient *tcp = dataObj.http.http_getStreamPtr();
   tcp->~WiFiClient();
   dataObj.clear();
+  
 }
 
 void FirebaseESP32::reconnectWiFi(bool reconnect)
@@ -353,12 +358,6 @@ bool FirebaseESP32::endStream(FirebaseData &dataObj)
       tcp->stop();
     }
   }
-
-  dataObj._streamPath.clear();
-  if (dataObj._handle)
-    vTaskDelete(dataObj._handle);
-
-  dataObj._handle = NULL;
 
   flag = dataObj.http.http_connected();
   if (!flag)
