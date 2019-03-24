@@ -311,7 +311,7 @@ public:
     Append new Boolean value to the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which float value will be appended.
+    @param path - Target database path which Boolean value will be appended.
     @param boolValue - The appended value.
 
     @return - Boolean type status indicates the success of operation.
@@ -590,7 +590,7 @@ public:
     Read the Boolean value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the float value is being read.
+    @param path - Database path which the Boolean value is being read.
 
     @return - Boolean type status indicates the success of operation.
 

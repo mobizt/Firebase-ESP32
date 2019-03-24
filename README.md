@@ -786,7 +786,7 @@ bool pushFloat(FirebaseData &dataObj, const String &path, float floatValue);
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
 
-param *`path`* - Target database path which float value will be appended.
+param *`path`* - Target database path which Boolean value will be appended.
 
 param *`boolValue`* - The appended value.
 
