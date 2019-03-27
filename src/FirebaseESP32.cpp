@@ -948,7 +948,6 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           jsonRes += lineBuf;
 
         dataTime = millis();
-        //trim(lineBuf);
 
         p1 = lineBuf.find(ESP32_FIREBASE_STR_5);
         if (p1 != std::string::npos)
@@ -1355,7 +1354,6 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
       {
 
         dataTime = millis();
-        //trim(lineBuf);
 
         p1 = lineBuf.find(ESP32_FIREBASE_STR_5);
         if (p1 != std::string::npos)
@@ -1498,7 +1496,6 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
       if (c == '\n' && !beginPayload)
       {
         dataTime = millis();
-        //trim(lineBuf);
 
         p1 = lineBuf.find(ESP32_FIREBASE_STR_102);
         if (p1 != std::string::npos)
@@ -2119,20 +2116,6 @@ bool FirebaseESP32::restore(FirebaseData &dataObj, const String &nodePath, const
   bool flag = sendRequest(dataObj, nodePath.c_str(), FirebaseMethod::RESTORE, FirebaseDataType::JSON, "");
   return flag;
 }
-
-/*
-//Remove as response buffer already screened by cr and lf
-//https://github.com/mobizt/Firebase-ESP32/issues/12
-
-inline std::string FirebaseESP32::trim(std::string &str)
-{
-  str.erase(0, str.find_first_not_of(' ')); //prefixing spaces
-  str.erase(str.find_last_not_of(' ') + 1); //surfixing spaces
-  //str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
-  //str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
-  return str;
-}
-*/
 
 bool FirebaseESP32::sdTest()
 {
