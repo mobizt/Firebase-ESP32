@@ -1,7 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.5
  * 
- * March 24, 2019
+ * March 27, 2019
+ * 
+ * Feature Added:
+ * 
+ * Feature Fixed:
+ * - Missing boolean and blob data type when get stream Data in stream callback function.
+ * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -852,13 +858,7 @@ protected:
   int firebaseConnect(FirebaseData &dataObj, const std::string &path, const uint8_t _method, uint8_t dataType, const std::string &payload);
   bool cancelCurrentResponse(FirebaseData &dataObj);
   void setDataType(FirebaseData &dataObj, const std::string &data);
-
-  /*
-  //Remove as response buffer already screened by cr and lf
-  //https://github.com/mobizt/Firebase-ESP32/issues/12
-
-  inline std::string trim(std::string &str);
-  */
+  
 
   bool sdTest();
   void createDirs(std::string dirs);
@@ -1146,6 +1146,7 @@ protected:
 
   bool getServerStreamResponse();
   bool getServerResponse();
+  std::string getDataType(uint8_t type);
 
   friend FirebaseESP32;
 };

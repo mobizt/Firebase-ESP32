@@ -1,7 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.5
  * 
- * March 24, 2019
+ * March 27, 2019
+ * 
+ * Feature Added:
+ * 
+ * Feature Fixed:
+ * - Missing boolean and blob data type when get stream Data in stream callback function.
+ * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -12,7 +18,7 @@
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
  * 
  * 
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * Permission is hereby granted, free of charge, to any person returning a copy of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
@@ -2059,18 +2065,8 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
           s._data = firebaseDataObject[id].get()._data;
           s._path = firebaseDataObject[id].get()._path;
 
-          if (firebaseDataObject[id].get()._dataType == FirebaseESP32::FirebaseDataType::JSON)
-            s._dataTypeStr = ESP32_FIREBASE_STR_74;
-          if (firebaseDataObject[id].get()._dataType == FirebaseESP32::FirebaseDataType::STRING)
-            s._dataTypeStr = ESP32_FIREBASE_STR_75;
-          if (firebaseDataObject[id].get()._dataType == FirebaseESP32::FirebaseDataType::FLOAT)
-            s._dataTypeStr = ESP32_FIREBASE_STR_76;
-          if (firebaseDataObject[id].get()._dataType == FirebaseESP32::FirebaseDataType::INTEGER)
-            s._dataTypeStr = ESP32_FIREBASE_STR_77;
-          if (firebaseDataObject[id].get()._dataType == FirebaseESP32::FirebaseDataType::NULL_)
-            s._dataTypeStr = ESP32_FIREBASE_STR_78;
-
           s._dataType = firebaseDataObject[id].get()._dataType;
+          s._dataTypeStr = firebaseDataObject[id].get().getDataType(s._dataType);
 
           firebaseDataObject[id].get()._dataAvailableCallback(s);
           s.empty();
@@ -2549,22 +2545,34 @@ bool FirebaseData::pauseFirebase(bool pause)
 
 String FirebaseData::dataType()
 {
+  std::string res = getDataType(_dataType);
+  return res.c_str();
+}
 
-  if (_dataType == FirebaseESP32::FirebaseDataType::JSON)
-    return FPSTR(ESP32_FIREBASE_STR_74);
+std::string FirebaseData::getDataType(uint8_t type)
+{
+  if (type == FirebaseESP32::FirebaseDataType::JSON)
+    return ESP32_FIREBASE_STR_74;
+
   if (_dataType == FirebaseESP32::FirebaseDataType::STRING)
-    return FPSTR(ESP32_FIREBASE_STR_75);
+    return ESP32_FIREBASE_STR_75;
+
   if (_dataType == FirebaseESP32::FirebaseDataType::FLOAT)
-    return FPSTR(ESP32_FIREBASE_STR_76);
+    return ESP32_FIREBASE_STR_76;
+
   if (_dataType == FirebaseESP32::FirebaseDataType::BOOLEAN)
-    return FPSTR(ESP32_FIREBASE_STR_105);
+    return ESP32_FIREBASE_STR_105;
+
   if (_dataType == FirebaseESP32::FirebaseDataType::INTEGER)
-    return FPSTR(ESP32_FIREBASE_STR_77);
+    return ESP32_FIREBASE_STR_77;
+
   if (_dataType == FirebaseESP32::FirebaseDataType::BLOB)
-    return FPSTR(ESP32_FIREBASE_STR_91);
+    return ESP32_FIREBASE_STR_91;
+
   if (_dataType == FirebaseESP32::FirebaseDataType::NULL_)
-    return FPSTR(ESP32_FIREBASE_STR_78);
-  return std::string().c_str();
+    return ESP32_FIREBASE_STR_78;
+
+  return std::string();
 }
 
 String FirebaseData::streamPath()
