@@ -6,7 +6,7 @@
  * Feature Added:
  * 
  * Feature Fixed:
- * - Missing boolean and blob data type when get stream Data in stream callback function.
+ * - Missing boolean and blob data types when get stream Data in stream callback function.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
