@@ -1,12 +1,15 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.5
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.6
  * 
- * March 27, 2019
+ * March 30, 2019
  * 
  * Feature Added:
+ * - Add blob data in StreamData
+ * - Update examples
  * 
  * Feature Fixed:
  * - Missing boolean and blob data types when get stream Data in stream callback function.
+ * - Missing blob data in StreamData
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -1090,9 +1093,26 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
               bool emptyPath = dataObj._path2.length() == 0;
               bool sameData = dataObj._data == dataObj._data2;
 
+              if (dataObj._data.length() >= strlen(ESP32_FIREBASE_STR_92) && !hasBlob)
+              {
+                if (dataObj._data.substr(0, strlen(ESP32_FIREBASE_STR_92)) == ESP32_FIREBASE_STR_92)
+                {
+                  lineBuf.clear();
+                  lineBuf = dataObj._data;
+                  dataObj._data = lineBuf.substr(strlen(ESP32_FIREBASE_STR_92), lineBuf.length() - strlen(ESP32_FIREBASE_STR_92) - 1);
+                  hasBlob = true;
+                  std::vector<uint8_t>().swap(dataObj._blob);
+                  dataObj._dataType = FirebaseDataType::BLOB;
+                  base64_decode_string(dataObj._data, dataObj._blob);
+                  dataObj._data.clear();
+                  dataObj._data2.clear();
+                }
+              }
+
               //Any stream update?
               if ((!samePath && (!rootPath || emptyPath)) || (samePath && !sameData && !dataObj._streamPathChanged))
               {
+
                 dataObj._streamDataChanged = true;
                 dataObj._data2.clear();
                 dataObj._data2 = dataObj._data;
@@ -2061,10 +2081,17 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
           s._streamPath = firebaseDataObject[id].get()._streamPath;
           s._data = firebaseDataObject[id].get()._data;
           s._path = firebaseDataObject[id].get()._path;
+         
 
           s._dataType = firebaseDataObject[id].get()._dataType;
           s._dataTypeStr = firebaseDataObject[id].get().getDataType(s._dataType);
 
+          if (s._dataType == FirebaseESP32::FirebaseDataType::BLOB){
+            s._blob = firebaseDataObject[id].get()._blob;
+            //Free ram in case of callback data was used
+            firebaseDataObject[id].get()._blob.clear();
+          }
+            
           firebaseDataObject[id].get()._dataAvailableCallback(s);
           s.empty();
         }
@@ -2744,6 +2771,23 @@ float StreamData::floatData()
     return 0;
 }
 
+bool StreamData::boolData()
+{
+  bool res;
+  char *str = new char[10];
+  memset(str, 0, 10);
+  strcpy_P(str, ESP32_FIREBASE_STR_3);
+  strcat_P(str, ESP32_FIREBASE_STR_107);
+  strcat_P(str, ESP32_FIREBASE_STR_3);
+
+  if (_data.length() > 0 && _dataType == FirebaseESP32::FirebaseDataType::BOOLEAN)
+    res = _data == str;
+
+  delete[] str;
+
+  return res;
+}
+
 String StreamData::stringData()
 {
   if (_dataType == FirebaseESP32::FirebaseDataType::STRING)
@@ -2760,6 +2804,16 @@ String StreamData::jsonData()
     return std::string().c_str();
 }
 
+std::vector<uint8_t> StreamData::blobData()
+{
+  if (_blob.size() > 0 && _dataType == FirebaseESP32::FirebaseDataType::BLOB)
+  {
+    return _blob;
+  }
+  else
+    return std::vector<uint8_t>();
+}
+
 String StreamData::dataType()
 {
   return _dataTypeStr.c_str();
@@ -2771,6 +2825,7 @@ void StreamData::empty()
   std::string().swap(_path);
   std::string().swap(_data);
   std::string().swap(_dataTypeStr);
+  std::vector<uint8_t>().swap(_blob);
 }
 
 QueryFilter::QueryFilter()

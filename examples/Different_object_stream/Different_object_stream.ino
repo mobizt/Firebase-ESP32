@@ -36,10 +36,16 @@ void streamCallback(StreamData data)
     Serial.println(data.intData());
   else if (data.dataType() == "float")
     Serial.println(data.floatData());
+  else if (data.dataType() == "boolean")
+    Serial.println(data.boolData());
   else if (data.dataType() == "string")
     Serial.println(data.stringData());
   else if (data.dataType() == "json")
     Serial.println(data.jsonData());
+  else if (data.dataType() == "blob")
+  {
+    //See blob examples
+  }
   Serial.println();
 }
 
@@ -105,6 +111,8 @@ void loop()
         Serial.println(firebaseData1.intData());
       else if (firebaseData1.dataType() == "float")
         Serial.println(firebaseData1.floatData());
+      else if (firebaseData1.dataType() == "boolean")
+        Serial.println(firebaseData1.boolData());
       else if (firebaseData1.dataType() == "string")
         Serial.println(firebaseData1.stringData());
       else if (firebaseData1.dataType() == "json")

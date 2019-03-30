@@ -38,10 +38,16 @@ void streamCallback1(StreamData data)
     Serial.println(data.intData());
   else if (data.dataType() == "float")
     Serial.println(data.floatData());
+  else if (data.dataType() == "boolean")
+    Serial.println(data.boolData());
   else if (data.dataType() == "string")
     Serial.println(data.stringData());
   else if (data.dataType() == "json")
     Serial.println(data.jsonData());
+  else if (data.dataType() == "blob")
+  {
+    //See blob examples
+  }
   Serial.println();
 }
 
@@ -67,10 +73,16 @@ void streamCallback2(StreamData data)
     Serial.println(data.intData());
   else if (data.dataType() == "float")
     Serial.println(data.floatData());
+  else if (data.dataType() == "boolean")
+    Serial.println(data.boolData());
   else if (data.dataType() == "string")
     Serial.println(data.stringData());
   else if (data.dataType() == "json")
     Serial.println(data.jsonData());
+  else if (data.dataType() == "blob")
+  {
+    //See blob examples
+  }
   Serial.println();
 }
 
@@ -144,7 +156,7 @@ void setup()
 
   Firebase.setStreamCallback(firebaseData2, streamCallback2, streamTimeoutCallback2);
 
-  //When stream timeou callback function is omitted, use Firebase.setStreamCallback(firebaseData2, streamCallback2);
+  //When stream timeout callback function is omitted, use Firebase.setStreamCallback(firebaseData2, streamCallback2);
 }
 
 void loop()
@@ -169,6 +181,8 @@ void loop()
         Serial.println(firebaseData1.intData());
       else if (firebaseData1.dataType() == "float")
         Serial.println(firebaseData1.floatData());
+      else if (firebaseData1.dataType() == "bool")
+        Serial.println(firebaseData1.boolData());
       else if (firebaseData1.dataType() == "string")
         Serial.println(firebaseData1.stringData());
       else if (firebaseData1.dataType() == "json")
@@ -205,6 +219,8 @@ void loop()
         Serial.println(firebaseData2.intData());
       else if (firebaseData2.dataType() == "float")
         Serial.println(firebaseData2.floatData());
+      else if (firebaseData2.dataType() == "boolean")
+        Serial.println(firebaseData2.boolData());
       else if (firebaseData2.dataType() == "string")
         Serial.println(firebaseData2.stringData());
       else if (firebaseData2.dataType() == "json")

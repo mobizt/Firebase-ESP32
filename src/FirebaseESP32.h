@@ -1,13 +1,16 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.5
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.6
  * 
- * March 27, 2019
+ * March 30, 2019
  * 
  * Feature Added:
+ * - Add blob data in StreamData
+ * - Update examples
  * 
  * Feature Fixed:
  * - Missing boolean and blob data types when get stream Data in stream callback function.
- * 
+ * - Missing blob data in StreamData
+ *  
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -1160,8 +1163,10 @@ public:
   String streamPath();
   int intData();
   float floatData();
+  bool boolData();
   String stringData();
   String jsonData();
+  std::vector<uint8_t> blobData();
   String dataType();
   void empty();
   friend FirebaseESP32;
@@ -1170,6 +1175,7 @@ protected:
   std::string _streamPath;
   std::string _path;
   std::string _data;
+  std::vector<uint8_t> _blob;
   std::string _dataTypeStr;
   uint8_t _dataType;
 };
