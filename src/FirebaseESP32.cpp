@@ -1,16 +1,15 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.6
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.7
  * 
- * March 30, 2019
+ * April 4, 2019
  * 
  * Feature Added:
- * - Add blob data in StreamData
+ * - Add stream event type data
  * - Update examples
  * 
  * Feature Fixed:
- * - Missing boolean and blob data types when get stream Data in stream callback function.
- * - Missing blob data in StreamData
- * 
+ *  
+ *  
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -85,23 +84,97 @@ FirebaseESP32::~FirebaseESP32()
 
 void FirebaseESP32::begin(const String &host, const String &auth)
 {
+  int p1 = std::string::npos;
+  int p2 = 0;
+  char *h = new char[host.length() + 1];
+  memset(h, 0, host.length() + 1);
+  strcpy(h, host.c_str());
+  char *_h = new char[host.length() + 1];
+  memset(_h, 0, host.length() + 1);
+
   _host.clear();
   _auth.clear();
+  _rootCA.clear();
+
   _host = host.c_str();
+
+  p1 = _host.find(ESP32_FIREBASE_STR_111);
+  if (p1 != std::string::npos)
+  {
+    if (h[strlen(h) - 1] == '/')
+      p2 = 1;
+
+    strncpy(_h, h + p1 + strlen(ESP32_FIREBASE_STR_111), strlen(h) - p1 - p2 - strlen(ESP32_FIREBASE_STR_111));
+    _host = _h;
+  }
+
+  if (p1 == std::string::npos)
+  {
+    p1 = _host.find(ESP32_FIREBASE_STR_112);
+    if (p1 != std::string::npos)
+    {
+      if (h[strlen(h) - 1] == '/')
+        p2 = 1;
+
+      strncpy(_h, h + p1 + strlen(ESP32_FIREBASE_STR_112), strlen(h) - p1 - p2 - strlen(ESP32_FIREBASE_STR_112));
+      _host = _h;
+    }
+  }
+
   _auth = auth.c_str();
-  _port = FIEBASE_PORT;
+  _port = FIEBASE_PORT;  
+
+  delete[] h;
+  delete[] _h;
 }
 
 void FirebaseESP32::begin(const String &host, const String &auth, const char *rootCA)
 {
+  int p1 = std::string::npos;
+  int p2 = 0;
+  char *h = new char[host.length() + 1];
+  memset(h, 0, host.length() + 1);
+  strcpy(h, host.c_str());
+  char *_h = new char[host.length() + 1];
+  memset(_h, 0, host.length() + 1);
+
   _host.clear();
   _auth.clear();
+
   _host = host.c_str();
+
+  p1 = _host.find(ESP32_FIREBASE_STR_111);
+  if (p1 != std::string::npos)
+  {
+    if (h[strlen(h) - 1] == '/')
+      p2 = 1;
+
+    strncpy(_h, h + p1 + strlen(ESP32_FIREBASE_STR_111), strlen(h) - p1 - p2 - strlen(ESP32_FIREBASE_STR_111));
+    _host = _h;
+  }
+
+  if (p1 == std::string::npos)
+  {
+    p1 = _host.find(ESP32_FIREBASE_STR_112);
+    if (p1 != std::string::npos)
+    {
+      if (h[strlen(h) - 1] == '/')
+        p2 = 1;
+
+      strncpy(_h, h + p1 + strlen(ESP32_FIREBASE_STR_112), strlen(h) - p1 - p2 - strlen(ESP32_FIREBASE_STR_112));
+      _host = _h;
+    }
+  }
+
   _auth = auth.c_str();
   _port = FIEBASE_PORT;
+
   _rootCA.clear();
   if (strlen(rootCA) > 0)
     _rootCA.push_back((char *)rootCA);
+
+  delete[] h;
+  delete[] _h;
 }
 
 void FirebaseESP32::end(FirebaseData &dataObj)
@@ -486,7 +559,12 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     }
 
     dataObj._streamPath.clear();
-    dataObj._streamPath = path;
+
+    if (path.length() > 0)
+      if (path[0] != '/')
+        dataObj._streamPath = ESP32_FIREBASE_STR_1;
+
+    dataObj._streamPath += path;
   }
   else
   {
@@ -494,7 +572,14 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     if (dataObj._isStream)
       forceEndHTTP(dataObj);
     if (method != FirebaseMethod::BACKUP && method != FirebaseMethod::RESTORE)
-      dataObj._path = path;
+    {
+      dataObj._path.clear();
+      if (path.length() > 0)
+        if (path[0] != '/')
+          dataObj._path = ESP32_FIREBASE_STR_1;
+      dataObj._path += path;
+    }
+
     dataObj._isStreamTimeout = false;
   }
 
@@ -1067,6 +1152,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
         {
           if (eventType == ESP32_FIREBASE_STR_15 || eventType == ESP32_FIREBASE_STR_16)
           {
+            dataObj._eventType = eventType;
 
             //Parses json response for path
             p1 = lineBuf.find(ESP32_FIREBASE_STR_17);
@@ -1131,7 +1217,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           }
           else
           {
-            //Firebase keep alive data
+            //Firebase keep alive event
             if (eventType == ESP32_FIREBASE_STR_11)
             {
               dataObj._isStreamTimeout = false;
@@ -1139,6 +1225,17 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
 
               if (dataObj._timeoutCallback)
                 dataObj._timeoutCallback(false);
+            }
+
+            //Firebase cancel and auth_revoked events
+            else if (eventType == ESP32_FIREBASE_STR_109 || eventType == ESP32_FIREBASE_STR_110)
+            {
+              dataObj._isStreamTimeout = false;
+              dataObj._dataMillis = millis();
+              dataObj._eventType = eventType;
+              //make stream available status
+              dataObj._streamDataChanged = true;
+              dataObj._dataAvailable = true;
             }
           }
         }
@@ -1735,6 +1832,10 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
     dataObj._isStream = false;
   }
 
+  if (path.length() > 0)
+    if (path[0] != '/')
+      request += ESP32_FIREBASE_STR_1;
+
   request += path;
 
   if (method == FirebaseMethod::PATCH || method == FirebaseMethod::PATCH_SILENT)
@@ -2081,17 +2182,18 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
           s._streamPath = firebaseDataObject[id].get()._streamPath;
           s._data = firebaseDataObject[id].get()._data;
           s._path = firebaseDataObject[id].get()._path;
-         
 
           s._dataType = firebaseDataObject[id].get()._dataType;
           s._dataTypeStr = firebaseDataObject[id].get().getDataType(s._dataType);
+          s._eventTypeStr = firebaseDataObject[id].get()._eventType;
 
-          if (s._dataType == FirebaseESP32::FirebaseDataType::BLOB){
+          if (s._dataType == FirebaseESP32::FirebaseDataType::BLOB)
+          {
             s._blob = firebaseDataObject[id].get()._blob;
             //Free ram in case of callback data was used
             firebaseDataObject[id].get()._blob.clear();
           }
-            
+
           firebaseDataObject[id].get()._dataAvailableCallback(s);
           s.empty();
         }
@@ -2518,6 +2620,7 @@ void FirebaseData::clear()
   std::string().swap(_fileName);
   std::string().swap(_redirectURL);
   std::string().swap(_firebaseError);
+  std::string().swap(_eventType);
 
   _dataAvailableCallback = NULL;
   _timeoutCallback = NULL;
@@ -2556,6 +2659,12 @@ bool FirebaseData::pauseFirebase(bool pause)
 String FirebaseData::dataType()
 {
   std::string res = getDataType(_dataType);
+  return res.c_str();
+}
+
+String FirebaseData::eventType()
+{
+  std::string res = _eventType;
   return res.c_str();
 }
 
@@ -2819,12 +2928,18 @@ String StreamData::dataType()
   return _dataTypeStr.c_str();
 }
 
+String StreamData::eventType()
+{
+  return _eventTypeStr.c_str();
+}
+
 void StreamData::empty()
 {
   std::string().swap(_streamPath);
   std::string().swap(_path);
   std::string().swap(_data);
   std::string().swap(_dataTypeStr);
+  std::string().swap(_eventTypeStr);
   std::vector<uint8_t>().swap(_blob);
 }
 

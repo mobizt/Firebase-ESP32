@@ -1,15 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.6
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.7
  * 
- * March 30, 2019
+ * April 4, 2019
  * 
  * Feature Added:
- * - Add blob data in StreamData
+ * - Add stream event type data
  * - Update examples
  * 
  * Feature Fixed:
- * - Missing boolean and blob data types when get stream Data in stream callback function.
- * - Missing blob data in StreamData
+ *  
  *  
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -166,6 +165,10 @@ static const char ESP32_FIREBASE_STR_105[] PROGMEM = "boolean";
 static const char ESP32_FIREBASE_STR_106[] PROGMEM = "bool,0";
 static const char ESP32_FIREBASE_STR_107[] PROGMEM = "bool,1";
 static const char ESP32_FIREBASE_STR_108[] PROGMEM = "\"bool,";
+static const char ESP32_FIREBASE_STR_109[] PROGMEM = "cancel";
+static const char ESP32_FIREBASE_STR_110[] PROGMEM = "auth_revoked";
+static const char ESP32_FIREBASE_STR_111[] PROGMEM = "http://";
+static const char ESP32_FIREBASE_STR_112[] PROGMEM = "https://";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -907,6 +910,22 @@ public:
   String dataType();
 
   /*
+    Determine the event type of stream.
+
+    @return The one of these event type e.g. put, patch, cancel, and auth_revoked.
+
+    The event type "put" indicated that data at event path relative to stream path was completely changed. Event path can be determined from dataPath().
+
+    The event type "patch" indicated that data at event path relative to stream path was updated. Event path can be determined from dataPath().
+
+    The event type "cancel" indeicated something wrong and cancel by server.
+
+    The event type "auth_revoked" indicated the provided Firebase Authentication Data (Database secret) is no longer valid.
+
+   */
+  String eventType();
+
+  /*
     Determine the current stream path.
 
     @return The database streaming path.
@@ -1133,6 +1152,8 @@ protected:
   std::string _fileName = "";
   std::string _redirectURL = "";
   std::string _firebaseError = "";
+  std::string _eventType = "";
+
   std::vector<uint8_t> _blob = std::vector<uint8_t>();
 
   int _httpCode;
@@ -1168,6 +1189,7 @@ public:
   String jsonData();
   std::vector<uint8_t> blobData();
   String dataType();
+  String eventType();
   void empty();
   friend FirebaseESP32;
 
@@ -1177,6 +1199,7 @@ protected:
   std::string _data;
   std::vector<uint8_t> _blob;
   std::string _dataTypeStr;
+  std::string _eventTypeStr;
   uint8_t _dataType;
 };
 

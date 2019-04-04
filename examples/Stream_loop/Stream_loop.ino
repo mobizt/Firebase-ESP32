@@ -118,8 +118,9 @@ void loop()
   {
     Serial.println("Stream Data available...");
     Serial.println("STREAM PATH: " + firebaseData.streamPath());
-    Serial.println("PATH: " + firebaseData.dataPath());
-    Serial.println("TYPE: " + firebaseData.dataType());
+    Serial.println("EVENT PATH: " + firebaseData.dataPath());
+    Serial.println("DATA TYPE: " + firebaseData.dataType());
+    Serial.println("EVENT TYPE: " + firebaseData.eventType());
     Serial.print("VALUE: ");
     if (firebaseData.dataType() == "int")
       Serial.println(firebaseData.intData());

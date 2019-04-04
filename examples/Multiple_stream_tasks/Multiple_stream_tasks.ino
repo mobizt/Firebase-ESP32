@@ -192,8 +192,9 @@ void runTask()
       {
         Serial.println("> Stream Data1 available...");
         Serial.println("> STREAM PATH: " + firebaseData1.streamPath());
-        Serial.println("> PATH: " + firebaseData1.dataPath());
-        Serial.println("> TYPE: " + firebaseData1.dataType());
+        Serial.println("> EVENT PATH: " + firebaseData1.dataPath());
+        Serial.println("> DATA TYPE: " + firebaseData1.dataType());
+        Serial.println("> EVENT TYPE: " + firebaseData1.eventType());
         Serial.print("> VALUE: ");
         if (firebaseData1.dataType() == "int")
           Serial.println(firebaseData1.intData());
@@ -238,8 +239,9 @@ void runTask()
       {
         Serial.println(">> Stream Data2 available...");
         Serial.println(">> STREAM PATH: " + firebaseData2.streamPath());
-        Serial.println(">> PATH: " + firebaseData2.dataPath());
-        Serial.println(">> TYPE: " + firebaseData2.dataType());
+        Serial.println(">> EVENT PATH: " + firebaseData2.dataPath());
+        Serial.println(">> DATA TYPE: " + firebaseData2.dataType());
+        Serial.println(">> EVENT TYPE: " + firebaseData2.eventType());
         Serial.print(">> VALUE: ");
         if (firebaseData2.dataType() == "int")
           Serial.println(firebaseData2.intData());

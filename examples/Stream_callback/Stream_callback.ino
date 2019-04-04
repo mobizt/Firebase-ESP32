@@ -31,8 +31,9 @@ void streamCallback1(StreamData data)
 
   Serial.println("> Stream Data1 available...");
   Serial.println("> STREAM PATH: " + data.streamPath());
-  Serial.println("> PATH: " + data.dataPath());
-  Serial.println("> TYPE: " + data.dataType());
+  Serial.println("> EVENT PATH: " + data.dataPath());
+  Serial.println("> DATA TYPE: " + data.dataType());
+  Serial.println("> EVENT TYPE: " + data.eventType());
   Serial.print("> VALUE: ");
   if (data.dataType() == "int")
     Serial.println(data.intData());
@@ -66,8 +67,9 @@ void streamCallback2(StreamData data)
 
   Serial.println(">> Stream Data2 available...");
   Serial.println(">> STREAM PATH: " + data.streamPath());
-  Serial.println(">> PATH: " + data.dataPath());
-  Serial.println(">> TYPE: " + data.dataType());
+  Serial.println(">> EVENT PATH: " + data.dataPath());
+  Serial.println(">> DATA TYPE: " + data.dataType());
+  Serial.println(">> EVENT TYPE: " + data.eventType());
   Serial.print(">> VALUE: ");
   if (data.dataType() == "int")
     Serial.println(data.intData());
