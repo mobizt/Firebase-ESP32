@@ -1578,7 +1578,7 @@ String dataType();
 
 **Determine the event type of stream.**
 
-@return The one of these event type String e.g. put, patch, cancel, and auth_revoked.
+return The one of these event type String e.g. put, patch, cancel, and auth_revoked.
 
 The event type "put" indicated that data at event path relative to stream path was completely changed. Event path can be determined from dataPath().
 
