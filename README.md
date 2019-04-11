@@ -12,6 +12,11 @@ This library comunicated with Google Firebase Realtime Database using the REST A
 This library supports all ESP32 MCU based modules. For ESP8266 please try [ESP8266 Firebase Arduino library]( https://github.com/mobizt/Firebase-ESP8266)
 
 
+For Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000 and Arduino UNO WiFi Rev.2, please try [Firebase Arduino Library for ARM/AVR WIFI Dev Boards based on WiFiNINA](https://github.com/mobizt/Firebase-Arduino-WiFiNINA)
+
+For Arduino MKR1000 WIFI will be supported soon.
+
+
 Copyright (c) 2019 K. Suwatchai (Mobizt).
 
 
