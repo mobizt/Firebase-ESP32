@@ -1,13 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.8
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.9
  * 
- * April 19, 2019
+ * April 20, 2019
  * 
  * Feature Added:
  * - Add SD configuration
  * - Update examples
  * 
  * Feature Fixed:
+ * - Fixed Boolean data type misconception
  *  
  *  
  * 
@@ -161,9 +162,9 @@ static const char ESP32_FIREBASE_STR_102[] PROGMEM = "\"error\" : ";
 static const char ESP32_FIREBASE_STR_103[] PROGMEM = "/.settings/rules";
 static const char ESP32_FIREBASE_STR_104[] PROGMEM = "{\"status\":\"ok\"}";
 static const char ESP32_FIREBASE_STR_105[] PROGMEM = "boolean";
-static const char ESP32_FIREBASE_STR_106[] PROGMEM = "bool,0";
-static const char ESP32_FIREBASE_STR_107[] PROGMEM = "bool,1";
-static const char ESP32_FIREBASE_STR_108[] PROGMEM = "\"bool,";
+static const char ESP32_FIREBASE_STR_106[] PROGMEM = "false";
+static const char ESP32_FIREBASE_STR_107[] PROGMEM = "true";
+static const char ESP32_FIREBASE_STR_108[] PROGMEM = "";
 static const char ESP32_FIREBASE_STR_109[] PROGMEM = "cancel";
 static const char ESP32_FIREBASE_STR_110[] PROGMEM = "auth_revoked";
 static const char ESP32_FIREBASE_STR_111[] PROGMEM = "http://";

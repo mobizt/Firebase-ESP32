@@ -1,13 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.8
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.9
  * 
- * April 19, 2019
+ * April 20, 2019
  * 
  * Feature Added:
  * - Add SD configuration
  * - Update examples
  * 
  * Feature Fixed:
+ * - Fixed Boolean data type misconception
  *  
  *  
  * 
@@ -599,10 +600,10 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
       method != FirebaseMethod::DELETE && method != FirebaseMethod::RESTORE)
   {
     payloadStr.clear();
-    if (dataType == FirebaseDataType::STRING || dataType == FirebaseDataType::BOOLEAN)
+    if (dataType == FirebaseDataType::STRING)
       payloadStr = ESP32_FIREBASE_STR_3;
     payloadStr += payload;
-    if (dataType == FirebaseDataType::STRING || dataType == FirebaseDataType::BOOLEAN)
+    if (dataType == FirebaseDataType::STRING)
       payloadStr += ESP32_FIREBASE_STR_3;
   }
 
@@ -1965,7 +1966,7 @@ void FirebaseESP32::setDataType(FirebaseData &dataObj, const std::string &data)
   {
     if (data[0] == '{')
       dataObj._dataType = FirebaseDataType::JSON;
-    else if (data.substr(0, strlen(ESP32_FIREBASE_STR_108)) == ESP32_FIREBASE_STR_108)
+    else if (data == ESP32_FIREBASE_STR_106 || data == ESP32_FIREBASE_STR_107)
       dataObj._dataType = FirebaseDataType::BOOLEAN;
     else if (data.substr(0, strlen(ESP32_FIREBASE_STR_92)) == ESP32_FIREBASE_STR_92)
       dataObj._dataType = FirebaseDataType::BLOB;
@@ -2742,16 +2743,9 @@ float FirebaseData::floatData()
 bool FirebaseData::boolData()
 {
   bool res;
-  char *str = new char[10];
-  memset(str, 0, 10);
-  strcpy_P(str, ESP32_FIREBASE_STR_3);
-  strcat_P(str, ESP32_FIREBASE_STR_107);
-  strcat_P(str, ESP32_FIREBASE_STR_3);
 
   if (_data.length() > 0 && _dataType == FirebaseESP32::FirebaseDataType::BOOLEAN)
-    res = _data == str;
-
-  delete[] str;
+    res = _data == ESP32_FIREBASE_STR_107;
 
   return res;
 }
@@ -2902,17 +2896,10 @@ float StreamData::floatData()
 bool StreamData::boolData()
 {
   bool res;
-  char *str = new char[10];
-  memset(str, 0, 10);
-  strcpy_P(str, ESP32_FIREBASE_STR_3);
-  strcat_P(str, ESP32_FIREBASE_STR_107);
-  strcat_P(str, ESP32_FIREBASE_STR_3);
 
   if (_data.length() > 0 && _dataType == FirebaseESP32::FirebaseDataType::BOOLEAN)
-    res = _data == str;
-
-  delete[] str;
-
+    res = _data == ESP32_FIREBASE_STR_107;
+    
   return res;
 }
 

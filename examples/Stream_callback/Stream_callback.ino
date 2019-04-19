@@ -52,7 +52,7 @@ void streamCallback1(StreamData data)
   else if (data.dataType() == "float")
     Serial.println(data.floatData());
   else if (data.dataType() == "boolean")
-    Serial.println(data.boolData());
+    Serial.println(data.boolData() == 1 ? "true" : "false");
   else if (data.dataType() == "string")
     Serial.println(data.stringData());
   else if (data.dataType() == "json")
@@ -88,7 +88,7 @@ void streamCallback2(StreamData data)
   else if (data.dataType() == "float")
     Serial.println(data.floatData());
   else if (data.dataType() == "boolean")
-    Serial.println(data.boolData());
+    Serial.println(data.boolData() == 1 ? "true" : "false");
   else if (data.dataType() == "string")
     Serial.println(data.stringData());
   else if (data.dataType() == "json")
@@ -234,7 +234,7 @@ void loop()
       else if (firebaseData2.dataType() == "float")
         Serial.println(firebaseData2.floatData());
       else if (firebaseData2.dataType() == "boolean")
-        Serial.println(firebaseData2.boolData());
+        Serial.println(firebaseData2.boolData() == 1 ? "true" : "false");
       else if (firebaseData2.dataType() == "string")
         Serial.println(firebaseData2.stringData());
       else if (firebaseData2.dataType() == "json")

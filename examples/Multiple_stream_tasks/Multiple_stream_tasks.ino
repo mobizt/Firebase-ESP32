@@ -129,7 +129,7 @@ void loop()
         else if (firebaseData1.dataType() == "float")
           Serial.println(firebaseData1.floatData());
         else if (firebaseData1.dataType() == "boolean")
-          Serial.println(firebaseData1.boolData());
+          Serial.println(firebaseData1.boolData() == 1 ? "true" : "false");
         else if (firebaseData1.dataType() == "string")
           Serial.println(firebaseData1.stringData());
         else if (firebaseData1.dataType() == "json")
@@ -159,7 +159,7 @@ void loop()
         else if (firebaseData2.dataType() == "float")
           Serial.println(firebaseData2.floatData());
         else if (firebaseData2.dataType() == "boolean")
-          Serial.println(firebaseData2.boolData());
+          Serial.println(firebaseData2.boolData() == 1 ? "true" : "false");
         else if (firebaseData2.dataType() == "string")
           Serial.println(firebaseData2.stringData());
         else if (firebaseData2.dataType() == "json")
@@ -212,7 +212,7 @@ void runTask()
         else if (firebaseData1.dataType() == "float")
           Serial.println(firebaseData1.floatData());
         else if (firebaseData1.dataType() == "boolean")
-          Serial.println(firebaseData1.boolData());
+          Serial.println(firebaseData1.boolData() == 1 ? "true" : "false");
         else if (firebaseData1.dataType() == "string")
           Serial.println(firebaseData1.stringData());
         else if (firebaseData1.dataType() == "json")
@@ -259,7 +259,7 @@ void runTask()
         else if (firebaseData2.dataType() == "flaot")
           Serial.println(firebaseData2.floatData());
         else if (firebaseData2.dataType() == "boolean")
-          Serial.println(firebaseData2.boolData());
+          Serial.println(firebaseData2.boolData() == 1 ? "true" : "false");
         else if (firebaseData2.dataType() == "string")
           Serial.println(firebaseData2.stringData());
         else if (firebaseData2.dataType() == "json")
