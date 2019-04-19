@@ -1,3 +1,15 @@
+/*
+ * Created by K. Suwatchai (Mobizt)
+ * 
+ * Email: k_suwatchai@hotmail.com
+ * 
+ * Github: https://github.com/mobizt
+ * 
+ * Copyright (c) 2019 mobizt
+ *
+*/
+
+
 //This example shows how to store and read binary data from file on SD card to database.
 
 //Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
@@ -42,11 +54,22 @@ void setup() {
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
 
+  
   //Mount SD card
-  if (!SD.begin()) {
+
+  if (!Firebase.sdBegin())
+  {
     Serial.println("SD Card mounted failed");
     return;
   }
+
+  /*
+  if (!Firebase.sdBegin(14, 2, 15, 13)) //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
+  {
+    Serial.println("SD Card mounted failed");
+    return;
+  }
+  */
 
 
   //Delete demo files
@@ -99,7 +122,8 @@ void setup() {
     Serial.println("DATA");
 
     //Need to begin SD card again due to File system closed by library
-    SD.begin();
+    SD.begin(); //or use Firebase.sdBegin();
+    //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
 
     //Readout the downloaded file
     file = SD.open("/file2.txt", FILE_READ);
@@ -164,7 +188,8 @@ void setup() {
       Serial.println("DATA");
 
       //Need to begin SD card again due to File system closed by library
-      SD.begin();
+      SD.begin(); //or use Firebase.sdBegin();
+      //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
 
       //Readout the downloaded file
       file = SD.open("/file3.txt", FILE_READ);

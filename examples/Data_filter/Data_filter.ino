@@ -1,3 +1,15 @@
+/*
+ * Created by K. Suwatchai (Mobizt)
+ * 
+ * Email: k_suwatchai@hotmail.com
+ * 
+ * Github: https://github.com/mobizt
+ * 
+ * Copyright (c) 2019 mobizt
+ *
+*/
+
+
 //This example shows how to construct queries to filter data.
 
 //Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex

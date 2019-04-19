@@ -1,3 +1,15 @@
+/*
+ * Created by K. Suwatchai (Mobizt)
+ * 
+ * Email: k_suwatchai@hotmail.com
+ * 
+ * Github: https://github.com/mobizt
+ * 
+ * Copyright (c) 2019 mobizt
+ *
+*/
+
+
 //This example shows how to use different Firebase Data objects to handle to same streaming path, one for stream connection (database data changes monitoring) and 
 //other for store, read, update database operation.
 

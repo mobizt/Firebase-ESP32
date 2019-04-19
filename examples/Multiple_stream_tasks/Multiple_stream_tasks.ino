@@ -1,3 +1,14 @@
+/*
+ * Created by K. Suwatchai (Mobizt)
+ * 
+ * Email: k_suwatchai@hotmail.com
+ * 
+ * Github: https://github.com/mobizt
+ * 
+ * Copyright (c) 2019 mobizt
+ *
+*/
+
 
 //This example shows how to read stream on other task function.
 

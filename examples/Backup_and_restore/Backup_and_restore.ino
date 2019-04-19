@@ -1,3 +1,15 @@
+/*
+ * Created by K. Suwatchai (Mobizt)
+ * 
+ * Email: k_suwatchai@hotmail.com
+ * 
+ * Github: https://github.com/mobizt
+ * 
+ * Copyright (c) 2019 mobizt
+ *
+*/
+
+
 //This example shows how to backup and restore database data
 
 #include <WiFi.h>
@@ -40,6 +52,9 @@ void setup()
 
   Serial.println("------------------------------------");
   Serial.println("Backup test...");
+  
+  //Provide specific SD card interface
+  //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
 
   //Download and save data at defined database path to SD card.
   //{TARGET_NODE_PATH} is the full path of database to backup and restore.

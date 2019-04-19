@@ -1,10 +1,10 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.7
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.8
  * 
- * April 4, 2019
+ * April 19, 2019
  * 
  * Feature Added:
- * - Add stream event type data
+ * - Add SD configuration
  * - Update examples
  * 
  * Feature Fixed:
@@ -122,7 +122,7 @@ void FirebaseESP32::begin(const String &host, const String &auth)
   }
 
   _auth = auth.c_str();
-  _port = FIEBASE_PORT;  
+  _port = FIEBASE_PORT;
 
   delete[] h;
   delete[] _h;
@@ -2017,6 +2017,23 @@ bool FirebaseESP32::handleTCPNotConnected(FirebaseData &dataObj)
   return true;
 }
 
+bool FirebaseESP32::sdBegin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss)
+{
+  _sck = sck;
+  _miso = miso;
+  _mosi = mosi;
+  _ss = ss;
+  _sdConfigSet = true;
+  SPI.begin(_sck, _miso, _mosi, _ss);
+  return SD.begin(_ss, SPI);
+}
+
+bool FirebaseESP32::sdBegin(void)
+{
+  _sdConfigSet = false;
+  return SD.begin();
+}
+
 void FirebaseESP32::errorToString(int httpCode, std::string &buf)
 {
   buf.clear();
@@ -2249,8 +2266,10 @@ bool FirebaseESP32::restore(FirebaseData &dataObj, const String &nodePath, const
 bool FirebaseESP32::sdTest()
 {
 
-  if (!SD.begin())
-    return false;
+  if (_sdConfigSet)
+    sdBegin(_sck, _miso, _mosi, _ss);
+  else
+    sdBegin();
 
   File file = SD.open(ESP32_FIREBASE_STR_73, FILE_WRITE);
   if (!file)

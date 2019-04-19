@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Client Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 2.3.7
+Google's Firebase Realtime Database Arduino Library for ESP32 v 2.3.8
 
 This client library provides the most reliable operations for read, store, update, delete, backup and restore the database data.
 
@@ -44,6 +44,8 @@ This following devices were tested and work well.
 
 * **Not required fingerprint** or **certificate data** to connect.
 
+* **Fast and no delay** for contiuous read and store data from/to database.
+
 * Using **Firebase Data object** that holds all data and instances.
 
 * **Read data** at the defined database path using get functions e.g. **getInt**, **getFloat**, **getBool**, **getString**, **getJSON**, **getBlob** and **getFile**.
@@ -77,6 +79,8 @@ This following devices were tested and work well.
 * Supports data **backup and restore** that working with SD card. 
 
 * Supports **blob** or binary data from memory and **File stream** from SD card.
+
+* Supports setup pin for SD card used in this library.
 
 
 
@@ -1545,6 +1549,40 @@ bool restore(FirebaseData &dataObj, const String &nodePath, const String &dirPat
 ```
 
 
+
+
+
+
+**Init SD card with GPIO pins.**
+
+param *`sck`* -SPI Clock pin.
+
+param *`miso`* - SPI MISO pin.
+
+param *`m0si`* - SPI MOSI pin.
+
+param *`ss`* - SPI Chip/Slave Select pin.
+
+return *`Boolean`* type status indicates the success of operation.
+
+
+```C++
+void sdBegin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
+```
+
+
+
+
+
+
+**Init SD card with default GPIO pins.**
+
+return *`Boolean`* type status indicates the success of operation.
+
+
+```C++
+void sdBegin(void);
+```
 
 
 

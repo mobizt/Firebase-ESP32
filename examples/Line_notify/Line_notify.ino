@@ -1,5 +1,16 @@
 
 /*
+ * Created by K. Suwatchai (Mobizt)
+ * 
+ * Email: k_suwatchai@hotmail.com
+ * 
+ * Github: https://github.com/mobizt
+ * 
+ * Copyright (c) 2019 mobizt
+ *
+*/
+
+/*
  * This shows how to pause the Firbase and send LINE Notify message using the same shared WiFiClient.
  * 1. Install HTTPClientESP32Ex library from https://github.com/mobizt/HTTPClientESP32Ex
  * 2. Install Line notify Arduino library for ESP32 https://github.com/mobizt/LINE-Notify-ESP32

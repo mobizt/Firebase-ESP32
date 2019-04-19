@@ -1,10 +1,10 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.7
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.8
  * 
- * April 4, 2019
+ * April 19, 2019
  * 
  * Feature Added:
- * - Add stream event type data
+ * - Add SD configuration
  * - Update examples
  * 
  * Feature Fixed:
@@ -47,7 +47,6 @@
 #include <functional>
 #include <SD.h>
 #include <vector>
-
 
 #define FIEBASE_PORT 443
 
@@ -243,7 +242,6 @@ public:
 
    */
   void end(FirebaseData &dataObj);
-
 
   /*
     Reconnect WiFi if lost connection.
@@ -844,6 +842,29 @@ public:
    */
   bool restore(FirebaseData &dataObj, const String &nodePath, const String &dirPath);
 
+  /*
+  
+    Init SD card with GPIO pins.
+  
+    @param sck -  SPI Clock pin.
+    @param miso - SPI MISO pin.
+    @param mosi - SPI MOSI pin.
+    @param ss -   SPI Chip/Slave Select pin.
+
+    @return Boolean type status indicates the success of operation.
+
+   */
+  bool sdBegin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
+
+  /*
+  
+    Init SD card with default GPIO pins.
+
+    @return Boolean type status indicates the success of operation.
+  
+   */
+  bool sdBegin(void);
+
   void errorToString(int httpCode, std::string &buf);
 
   friend FirebaseData;
@@ -864,7 +885,6 @@ protected:
   int firebaseConnect(FirebaseData &dataObj, const std::string &path, const uint8_t _method, uint8_t dataType, const std::string &payload);
   bool cancelCurrentResponse(FirebaseData &dataObj);
   void setDataType(FirebaseData &dataObj, const std::string &data);
-  
 
   bool sdTest();
   void createDirs(std::string dirs);
@@ -882,6 +902,8 @@ protected:
   bool _reconnectWiFi;
   bool _sdOk = false;
   bool _sdInUse = false;
+  bool _sdConfigSet = false;
+  uint8_t _sck, _miso, _mosi, _ss;
   File file;
 };
 
@@ -1166,7 +1188,6 @@ protected:
   std::string _backupDir = "";
   std::string _backupFilename = "";
   size_t _backupzFileSize = 0;
-  
 
   bool getServerStreamResponse();
   bool getServerResponse();
