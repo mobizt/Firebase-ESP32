@@ -565,7 +565,7 @@ Here is the usage example to back up all database at root path "/" and restore i
 
 ```C++
 
- String backupFilePath = "";
+ 
 
  //Begin backup whole database and download to "/myBackup" on SD card
  if (!Firebase.backup(firebaseData, "/", "/myBackup"))
@@ -578,14 +578,12 @@ Here is the usage example to back up all database at root path "/" and restore i
    //Successfull backup, print out the file path and size
    Serial.println(firebaseData.getBackupFilename());
    Serial.println(firebaseData.getBackupFileSize());
-
-   backupFilePath = firebaseData.getBackupFilename();
   }
 
 
   //Begin restore backed dup data back to database
 
-  if (!Firebase.restore(firebaseData, "/", backupFilePath))
+  if (!Firebase.restore(firebaseData, "/", "/myBackup"))
   {
     //Database restoration failed, printout the error detail
     Serial.println(firebaseData.fileTransferError());

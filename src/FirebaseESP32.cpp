@@ -503,7 +503,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
   if (WiFi.status() != WL_CONNECTED)
   {
     dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
-    return -1;
+    return HTTPC_ERROR_CONNECTION_LOST;
   }
 
   if (path.length() == 0 || _host.length() == 0 || _auth.length() == 0)
@@ -512,6 +512,9 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     return HTTP_CODE_BAD_REQUEST;
   }
 
+  uint8_t retryCount = 0;
+  uint8_t maxRetry = 5;
+
   size_t bufSize = 32;
   char *buf = new char[bufSize];
 
@@ -519,7 +522,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
   size_t toRead = 0;
   bool httpConnected = false;
 
-  int httpCode = -1;
+  int httpCode = HTTPC_ERROR_CONNECTION_REFUSED;
 
   //build requested uri
   std::string payloadStr = "";
@@ -742,6 +745,15 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
 
   httpCode = dataObj.http.http_sendRequest(header.c_str(), payloadStr.c_str());
 
+  retryCount = 0;
+  while (httpCode != 0)
+  {
+    retryCount++;
+    if (retryCount > maxRetry)
+      break;
+    httpCode = dataObj.http.http_sendRequest(header.c_str(), payloadStr.c_str());
+  }
+
   if (method == FirebaseMethod::RESTORE || (dataType == FirebaseDataType::FILE && (method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST)))
   {
 
@@ -799,7 +811,7 @@ EXIT_1:
   std::string().swap(header);
   std::string().swap(uri);
 
-  return -1;
+  return HTTPC_ERROR_CONNECTION_REFUSED;
 }
 
 bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, const uint8_t method, uint8_t dataType, const std::string &payload)
@@ -808,20 +820,25 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
   bool flag = false;
   dataObj._firebaseError.clear();
 
+
   if (dataObj._pause || dataObj._file_transfering)
     return true;
 
+  
   if (path.length() == 0 || _host.length() == 0 || _auth.length() == 0)
   {
     dataObj._httpCode = HTTP_CODE_BAD_REQUEST;
     return false;
   }
 
+
+
   if ((method == FirebaseMethod::PUT || method == FirebaseMethod::POST || method == FirebaseMethod::PATCH || method == FirebaseMethod::PATCH_SILENT || method == FirebaseMethod::SET_RULES) && payload.length() == 0 && dataType != FirebaseDataType::STRING && dataType != FirebaseDataType::BLOB && dataType != FirebaseDataType::FILE)
   {
     dataObj._httpCode = HTTP_CODE_BAD_REQUEST;
     return false;
   }
+
 
   //Try to reconnect WiFi if lost connection
   if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
@@ -843,6 +860,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
     dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
     return false;
   }
+
 
   //Get the current WiFi client from current firebase data
   //Check for connection status
@@ -876,7 +894,8 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
           delay(20);
           forceEndHTTP(dataObj);
           if (dataObj.http.http_connected())
-            return false;
+            if (!dataObj._isStream)
+              return false;
         }
         dataObj._httpConnected = false;
       }

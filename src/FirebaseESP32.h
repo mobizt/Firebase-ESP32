@@ -899,8 +899,8 @@ protected:
   std::string _auth = "";
   std::vector<const char *> _rootCA = std::vector<const char *>();
 
-  uint16_t _port;
-  bool _reconnectWiFi;
+  uint16_t _port = 443;
+  bool _reconnectWiFi = false;
   bool _sdOk = false;
   bool _sdInUse = false;
   bool _sdConfigSet = false;
@@ -1141,29 +1141,29 @@ protected:
   StreamTimeoutCallback _timeoutCallback = NULL;
   TaskHandle_t _handle = NULL;
   int _index = -1;
-  uint8_t _dataTypeNum;
+  uint8_t _dataTypeNum = 0;
 
-  bool _isStreamTimeout;
-  bool _isStream;
-  bool _streamStop;
-  bool _isSilentResponse;
+  bool _isStreamTimeout = false;
+  bool _isStream = false;
+  bool _streamStop = false;
+  bool _isSilentResponse = false;
 
-  bool _streamDataChanged;
-  bool _streamPathChanged;
-  bool _dataAvailable;
-  bool _keepAlive;
-  bool _httpConnected;
-  bool _interruptRequest;
-  bool _mismatchDataType;
-  bool _pathNotExist;
-  bool _pause;
-  bool _file_transfering;
-  uint8_t _dataType;
-  uint8_t _dataType2;
-  uint8_t _connectionStatus;
+  bool _streamDataChanged = false;
+  bool _streamPathChanged = false;
+  bool _dataAvailable = false;
+  bool _keepAlive = false;
+  bool _httpConnected = false;
+  bool _interruptRequest = false;
+  bool _mismatchDataType = false;
+  bool _pathNotExist = false;
+  bool _pause = false;
+  bool _file_transfering = false;
+  uint8_t _dataType = 0;
+  uint8_t _dataType2 = 0;
+  uint8_t _connectionStatus = 0;
 
   uint8_t _r_method = 0;
-  uint8_t _r_dataType;
+  uint8_t _r_dataType = 0;
 
   std::string _path = "";
   std::string _path2 = "";
@@ -1179,12 +1179,12 @@ protected:
 
   std::vector<uint8_t> _blob = std::vector<uint8_t>();
 
-  int _httpCode;
-  int _contentLength;
+  int _httpCode = -1000;
+  int _contentLength = 0;
 
-  unsigned long _dataMillis;
-  unsigned long _streamMillis;
-  unsigned long _streamResetMillis;
+  unsigned long _dataMillis = 0;
+  unsigned long _streamMillis = 0;
+  unsigned long _streamResetMillis = 0;
   std::string _backupNodePath = "";
   std::string _backupDir = "";
   std::string _backupFilename = "";
@@ -1216,13 +1216,13 @@ public:
   friend FirebaseESP32;
 
 protected:
-  std::string _streamPath;
-  std::string _path;
-  std::string _data;
-  std::vector<uint8_t> _blob;
-  std::string _dataTypeStr;
-  std::string _eventTypeStr;
-  uint8_t _dataType;
+  std::string _streamPath = "";
+  std::string _path = "";
+  std::string _data = "";
+  std::vector<uint8_t> _blob = std::vector<uint8_t>();
+  std::string _dataTypeStr = "";
+  std::string _eventTypeStr = "";
+  uint8_t _dataType = 0;
 };
 
 extern FirebaseESP32 Firebase;
