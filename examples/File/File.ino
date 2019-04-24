@@ -73,30 +73,90 @@ void setup() {
 
 
   //Delete demo files
-  if (SD.exists("/file1.txt"))
-    SD.remove("/file1.txt");
+  if (SD.exists("/source.txt"))
+    SD.remove("/source.txt");
 
-  if (SD.exists("/file2.txt"))
-    SD.remove("/file2.txt");
+  if (SD.exists("/target_1.txt"))
+    SD.remove("/target_1.txt");
 
-  if (SD.exists("/file3.txt"))
-    SD.remove("/file3.txt");
+  if (SD.exists("/target_2.txt"))
+    SD.remove("/target_2.txt");
+
+  if (SD.exists("/target_3.txt"))
+    SD.remove("/target_3.txt");
+
+  if (SD.exists("/target_4.txt"))
+    SD.remove("/target_4.txt");
 
 
+  if (SD.exists("/target_5.txt"))
+    SD.remove("/target_5.txt");
 
-  Serial.println("-----------------------------------");
-  Serial.println("Set file data test...");
+
+  if (SD.exists("/target_6.txt"))
+    SD.remove("/target_6.txt");
+
+  if (SD.exists("/target_7.txt"))
+    SD.remove("/target_7.txt");
+
+  if (SD.exists("/target_8.txt"))
+    SD.remove("/target_8.txt");
+
+  if (SD.exists("/target_9.txt"))
+    SD.remove("/target_9.txt");
+
+  if (SD.exists("/target_10.txt"))
+    SD.remove("/target_10.txt");
+
+  if (SD.exists("/push_in.txt"))
+    SD.remove("/push_in.txt");
+
+  if (SD.exists("/push_out.txt"))
+    SD.remove("/push_out.txt");
+
+ 
+
+  /*/////////////////////////////////////////////////////
+
+  Sending large file ( > 10k) leads to unexpected result
+
+  /////////////////////////////////////////////////////*/
 
 
-  //Write demo data to file
-  file = SD.open("/file1.txt", FILE_WRITE);
-  for (int i = 0; i < 256; i++)
-    file.write(i);
+  //Write demo data to file (8192 bytes)
+  file = SD.open("/source.txt", FILE_WRITE);
+  for (int i = 0; i < 8192; i++)
+    file.write(0xf);
 
   file.close();
 
+  
+  
+  Serial.println("-----------------------------------");
+  Serial.println("Set file data 1 test...");
+
+
   //Set file (read file from SD card and set to database)
-  if (Firebase.setFile(firebaseData, path + "/Binary/File/data", "/file1.txt"))
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data1", "/source.txt"))
+  {
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("-------------------------------------");
+    Serial.println();
+  }
+
+  Serial.println("-----------------------------------");
+  Serial.println("Set file data 2 test...");
+
+
+  //Set file (read file from SD card and set to database)
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data2", "/source.txt"))
   {
     Serial.println("PASSED");
     Serial.println("------------------------------------");
@@ -112,39 +172,224 @@ void setup() {
 
 
   Serial.println("-----------------------------------");
-  Serial.println("Get file data test...");
+  Serial.println("Set file data 3 test...");
+
+
+  //Set file (read file from SD card and set to database)
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data3", "/source.txt"))
+  {
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("-------------------------------------");
+    Serial.println();
+  }
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Set file data 4 test...");
+
+
+  //Set file (read file from SD card and set to database)
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data4", "/source.txt"))
+  {
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("-------------------------------------");
+    Serial.println();
+  }
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Set file data 5 test...");
+
+
+  //Set file (read file from SD card and set to database)
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data5", "/source.txt"))
+  {
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("-------------------------------------");
+    Serial.println();
+  }
+
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Set file data 6 test...");
+
+
+  //Set file (read file from SD card and set to database)
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data6", "/source.txt"))
+  {
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("-------------------------------------");
+    Serial.println();
+  }
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Set file data 7 test...");
+
+
+  //Set file (read file from SD card and set to database)
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data7", "/source.txt"))
+  {
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("-------------------------------------");
+    Serial.println();
+  }
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Set file data 8 test...");
+
+
+  //Set file (read file from SD card and set to database)
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data8", "/source.txt"))
+  {
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("-------------------------------------");
+    Serial.println();
+  }
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Set file data 9 test...");
+
+
+  //Set file (read file from SD card and set to database)
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data9", "/source.txt"))
+  {
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("-------------------------------------");
+    Serial.println();
+  }
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Set file data 10 test...");
+
+
+  //Set file (read file from SD card and set to database)
+  if (Firebase.setFile(firebaseData, path + "/Binary/File/data10", "/source.txt"))
+  {
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("-------------------------------------");
+    Serial.println();
+  }
+
+
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Get file data 1 test...");
 
   //Get file (download file to SD card)
-  if (Firebase.getFile(firebaseData, path + "/Binary/File/data", "/file2.txt"))
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data1", "/target_1.txt"))
   {
 
     Serial.println("PASSED");
-    Serial.println("DATA");
-
-    //Need to begin SD card again due to File system closed by library
-    SD.begin(); //or use Firebase.sdBegin();
-    //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
-
-    //Readout the downloaded file
-    file = SD.open("/file2.txt", FILE_READ);
-    int i = 0;
-
-    while (file.available())
-    {
-      if (i > 0 && i % 16 == 0)
-        Serial.println();
-
-      if (i < 16)
-        Serial.print("0");
-
-      Serial.print(file.read(), HEX);
-      Serial.print(" ");
-      i++;
-    }
+    Serial.println("------------------------------------");
     Serial.println();
-    Serial.println("-------------------------------------");
+
+  }
+  else
+  {
+
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("--------------------------------");
     Serial.println();
-    file.close();
+  }
+
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Get file data 2 test...");
+
+  //Get file (download file to SD card)
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data2", "/target_2.txt"))
+  {
+
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+
+  }
+  else
+  {
+
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("--------------------------------");
+    Serial.println();
+  }
+
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Get file data 3 test...");
+
+  //Get file (download file to SD card)
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data3", "/target_3.txt"))
+  {
+
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
 
   }
   else
@@ -158,17 +403,185 @@ void setup() {
 
 
   Serial.println("-----------------------------------");
+  Serial.println("Get file data 4 test...");
+
+  //Get file (download file to SD card)
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data4", "/target_4.txt"))
+  {
+
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+
+  }
+  else
+  {
+
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("--------------------------------");
+    Serial.println();
+  }
+
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Get file data 5 test...");
+
+  //Get file (download file to SD card)
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data5", "/target_5.txt"))
+  {
+
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+
+  }
+  else
+  {
+
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("--------------------------------");
+    Serial.println();
+  }
+
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Get file data 6 test...");
+
+  //Get file (download file to SD card)
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data6", "/target_6.txt"))
+  {
+
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+
+  }
+  else
+  {
+
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("--------------------------------");
+    Serial.println();
+  }
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Get file data 7 test...");
+
+  //Get file (download file to SD card)
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data7", "/target_7.txt"))
+  {
+
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+
+  }
+  else
+  {
+
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("--------------------------------");
+    Serial.println();
+  }
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Get file data 8 test...");
+
+  //Get file (download file to SD card)
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data8", "/target_8.txt"))
+  {
+
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+
+  }
+  else
+  {
+
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("--------------------------------");
+    Serial.println();
+  }
+
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Get file data 9 test...");
+
+  //Get file (download file to SD card)
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data9", "/target_9.txt"))
+  {
+
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+
+  }
+  else
+  {
+
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("--------------------------------");
+    Serial.println();
+  }
+
+
+  Serial.println("-----------------------------------");
+  Serial.println("Get file data 10 test...");
+
+  //Get file (download file to SD card)
+  if (Firebase.getFile(firebaseData, path + "/Binary/File/data10", "/target_10.txt"))
+  {
+
+    Serial.println("PASSED");
+    Serial.println("------------------------------------");
+    Serial.println();
+
+  }
+  else
+  {
+
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.fileTransferError());
+    Serial.println("--------------------------------");
+    Serial.println();
+  }
+
+
+
+
+
+
+
+  Serial.println("-----------------------------------");
   Serial.println("Append file data test...");
 
+
+  //Need to begin SD card again due to File system closed by library
+  SD.begin(); //or use Firebase.sdBegin();
+  //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
+
+
   //Write demo data to file
-  file = SD.open("/file1.txt", FILE_WRITE);
+  file = SD.open("/push_in.txt", FILE_WRITE);
   for (int i = 255; i >= 0; i--)
     file.write(i);
 
   file.close();
 
   //Append file data to database
-  if (Firebase.pushFile(firebaseData, path + "/Binary/File/Logs", "/file1.txt"))
+  if (Firebase.pushFile(firebaseData, path + "/Binary/File/Logs", "/push_in.txt"))
   {
     Serial.println("PASSED");
     Serial.println("PATH: " + firebaseData.dataPath());
@@ -181,7 +594,7 @@ void setup() {
     Serial.println("Get appended file data test...");
 
     //Get the recently appended file (download file to SD card)
-    if (Firebase.getFile(firebaseData, path + "/Binary/File/Logs/" + firebaseData.pushName(), "/file3.txt"))
+    if (Firebase.getFile(firebaseData, path + "/Binary/File/Logs/" + firebaseData.pushName(), "/push_out.txt"))
     {
 
       Serial.println("PASSED");
@@ -192,7 +605,7 @@ void setup() {
       //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
 
       //Readout the downloaded file
-      file = SD.open("/file3.txt", FILE_READ);
+      file = SD.open("/push_out.txt", FILE_READ);
       int i = 0;
 
       while (file.available())
@@ -230,8 +643,7 @@ void setup() {
     Serial.println();
   }
 
-  //Quit Firebase and release all resources
-  Firebase.end(firebaseData);
+ 
   
 }
 

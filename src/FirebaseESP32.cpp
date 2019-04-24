@@ -1964,6 +1964,7 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   delete[] num;
 }
 
+
 bool FirebaseESP32::cancelCurrentResponse(FirebaseData &dataObj)
 {
   forceEndHTTP(dataObj);
