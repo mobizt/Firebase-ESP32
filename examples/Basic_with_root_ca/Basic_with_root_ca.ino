@@ -92,12 +92,12 @@ void setup()
   Serial.println();
 
   Serial.println("------------------------------------");
-  Serial.println("Set integer test...");
+  Serial.println("Set double test...");
 
   for (uint8_t i = 0; i < 10; i++)
   {
 
-    if (Firebase.setInt(firebaseData, path + "/Int/Data" + (i + 1), (i + 1) * 10))
+    if (Firebase.setDouble(firebaseData, path + "/Double/Data" + (i + 1), ((i + 1) * 10) + 0.123456789))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
@@ -106,7 +106,9 @@ void setup()
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
       else if (firebaseData.dataType() == "float")
-        Serial.println(firebaseData.floatData());
+        Serial.println(firebaseData.floatData(), 5);
+      else if (firebaseData.dataType() == "double")
+        Serial.println(firebaseData.doubleData(), 9);
       else if (firebaseData.dataType() == "boolean")
         Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
       else if (firebaseData.dataType() == "string")
@@ -126,12 +128,12 @@ void setup()
   }
 
   Serial.println("------------------------------------");
-  Serial.println("Get integer test...");
+  Serial.println("Get double test...");
 
   for (uint8_t i = 0; i < 10; i++)
   {
 
-    if (Firebase.getInt(firebaseData, path + "/Int/Data" + (i + 1)))
+    if (Firebase.getInt(firebaseData, path + "/Double/Data" + (i + 1)))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
@@ -140,7 +142,9 @@ void setup()
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
       else if (firebaseData.dataType() == "float")
-        Serial.println(firebaseData.floatData());
+        Serial.println(firebaseData.floatData(), 5);
+      else if (firebaseData.dataType() == "double")
+        Serial.println(firebaseData.doubleData(), 9);
       else if (firebaseData.dataType() == "boolean")
         Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
       else if (firebaseData.dataType() == "string")
@@ -226,7 +230,9 @@ void setup()
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
       else if (firebaseData.dataType() == "float")
-        Serial.println(firebaseData.floatData());
+        Serial.println(firebaseData.floatData(), 5);
+      else if (firebaseData.dataType() == "double")
+        Serial.println(firebaseData.doubleData(), 9);
       else if (firebaseData.dataType() == "boolean")
         Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
       else if (firebaseData.dataType() == "string")
@@ -244,38 +250,6 @@ void setup()
       Serial.println();
     }
   }
-
-  Serial.println("------------------------------------");
-  Serial.println("Get JSON test...");
-  if (Firebase.getJSON(firebaseData, path))
-  {
-    Serial.println("PASSED");
-    Serial.println("PATH: " + firebaseData.dataPath());
-    Serial.println("TYPE: " + firebaseData.dataType());
-    Serial.print("VALUE: ");
-    if (firebaseData.dataType() == "int")
-      Serial.println(firebaseData.intData());
-    else if (firebaseData.dataType() == "float")
-      Serial.println(firebaseData.floatData());
-    else if (firebaseData.dataType() == "boolean")
-      Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
-    else if (firebaseData.dataType() == "string")
-      Serial.println(firebaseData.stringData());
-    else if (firebaseData.dataType() == "json")
-      Serial.println(firebaseData.jsonData());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-
-  //Quit Firebase and release all resources
-  Firebase.end(firebaseData);
 }
 
 void loop()

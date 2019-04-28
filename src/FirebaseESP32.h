@@ -1,15 +1,19 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 2.3.9
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.0
  * 
- * April 20, 2019
+ * April 28, 2019
  * 
  * Feature Added:
- * - Add SD configuration
+ * - Add retry operation
+ * - Add queue operation
+ * - Add double data type
  * - Update examples
  * 
  * Feature Fixed:
- * - Fixed Boolean data type misconception
- *  
+ * - Prevent crash due to corrupted Heap 
+ *   in various simultaneously asynchronous 
+ *   connections from multiple Firebase Data objects 
+ * - Reliability  
  *  
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -44,6 +48,8 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include "FS.h"
+#include "SPIFFS.h"
 #include <HTTPClientESP32Ex.h>
 #include <functional>
 #include <SD.h>
@@ -150,7 +156,7 @@ static const char ESP32_FIREBASE_STR_90[] PROGMEM = "/root.json";
 static const char ESP32_FIREBASE_STR_91[] PROGMEM = "blob";
 static const char ESP32_FIREBASE_STR_92[] PROGMEM = "\"blob,base64,";
 static const char ESP32_FIREBASE_STR_93[] PROGMEM = "\"file,base64,";
-static const char ESP32_FIREBASE_STR_94[] PROGMEM = "http connection was used by other process";
+static const char ESP32_FIREBASE_STR_94[] PROGMEM = "http connection was used by other processes";
 static const char ESP32_FIREBASE_STR_95[] PROGMEM = "Location: ";
 static const char ESP32_FIREBASE_STR_96[] PROGMEM = "&orderBy=";
 static const char ESP32_FIREBASE_STR_97[] PROGMEM = "&limitToFirst=";
@@ -164,23 +170,40 @@ static const char ESP32_FIREBASE_STR_104[] PROGMEM = "{\"status\":\"ok\"}";
 static const char ESP32_FIREBASE_STR_105[] PROGMEM = "boolean";
 static const char ESP32_FIREBASE_STR_106[] PROGMEM = "false";
 static const char ESP32_FIREBASE_STR_107[] PROGMEM = "true";
-static const char ESP32_FIREBASE_STR_108[] PROGMEM = "";
+static const char ESP32_FIREBASE_STR_108[] PROGMEM = "double";
 static const char ESP32_FIREBASE_STR_109[] PROGMEM = "cancel";
 static const char ESP32_FIREBASE_STR_110[] PROGMEM = "auth_revoked";
 static const char ESP32_FIREBASE_STR_111[] PROGMEM = "http://";
 static const char ESP32_FIREBASE_STR_112[] PROGMEM = "https://";
+static const char ESP32_FIREBASE_STR_113[] PROGMEM = "_stream";
+static const char ESP32_FIREBASE_STR_114[] PROGMEM = "_error_queue";
+static const char ESP32_FIREBASE_STR_115[] PROGMEM = "get";
+static const char ESP32_FIREBASE_STR_116[] PROGMEM = "set";
+static const char ESP32_FIREBASE_STR_117[] PROGMEM = "push";
+static const char ESP32_FIREBASE_STR_118[] PROGMEM = "update";
+static const char ESP32_FIREBASE_STR_119[] PROGMEM = "delete";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 class FirebaseData;
 class StreamData;
+class QueueInfo;
 class FirebaseESP32;
+
+struct QueueStorageType
+{
+  static const uint8_t SPIFFS = 0;
+  static const uint8_t SD = 1;
+};
 
 typedef void (*StreamEventCallback)(StreamData);
 typedef void (*StreamTimeoutCallback)(bool);
+typedef void (*QueueInfoCallback)(QueueInfo);
 
 static std::vector<std::reference_wrapper<FirebaseData>> firebaseDataObject;
+static uint8_t dataObjectIndex = 0;
 static uint8_t streamIndex = 0;
+static uint8_t errorQueueIndex = 0;
 
 class QueryFilter
 {
@@ -198,6 +221,7 @@ public:
   void equalTo(const String &);
   void clear();
   friend FirebaseESP32;
+  friend FirebaseData;
 
 protected:
   std::string _orderBy = "";
@@ -206,6 +230,71 @@ protected:
   std::string _startAt = "";
   std::string _endAt = "";
   std::string _equalTo = "";
+};
+
+class QueueInfo
+{
+public:
+  QueueInfo();
+  ~QueueInfo();
+  uint8_t totalQueues();
+  uint32_t currentQueueID();
+  bool isQueueFull();
+  String dataType();
+  String method();
+  String path();
+
+  friend FirebaseESP32;
+
+protected:
+  void clear();
+  uint8_t _totalQueue = 0;
+  uint32_t _currentQueueID = 0;
+  bool _isQueueFull = false;
+  bool _isQueue = false;
+  std::string _dataType = "";
+  std::string _method = "";
+  std::string _path = "";
+};
+
+struct QueueItem
+{
+  uint8_t firebaseDataType = 0;
+  uint8_t firebaseMethod = 0;
+  uint32_t qID = 0;
+  uint32_t timestamp = 0;
+  uint8_t runCount = 0;
+  uint8_t runIndex = 0;
+
+  std::string path = "";
+  std::string payload = "";
+  std::vector<uint8_t> blob = std::vector<uint8_t>();
+  std::string filename = "";
+  QueryFilter queryFilter;
+  int *intPtr = nullptr;
+  float *floatPtr = nullptr;
+  double *doublePtr = nullptr;
+  bool *boolPtr = nullptr;
+  String *stringPtr = nullptr;
+  std::vector<uint8_t> *blobPtr = nullptr;
+};
+
+class QueueManager
+{
+public:
+  QueueManager();
+  ~QueueManager();
+
+  bool add(QueueItem q);
+  void remove(uint8_t index);
+
+  friend FirebaseESP32;
+  friend FirebaseData;
+
+private:
+  void clear();
+  std::vector<QueueItem> _queueCollection = std::vector<QueueItem>();
+  uint8_t _maxQueue = 10;
 };
 
 class FirebaseESP32
@@ -319,6 +408,21 @@ public:
   bool pushFloat(FirebaseData &dataObj, const String &path, float floatValue);
 
   /*
+    Append new double value (8 bytes) to the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which float value will be appended.
+    @param doubleValue - The appended value.
+
+    @return - Boolean type status indicates the success of operation.
+
+    The new appended node's key will be stored in Firebase Data object,
+    which its value can be accessed via function [FirebaseData object].pushName().
+
+  */
+  bool pushDouble(FirebaseData &dataObj, const String &path, double doubleValue);
+
+  /*
     Append new Boolean value to the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -429,6 +533,24 @@ public:
 
    */
   bool setFloat(FirebaseData &dataObj, const String &path, float floatValue);
+
+  /*
+    Set double data at the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which float data will be set.
+    @param doubleValue - Double value to set.
+
+    @return - Boolean type status indicates the success of operation.
+
+    Call [FirebaseData object].dataType to determine what type of data that successfully
+    stores in database.
+
+    Call [FirebaseData object].doubleData will return the double value of
+    payload returned from server.
+
+  */
+  bool setDouble(FirebaseData &dataObj, const String &path, double doubleValue);
 
   /*
     Set Boolean data at the defined database path.
@@ -578,6 +700,21 @@ public:
   bool getInt(FirebaseData &dataObj, const String &path);
 
   /*
+    Read the integer value at the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the float value is being read.
+    @param target - The integer type variable to store value.
+
+    @return - Boolean type status indicates the success of operation.
+
+    If the type of payload returned from server is not integer, float and double, 
+    the target variable's value will be zero (0).
+
+  */
+  bool getInt(FirebaseData &dataObj, const String &path, int &target);
+
+  /*
     Read the float value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -596,6 +733,58 @@ public:
 
    */
   bool getFloat(FirebaseData &dataObj, const String &path);
+
+  /*
+    Read the float value at the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the float value is being read.
+    @param target - The float type variable to store value.
+
+    @return - Boolean type status indicates the success of operation.
+
+
+    If the type of payload returned from server is not integer, float and double, 
+    the target variable's value will be zero (0).
+
+   */
+  bool getFloat(FirebaseData &dataObj, const String &path, float &target);
+
+  /*
+    Read the double value at the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the float value is being read.
+
+    @return - Boolean type status indicates the success of operation.
+
+    Call [FirebaseData object].dataType to determine what type of data that successfully
+    stores in database. 
+    
+    Call [FirebaseData object].doubleData will return the double value of
+    payload returned from server.
+
+    If the payload returned from server is not integer, float and double, 
+    the function [FirebaseData object].doubleData will return zero (0).
+
+   */
+  bool getDouble(FirebaseData &dataObj, const String &path);
+
+  /*
+    Read the float value at the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the float value is being read.
+    @param target - The double type variable to store value.
+
+    @return - Boolean type status indicates the success of operation.
+
+
+    If the type of payload returned from server is not integer, float and double, 
+    the target variable's value will be zero (0).
+
+   */
+  bool getDouble(FirebaseData &dataObj, const String &path, double &target);
 
   /*
     Read the Boolean value at the defined database path.
@@ -618,6 +807,22 @@ public:
   bool getBool(FirebaseData &dataObj, const String &path);
 
   /*
+    Read the Boolean value at the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the Boolean value is being read.
+    @param target - The boolean type variable to store value.
+
+    @return - Boolean type status indicates the success of operation.
+
+
+    If the type of payload returned from server is not Boolean, 
+    the target variable's value will be false.
+
+   */
+  bool getBool(FirebaseData &dataObj, const String &path, bool &target);
+
+  /*
     Read the string or text at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -638,11 +843,26 @@ public:
   bool getString(FirebaseData &dataObj, const String &path);
 
   /*
+    Read the string or text at the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the string value is being read.
+    @param target - The String object to store value.
+
+    @return - Boolean type status indicates the success of operation.
+
+    If the type of payload returned from server is not string,
+    the target String object's value will be empty.
+
+  */
+  bool getString(FirebaseData &dataObj, const String &path, String &target);
+
+  /*
     Read the JSON string at the defined database path.
     The returned payload JSON string represents the child nodes and their value.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the string value is being read.
+    @param path - Database path which the JSON string value is being read.
 
     @return - Boolean type status indicates the success of operation.
 
@@ -663,7 +883,23 @@ public:
     The returned payload JSON string represents the child nodes and their value.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the string value is being read.
+    @param path - Database path which the JSON string value is being read.
+    @param target - The String object to store JSON string.
+
+    @return - Boolean type status indicates the success of operation.
+
+    If the type of payload returned from server is not string,
+    the target String object's value will be empty.
+
+  */
+  bool getJSON(FirebaseData &dataObj, const String &path, String &target);
+
+  /*
+    Read the JSON string at the defined database path.
+    The returned payload JSON string represents the child nodes and their value.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the JSON string value is being read.
     @param query - QueryFilter class to set query parameters to filter data.
 
     @return - Boolean type status indicates the success of operation.
@@ -699,6 +935,21 @@ public:
   bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &query);
 
   /*
+     Read the JSON string at the defined database path as above
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the JSON string value is being read.
+    @param target - The String object to store JSON string.
+
+    @return - Boolean type status indicates the success of operation.
+
+    If the type of payload returned from server is not json,
+    the target String object's value will be empty.
+
+  */
+  bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &query, String &target);
+
+  /*
     Read the blob (binary data) at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -717,6 +968,22 @@ public:
 
    */
   bool getBlob(FirebaseData &dataObj, const String &path);
+
+  /*
+    Read the blob (binary data) at the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path which the binary data is being read.
+    @param target - Dynamic array of unsigned 8-bit data (i.e. std::vector<uint8_t>) to store value.
+
+    @return - Boolean type status indicates the success of operation.
+
+
+    If the type of payload returned from server is not blob,
+    the target variable value will be empty array.
+
+  */
+  bool getBlob(FirebaseData &dataObj, const String &path, std::vector<uint8_t> &target);
 
   /*
     Download file data in database at defined database path and save to SD card.
@@ -817,6 +1084,45 @@ public:
   void removeStreamCallback(FirebaseData &dataObj);
 
   /*
+    Start the Firbase Error Queues Auto Run Process.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param callback - Callback function that accepts QueueInfo Object as parameter, optional.
+
+    The following functions are available from QueueInfo Object accepted by callback.
+
+    queueInfo.totalQueues(), get the total Error Queues in Error Queue Collection.
+
+    queueInfo.currentQueueID(), get current Error Queue ID that being process.
+
+    queueInfo.isQueueFull(), determine whether Error Queue Collection is full or not.
+
+    queueInfo.dataType(), get string of the Frebase call data type that being process of current Error Queue.
+
+    queueInfo.method(), get string of the Firebase call method that being process of current Error Queue.
+
+    queueInfo.path(), get string of the Firebase call path that being process of current Error Queue.
+
+   */
+  void beginAutoRunErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL);
+
+  /*
+    Stop the Firbase Error Queues Auto Run Process.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+
+  */
+  void endAutoRunErrorQueue(FirebaseData &dataObj);
+
+  /*
+    Clear all Firbase Error Queues in Error Queue collection.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+
+  */
+  void clearErrorQueue(FirebaseData &dataObj);
+
+  /*
     Backup (download) database at defined database path to SD card.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -866,11 +1172,132 @@ public:
    */
   bool sdBegin(void);
 
+  /*
+
+    Set maximum Firebase read/store retry operation (0 - 255) in case of network problems and buffer overflow.
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param num - The maximum retry.
+
+  */
+  void setMaxRetry(FirebaseData &dataObj, uint8_t num);
+
+  /*
+   
+   Set the maximum Firebase Error Queues in collection (0 - 255).
+
+   Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase Error Queues collection.
+
+   @param dataObj - Firebase Data Object to hold data and instances.
+   @param num - The maximum Firebase Error Queues.
+
+  */
+  void setMaxErrorQueue(FirebaseData &dataObj, uint8_t num);
+
+  /*
+   
+   Save Firebase Error Queues as SPIFFS file (save only database store queues).
+
+   Firebase read (get) operation will not be saved.
+
+   @param dataObj - Firebase Data Object to hold data and instances.
+   @param filename - File name to be saved.
+   @param storageType - Type of storage to save file, QueueStorageType::SPIFS or QueueStorageType::SD.
+    
+  */
+  bool saveErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType);
+
+  /*
+   
+   Delete file in Flash (SPIFFS) or SD card.
+
+   @param filename - File name to delete.
+   @param storageType - Type of storage to save file, QueueStorageType::SPIFS or QueueStorageType::SD.
+    
+  */
+  bool deleteStorageFile(const String &filename, uint8_t storageType);
+
+  /*
+   
+   Restore Firebase Error Queues from SPIFFS file.
+
+   @param dataObj - Firebase Data Object to hold data and instances.
+   @param filename - File name to be read and restore queues.
+   @param storageType - Type of storage to read file, QueueStorageType::SPIFS or QueueStorageType::SD.
+    
+  */
+  bool restoreErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType);
+
+  /*
+    Determine number of Firebase Error Queues stored in defined SPIFFS file.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param filename - File name to be read and count for queues.
+    @param storageType - Type of storage to read file, QueueStorageType::SPIFS or QueueStorageType::SD.
+
+    @return Number (0-255) of queues store in defined SPIFFS file.
+
+  */
+  uint8_t errorQueueCount(FirebaseData &dataObj, const String &filename, uint8_t storageType);
+
+  /*
+    Determine number of queues in Firebase Data object Firebase Error Queues collection.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @return Number (0-255) of queues in Firebase Data object queue collection.
+
+  */
+  uint8_t errorQueueCount(FirebaseData &dataObj);
+
+  /*
+    Determine whether the Firebase Error Queues collection was full or not.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+
+    @return Boolean type status indicates whether the  Firebase Error Queues collection was full or not.
+
+  */
+  bool isErrorQueueFull(FirebaseData &dataObj);
+
+  /*
+    Pocess all failed Firebase operation queue items when network is available.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+
+    @param callback - Callback function that accepts QueueInfo parameter.
+  
+  */
+  void processErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL);
+
+  /*
+    Return Firebase Error Queue ID of last Firebase Error.
+
+    Return 0 if there is no Firebase Error from last operation.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    
+    @return Number of Queue ID.
+
+   */
+  uint32_t getErrorQueueID(FirebaseData &dataObj);
+
+  /*
+    Determine whether Firebase Error Queue is currently exsted is Error Queue collection or not.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param errorQueueID - The Firebase Error Queue ID get from getErrorQueueID.
+    
+   @return - Boolean type status indicates the queue existence.
+
+   */
+  bool isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQueueID);
+
   void errorToString(int httpCode, std::string &buf);
 
   friend FirebaseData;
 
 protected:
+  bool buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, uint8_t firebaseDataType, const String &path, const char *buf, bool queue);
+  bool buildRequestFile(FirebaseData &dataObj, uint8_t firebaseMethod, const String &path, const String &fileName, bool queue);
   bool sendRequest(FirebaseData &dataObj, const std::string &path, const uint8_t _method, uint8_t dataType, const std::string &payload);
   bool firebaseConnectStream(FirebaseData &dataObj, const std::string &path);
   bool getServerStreamResponse(FirebaseData &dataObj);
@@ -883,9 +1310,13 @@ protected:
   void resetFirebasedataFlag(FirebaseData &dataObj);
   bool handleTCPNotConnected(FirebaseData &dataObj);
   void forceEndHTTP(FirebaseData &dataObj);
+  bool apConnected();
   int firebaseConnect(FirebaseData &dataObj, const std::string &path, const uint8_t _method, uint8_t dataType, const std::string &payload);
   bool cancelCurrentResponse(FirebaseData &dataObj);
   void setDataType(FirebaseData &dataObj, const std::string &data);
+  bool commError(FirebaseData &dataObj);
+  uint8_t openErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType, uint8_t mode);
+  std::vector<std::string> splitString(int size, const char *str, const char delim);
 
   bool sdTest();
   void createDirs(std::string dirs);
@@ -990,6 +1421,15 @@ public:
 
    */
   float floatData();
+
+  /*
+
+    Return the double data of server returned payload.
+
+    @return double value.
+
+  */
+  double doubleData();
 
   /*
 
@@ -1135,14 +1575,19 @@ public:
   QueryFilter queryFilter;
 
   friend FirebaseESP32;
+  friend QueueManager;
 
 protected:
   StreamEventCallback _dataAvailableCallback = NULL;
   StreamTimeoutCallback _timeoutCallback = NULL;
+  QueueInfoCallback _queueInfoCallback = NULL;
   TaskHandle_t _handle = NULL;
+  TaskHandle_t _q_handle = NULL;
   int _index = -1;
   uint8_t _dataTypeNum = 0;
 
+  bool _firebaseCall = false;
+  bool _streamCall = false;
   bool _isStreamTimeout = false;
   bool _isStream = false;
   bool _streamStop = false;
@@ -1161,6 +1606,9 @@ protected:
   uint8_t _dataType = 0;
   uint8_t _dataType2 = 0;
   uint8_t _connectionStatus = 0;
+  uint32_t _qID = 0;
+  QueueManager _qMan;
+  uint8_t _maxRetry = 0;
 
   uint8_t _r_method = 0;
   uint8_t _r_dataType = 0;
@@ -1176,6 +1624,7 @@ protected:
   std::string _redirectURL = "";
   std::string _firebaseError = "";
   std::string _eventType = "";
+  uint16_t _maxBlobSize = 1024;
 
   std::vector<uint8_t> _blob = std::vector<uint8_t>();
 
@@ -1193,6 +1642,24 @@ protected:
   bool getServerStreamResponse();
   bool getServerResponse();
   std::string getDataType(uint8_t type);
+  std::string getMethod(uint8_t method);
+
+  void addQueue(uint8_t firebaseMethod,
+                uint8_t firebaseDataType,
+                const std::string path,
+                const std::string filename,
+                const std::string payload,
+                bool isQuery,
+                int *intTarget,
+                float *floatTarget,
+                double *doubleTarget,
+                bool *boolTarget,
+                String *stringTarget,
+                std::vector<uint8_t> *blobTarget);
+
+  void clearQueueItem(QueueItem &item);
+
+  void setQuery(QueryFilter &query);
 
   friend FirebaseESP32;
 };
@@ -1206,6 +1673,7 @@ public:
   String streamPath();
   int intData();
   float floatData();
+  double doubleData();
   bool boolData();
   String stringData();
   String jsonData();

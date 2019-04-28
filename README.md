@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Client Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 2.3.9
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.0.0
 
 This client library provides the most reliable operations for read, store, update, delete, backup and restore the database data.
 
@@ -32,6 +32,7 @@ This following devices were tested and work well.
  * Sparkfun ESP32 Thing
  * NodeMCU-32
  * WEMOS LOLIN32
+ * TTGO T8 V1.8
 
  
 
@@ -48,11 +49,11 @@ This following devices were tested and work well.
 
 * Using **Firebase Data object** that holds all data and instances.
 
-* **Read data** at the defined database path using get functions e.g. **getInt**, **getFloat**, **getBool**, **getString**, **getJSON**, **getBlob** and **getFile**.
+* **Read data** at the defined database path using get functions e.g. **getInt**, **getFloat**, **getDouble**, **getBool**, **getString**, **getJSON**, **getBlob** and **getFile**.
 
-* **Store data** at the defined database path using set functions e.g. **setInt**, **setFloat**, **setBool**, **setString**, **setJSON**, **setBlob** and **setFile**.
+* **Store data** at the defined database path using set functions e.g. **setInt**, **setFloat**, **setDouble**, **setBool**, **setString**, **setJSON**, **setBlob** and **setFile**.
 
-* **Append data** to the defined database path using push functions e.g. **pushInt**, **pushFloat**, **pushBool**,  **pushString**, **pushJSON**, **pushBlob** and **pushFile**.
+* **Append data** to the defined database path using push functions e.g. **pushInt**, **pushFloat**, **pushDouble**, **pushBool**,  **pushString**, **pushJSON**, **pushBlob** and **pushFile**.
 
 * **Update data** at the defined database path using **updateNode** and **updateNodeSilent** functions.
 
@@ -60,11 +61,13 @@ This following devices were tested and work well.
 
 * **Read and write database rules** using **getRules** and **setRules** functions.
 
+* **Supports Error Retry and Error Queue to resume all Firebase read/store Error oerations** up to 255 queues. Firebase Error queues can be tracked its status and saved as file for further restore. Data can be resumed from queue operation (get) when global variable is provided. 
+
 * **Quit and release all resources** which belong to Firbase data using **end** function.
 
 * Supports **Data Filtering** using the orderBy, limitToFirst, limitToLast, startAt, endAt, and equalTo query parameters.
 
-* Supports integer, float, boolean, string and JSON string data types.   
+* Supports integer, float, double, boolean, string and JSON string data types.   
 
   For JSON string data type, parsing as an object required external JSON parser library e.g. [**ArduinoJson**](https://github.com/bblanchon/ArduinoJson).
 
@@ -184,6 +187,15 @@ Firebase.begin("yout_project_id.firebaseio.com", "your_Firebase_database_secret"
 
 Firebase.reconnectWiFi(true);
 
+//6. Optional, set number of auto retry when read/store data
+
+ Firebase.setMaxRetry(firebaseData, 3);
+
+//7. Optional, set number of read/store data error can be added to queue collection
+
+Firebase.setMaxErrorQueue(firebaseData, 30);
+
+
 ```
 
 ___
@@ -192,7 +204,7 @@ ___
 ### Read, Store, Update, Delete, Backup and Restore Data
 
 
-**To read the data, use `get<Data Type>` functions i.e. getInt, getFlot, getBool, getString, getJSON, getBlob and getFile.**
+**To read the data, use `get<Data Type>` functions i.e. getInt, getFlot, getDouble, getBool, getString, getJSON, getBlob and getFile.**
 
 
 
@@ -200,13 +212,13 @@ The `get<Data Type>` function returned boolean value for success of operation. T
 
 payload that Firebase server returned back to client. The http status and matching between data type request and response were determined to set the success status.
 
-To read the payload data, one of theses functions can be called i.e. intData, floatData, boolData, stringData, jsonData and blobData.
+To read the payload data, one of theses functions can be called i.e. intData, floatData, doubleData, boolData, stringData, jsonData and blobData.
 
-The data you read from returned payload will tell actual data type stored or existed in database, not the modification version data type e.g. string "1.5" stored in database, can be read only from stringData as it returned from server.
+The data you read from returned payload will tell actual data type stored or existed in database, not the modification version or variant data types e.g. string "1.5" stored in database, can be read only from stringData as it returned from server.
 
-Any attempt to read integer from intData, float from floatData, and JSON from JsonData will return zero and empty string. 
+Any attempt to read integer from intData, float from floatData, double from doubleData and JSON from JsonData will return zero and empty string. 
 
-This allow you to know what exactly type of data stored in database and how to manage it instead of cast all data as string (int -> string or float -> string) or as number. 
+This allow you to know what exactly data type stored in database and how to manage it instead of cast all data as string (int -> string or float -> string) or as number. 
 
 You can call getDataType to determine what type of data returned to be manipulated.
 
@@ -255,7 +267,7 @@ Here is the example usage to read integer value from defined database path "/tes
 
 
 
-**To store the data, use `set<Data Type>` functions i.e. setInt, setFlot, setBool, setString, setJSON, setBlob and setFile.**
+**To store the data, use `set<Data Type>` functions i.e. setInt, setFlot, setDouble, setBool, setString, setJSON, setBlob and setFile.**
 
 
 
@@ -298,7 +310,7 @@ if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt")){
 ```
 
 
-**To append new data to database, `push<Data Type>` should be called e.g. pushInt, pushFloat, pushBool, pushString, pushJSON, pushBlob and pushFile.**
+**To append new data to database, `push<Data Type>` should be called e.g. pushInt, pushFloat, pushDouble, pushBool, pushString, pushJSON, pushBlob and pushFile.**
 
 
 With push operation, server will return payload (key or name of newly appended node) to client.
@@ -349,7 +361,7 @@ If any key provided in JSON data was not existed in database at the path, new ke
 
 Everytime you call updateNode, the payload that exactly the JSON data you sent will return back from server. 
 
-Update database with large JSON will consume as much as double network data. Function updateNodeSilent can reduce the network data usage in this case.
+Update database with large JSON will consume as much as double network data. Function updateNodeSilent can be reduced the network data usage in this case.
 
 Below is the example for database update at "/test" using JSON data.
 
@@ -397,12 +409,11 @@ Firebase.deleteNode(firebaseData, "/test/append");
 
 **Data Filtering via query parameters**
 
-The quey parameters that can set using the QueryFilter class.
+The query parameters that can set using the QueryFilter class.
 
 These parameters are `orderBy`, `limitToFirst`, `limitToLast`, `startAt`, `endAt`, and `equalTo`.
 
-To filter data, parameter `orderBy` should be assigned which you can assign "$key" for filtering all nodes under defined database path
-using their keys, assign "$value" for filtering all nodes under defined database path using their values. 
+To filter data, parameter `orderBy` should be assigned which you can assign "$key" for filtering all nodes under defined database path using their keys, assign "$value" for filtering all nodes under defined database path using their values. 
 
 Assign specific node key or name for filtering the specified child node under defined database path using their key, and assign "$priority" for filtering all nodes under defined database path using their "virtual child" named .priority.
 
@@ -465,30 +476,29 @@ query.clear();
 ___
 
 
-### Data changes monitoring (Stream)
+### Data Changes Monitoring (Stream)
 
 
 
-**The Firebase Realtime Database update or change event was sent to client using the HTTP stream connection. The connection was keep alive as long as no network communication interruption.**
+**The Firebase Realtime Database update or change event was sent to client using the HTTP stream connection. The connection was keep alive as long as no network interruption.**
 
 The function to handle the update and change event monitoring are beginStream, setStreamCallback and readStream.
 
-To subscribe, monitor or follow the data change on defined database path, the function beginStream must be called first.
+To subscribe, monitor or follow the data changes on defined database path, the function beginStream must be called first.
 
-To handle the data that will be received when database at that path updates or changes, the function readStream should be called in loop,
-otherwise callback function is required and assigned using the function setStreamCallback.
+To handle the data that will be received when database at that path updates or changes, the function readStream should be called in loop, otherwise callback function is required and assigned using the function setStreamCallback.
 
-When no callback is assigned, the data that return from stream should be routinely veriy inside the loop function. To determine the stream data is available, function streamAvailable should be called. 
+When no callback function was assigned, the data that return from stream should be routinely read inside the loop function. To determine the stream data is available, function streamAvailable should be called. 
 
-The function streamAvailable returned true when stream data was received in buffer. 
+The function streamAvailable returned true when stream data was received in received buffer. 
 
-Then stream data can be accessed directly by calling intData, floatData, stringData, jsonData and blobData.
+Then stream data can be accessed directly by calling intData, floatData, doubleData, boolData, stringData, jsonData and blobData.
 
 If stream callback function was assigned, it should accept StreamData as parameter which is a class that contains all data from stream, included streamPath, dataPath, dataType and value changes at defined streaming path.
 
 To end the stream, call endStream. 
 
-Here is the example use of stream to handle the changes or updates at "/test/data".
+Here is the example use of stream to handle the data changes or data updates at "/test/data".
 
 ```C++
 
@@ -524,7 +534,11 @@ void streamCallback(StreamData data)
   if (data.dataType() == "int")
     Serial.println(data.intData());
   else if (data.dataType() == "float")
-    Serial.println(data.floatData());
+    Serial.println(data.floatData(), 5);
+  else if (data.dataType() == "double")
+    Serial.println(data.doubleData(), 9);
+  else if (data.dataType() == "boolean")
+    Serial.println(data.boolData() == 1 ? "true" : "false");
   else if (data.dataType() == "string")
     Serial.println(data.stringData());
   else if (data.dataType() == "json")
@@ -554,8 +568,7 @@ ___
 
 **The backup and restore are very easy, no need to specify the filename, just defined the database path to backup or restore and the folder or path on SD card to save the backup data.**
 
-The downloaded backup file is actually JSON text file with .json extension. The file name is constructed from the defined database path,
-e.g. "/root.json" for "/" or "/mydb.backup.data.json" for "/mydb/backup/data".
+The downloaded backup file is actually JSON text file with .json extension. The file name is constructed from the defined database path, e.g. "/root.json" for "/" or "/mydb.backup.data.json" for "/mydb/backup/data".
 
 The database restoration returned completed status only when Firebase server completely update the data. 
 
@@ -597,6 +610,178 @@ Here is the usage example to back up all database at root path "/" and restore i
 ```
 
 
+
+___
+
+
+### Error Retry and Queues
+
+
+
+
+**To set number of trial when read or store database failed, call setMaxRetry function**
+
+Any Firebase read or store data was failed due to network problems, it will retry for the times that defined by setMaxRetry function.
+
+```C++
+//set maximum trial to 3
+ Firebase.setMaxRetry(firebaseData, 3);
+
+```
+
+
+**To set maximum Error Queues that added to Error Queue collection, call setMaxErrorQueue function**
+
+After trial was reached the max retry in setMaxRetry, that error operation (due to netork problems) will be added to Error Queue collection. The maximum queues that can be stored in Error Queue collection will be limited by setMaxErrorQueue.
+
+The queue collection status can be checked by isErrorQueueFull function.
+
+
+```C++
+
+ //set maximum queues to 10
+ Firebase.setMaxErrorQueue(firebaseData, 10);
+
+ //determine whether Error Queue collection is full or not
+ Firebase.isErrorQueueFull(firebaseData);
+
+```
+
+**To run Error Queues**
+
+This library provides two ways to run or process Error Queues. First is beginAutoRunErrorQueue function and another is processErrorQueue function.
+
+The function beginAutoRunErrorQueue will run or process queues automatically and can be call once. The function processErrorQueue will run or process queues manually and recommended to use it in loop().
+
+With beginAutoRunErrorQueue function, you can assigned callback function that accept QueueInfo object as parameter.
+
+The QueueInfo object contains all information about being processed queue, number of remaining queues and Error Queue collection status.
+
+You can track the Error Queues manually or through QueueInfo assigned with beginAutoRunErrorQueue callback function.
+
+To track Error Queues manually, when Firebase operation was failed to read/store data, call getErrorQueueID function i.e. Firebase.getErrorQueueID(firebaseData) to get the unsigned integer presents the id of queue, use this number to check whether this queue id is still existed in Error Queue collection or not. 
+
+Use isErrorQueueExisted i.e. Firebase.isErrorQueueExisted(firebaseData, SOME_ID) to check the existence of queue in Error Queue collection.
+
+If the queue id is not existed, that queue is already done.
+
+Below is automatic run Error Queues and track the status by callback function.
+
+
+```C++
+
+//In setup()
+
+//Set the maximum Firebase Error Queues in collection (0 - 255).
+//Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase Error Queues ollection.
+Firebase.setMaxErrorQueue(firebaseData, 10);
+
+//Begin to run Error Queues in Error Queue collection  
+Firebase.beginAutoRunErrorQueue(firebaseData, callback);
+
+
+//Use to stop the auto run queues
+//Firebase.endAutoRunErrorQueue(firebaseData);
+
+
+void errorQueueCallback (QueueInfo queueinfo){
+
+  if (queueinfo.isQueueFull())
+  {
+    Serial.println("Queue is full");
+  }
+
+  Serial.print("Remaining queues: ");
+  Serial.println(queueinfo.totalQueues());
+
+  Serial.print("Being processed queue ID: ");
+  Serial.println(queueinfo.currentQueueID());  
+
+  Serial.print("Data type:");
+  Serial.println(queueinfo.dataType()); 
+
+  Serial.print("Method: ");
+  Serial.println(queueinfo.method());
+
+  Serial.print("Path: ");
+  Serial.println(queueinfo.path());
+
+  Serial.println();
+}
+
+
+
+```
+
+Below is to run Error Queues and track the status manually.
+
+
+```C++
+
+//In setup()
+
+//Set the maximum Firebase Error Queues in collection (0 - 255).
+//Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase Error Queues ollection.
+Firebase.setMaxErrorQueue(firebaseData, 10);
+
+
+
+//All of the following are in loop()
+
+Firebase.processErrorQueue(firebaseData);
+
+//Detrnine the queue status
+if (Firebase.isErrorQueueFull(firebaseData))
+{
+  Serial.println("Queue is full");
+}
+
+//Remaining Error Queues in Error Queue collection
+Serial.print("Remaining queues: ");
+Serial.println(Firebase.errorQueueCount(firebaseData));
+
+//Assumed that queueID is unsigned integer array of queue that added to Error Queue collection when error and use Firebase.getErrorQueueID to get this Error Queue id.
+
+for (uint8_t i = 0; i < LENGTH_OF_QUEUEID_ARRAY; i++)
+{
+  Serial.print("Error Queue ");
+  Serial.print(queueID[i]);
+  if (Firebase.isErrorQueueExisted(firebaseData, queueID[i]))
+    Serial.println(" is queuing");
+  else
+    Serial.println(" is done");
+}
+Serial.println();
+
+
+```
+
+
+**To save and restore Error Queues**
+
+**To save Error Queue, call saveErrorQueue and to restore Error Queues, call restoreErrorQueue**
+
+Error Queus can be save as file in SD card or Flash memory with saveErrorQueue function which two types of storage can be asigned, QueueStorageType::SPIFFS and QueueStorageType::SD.
+
+Error Queues store as file can be restored to Error Queue collection with restoreErrorQueue function which two types of storage can be asigned as defined in saveErrorQueue function.
+
+Only set/push/update queues can be saved to file for further resume due to it not need destination variable to store data as get queue.
+
+Below is example for restore and save Error Queues in /test.txt file.
+
+```C++
+//To restore Error Queues
+
+if (Firebase.errorQueueCount(firebaseData, "/test.txt", QueueStorageType::SPIFFS) > 0)
+{
+    Firebase.restoreErrorQueue(firebaseData, "/test.txt", QueueStorageType::SPIFFS);
+    Firebase.deleteStorageFile("/test.txt", QueueStorageType::SPIFFS);
+}
+
+//To save Error Queues to file
+Firebase.saveErrorQueue(firebaseData, "/test.txt", QueueStorageType::SPIFFS);
+
+```
 
 ___
 
@@ -789,6 +974,32 @@ bool pushFloat(FirebaseData &dataObj, const String &path, float floatValue);
 
 
 
+
+**Append new double value (8 bytes) to the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Target database path which float value will be appended.
+
+param *`doubleValue`* - The appended value.
+
+return *`Boolean`* type status indicates the success of operation.
+
+The new appended node's key will be stored in Firebase Data object,
+which its value can be accessed via function [FirebaseData object].pushName().
+
+```C++
+bool pushDouble(FirebaseData &dataObj, const String &path, double doubleValue);
+```
+
+
+
+
+
+
+
+
+
 **Append new Boolean value to the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -951,6 +1162,33 @@ payload returned from server.
 ```C++
 bool setFloat(FirebaseData &dataObj, const String &path, float floatValue);
 ```
+
+
+
+
+
+
+
+**Set double data at the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Target database path which float data will be set.
+
+param *`doubleValue`* - Double value to set.
+
+return *`Boolean`* type status indicates the success of operation.
+
+Call [FirebaseData object].dataType to determine what type of data that successfully
+stores in database.
+
+Call [FirebaseData object].doubleData will return the double value of
+payload returned from server.
+
+```C++
+bool setDouble(FirebaseData &dataObj, const String &path, double doubleValue);
+```
+
 
 
 
@@ -1167,6 +1405,28 @@ bool getInt(FirebaseData &dataObj, const String &path);
 
 
 
+**Read the integer value at the defined database path**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the integer value is being read.
+
+param *`target`* - The integer type variable to store value.
+
+return *`Boolean`* type status indicates the success of operation.
+
+If the type of payload returned from server is not integer, float and double, 
+the target variable's value will be zero (0).
+
+```C++
+bool getInt(FirebaseData &dataObj, const String &path, int &target);
+
+
+
+
+
+
+
 **Read the float value at the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -1186,6 +1446,75 @@ the function [FirebaseData object].intData will return zero (0).
 
 ```C++
 bool getFloat(FirebaseData &dataObj, const String &path);
+```
+
+
+
+
+
+**Read the float value at the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the float value is being read.
+
+param *`target`* - The float type variable to store value.
+
+return *`Boolean`* type status indicates the success of operation.
+
+If the type of payload returned from server is not integer, float and double, 
+the target variable's value will be zero (0).
+
+```C++
+bool getFloat(FirebaseData &dataObj, const String &path, float &target);
+```
+
+
+
+
+
+**Read the double value at the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the float value is being rea.
+
+return *`Boolean`* type status indicates the success of operation.
+
+Call [FirebaseData object].dataType to determine what type of data that successfully
+stores in database. 
+    
+Call [FirebaseData object].doubleData will return the double value of
+payload returned from server.
+
+If the payload returned from server is not integer, float and double, 
+the function [FirebaseData object].doubleData will return zero (0).
+
+```C++
+bool getDouble(FirebaseData &dataObj, const String &path);
+```
+
+
+
+
+
+
+
+**Read the float value at the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the float value is being read.
+
+param *`target`* - The double type variable to store value.
+
+return *`Boolean`* type status indicates the success of operation.
+
+If the type of payload returned from server is not integer, float and double, 
+the target variable's value will be zero (0).
+
+```C++
+bool getDouble(FirebaseData &dataObj, const String &path, double &target);
 ```
 
 
@@ -1220,6 +1549,28 @@ bool getBool(FirebaseData &dataObj, const String &path);
 
 
 
+**Read the Boolean value at the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the Boolean value is being read.
+
+param *`target`* - The boolean type variable to store value.
+
+return *`Boolean`* type status indicates the success of operation.
+
+If the type of payload returned from server is not Boolean, 
+the target variable's value will be false.
+
+```C++
+bool getBool(FirebaseData &dataObj, const String &path, bool &target);
+```
+
+
+
+
+
+
 
 **Read the string or text at the defined database path.**
 
@@ -1247,6 +1598,26 @@ bool getString(FirebaseData &dataObj, const String &path);
 
 
 
+**Read the string or text at the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the string value is being read.
+
+param *`target`* - The String object to store value.
+
+return *`Boolean`* type status indicates the success of operation.
+
+If the type of payload returned from server is not string,
+the target String object's value will be empty.
+
+```C++
+bool getString(FirebaseData &dataObj, const String &path, String &target);
+```
+
+
+
+
 
 **Read the JSON string at the defined database path.**
 
@@ -1254,7 +1625,7 @@ The returned payload JSON string represents the child nodes and their value.
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
 
-param *`path`* - Database path which the string value is being read.
+param *`path`* - Database path which the JSON string value is being read.
 
 return *`Boolean`* type status indicates the success of operation.
 
@@ -1278,13 +1649,38 @@ bool getJSON(FirebaseData &dataObj, const String &path);
 
 
 
+**Read the JSON string at the defined database path.**
+
+The returned payload JSON string represents the child nodes and their value.
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the JSON string value is being read.
+
+param *`target`* - The String object to store JSON string.
+
+return *`Boolean`* type status indicates the success of operation.
+
+If the type of payload returned from server is not string,
+the target String object's value will be empty.
+
+```C++
+bool getJSON(FirebaseData &dataObj, const String &path, String &target);
+```
+
+
+
+
+
+
+
 **Read the JSON string with data filtering at the defined database path.**
 
 The returned payload JSON string represents the child nodes and their value.
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
 
-param *`path`* - Database path which the string value is being read.
+param *`path`* - Database path which the JSON string value is being read.
 
 param *`query`* - QueryFilter class to set query parameters to filter data.
 
@@ -1335,6 +1731,31 @@ bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &quer);
 
 
 
+**Read the JSON string at the defined database path as above**
+
+The returned payload JSON string represents the child nodes and their value.
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the JSON string value is being read.
+
+param *`target`* - The String object to store JSON string.
+
+return *`Boolean`* type status indicates the success of operation.
+
+If the type of payload returned from server is not json,
+the target String object's value will be empty.
+
+```C++
+bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &query, String &target);
+```
+
+
+
+
+
+
+
 **Read the blob (binary data) at the defined database path.**
 
 param *`dataObj`* - Firebase Data Object to hold data and instances.
@@ -1354,6 +1775,28 @@ the function [FirebaseData object].blobData will return empty array.
 
 ```C++
 bool getBlob(FirebaseData &dataObj, const String &path);
+```
+
+
+
+
+
+
+**Read the blob (binary data) at the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Database path which the binary data is being read.
+
+param *`target`* - Dynamic array of unsigned 8-bit data (i.e. std::vector<uint8_t>) to store value.
+
+return *`Boolean`* type status indicates the success of operation.
+
+If the type of payload returned from server is not blob,
+the target variable value will be empty array.
+
+```C++
+bool getBlob(FirebaseData &dataObj, const String &path, std::vector<uint8_t> &target);
 ```
 
 
@@ -1509,6 +1952,59 @@ void removeStreamCallback(FirebaseData &dataObj);
 
 
 
+**Start the Firbase Error Queues Auto Run Process.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`callback`* - Callback function that accepts QueueInfo Object as parameter, optional.
+
+The following functions are available from QueueInfo Object accepted by callback.
+
+queueInfo.totalQueues(), get the total Error Queues in Error Queue Collection.
+
+queueInfo.currentQueueID(), get current Error Queue ID that being process.
+
+queueInfo.isQueueFull(), determine whether Error Queue Collection is full or not.
+
+queueInfo.dataType(), get string of the Frebase call data type that being process of current Error Queue.
+
+queueInfo.method(), get string of the Firebase call method that being process of current Error Queue.
+
+queueInfo.path(), get string of the Firebase call path that being process of current Error Queue.
+
+
+```C++
+void beginAutoRunErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL);
+```
+
+
+
+
+
+**Stop the Firbase Error Queues Auto Run Process.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+
+```C++
+void endAutoRunErrorQueue(FirebaseData &dataObj);
+```
+
+
+
+
+**Clear all Firbase Error Queues in Error Queue collection.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+
+```C++
+void clearErrorQueue(FirebaseData &dataObj);
+```
+
+
+
+
 
 **Backup (download) database at defined database path to SD card.**
 
@@ -1586,6 +2082,181 @@ void sdBegin(void);
 
 
 
+**Set maximum Firebase read/store retry operation (0 - 255) in case of network problems and buffer overflow.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`num`* - The maximum retry.
+
+```C++
+void setMaxRetry(FirebaseData &dataObj, uint8_t num);
+```
+
+
+
+
+
+**Set the maximum Firebase Error Queues in collection (0 - 255).**
+
+Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase Error Queues collection.
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`num`* - The maximum Firebase Error Queues.
+
+```C++
+void setMaxErrorQueue(FirebaseData &dataObj, uint8_t num);
+```
+
+
+
+
+   
+**Save Firebase Error Queues as SPIFFS file (save only database store queues).**
+
+Firebase read (get) operation will not be saved.
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`filename`* - File name to be saved.
+
+param *`storageType`* - Type of storage to save file, QueueStorageType::SPIFS or QueueStorageType::SD.
+    
+```C++
+bool saveErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType);
+```
+   
+
+
+
+
+
+**Delete file in Flash (SPIFFS) or SD card.**
+
+param *`filename`* - File name to delete.
+
+param *`storageType`* - Type of storage to save file, QueueStorageType::SPIFS or QueueStorageType::SD.
+    
+```C++
+bool deleteStorageFile(const String &filename, uint8_t storageType);
+```
+
+
+
+
+   
+**Restore Firebase Error Queues from SPIFFS file.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`filename`* - File name to be read and restore queues.
+
+param *`storageType`* - Type of storage to read file, QueueStorageType::SPIFS or QueueStorageType::SD.
+    
+```C++
+bool restoreErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType);
+```
+
+
+
+
+
+**Determine number of Firebase Error Queues stored in defined SPIFFS file.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`filename`* - File name to be read and count for queues.
+
+param *`storageType`* - Type of storage to read file, QueueStorageType::SPIFS or QueueStorageType::SD.
+
+
+return *`Number`* (0-255) of queues store in defined SPIFFS file.
+
+```C++
+uint8_t errorQueueCount(FirebaseData &dataObj, const String &filename, uint8_t storageType);
+```
+
+
+
+
+
+
+**Determine number of queues in Firebase Data object Firebase Error Queues collection.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+return *`Number`* (0-255) of queues in Firebase Data object queue collection.
+
+```C++
+uint8_t errorQueueCount(FirebaseData &dataObj);
+```
+
+
+
+
+
+
+**Determine whether the Firebase Error Queues collection was full or not.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+return *`Boolean`* type status indicates whether the  Firebase Error Queues collection was full or not.
+
+```C++
+bool isErrorQueueFull(FirebaseData &dataObj);
+```
+
+
+
+
+
+
+**Pocess all failed Firebase operation queue items when network is available.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`callback`* - Callback function that accepts QueueInfo parameter.
+  
+```C++
+void processErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL);
+```
+
+
+
+
+
+
+**Return Firebase Error Queue ID of last Firebase Error.**
+
+Return 0 if there is no Firebase Error from last operation.
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+    
+return *`Number`* of Queue ID.
+
+```C++
+uint32_t getErrorQueueID(FirebaseData &dataObj);
+```
+
+
+
+
+**Determine whether Firebase Error Queue is currently exsted is Error Queue collection or not.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`errorQueueID`* - The Firebase Error Queue ID get from getErrorQueueID.
+    
+return - *`Boolean type`* status indicates the queue existence.
+
+```C++
+bool isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQueueID);
+```
+
+
+
+
+
 ### Firebase Data object functions
 
 **Pause/Unpause WiFiClient from all Firebase operations.**
@@ -1606,7 +2277,7 @@ bool pauseFirebase(bool pause);
 
 **Determine the data type of payload returned from server.**
 
-return *The one of these data type e.g. integer, float, string, json and blob.*
+return *`The one of these data type e.g. integer, float, string, json and blob.`*
 
 ```C++
 String dataType();
@@ -1619,7 +2290,7 @@ String dataType();
 
 **Determine the event type of stream.**
 
-return The one of these event type String e.g. put, patch, cancel, and auth_revoked.
+return *`The one of these event type String e.g. put, patch, cancel, and auth_revoked.`*
 
 The event type "put" indicated that data at event path relative to stream path was completely changed. Event path can be determined from dataPath().
 
@@ -1641,7 +2312,7 @@ String eventType();
 
 **Determine the current stream path.**
 
-return *The database streaming path.*
+return *`The database streaming path.`*
 
 ```C++
 String streamPath();
@@ -1655,7 +2326,7 @@ String streamPath();
 
 **Determine the current data path.**
 
-return *The database path which belong to server' s returned payload.*
+return *`The database path which belong to server' s returned payload.`*
 
 The database path returned from this function in case of stream, also changed up on the child or parent's stream
 value changes.
@@ -1672,7 +2343,7 @@ String dataPath();
 
 **Determine the error reason String from process.**
 
-return *The error description string (String object).*
+return *`The error description string (String object).`*
 
 ```C++
 String errorReason();
@@ -1686,7 +2357,7 @@ String errorReason();
 
 **Return the ineger data of server returned payload.**
 
-return *Integer value.*
+return *`Integer value.`*
 
 ```C++
 int intData();
@@ -1700,7 +2371,7 @@ int intData();
 
 **Return the float data of server returned payload.**
 
-return *Float value.*
+return *`Float value.`*
 
 ```C++
 float floatData();
@@ -1710,9 +2381,21 @@ float floatData();
 
 
 
+**Return the double data of server returned payload.**
+
+return *`Double value.`*
+
+```C++
+float doubleData();
+```
+
+
+
+
+
 **Return the Boolean data of server returned payload.**
 
-return *Boolean value.*
+return *`Boolean value.`*
 
 ```C++
 float boolData();
@@ -1725,7 +2408,7 @@ float boolData();
 
 **Return the String data of server returned payload.**
 
-return *String (String object).*
+return *`String (String object).`*
 
 ```C++
 String stringData();
@@ -1739,7 +2422,7 @@ String stringData();
 
 **Return the JSON String data of server returned payload.**
 
-return *String (String object).*
+return *`String (String object).`*
 
 ```C++
 String jsonData();
@@ -1753,7 +2436,7 @@ String jsonData();
 
 **Return the blob data (uint8_t) array of server returned payload.**
 
-return *Dynamic array* of 8-bit unsigned integer i.e. `std::vector<uint8_t>`.
+return *`Dynamic array`* of 8-bit unsigned integer i.e. `std::vector<uint8_t>`.
 
 ```C++
 std::vector<uint8_t> blobData();
@@ -1923,7 +2606,7 @@ void clear();
 
 **Determine the error description for file transfering (pushFile, setFile, backup and restore).**
 
-return *Error description string* (String object).
+return *`Error description string* (String object).`*
 
 ```C++
 String fileTransferError();
@@ -1937,7 +2620,7 @@ String fileTransferError();
 
 **Return the server's payload data.**
 
-return *Payload string* (String object).
+return *`Payload string* (String object).`*
 
 ```C++
 String payload();
@@ -1947,13 +2630,26 @@ String payload();
 
 
 
+## License
+
+The MIT License (MIT)
+Copyright (c) 2019 K. Suwatchai (Mobizt)
 
 
-## To do
+Permission is hereby granted, free of charge, to any person returning a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-* Add support to upload/download backup data to/from Google cloud storage (in the Firebase projectID Bucket).
-
-* Add support to Cloud messaging
-
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 

@@ -74,6 +74,11 @@ void setup()
 void loop()
 {
 
+  //This example uses the same Firebase Data object to read/store data (get, set, update, push and delete) and stream.
+  //This causes some delay (for start new SSL connection) for swiching between read/store and stream operation.
+  //For no delay, see Different_objects_stream.ino example which uses different Firebase Data object for read/store and stream data.
+
+
   if (millis() - sendDataPrevMillis > 15000)
   {
     sendDataPrevMillis = millis();
@@ -91,7 +96,9 @@ void loop()
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
       else if (firebaseData.dataType() == "float")
-        Serial.println(firebaseData.floatData());
+        Serial.println(firebaseData.floatData(), 5);
+      else if (firebaseData.dataType() == "double")
+        Serial.println(firebaseData.doubleData(), 9);
       else if (firebaseData.dataType() == "boolean")
         Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
       else if (firebaseData.dataType() == "string")
@@ -137,7 +144,9 @@ void loop()
     if (firebaseData.dataType() == "int")
       Serial.println(firebaseData.intData());
     else if (firebaseData.dataType() == "float")
-      Serial.println(firebaseData.floatData());
+      Serial.println(firebaseData.floatData(), 5);
+    else if (firebaseData.dataType() == "double")
+      Serial.println(firebaseData.doubleData(), 9);
     else if (firebaseData.dataType() == "boolean")
       Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
     else if (firebaseData.dataType() == "string")

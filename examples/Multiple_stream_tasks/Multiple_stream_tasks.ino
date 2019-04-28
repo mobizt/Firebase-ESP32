@@ -14,6 +14,13 @@
 
 //Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
+/*
+
+THIS EXAMPLE IS OBSOLETED AND NOT RECOMMENDED TO USE SINCE FIREBASE-ESP32 VERSION 3.0.0
+DEU TO UNHANDLED TASKS AND NOT COMPATTIBLE WITH FIREBASE ERROR QUEUES.
+
+*/
+
 #include <WiFi.h>
 #include "FirebaseESP32.h"
 
@@ -103,6 +110,10 @@ void setup()
 void loop()
 {
 
+  //This example uses the same Firebase Data object to read/store data (get, set, update, push and delete) and stream.
+  //This causes some delay (for start new SSL connection) for swiching between read/store and stream operation.
+  //For no delay, see Different_objects_stream.ino example which uses different Firebase Data object for read/store and stream data.
+
   if (millis() - sendPrevMillis > 30000)
   {
     sendPrevMillis = millis();
@@ -127,7 +138,9 @@ void loop()
         if (firebaseData1.dataType() == "int")
           Serial.println(firebaseData1.intData());
         else if (firebaseData1.dataType() == "float")
-          Serial.println(firebaseData1.floatData());
+          Serial.println(firebaseData1.floatData(), 5);
+        else if (firebaseData1.dataType() == "double")
+          Serial.println(firebaseData1.doubleData(), 9);
         else if (firebaseData1.dataType() == "boolean")
           Serial.println(firebaseData1.boolData() == 1 ? "true" : "false");
         else if (firebaseData1.dataType() == "string")
@@ -157,7 +170,9 @@ void loop()
         if (firebaseData2.dataType() == "int")
           Serial.println(firebaseData2.intData());
         else if (firebaseData2.dataType() == "float")
-          Serial.println(firebaseData2.floatData());
+          Serial.println(firebaseData2.floatData(), 5);
+        else if (firebaseData2.dataType() == "double")
+          Serial.println(firebaseData2.doubleData(), 9);
         else if (firebaseData2.dataType() == "boolean")
           Serial.println(firebaseData2.boolData() == 1 ? "true" : "false");
         else if (firebaseData2.dataType() == "string")
@@ -210,7 +225,9 @@ void runTask()
         if (firebaseData1.dataType() == "int")
           Serial.println(firebaseData1.intData());
         else if (firebaseData1.dataType() == "float")
-          Serial.println(firebaseData1.floatData());
+          Serial.println(firebaseData1.floatData(), 5);
+        else if (firebaseData1.dataType() == "double")
+          Serial.println(firebaseData1.doubleData(), 9);
         else if (firebaseData1.dataType() == "boolean")
           Serial.println(firebaseData1.boolData() == 1 ? "true" : "false");
         else if (firebaseData1.dataType() == "string")
@@ -256,8 +273,10 @@ void runTask()
         Serial.print(">> VALUE: ");
         if (firebaseData2.dataType() == "int")
           Serial.println(firebaseData2.intData());
-        else if (firebaseData2.dataType() == "flaot")
-          Serial.println(firebaseData2.floatData());
+        else if (firebaseData2.dataType() == "float")
+          Serial.println(firebaseData2.floatData(), 5);
+        else if (firebaseData2.dataType() == "double")
+          Serial.println(firebaseData2.doubleData(), 9);
         else if (firebaseData2.dataType() == "boolean")
           Serial.println(firebaseData2.boolData() == 1 ? "true" : "false");
         else if (firebaseData2.dataType() == "string")

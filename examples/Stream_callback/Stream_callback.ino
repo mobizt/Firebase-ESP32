@@ -50,7 +50,9 @@ void streamCallback1(StreamData data)
   if (data.dataType() == "int")
     Serial.println(data.intData());
   else if (data.dataType() == "float")
-    Serial.println(data.floatData());
+    Serial.println(data.floatData(), 5);
+  else if (data.dataType() == "double")
+    Serial.println(data.doubleData(), 9);
   else if (data.dataType() == "boolean")
     Serial.println(data.boolData() == 1 ? "true" : "false");
   else if (data.dataType() == "string")
@@ -86,7 +88,9 @@ void streamCallback2(StreamData data)
   if (data.dataType() == "int")
     Serial.println(data.intData());
   else if (data.dataType() == "float")
-    Serial.println(data.floatData());
+    Serial.println(data.floatData(), 5);
+  else if (data.dataType() == "double")
+    Serial.println(data.doubleData(), 9);
   else if (data.dataType() == "boolean")
     Serial.println(data.boolData() == 1 ? "true" : "false");
   else if (data.dataType() == "string")
@@ -176,6 +180,11 @@ void setup()
 void loop()
 {
 
+  //This example uses the same Firebase Data object to read/store data (get, set, update, push and delete) and stream.
+  //This causes some delay (for start new SSL connection) for swiching between read/store and stream operation.
+  //For no delay, see Different_objects_stream.ino example which uses different Firebase Data object for read/store and stream data.
+
+
   if (millis() - sendDataPrevMillis1 > 28000)
   {
     sendDataPrevMillis1 = millis();
@@ -194,9 +203,11 @@ void loop()
       if (firebaseData1.dataType() == "int")
         Serial.println(firebaseData1.intData());
       else if (firebaseData1.dataType() == "float")
-        Serial.println(firebaseData1.floatData());
-      else if (firebaseData1.dataType() == "bool")
-        Serial.println(firebaseData1.boolData());
+        Serial.println(firebaseData1.floatData(), 5);
+      else if (firebaseData1.dataType() == "double")
+        Serial.println(firebaseData1.doubleData(), 9);
+      else if (firebaseData1.dataType() == "boolean")
+        Serial.println(firebaseData1.boolData() == 1 ? "true" : "false");
       else if (firebaseData1.dataType() == "string")
         Serial.println(firebaseData1.stringData());
       else if (firebaseData1.dataType() == "json")
@@ -232,7 +243,9 @@ void loop()
       if (firebaseData2.dataType() == "int")
         Serial.println(firebaseData2.intData());
       else if (firebaseData2.dataType() == "float")
-        Serial.println(firebaseData2.floatData());
+        Serial.println(firebaseData2.floatData(), 5);
+      else if (firebaseData2.dataType() == "double")
+        Serial.println(firebaseData2.doubleData(), 9);
       else if (firebaseData2.dataType() == "boolean")
         Serial.println(firebaseData2.boolData() == 1 ? "true" : "false");
       else if (firebaseData2.dataType() == "string")
