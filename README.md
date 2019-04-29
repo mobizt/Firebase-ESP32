@@ -1424,7 +1424,7 @@ the target variable's value will be zero (0).
 
 ```C++
 bool getInt(FirebaseData &dataObj, const String &path, int &target);
-
+```
 
 
 
