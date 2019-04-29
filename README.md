@@ -14,6 +14,10 @@ This library supports all ESP32 MCU based modules. For ESP8266 please try [ESP82
 
 For Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000 and Arduino UNO WiFi Rev.2, please try [Firebase Arduino Library for ARM/AVR WIFI Dev Boards based on WiFiNINA](https://github.com/mobizt/Firebase-Arduino-WiFiNINA)
 
+
+
+For Arduino WiFi Shield 101 and Arduino MKR1000 WIFI, please try [Firebase Arduino Library for ARM/AVR WIFI Dev Boards based on WiFi101](https://github.com/mobizt/Firebase-Arduino-WiFi101)
+
 For Arduino MKR1000 WIFI will be supported soon.
 
 
@@ -2633,6 +2637,7 @@ String payload();
 ## License
 
 The MIT License (MIT)
+
 Copyright (c) 2019 K. Suwatchai (Mobizt)
 
 
