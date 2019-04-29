@@ -2057,7 +2057,7 @@ param *`sck`* -SPI Clock pin.
 
 param *`miso`* - SPI MISO pin.
 
-param *`m0si`* - SPI MOSI pin.
+param *`mosi`* - SPI MOSI pin.
 
 param *`ss`* - SPI Chip/Slave Select pin.
 
