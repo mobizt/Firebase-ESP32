@@ -1301,7 +1301,7 @@ protected:
 
   void buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t _method, const std::string &path, const std::string &auth, int payloadLength, std::string &request);
   void resetFirebasedataFlag(FirebaseData &dataObj);
-  bool handleTCPNotConnected(FirebaseData &dataObj);
+  bool handleNetNotConnected(FirebaseData &dataObj);
   void forceEndHTTP(FirebaseData &dataObj);
   bool apConnected();
   int firebaseConnect(FirebaseData &dataObj, const std::string &path, const uint8_t _method, uint8_t dataType, const std::string &payload);
