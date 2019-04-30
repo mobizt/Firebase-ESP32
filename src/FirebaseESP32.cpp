@@ -1,19 +1,12 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.0
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.1
  * 
- * April 28, 2019
+ * April 30, 2019
  * 
  * Feature Added:
- * - Add retry operation
- * - Add queue operation
- * - Add double data type
- * - Update examples
+ * - Add keywords
  * 
  * Feature Fixed:
- * - Prevent crash due to corrupted Heap 
- *   in various simultaneously asynchronous 
- *   connections from multiple Firebase Data objects 
- * - Reliability 
  *  
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -4424,12 +4417,12 @@ String QueueInfo::dataType()
   return _dataType.c_str();
 }
 
-String QueueInfo::method()
+String QueueInfo::firebaseMethod()
 {
   return _method.c_str();
 }
 
-String QueueInfo::path()
+String QueueInfo::dataPath()
 {
   return _path.c_str();
 }
