@@ -4,7 +4,7 @@
  * May 1, 2019
  * 
  * Feature Added:
- * 
+ * - examples
  * 
  * Feature Fixed:
  * - readStream bugs
@@ -2287,6 +2287,9 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
 
       res = getServerResponse(dataObj);
 
+      if (!dataObj._httpConnected)
+        dataObj._httpCode = HTTPC_ERROR_NOT_CONNECTED;
+
       dataObj._streamCall = false;
 
       return res;
@@ -2329,6 +2332,9 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
     bool res = false;
 
     res = getServerResponse(dataObj);
+
+    if (!dataObj._httpConnected)
+        dataObj._httpCode = HTTPC_ERROR_NOT_CONNECTED;
 
     dataObj._streamCall = false;
 

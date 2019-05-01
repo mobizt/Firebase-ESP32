@@ -4,7 +4,7 @@
  * May 1, 2019
  * 
  * Feature Added:
- * 
+ * - examples
  * 
  * Feature Fixed:
  * - readStream bugs
