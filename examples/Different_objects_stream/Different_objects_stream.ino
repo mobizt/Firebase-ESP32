@@ -9,12 +9,10 @@
  *
 */
 
-
-//This example shows how to use different Firebase Data objects to handle to same streaming path, one for stream connection (database data changes monitoring) and 
+//This example shows how to use different Firebase Data objects to handle to same streaming path, one for stream connection (database data changes monitoring) and
 //other for store, read, update database operation.
 
 //Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
-
 
 #include <WiFi.h>
 #include "FirebaseESP32.h"
@@ -23,7 +21,6 @@
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 #define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com" //Do not include https:// in FIREBASE_HOST
 #define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
-
 
 //Define Firebase Data objects
 FirebaseData firebaseData1;
@@ -36,6 +33,16 @@ uint16_t count1;
 String json;
 
 String path = "";
+
+void streamTimeoutCallback(bool timeout)
+{
+  if (timeout)
+  {
+    Serial.println();
+    Serial.println("Stream Data 1 timeout, resume streaming...");
+    Serial.println();
+  }
+}
 
 void streamCallback(StreamData data)
 {
@@ -64,6 +71,35 @@ void streamCallback(StreamData data)
   Serial.println();
 }
 
+/*
+
+void errorQueueCallback (QueueInfo queueinfo){
+
+  if (queueinfo.isQueueFull())
+  {
+    Serial.println("Queue is full");
+  }
+
+  Serial.print("Remaining queues: ");
+  Serial.println(queueinfo.totalQueues());
+
+  Serial.print("Being processed queue ID: ");
+  Serial.println(queueinfo.currentQueueID());  
+
+  Serial.print("Data type:");
+  Serial.println(queueinfo.dataType()); 
+
+  Serial.print("Method: ");
+  Serial.println(queueinfo.firebaseMethod());
+
+  Serial.print("Path: ");
+  Serial.println(queueinfo.dataPath());
+
+  Serial.println();
+}
+
+*/
+
 void setup()
 {
 
@@ -86,6 +122,10 @@ void setup()
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
 
+  //Firebase.setMaxRetry(firebaseData1, 3);
+  //Firebase.setMaxErrorQueue(firebaseData1, 10);
+  //Firebase.beginAutoRunErrorQueue(firebaseData1, errorQueueCallback);
+
   Serial.println("------------------------------------");
   Serial.println("Begin stream 1...");
   if (!Firebase.beginStream(firebaseData2, path + "/Stream/data1"))
@@ -101,7 +141,8 @@ void setup()
     Serial.println();
   }
 
-  Firebase.setStreamCallback(firebaseData2, streamCallback);
+  //Firebase.setStreamCallback(firebaseData2, streamCallback);
+  Firebase.setStreamCallback(firebaseData2, streamCallback, streamTimeoutCallback);
 }
 
 void loop()
@@ -124,7 +165,7 @@ void loop()
       Serial.print("VALUE: ");
       if (firebaseData1.dataType() == "int")
         Serial.println(firebaseData1.intData());
-     else if (firebaseData1.dataType() == "float")
+      else if (firebaseData1.dataType() == "float")
         Serial.println(firebaseData1.floatData(), 5);
       else if (firebaseData1.dataType() == "double")
         Serial.println(firebaseData1.doubleData(), 9);
@@ -141,9 +182,14 @@ void loop()
     {
       Serial.println("FAILED");
       Serial.println("REASON: " + firebaseData1.errorReason());
+      /*
+      if (Firebase.getErrorQueueID(firebaseData1) > 0)
+      {
+        Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(firebaseData1)));
+      }
+      */
       Serial.println("------------------------------------");
       Serial.println();
     }
   }
 }
-
