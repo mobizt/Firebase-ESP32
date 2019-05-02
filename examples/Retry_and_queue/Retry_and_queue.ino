@@ -10,7 +10,7 @@
 */
 
 
-//This example shows how to read stream on other task function.
+//This example shows how error retry and queues work.
 
 //Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
