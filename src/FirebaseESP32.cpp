@@ -1,13 +1,12 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.3
  * 
- * May 1, 2019
+ * May 3, 2019
  * 
  * Feature Added:
- * - examples
+ * - Cloud Messaging
  * 
  * Feature Fixed:
- * - readStream bugs
  *  
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -69,6 +68,13 @@ struct FirebaseESP32::FirebaseMethod
   static const uint8_t RESTORE = 9;
   static const uint8_t GET_RULES = 10;
   static const uint8_t SET_RULES = 11;
+};
+
+struct FirebaseESP32::FCMMessageType
+{
+  static const uint8_t SINGLE = 0;
+  static const uint8_t MULTICAST = 1;
+  static const uint8_t TOPIC = 2;
 };
 
 FirebaseESP32::FirebaseESP32()
@@ -220,11 +226,11 @@ bool FirebaseESP32::buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, 
 
   unsigned long lastTime = millis();
 
-  if (dataObj._streamCall)
-    while (dataObj._streamCall && millis() - lastTime < 1000)
+  if (dataObj._streamCall || dataObj._cfmCall)
+    while ((dataObj._streamCall || dataObj._cfmCall) && millis() - lastTime < 1000)
       delay(1);
 
-  if (dataObj._streamCall)
+  if (dataObj._streamCall || dataObj._cfmCall)
   {
     dataObj._httpCode = HTTPC_ERROR_CONNECTION_INUSED;
     return false;
@@ -279,11 +285,11 @@ bool FirebaseESP32::buildRequestFile(FirebaseData &dataObj, uint8_t firebaseMeth
 
   unsigned long lastTime = millis();
 
-  if (dataObj._streamCall)
-    while (dataObj._streamCall && millis() - lastTime < 1000)
+  if (dataObj._streamCall || dataObj._cfmCall)
+    while ((dataObj._streamCall || dataObj._cfmCall) && millis() - lastTime < 1000)
       delay(1);
 
-  if (dataObj._streamCall)
+  if (dataObj._streamCall || dataObj._cfmCall)
   {
     dataObj._httpCode = HTTPC_ERROR_CONNECTION_INUSED;
     return false;
@@ -2276,7 +2282,7 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
       if (!apConnected(dataObj))
         return false;
 
-      while (dataObj._firebaseCall)
+      while (dataObj._firebaseCall || dataObj._cfmCall)
         delay(1);
 
       dataObj._streamCall = true;
@@ -2305,7 +2311,7 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
     if (!apConnected(dataObj))
       return false;
 
-    while (dataObj._firebaseCall)
+    while (dataObj._firebaseCall || dataObj._cfmCall)
       delay(1);
 
     dataObj._streamCall = true;
@@ -2334,7 +2340,7 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
     res = getServerResponse(dataObj);
 
     if (!dataObj._httpConnected)
-        dataObj._httpCode = HTTPC_ERROR_NOT_CONNECTED;
+      dataObj._httpCode = HTTPC_ERROR_NOT_CONNECTED;
 
     dataObj._streamCall = false;
 
@@ -2351,6 +2357,7 @@ bool FirebaseESP32::apConnected(FirebaseData &dataObj)
     dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
     dataObj._firebaseCall = false;
     dataObj._streamCall = false;
+    dataObj._cfmCall = false;
     return false;
   }
   return true;
@@ -2925,9 +2932,93 @@ void FirebaseESP32::errorToString(int httpCode, std::string &buf)
   case HTTPC_ERROR_CONNECTION_INUSED:
     buf = ESP32_FIREBASE_STR_94;
     return;
+  case HTTPC_NO_FCM_TOPIC_PROVIDED:
+    buf = ESP32_FIREBASE_STR_144;
+    return;
+  case HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED:
+    buf = ESP32_FIREBASE_STR_145;
+    return;
+  case HTTPC_NO_FCM_SERVER_KEY_PROVIDED:
+    buf = ESP32_FIREBASE_STR_146;
+    return;
+
   default:
     return;
   }
+}
+
+bool FirebaseESP32::sendFCMMessage(FirebaseData &dataObj, uint8_t messageType)
+{
+  //Try to reconnect WiFi if lost connection
+  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
+  {
+    uint8_t tryCount = 0;
+    WiFi.reconnect();
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      tryCount++;
+      delay(50);
+      if (tryCount > 60)
+        break;
+    }
+  }
+
+  //If WiFi is not connected, return false
+  if (!apConnected(dataObj))
+    return false;
+
+  bool res = false;
+  unsigned long lastTime = millis();
+
+  if (dataObj._streamCall || dataObj._cfmCall || dataObj._cfmCall)
+    while ((dataObj._streamCall || dataObj._firebaseCall || dataObj._cfmCall) && millis() - lastTime < 1000)
+      delay(1);
+
+  if (dataObj._streamCall || dataObj._firebaseCall || dataObj._cfmCall)
+  {
+    dataObj._httpCode = HTTPC_ERROR_CONNECTION_INUSED;
+    return false;
+  }
+
+  dataObj._cfmCall = true;
+
+  if (dataObj.http.http_connected())
+    forceEndHTTP(dataObj);
+
+  if (_rootCA.size() > 0)
+  {
+    res = dataObj.fcm.fcm_connect(dataObj.http, _host, _port, _rootCA);
+  }
+  else
+  {
+    res = dataObj.fcm.fcm_connect(dataObj.http, _host, _port);
+  }
+
+  if (!res)
+  {
+    dataObj._httpCode = HTTPC_ERROR_CONNECTION_REFUSED;
+    dataObj._cfmCall = false;
+    return false;
+  }
+
+  res = dataObj.fcm.fcm_send(dataObj.http, dataObj._httpCode, messageType);
+  dataObj._cfmCall = false;
+  return res;
+}
+
+bool FirebaseESP32::sendMessage(FirebaseData &dataObj)
+{
+  return sendFCMMessage(dataObj, FirebaseESP32::FCMMessageType::SINGLE);
+}
+
+bool FirebaseESP32::broadcastMessage(FirebaseData &dataObj)
+{
+  return sendFCMMessage(dataObj, FirebaseESP32::FCMMessageType::MULTICAST);
+}
+
+bool FirebaseESP32::sendTopic(FirebaseData &dataObj)
+{
+  return sendFCMMessage(dataObj, FirebaseESP32::FCMMessageType::TOPIC);
 }
 
 void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback)
@@ -4380,6 +4471,450 @@ void QueueInfo::clear()
   std::string().swap(_dataType);
   std::string().swap(_method);
   std::string().swap(_path);
+}
+
+FCMObject::FCMObject() {}
+FCMObject::~FCMObject()
+{
+  clear();
+}
+
+void FCMObject::begin(const String &serverKey)
+{
+  _server_key = serverKey.c_str();
+}
+
+void FCMObject::addDeviceToken(const String &deviceToken)
+{
+  _deviceToken.push_back(deviceToken.c_str());
+}
+void FCMObject::removeDeviceToken(uint16_t index)
+{
+  if (_deviceToken.size() > 0)
+  {
+    std::string().swap(_deviceToken[index]);
+    _deviceToken.erase(_deviceToken.begin() + index);
+  }
+}
+void FCMObject::clearDeviceToken()
+{
+  for (size_t i = 0; i < _deviceToken.size(); i++)
+  {
+    std::string().swap(_deviceToken[i]);
+    _deviceToken.erase(_deviceToken.begin() + i);
+  }
+}
+
+void FCMObject::setNotifyMessage(const String &title, const String &body)
+{
+  _notify_title = title.c_str();
+  _notify_body = body.c_str();
+  _notify_icon = "";
+  _notify_click_action = "";
+}
+
+void FCMObject::setNotifyMessage(const String &title, const String &body, const String &icon)
+{
+  _notify_title = title.c_str();
+  _notify_body = body.c_str();
+  _notify_icon = icon.c_str();
+  _notify_click_action = "";
+}
+
+void FCMObject::setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action)
+{
+  _notify_title = title.c_str();
+  _notify_body = body.c_str();
+  _notify_icon = icon.c_str();
+  _notify_click_action = click_action.c_str();
+}
+
+void FCMObject::clearNotifyMessage()
+{
+  _notify_title = "";
+  _notify_body = "";
+  _notify_icon = "";
+  _notify_click_action = "";
+}
+
+void FCMObject::setDataMessage(const String &jsonString)
+{
+  _data_msg = jsonString.c_str();
+}
+
+void FCMObject::clearDataMessage()
+{
+  _data_msg = "";
+}
+
+void FCMObject::setPriority(const String &priority)
+{
+  _priority = priority.c_str();
+}
+
+void FCMObject::setCollapseKey(const String &key)
+{
+  _collapse_key = key.c_str();
+}
+
+void FCMObject::setTimeToLive(uint32_t seconds)
+{
+  if (seconds <= 2419200)
+    _ttl = seconds;
+  else
+    _ttl = -1;
+}
+
+void FCMObject::setTopic(const String &topic)
+{
+  _topic = ESP32_FIREBASE_STR_134;
+  _topic += topic.c_str();
+}
+
+String FCMObject::getSendResult()
+{
+  return _sendResult.c_str();
+}
+
+bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, const std::string &host, uint16_t port, std::vector<const char *> _rootCA)
+{
+  int httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, port, ESP32_FIREBASE_STR_121, (const char *)_rootCA.front());
+
+  if (!httpConnected)
+  {
+    return false;
+  }
+}
+
+bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, const std::string &host, uint16_t port)
+{
+
+  int httpConnected = httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, port, ESP32_FIREBASE_STR_121, (const char *)NULL);
+
+  if (!httpConnected)
+  {
+    return false;
+  }
+}
+void FCMObject::fcm_buildHeader(std::string &header, size_t payloadSize)
+{
+  char *len = new char[20];
+  memset(len, 0, 20);
+
+  header = ESP32_FIREBASE_STR_24;
+  header += ESP32_FIREBASE_STR_6;
+  header += ESP32_FIREBASE_STR_121;
+  header += ESP32_FIREBASE_STR_30;
+
+  header += ESP32_FIREBASE_STR_31;
+  header += ESP32_FIREBASE_STR_120;
+  header += ESP32_FIREBASE_STR_21;
+
+  header += ESP32_FIREBASE_STR_131;
+  header += _server_key;
+  header += ESP32_FIREBASE_STR_21;
+
+  header += ESP32_FIREBASE_STR_32;
+
+  header += ESP32_FIREBASE_STR_8;
+  header += ESP32_FIREBASE_STR_129;
+  header += ESP32_FIREBASE_STR_21;
+
+  header += ESP32_FIREBASE_STR_12;
+  itoa(payloadSize, len, 10);
+  header += len;
+  header += ESP32_FIREBASE_STR_21;
+  header += ESP32_FIREBASE_STR_34;
+  header += ESP32_FIREBASE_STR_21;
+  delete[] len;
+}
+
+void FCMObject::fcm_buildPayload(std::string &msg, uint8_t messageType)
+{
+
+  if (_notify_title.length() > 0 || _notify_body.length() > 0)
+  {
+    msg += ESP32_FIREBASE_STR_122;
+    msg += ESP32_FIREBASE_STR_123;
+    msg += _notify_title;
+    msg += ESP32_FIREBASE_STR_124;
+    msg += _notify_body;
+    msg += ESP32_FIREBASE_STR_3;
+
+    if (_notify_icon.length() > 0)
+    {
+      msg += ESP32_FIREBASE_STR_125;
+      msg += _notify_icon;
+      msg += ESP32_FIREBASE_STR_3;
+    }
+
+    if (_notify_click_action.length() > 0)
+    {
+      msg += ESP32_FIREBASE_STR_126;
+      msg += _notify_click_action;
+      msg += ESP32_FIREBASE_STR_3;
+    }
+
+    msg += ESP32_FIREBASE_STR_127;
+  }
+  if (messageType == FirebaseESP32::FCMMessageType::SINGLE)
+  {
+    msg += ESP32_FIREBASE_STR_128;
+
+    msg += _deviceToken[0];
+
+    msg += ESP32_FIREBASE_STR_3;
+  }
+  else if (messageType == FirebaseESP32::FCMMessageType::MULTICAST)
+  {
+    msg += ESP32_FIREBASE_STR_130;
+
+    for (uint16_t i = 0; i < _deviceToken.size(); i++)
+    {
+      if (i > 0)
+        msg += ESP32_FIREBASE_STR_132;
+
+      msg += ESP32_FIREBASE_STR_3;
+      msg += _deviceToken[i];
+      msg += ESP32_FIREBASE_STR_3;
+    }
+
+    msg += ESP32_FIREBASE_STR_133;
+  }
+  else if (messageType == FirebaseESP32::FCMMessageType::TOPIC)
+  {
+    msg += ESP32_FIREBASE_STR_128;
+
+    msg += _topic;
+
+    msg += ESP32_FIREBASE_STR_3;
+  }
+
+  if (_data_msg.length() > 0)
+  {
+    msg += ESP32_FIREBASE_STR_135;
+    msg += _data_msg;
+  }
+
+  if (_priority.length() > 0)
+  {
+    msg += ESP32_FIREBASE_STR_136;
+    msg += _priority;
+    msg += ESP32_FIREBASE_STR_3;
+  }
+
+  if (_ttl > -1)
+  {
+    char *ttl = new char[20];
+    memset(ttl, 0, 20);
+    msg += ESP32_FIREBASE_STR_137;
+    itoa(_ttl, ttl, 10);
+    msg += ttl;
+    delete[] ttl;
+  }
+
+  if (_collapse_key.length() > 0)
+  {
+    msg += ESP32_FIREBASE_STR_138;
+    msg += _collapse_key;
+    msg += ESP32_FIREBASE_STR_3;
+  }
+
+  msg += ESP32_FIREBASE_STR_127;
+}
+
+bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
+{
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    httpcode = HTTPC_ERROR_CONNECTION_LOST;
+    return false;
+  }
+
+  WiFiClient *netClient = client.http_getStreamPtr();
+
+  if (!netClient)
+  {
+    httpcode = HTTPC_ERROR_CONNECTION_LOST;
+    return false;
+  }
+
+  bool flag = false;
+  std::string lineBuf = "";
+
+  _sendResult = "";
+
+  char c;
+  int p1, p2;
+  httpcode = -1000;
+
+  size_t lfCount = 0;
+  size_t charPos = 0;
+
+  bool payloadBegin = false;
+
+  unsigned long dataTime = millis();
+
+  while (netClient->connected() && !netClient->available() && millis() - dataTime < 5000)
+  {
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      httpcode = HTTPC_ERROR_CONNECTION_LOST;
+      return false;
+    }
+    delay(1);
+  }
+
+  dataTime = millis();
+  if (netClient->connected() && netClient->available())
+  {
+
+    while (netClient->available())
+    {
+
+      if (WiFi.status() != WL_CONNECTED)
+      {
+        httpcode = HTTPC_ERROR_CONNECTION_LOST;
+        return false;
+      }
+
+      c = netClient->read();
+
+      if (c != '\r' && c != '\n')
+        lineBuf.append(1, c);
+
+      charPos++;
+
+      if (c == '\n')
+      {
+
+        dataTime = millis();
+
+        p1 = lineBuf.find(ESP32_FIREBASE_STR_5);
+        if (p1 != std::string::npos)
+        {
+          p2 = lineBuf.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
+          if (p2 != std::string::npos)
+            httpcode = atoi(lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
+        }
+
+        if (httpcode == HTTP_CODE_OK && lfCount > 0 && lineBuf.length() == 0)
+          payloadBegin = true;
+
+        if (!payloadBegin)
+          lineBuf.clear();
+
+        lfCount++;
+        charPos = 0;
+      }
+
+      if (millis() - dataTime > 5000)
+      {
+        httpcode = HTTPC_ERROR_READ_TIMEOUT;
+        break;
+      }
+    }
+
+    _sendResult = lineBuf;
+
+    if (!httpcode)
+      httpcode = HTTPC_ERROR_NO_HTTP_SERVER;
+
+    goto EXIT_5;
+  }
+
+  std::string().swap(lineBuf);
+
+  if (httpcode == -1000)
+  {
+    httpcode = 0;
+    flag = true;
+  }
+
+  return flag;
+
+EXIT_5:
+
+  std::string().swap(lineBuf);
+
+  if (httpcode == HTTPC_ERROR_READ_TIMEOUT)
+    return false;
+
+  return httpcode == HTTP_CODE_OK;
+}
+
+bool FCMObject::fcm_send(HTTPClientESP32Ex &client, int &httpcode, uint8_t messageType)
+{
+
+  std::string msg = "";
+  std::string header = "";
+
+  if (_server_key.length() == 0)
+  {
+    httpcode = HTTPC_NO_FCM_SERVER_KEY_PROVIDED;
+    return false;
+  }
+
+  if (_deviceToken.size() == 0)
+  {
+    httpcode = HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED;
+    return false;
+  }
+
+  if (messageType == FirebaseESP32::FCMMessageType::TOPIC && _topic.length() == 0)
+  {
+    httpcode = HTTPC_NO_FCM_TOPIC_PROVIDED;
+    return false;
+  }
+
+  fcm_buildPayload(msg, messageType);
+
+  fcm_buildHeader(header, msg.length());
+
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    httpcode = HTTPC_ERROR_CONNECTION_LOST;
+    return false;
+  }
+
+  uint8_t retryCount = 0;
+  httpcode = client.http_sendRequest(header.c_str(), "");
+  while (httpcode != 0)
+  {
+    retryCount++;
+    if (retryCount > 5)
+      break;
+
+    httpcode = client.http_sendRequest(header.c_str(), "");
+  }
+
+  if (httpcode != 0)
+    return false;
+
+  httpcode = client.http_sendRequest("", msg.c_str());
+  if (httpcode != 0)
+    return false;
+
+  bool res = getFCMServerResponse(client, httpcode);
+
+  return res;
+}
+
+void FCMObject::clear()
+{
+  std::string().swap(_notify_title);
+  std::string().swap(_notify_body);
+  std::string().swap(_notify_icon);
+  std::string().swap(_notify_click_action);
+  std::string().swap(_data_msg);
+  std::string().swap(_priority);
+  std::string().swap(_collapse_key);
+  std::string().swap(_topic);
+  std::string().swap(_server_key);
+  std::string().swap(_sendResult);
+  int _ttl = -1;
+  clearDeviceToken();
+  std::vector<std::string>().swap(_deviceToken);
 }
 
 FirebaseESP32 Firebase = FirebaseESP32();

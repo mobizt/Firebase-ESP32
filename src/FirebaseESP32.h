@@ -1,13 +1,12 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.3
  * 
- * May 1, 2019
+ * May 3, 2019
  * 
  * Feature Added:
- * - examples
+ * - Cloud Messaging
  * 
  * Feature Fixed:
- * - readStream bugs
  *  
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -56,6 +55,9 @@
 #define FIREBASE_ERROR_DATA_TYPE_MISMATCH -14
 #define FIREBASE_ERROR_PATH_NOT_EXIST -15
 #define HTTPC_ERROR_CONNECTION_INUSED -16
+#define HTTPC_NO_FCM_TOPIC_PROVIDED -17
+#define HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED -18
+#define HTTPC_NO_FCM_SERVER_KEY_PROVIDED -19
 
 static const char ESP32_FIREBASE_STR_1[] PROGMEM = "/";
 static const char ESP32_FIREBASE_STR_2[] PROGMEM = ".json?auth=";
@@ -177,12 +179,41 @@ static const char ESP32_FIREBASE_STR_117[] PROGMEM = "push";
 static const char ESP32_FIREBASE_STR_118[] PROGMEM = "update";
 static const char ESP32_FIREBASE_STR_119[] PROGMEM = "delete";
 
+static const char ESP32_FIREBASE_STR_120[] PROGMEM = "fcm.googleapis.com";
+static const char ESP32_FIREBASE_STR_121[] PROGMEM = "/fcm/send";
+static const char ESP32_FIREBASE_STR_122[] PROGMEM = "{\"notification\":{";
+static const char ESP32_FIREBASE_STR_123[] PROGMEM = "\"title\":\"";
+static const char ESP32_FIREBASE_STR_124[] PROGMEM = "\",\"body\":\"";
+static const char ESP32_FIREBASE_STR_125[] PROGMEM = ",\"icon\":\"";
+static const char ESP32_FIREBASE_STR_126[] PROGMEM = ",\"click_action\":\"";
+static const char ESP32_FIREBASE_STR_127[] PROGMEM = "}";
+static const char ESP32_FIREBASE_STR_128[] PROGMEM = ",\"to\":\"";
+static const char ESP32_FIREBASE_STR_129[] PROGMEM = "application/json";
+static const char ESP32_FIREBASE_STR_130[] PROGMEM = ",\"registration_ids\":[";
+static const char ESP32_FIREBASE_STR_131[] PROGMEM = "Authorization: key=";
+static const char ESP32_FIREBASE_STR_132[] PROGMEM = ",";
+static const char ESP32_FIREBASE_STR_133[] PROGMEM = "]";
+static const char ESP32_FIREBASE_STR_134[] PROGMEM = "/topics/";
+static const char ESP32_FIREBASE_STR_135[] PROGMEM = ",\"data\":";
+static const char ESP32_FIREBASE_STR_136[] PROGMEM = ",\"priority\":\"";
+static const char ESP32_FIREBASE_STR_137[] PROGMEM = ",\"time_to_live\":";
+static const char ESP32_FIREBASE_STR_138[] PROGMEM = ",\"collapse_key\":\"";
+static const char ESP32_FIREBASE_STR_139[] PROGMEM = "\"multicast_id\":";
+static const char ESP32_FIREBASE_STR_140[] PROGMEM = "\"success\":";
+static const char ESP32_FIREBASE_STR_141[] PROGMEM = "\"failure\":";
+static const char ESP32_FIREBASE_STR_142[] PROGMEM = "\"canonical_ids\":";
+static const char ESP32_FIREBASE_STR_143[] PROGMEM = "\"results\":";
+static const char ESP32_FIREBASE_STR_144[] PROGMEM = "No topic provided";
+static const char ESP32_FIREBASE_STR_145[] PROGMEM = "No device token provided";
+static const char ESP32_FIREBASE_STR_146[] PROGMEM = "No server key provided";
+
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 class FirebaseData;
 class StreamData;
 class QueueInfo;
 class FirebaseESP32;
+class FCMObject;
 
 struct QueueStorageType
 {
@@ -198,6 +229,163 @@ static std::vector<std::reference_wrapper<FirebaseData>> firebaseDataObject;
 static uint8_t dataObjectIndex = 0;
 static uint8_t streamIndex = 0;
 static uint8_t errorQueueIndex = 0;
+
+class FCMObject
+{
+public:
+  FCMObject();
+  ~FCMObject();
+
+  /*
+    Store Firebase Cloud Messaging's authentication credentials.
+    
+    @param serverKey - Server key found on Console: Project settings > Cloud Messaging
+
+   */
+  void begin(const String &serverKey);
+
+  /*
+    Add recipient's device registration token or instant ID token.
+    
+    @param deviceToken - Recipient's device registration token to addd that message will be sent to.
+
+   */
+  void addDeviceToken(const String &deviceToken);
+
+  /*
+    Remove recipient's device registration token or instant ID token.
+    
+    @param index - Index (start from zero) of recipient's device registration token that added to FCM Data Object of Firebase Data object.
+
+   */
+  void removeDeviceToken(uint16_t index);
+
+  /*
+    Clear all recipient's device registration tokens.
+    
+  */
+  void clearDeviceToken();
+
+  /*
+    Set the notify message type information.
+    
+    @param title - The title text of notification message.
+    @param body - The body text of notification message.
+
+   */
+  void setNotifyMessage(const String &title, const String &body);
+
+  /*
+    Set the notify message type information.
+    
+    @param title - The title text of notification message.
+    @param body - The body text of notification message.
+    @param icon - The name and/or included URI/URL of icon to show on notify message.
+
+   */
+  void setNotifyMessage(const String &title, const String &body, const String &icon);
+
+  /*
+    Set the notify message type information.
+    
+    @param title - The title text of notification message.
+    @param body - The body text of notification message.
+    @param icon - The name and/or included URI/URL of icon to show on notify message.
+    @param click_action - The URL or intent to accept click event on notification message.
+
+   */
+  void setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action);
+
+  /*
+    Clear all notify message information.
+    
+  */
+  void clearNotifyMessage();
+
+  /*
+    Set the custom data message type information.
+    
+    @param jsonString - The JSON structured data string.
+
+  */
+  void setDataMessage(const String &jsonString);
+
+  /*
+    Clear custom data message type information.
+    
+  */
+  void clearDataMessage();
+
+  /*
+    Set the prioiry of message (notification and custom data).
+    
+    @param priority - The priority string i.e. normal and high.
+
+  */
+  void setPriority(const String &priority);
+
+  /*
+    Set the collapse key of message (notification and custom data).
+    
+    @param key - String of collapse key.
+
+  */
+  void setCollapseKey(const String &key);
+
+  /*
+    Set the Time To Live of message (notification and custom data).
+    
+    @param seconds - Number of seconds from 0 to 2,419,200 (4 weeks).
+
+  */
+  void setTimeToLive(uint32_t seconds);
+
+  /*
+    Set topic of message will be send to.
+    
+    @param topic - Topic string.
+
+  */
+  void setTopic(const String &topic);
+
+  /*
+    Get the send result.
+    
+    @return String of payload returned from server.
+
+  */
+  String getSendResult();
+
+  friend FirebaseESP32;
+  friend FirebaseData;
+
+private:
+  bool fcm_connect(HTTPClientESP32Ex &client, const std::string &host, uint16_t port);
+  bool fcm_connect(HTTPClientESP32Ex &client, const std::string &host, uint16_t port, std::vector<const char *> _rootCA);
+
+  bool fcm_send(HTTPClientESP32Ex &client, int &httpcode, uint8_t messageType);
+
+  void fcm_buildHeader(std::string &header, size_t payloadSize);
+
+  void fcm_buildPayload(std::string &msg, uint8_t messageType);
+
+  bool getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode);
+
+  void clear();
+
+  std::string _notify_title = "";
+  std::string _notify_body = "";
+  std::string _notify_icon = "";
+  std::string _notify_click_action = "";
+  std::string _data_msg = "";
+  std::string _priority = "";
+  std::string _collapse_key = "";
+  std::string _topic = "";
+  std::string _server_key = "";
+  std::string _sendResult = "";
+  int _ttl = -1;
+  std::vector<std::string> _deviceToken;
+};
 
 class QueryFilter
 {
@@ -296,6 +484,7 @@ class FirebaseESP32
 public:
   struct FirebaseDataType;
   struct FirebaseMethod;
+  struct FCMMessageType;
 
   FirebaseESP32();
   ~FirebaseESP32();
@@ -1287,6 +1476,36 @@ public:
 
   void errorToString(int httpCode, std::string &buf);
 
+  /*
+    Send Firebase Cloud Messaging to device with first registeration token which added by firebaseData.fcm.addDeviceToken.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    
+   @return - Boolean type status indicates the success of operation.
+
+   */
+  bool sendMessage(FirebaseData &dataObj);
+
+  /*
+    Send Firebase Cloud Messaging to all devices (multicast) which added by firebaseData.fcm.addDeviceToken.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    
+   @return - Boolean type status indicates the success of operation.
+
+   */
+  bool broadcastMessage(FirebaseData &dataObj);
+
+  /*
+    Send Firebase Cloud Messaging to devices that subscribed to topic.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    
+   @return - Boolean type status indicates the success of operation.
+
+   */
+  bool sendTopic(FirebaseData &dataObj);
+
   friend FirebaseData;
 
 protected:
@@ -1319,6 +1538,8 @@ protected:
   void send_base64_encode_file(WiFiClient *tcp, const std::string &filePath);
   bool base64_decode_string(const std::string src, std::vector<uint8_t> &out);
   bool base64_decode_file(File &file, const char *src, size_t len);
+
+  bool sendFCMMessage(FirebaseData &dataObj, uint8_t messageType);
 
   std::string _host = "";
   std::string _auth = "";
@@ -1564,6 +1785,8 @@ public:
    */
   String payload();
 
+  FCMObject fcm;
+
   HTTPClientESP32Ex http;
 
   QueryFilter queryFilter;
@@ -1582,6 +1805,7 @@ protected:
 
   bool _firebaseCall = false;
   bool _streamCall = false;
+  bool _cfmCall = false;
   bool _isStreamTimeout = false;
   bool _isStream = false;
   bool _streamStop = false;

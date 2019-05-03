@@ -13,7 +13,7 @@ QueryFilter	KEYWORD1
 QueueManager	KEYWORD1
 HTTPClientESP32Ex	KEYWORD1
 QueueInfo	KEYWORD1
-
+fcm	KEYWORD1
 
 ###############################################
 # Methods and Functions for Firebase (KEYWORD2)
@@ -73,6 +73,9 @@ processErrorQueue	KEYWORD2
 getErrorQueueID	KEYWORD2
 isErrorQueueExisted	KEYWORD2
 errorToString	KEYWORD2
+sendMessage	KEYWORD2
+broadcastMessage	KEYWORD2
+sendTopic	KEYWORD2
 
 #############################################
 # Methods for Firebase Data object (KEYWORD2)
@@ -107,6 +110,22 @@ fileTransferError	KEYWORD2
 payload	KEYWORD2
 queryFilter	KEYWORD2
 empty	KEYWORD2
+
+########################################################
+# Methods for Firebase Cloud Messaging Object (KEYWORD2)
+########################################################
+addDeviceToken	KEYWORD2
+removeDeviceToken	KEYWORD2
+clearDeviceToken	KEYWORD2
+setNotifyMessage	KEYWORD2
+clearNotifyMessage	KEYWORD2
+setDataMessage	KEYWORD2
+clearDataMessage	KEYWORD2
+setPriority	KEYWORD2
+setCollapseKey	KEYWORD2
+setTimeToLive	KEYWORD2
+setTopic	KEYWORD2
+getSendResult	KEYWORD2
 
 ###############################################
 # Methods for QueryFilter (KEYWORD2)
