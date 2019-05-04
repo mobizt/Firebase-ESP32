@@ -3015,11 +3015,11 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &dataObj, uint8_t messageType)
 
   if (_rootCA.size() > 0)
   {
-    res = dataObj.fcm.fcm_connect(dataObj.http, _host, _port, _rootCA);
+    res = dataObj.fcm.fcm_connect(dataObj.http, _rootCA);
   }
   else
   {
-    res = dataObj.fcm.fcm_connect(dataObj.http, _host, _port);
+    res = dataObj.fcm.fcm_connect(dataObj.http);
   }
 
   if (!res)
@@ -4605,9 +4605,9 @@ String FCMObject::getSendResult()
   return _sendResult.c_str();
 }
 
-bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, const std::string &host, uint16_t port, std::vector<const char *> _rootCA)
+bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, std::vector<const char *> _rootCA)
 {
-  int httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, port, ESP32_FIREBASE_STR_121, (const char *)_rootCA.front());
+  int httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, _port, ESP32_FIREBASE_STR_121, (const char *)_rootCA.front());
 
   if (!httpConnected)
     return false;
@@ -4615,10 +4615,10 @@ bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, const std::string &host, 
   return true;
 }
 
-bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, const std::string &host, uint16_t port)
+bool FCMObject::fcm_connect(HTTPClientESP32Ex &client)
 {
 
-  int httpConnected = httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, port, ESP32_FIREBASE_STR_121, (const char *)NULL);
+  int httpConnected = httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, _port, ESP32_FIREBASE_STR_121, (const char *)NULL);
 
   if (!httpConnected)
   {

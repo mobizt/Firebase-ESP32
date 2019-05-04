@@ -362,8 +362,8 @@ public:
   friend FirebaseData;
 
 private:
-  bool fcm_connect(HTTPClientESP32Ex &client, const std::string &host, uint16_t port);
-  bool fcm_connect(HTTPClientESP32Ex &client, const std::string &host, uint16_t port, std::vector<const char *> _rootCA);
+  bool fcm_connect(HTTPClientESP32Ex &client);
+  bool fcm_connect(HTTPClientESP32Ex &client, std::vector<const char *> _rootCA);
 
   bool fcm_send(HTTPClientESP32Ex &client, int &httpcode, uint8_t messageType);
 
@@ -387,6 +387,7 @@ private:
   std::string _sendResult = "";
   int _ttl = -1;
   uint16_t _index = 0;
+  uint16_t _port = 443;
   std::vector<std::string> _deviceToken;
 };
 
