@@ -1,7 +1,7 @@
 /*
  * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.3
  * 
- * May 3, 2019
+ * May 4, 2019
  * 
  * Feature Added:
  * - Cloud Messaging
@@ -58,6 +58,7 @@
 #define HTTPC_NO_FCM_TOPIC_PROVIDED -17
 #define HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED -18
 #define HTTPC_NO_FCM_SERVER_KEY_PROVIDED -19
+#define HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED -20
 
 static const char ESP32_FIREBASE_STR_1[] PROGMEM = "/";
 static const char ESP32_FIREBASE_STR_2[] PROGMEM = ".json?auth=";
@@ -206,6 +207,7 @@ static const char ESP32_FIREBASE_STR_143[] PROGMEM = "\"results\":";
 static const char ESP32_FIREBASE_STR_144[] PROGMEM = "No topic provided";
 static const char ESP32_FIREBASE_STR_145[] PROGMEM = "No device token provided";
 static const char ESP32_FIREBASE_STR_146[] PROGMEM = "No server key provided";
+static const char ESP32_FIREBASE_STR_147[] PROGMEM = "The index of recipient device registered token not found";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -384,6 +386,7 @@ private:
   std::string _server_key = "";
   std::string _sendResult = "";
   int _ttl = -1;
+  uint16_t _index = 0;
   std::vector<std::string> _deviceToken;
 };
 
@@ -1469,29 +1472,29 @@ public:
     @param dataObj - Firebase Data Object to hold data and instances.
     @param errorQueueID - The Firebase Error Queue ID get from getErrorQueueID.
     
-   @return - Boolean type status indicates the queue existence.
+    @return - Boolean type status indicates the queue existence.
 
    */
   bool isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQueueID);
-
-  void errorToString(int httpCode, std::string &buf);
 
   /*
     Send Firebase Cloud Messaging to device with first registeration token which added by firebaseData.fcm.addDeviceToken.
 
     @param dataObj - Firebase Data Object to hold data and instances.
+
+    @param index - The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
     
-   @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of operation.
 
    */
-  bool sendMessage(FirebaseData &dataObj);
+  bool sendMessage(FirebaseData &dataObj, uint16_t index);
 
   /*
     Send Firebase Cloud Messaging to all devices (multicast) which added by firebaseData.fcm.addDeviceToken.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     
-   @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of operation.
 
    */
   bool broadcastMessage(FirebaseData &dataObj);
@@ -1501,10 +1504,12 @@ public:
 
     @param dataObj - Firebase Data Object to hold data and instances.
     
-   @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of operation.
 
    */
   bool sendTopic(FirebaseData &dataObj);
+
+  void errorToString(int httpCode, std::string &buf);
 
   friend FirebaseData;
 

@@ -1,7 +1,7 @@
 /*
  * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.3
  * 
- * May 3, 2019
+ * May 4, 2019
  * 
  * Feature Added:
  * - Cloud Messaging
@@ -2941,6 +2941,9 @@ void FirebaseESP32::errorToString(int httpCode, std::string &buf)
   case HTTPC_NO_FCM_SERVER_KEY_PROVIDED:
     buf = ESP32_FIREBASE_STR_146;
     return;
+  case HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED:
+    buf = ESP32_FIREBASE_STR_147;
+    return;
 
   default:
     return;
@@ -2949,6 +2952,31 @@ void FirebaseESP32::errorToString(int httpCode, std::string &buf)
 
 bool FirebaseESP32::sendFCMMessage(FirebaseData &dataObj, uint8_t messageType)
 {
+
+  if (dataObj.fcm._server_key.length() == 0)
+  {
+    dataObj._httpCode = HTTPC_NO_FCM_SERVER_KEY_PROVIDED;
+    return false;
+  }
+
+  if (dataObj.fcm._deviceToken.size() == 0)
+  {
+    dataObj._httpCode = HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED;
+    return false;
+  }
+
+  if (messageType == FirebaseESP32::FCMMessageType::SINGLE && dataObj.fcm._deviceToken.size() > 0 && dataObj.fcm._index > dataObj.fcm._deviceToken.size() - 1)
+  {
+    dataObj._httpCode = HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED;
+    return false;
+  }
+
+  if (messageType == FirebaseESP32::FCMMessageType::TOPIC && dataObj.fcm._topic.length() == 0)
+  {
+    dataObj._httpCode = HTTPC_NO_FCM_TOPIC_PROVIDED;
+    return false;
+  }
+
   //Try to reconnect WiFi if lost connection
   if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
   {
@@ -2970,7 +2998,7 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &dataObj, uint8_t messageType)
   bool res = false;
   unsigned long lastTime = millis();
 
-  if (dataObj._streamCall || dataObj._cfmCall || dataObj._cfmCall)
+  if (dataObj._streamCall || dataObj._firebaseCall || dataObj._cfmCall)
     while ((dataObj._streamCall || dataObj._firebaseCall || dataObj._cfmCall) && millis() - lastTime < 1000)
       delay(1);
 
@@ -3006,8 +3034,9 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &dataObj, uint8_t messageType)
   return res;
 }
 
-bool FirebaseESP32::sendMessage(FirebaseData &dataObj)
+bool FirebaseESP32::sendMessage(FirebaseData &dataObj, uint16_t index)
 {
+  dataObj.fcm._index = index;
   return sendFCMMessage(dataObj, FirebaseESP32::FCMMessageType::SINGLE);
 }
 
@@ -4581,9 +4610,9 @@ bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, const std::string &host, 
   int httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, port, ESP32_FIREBASE_STR_121, (const char *)_rootCA.front());
 
   if (!httpConnected)
-  {
     return false;
-  }
+
+  return true;
 }
 
 bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, const std::string &host, uint16_t port)
@@ -4661,7 +4690,7 @@ void FCMObject::fcm_buildPayload(std::string &msg, uint8_t messageType)
   {
     msg += ESP32_FIREBASE_STR_128;
 
-    msg += _deviceToken[0];
+    msg += _deviceToken[_index];
 
     msg += ESP32_FIREBASE_STR_3;
   }
@@ -4849,24 +4878,6 @@ bool FCMObject::fcm_send(HTTPClientESP32Ex &client, int &httpcode, uint8_t messa
   std::string msg = "";
   std::string header = "";
 
-  if (_server_key.length() == 0)
-  {
-    httpcode = HTTPC_NO_FCM_SERVER_KEY_PROVIDED;
-    return false;
-  }
-
-  if (_deviceToken.size() == 0)
-  {
-    httpcode = HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED;
-    return false;
-  }
-
-  if (messageType == FirebaseESP32::FCMMessageType::TOPIC && _topic.length() == 0)
-  {
-    httpcode = HTTPC_NO_FCM_TOPIC_PROVIDED;
-    return false;
-  }
-
   fcm_buildPayload(msg, messageType);
 
   fcm_buildHeader(header, msg.length());
@@ -4892,6 +4903,10 @@ bool FCMObject::fcm_send(HTTPClientESP32Ex &client, int &httpcode, uint8_t messa
     return false;
 
   httpcode = client.http_sendRequest("", msg.c_str());
+
+  std::string().swap(msg);
+  std::string().swap(header);
+
   if (httpcode != 0)
     return false;
 
@@ -4912,7 +4927,8 @@ void FCMObject::clear()
   std::string().swap(_topic);
   std::string().swap(_server_key);
   std::string().swap(_sendResult);
-  int _ttl = -1;
+  _ttl = -1;
+  _index = 0;
   clearDeviceToken();
   std::vector<std::string>().swap(_deviceToken);
 }

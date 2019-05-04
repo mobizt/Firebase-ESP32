@@ -127,9 +127,9 @@ setTimeToLive	KEYWORD2
 setTopic	KEYWORD2
 getSendResult	KEYWORD2
 
-###############################################
+####################################
 # Methods for QueryFilter (KEYWORD2)
-###############################################
+####################################
 
 orderBy	KEYWORD2
 limitToFirst	KEYWORD2

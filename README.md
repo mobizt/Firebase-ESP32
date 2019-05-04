@@ -809,6 +809,68 @@ After end was called, all resources in Firebase Data object included callbacks a
 
 
 
+**Send Notification message through Firebase Cloud Messaging (FCM)**
+
+There are two types of FCM message data that can be sent using this library e.g. notification and custom data.
+
+These two types data can send together or separately.
+
+To send message to one recipient, call Firebase.sendMessage and call Firebase.broadcastMessage to send message to multiple recipients.  
+
+Use Firebase.sendTopic when to send message to any recipient who subscribed to the topic.
+
+The FCM message it self offers broad range of messaging options and capabilities for various recipient device platforms i.e. Android, iOS and web, these basic options can be set and work for all platforms. 
+
+
+To assign server key of your Firebase project, call firebaseData.fcm.begin.
+
+To add recipient registered device token which you want to send message to, call firebaseData.fcm.addDeviceToken. This recipient device token can be removed or clear by firebaseData.fcm.removeDeviceToken and firebaseData.fcm.clearDeviceToken.
+
+For the notification message, title, body, icon (optional), and click_action (optional) can be set through firebaseData.fcm.setNotifyMessage. And clear these notify message data with firebaseData.fcm.clearNotifyMessage.
+
+For the data message, provide your custom data as JSON object (string) to firebaseData.fcm.setDataMessage which can be clear with firebaseData.fcm.clearDataMessage.
+
+The other options are priority, collapse key, Time to Live of message and topic to send message to, can be set from the following functions.
+
+Call firebaseData.fcm.setPriority for priority ("normal" or "high"), firebaseData.fcm.setCollapseKey for collapse key setup, firebaseData.fcm.setTimeToLive for life span of message setup between 0 sec. to 2,419,200 sec.  (or 4 weeks), and firebaseData.fcm.setTopic for assigning the topic that message to send to.
+
+
+Below is example how to send FCM message.
+
+```C++
+//Provide your Firebase project's server key here
+firebaseData.fcm.begin(FIREBASE_FCM_SERVER_KEY);
+
+//Prvide one or more the recipient registered token or instant ID token
+firebaseData.fcm.addDeviceToken(FIREBASE_FCM_DEVICE_TOKEN);
+
+//Provide the priority (optional)
+firebaseData.fcm.setPriority("normal");
+
+//Provide the time to live (optional)
+firebaseData.fcm.setTimeToLive(5000);
+
+//Set the notification message data
+firebaseData.fcm.setNotifyMessage("Notification", "Hello World!", "firebase-logo.png", "http://www.google.com");
+
+//Set the custom message data
+firebaseData.fcm.setDataMessage("{\"myData\":\"myValue\"}");
+
+//Send message to one recipient with inddex 1 (index starts from 0)
+if (Firebase.sendMessage(firebaseData, 1))
+{
+  //Success, print the result returned from server
+  Serial.println(firebaseData.fcm.getSendResult());
+}
+else
+{
+  //Failed, print the error reason
+  Serial.println(firebaseData.errorReason());
+}
+
+```
+
+
 See [full examples](https://github.com/mobizt/Firebase-ESP32/tree/master/examples) for all features usages.
 
 
@@ -2263,6 +2325,49 @@ bool isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQueueID);
 
 
 
+
+**Send Firebase Cloud Messaging to device with first registeration token which added by firebaseData.fcm.addDeviceToken.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`index`* - The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
+    
+return - *`Boolean type`* status indicates the success of operation.
+
+```C++
+bool sendMessage(FirebaseData &dataObj, uint16_t index);
+```
+
+
+
+
+
+**Send Firebase Cloud Messaging to all devices (multicast) which added by firebaseData.fcm.addDeviceToken.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+    
+return - *`Boolean type`* status indicates the success of operation.
+
+```C++
+bool broadcastMessage(FirebaseData &dataObj);
+```
+
+
+
+
+**Send Firebase Cloud Messaging to devices that subscribed to topic.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+    
+return - *`Boolean type`* status indicates the success of operation.
+
+```C++
+bool sendTopic(FirebaseData &dataObj);
+```
+
+
+
+
 ### Firebase Data object functions
 
 **Pause/Unpause WiFiClient from all Firebase operations.**
@@ -2630,6 +2735,192 @@ return *`Payload string* (String object).`*
 
 ```C++
 String payload();
+```
+
+
+
+
+
+### Firebase Cloud Messaging object functions
+
+
+**Store Firebase Cloud Messaging's authentication credentials.**
+    
+param *`serverKey`* - Server key found on Console: Project settings > Cloud Messaging
+
+```C++
+void begin(const String &serverKey);
+```
+
+
+
+
+
+
+**Add recipient's device registration token or instant ID token.**
+    
+param *`deviceToken`* - Recipient's device registration token to addd that message will be sent to.
+
+```C++
+void addDeviceToken(const String &deviceToken);
+```
+
+
+
+
+
+ **Remove recipient's device registration token or instant ID token.**
+    
+param *`index`* - Index (start from zero) of recipient's device registration token that added to FCM Data Object of Firebase Data object.
+
+```C++
+void removeDeviceToken(uint16_t index);
+```
+
+
+
+
+**Clear all recipient's device registration tokens.**
+    
+ ```C++
+ void clearDeviceToken();
+```
+
+
+
+
+
+**Set the notify message type information.**
+    
+param *`title`* - The title text of notification message.
+
+param *`body`* - The body text of notification message.
+
+```C++
+void setNotifyMessage(const String &title, const String &body);
+```
+
+
+
+
+**Set the notify message type information.**
+    
+param *`title`* - The title text of notification message.
+
+param *`body`* - The body text of notification message.
+
+param *`icon`* - The name and/or included URI/URL of icon to show on notify message.
+
+```C++
+void setNotifyMessage(const String &title, const String &body, const String &icon);
+```
+
+
+
+
+
+**Set the notify message type information.**
+    
+param *`title`* - The title text of notification message.
+
+param *`body`* - The body text of notification message.
+
+param *`icon`* - The name and/or included URI/URL of icon to show on notify message.
+
+param *`click_action`* - The URL or intent to accept click event on notification message.
+
+```C++
+void setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action);
+```
+
+
+
+
+
+**Clear all notify message information.**
+    
+```C++
+void clearNotifyMessage();
+```
+
+
+
+
+
+**Set the custom data message type information.**
+    
+param *`jsonString`* - The JSON structured data string.
+
+```C++
+void setDataMessage(const String &jsonString);
+```
+
+
+
+
+**Clear custom data message type information.**
+    
+```C++
+void clearDataMessage();
+```
+
+
+
+
+
+**Set the prioiry of message (notification and custom data).**
+    
+param *`priority`* - The priority string i.e. normal and high.
+
+```C++
+void setPriority(const String &priority);
+```
+
+
+
+
+
+
+**Set the collapse key of message (notification and custom data).**
+    
+param *`key`* - String of collapse key.
+
+```C++
+void setCollapseKey(const String &key);
+```
+
+
+
+
+
+**Set the Time To Live of message (notification and custom data).**
+    
+param *`seconds`* - Number of seconds from 0 to 2,419,200 (4 weeks).
+
+```C++
+void setTimeToLive(uint32_t seconds);
+```
+
+
+
+
+**Set topic of message will be send to.**
+    
+param *`topic - Topic string.
+
+```C++
+void setTopic(const String &topic);
+```
+
+
+
+
+**Get the send result.**
+    
+return *`String`* of payload returned from server.
+
+```C++
+String getSendResult();
 ```
 
 

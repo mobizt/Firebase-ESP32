@@ -89,7 +89,7 @@ void sendMessage()
 
     //if (Firebase.broadcastMessage(firebaseData1))
     //if (Firebase.sendTopic(firebaseData1))
-    if (Firebase.sendMessage(firebaseData1))
+    if (Firebase.sendMessage(firebaseData1, 0))//send message to recipient index 0
     {
 
         Serial.println("PASSED");
