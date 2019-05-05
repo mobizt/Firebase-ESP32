@@ -1,10 +1,10 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.4
  * 
- * May 5, 2019
+ * May 6, 2019
  * 
  * Feature Added:
- * - Cloud Messaging
+ * - ETag
  * 
  * Feature Fixed:
  *  
@@ -208,6 +208,11 @@ static const char ESP32_FIREBASE_STR_144[] PROGMEM = "No topic provided";
 static const char ESP32_FIREBASE_STR_145[] PROGMEM = "No device token provided";
 static const char ESP32_FIREBASE_STR_146[] PROGMEM = "No server key provided";
 static const char ESP32_FIREBASE_STR_147[] PROGMEM = "The index of recipient device registered token not found";
+static const char ESP32_FIREBASE_STR_148[] PROGMEM = "X-Firebase-ETag: true\r\n";
+static const char ESP32_FIREBASE_STR_149[] PROGMEM = "if-match: ";
+static const char ESP32_FIREBASE_STR_150[] PROGMEM = "ETag: ";
+static const char ESP32_FIREBASE_STR_151[] PROGMEM = "null_etag";
+static const char ESP32_FIREBASE_STR_152[] PROGMEM = "Precondition Failed (ETag is not match)";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -565,6 +570,14 @@ public:
   bool pathExist(FirebaseData &dataObj, const String &path);
 
   /*
+    Determine the unique identifier (ETag) of current data at the defined database path.
+
+    @return String of unique identifier.
+
+  */
+  String getETag(FirebaseData &dataObj, const String &path);
+
+  /*
     Append new integer value to the defined database path. 
     
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -704,6 +717,29 @@ public:
   bool setInt(FirebaseData &dataObj, const String &path, int intValue);
 
   /*
+    Set integer data at the defined database path if defined database path's ETag matched the ETag value.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which integer data will be set.
+    @param intValue - Integer value to set.
+    @param ETag - Known unique identifier string (ETag) of defined database path.
+
+    @return - Boolean type status indicates the success of operation.
+
+    Call [FirebaseData object].dataType to determine what type of data that successfully
+    stores in database. 
+    
+    If ETag at the defined database path is not match the provided ETag parameter,
+    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+
+    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    Also call [FirebaseData object].intData to get the current integer value.
+    
+
+   */
+  bool setInt(FirebaseData &dataObj, const String &path, int intValue, const String &ETag);
+
+  /*
     Set float data at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -720,6 +756,31 @@ public:
 
    */
   bool setFloat(FirebaseData &dataObj, const String &path, float floatValue);
+
+  /*
+    Set float data at the defined database path if defined database path's ETag matched the ETag value.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which float data will be set.
+    @param floatValue - Float value to set.
+    @param ETag - Known unique identifier string (ETag) of defined database path.
+
+    @return - Boolean type status indicates the success of operation.
+    
+    Call [FirebaseData object].dataType to determine what type of data that successfully
+    stores in database. 
+    
+    Call [FirebaseData object].floatData will return the float value of
+    payload returned from server.
+
+    If ETag at the defined database path is not match the provided ETag parameter,
+    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+
+    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    Also call [FirebaseData object].floatData to get the current float value.
+
+   */
+  bool setFloat(FirebaseData &dataObj, const String &path, float floatValue, const String &ETag);
 
   /*
     Set double data at the defined database path.
@@ -740,6 +801,31 @@ public:
   bool setDouble(FirebaseData &dataObj, const String &path, double doubleValue);
 
   /*
+    Set double data at the defined database path if defined database path's ETag matched the ETag value.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which float data will be set.
+    @param doubleValue - Double value to set.
+    @param ETag - Known unique identifier string (ETag) of defined database path.
+
+    @return - Boolean type status indicates the success of operation.
+
+    Call [FirebaseData object].dataType to determine what type of data that successfully
+    stores in database.
+
+    Call [FirebaseData object].doubleData will return the double value of
+    payload returned from server.
+
+    If ETag at the defined database path is not match the provided ETag parameter,
+    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+
+    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    Also call [FirebaseData object].doubeData to get the current double value.
+
+  */
+  bool setDouble(FirebaseData &dataObj, const String &path, double doubleValue, const String &ETag);
+
+  /*
     Set Boolean data at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -758,6 +844,31 @@ public:
   bool setBool(FirebaseData &dataObj, const String &path, bool boolValue);
 
   /*
+    Set Boolean data at the defined database path if defined database path's ETag matched the ETag value.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which Boolean data will be set.
+    @param boolValue - Boolean value to set.
+    @param ETag - Known unique identifier string (ETag) of defined database path.
+
+    @return - Boolean type status indicates the success of operation.
+
+    Call [FirebaseData object].dataType to determine what type of data that successfully
+    stores in database.
+
+    Call [FirebaseData object].boolData will return the Boolean value of
+    payload returned from server.
+
+    If ETag at the defined database path is not match the provided ETag parameter,
+    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+
+    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    Also call [FirebaseData object].doubeData to get the current boolean value.
+
+  */
+  bool setBool(FirebaseData &dataObj, const String &path, bool boolValue, const String &ETag);
+
+  /*
     Set string (text) at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -774,6 +885,31 @@ public:
 
    */
   bool setString(FirebaseData &dataObj, const String &path, const String &stringValue);
+
+  /*
+    Set string (text) at the defined database path if defined database path's ETag matched the ETag value.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which string data will be set.
+    @param stringValue - String or text to set.
+    @param ETag - Known unique identifier string (ETag) of defined database path.
+
+    @return - Boolean type status indicates the success of operation.
+    
+    Call [FirebaseData object].dataType to determine what type of data that successfully
+    stores in database. 
+    
+    Call [FirebaseData object].stringData will return the string value of
+    payload returned from server.
+
+    If ETag at the defined database path is not match the provided ETag parameter,
+    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+
+    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    Also call [FirebaseData object].stringData to get the current string value.
+
+   */
+  bool setString(FirebaseData &dataObj, const String &path, const String &stringValue, const String &ETag);
 
   /*
 
@@ -798,6 +934,35 @@ public:
   bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString);
 
   /*
+
+    Set child nodes's key and value (using JSON data) to the defined database path if defined database path's ETag matched the ETag value.
+
+    This will replace any child nodes inside the defined path with node' s key
+    and value defined in JSON data.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which key and value in JSON data will be replaced or set.
+    @param jsonString - The JSON string to set (should be valid JSON data).
+    @param ETag - Known unique identifier string (ETag) of defined database path.
+
+    @return - Boolean type status indicates the success of operation.
+    
+    Call [FirebaseData object].dataType to determine what type of data that successfully
+    stores in database. 
+    
+    Call [FirebaseData object].jsonData will return the JSON string value of
+    payload returned from server.
+
+    If ETag at the defined database path is not match the provided ETag parameter,
+    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+
+    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    Also call [FirebaseData object].jsonData to get the current JSON string value.
+
+   */
+  bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString, const String &ETag);
+
+  /*
     Set blob (binary data) at the defined database path.
 
     This will replace any child nodes inside the defined path with blob or binary data.
@@ -815,6 +980,27 @@ public:
   bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size);
 
   /*
+    Set blob (binary data) at the defined database path if defined database path's ETag matched the ETag value.
+
+    This will replace any child nodes inside the defined path with blob or binary data.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which binary data will be set.
+    @param blob - Byte array of data.
+    @param size - Size of byte array.
+    @param ETag - Known unique identifier string (ETag) of defined database path.
+
+    @return - Boolean type status indicates the success of operation.
+    
+    No payload returned from server.
+
+    If ETag at the defined database path is not match the provided ETag parameter,
+    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+
+   */
+  bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, const String &ETag);
+
+  /*
     Set binary data from file store on SD card to the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -827,6 +1013,24 @@ public:
 
    */
   bool setFile(FirebaseData &dataObj, const String &path, const String &fileName);
+
+  /*
+    Set binary data from file store on SD card to the defined database path if defined database path's ETag matched the ETag value.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which binary data from file will be set.
+    @param fileName - File name (full file path) in SD card.
+    @param ETag - Known unique identifier string (ETag) of defined database path.
+
+    @return - Boolean type status indicates the success of operation.
+    
+    No payload returned from server.
+
+    If ETag at the defined database path is not match the provided ETag parameter,
+    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+
+   */
+  bool setFile(FirebaseData &dataObj, const String &path, const String &fileName, const String &ETag);
 
   /*
     Update child nodes's key or exising key's value (using JSON data) under the defined database path.
@@ -1199,6 +1403,21 @@ public:
   bool deleteNode(FirebaseData &dataObj, const String &path);
 
   /*
+    Delete all child nodes at the defined database path if defined database path's ETag matched the ETag value.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Database path to be deleted.
+    @param ETag - Known unique identifier string (ETag) of defined database path.
+
+    @return - Boolean type status indicates the success of operation.
+
+    If ETag at the defined database path is not match the provided ETag parameter,
+    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+
+   */
+  bool deleteNode(FirebaseData &dataObj, const String &path, const String &ETag);
+
+  /*
     Start monitoring the value changes at the defined path and its children.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -1515,9 +1734,9 @@ public:
   friend FirebaseData;
 
 protected:
-  bool buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, uint8_t firebaseDataType, const String &path, const char *buf, bool queue);
-  bool buildRequestFile(FirebaseData &dataObj, uint8_t firebaseMethod, const String &path, const String &fileName, bool queue);
-  bool sendRequest(FirebaseData &dataObj, const std::string &path, const uint8_t _method, uint8_t dataType, const std::string &payload);
+  bool buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, uint8_t firebaseDataType, const String &path, const char *buf, bool queue, const std::string &etag = "");
+  bool buildRequestFile(FirebaseData &dataObj, uint8_t firebaseMethod, const String &path, const String &fileName, bool queue, const std::string &etag = "");
+  bool sendRequest(FirebaseData &dataObj, const std::string &path, const uint8_t _method, uint8_t dataType, const std::string &payload, const std::string &etag);
   bool firebaseConnectStream(FirebaseData &dataObj, const std::string &path);
   bool getServerStreamResponse(FirebaseData &dataObj);
   bool getServerResponse(FirebaseData &dataObj);
@@ -1599,6 +1818,14 @@ public:
 
    */
   String eventType();
+
+  /*
+    Determine the unique identifier (ETag) of current data.
+
+    @return String of unique identifier.
+
+  */
+  String ETag();
 
   /*
     Determine the current stream path.
@@ -1848,6 +2075,8 @@ protected:
   std::string _redirectURL = "";
   std::string _firebaseError = "";
   std::string _eventType = "";
+  std::string _etag = "";
+  std::string _etag2 = "";
   uint16_t _maxBlobSize = 1024;
 
   std::vector<uint8_t> _blob = std::vector<uint8_t>();
