@@ -77,6 +77,7 @@ void setup()
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.println("TYPE: " + firebaseData.dataType());
+      Serial.println("ETAG: " + firebaseData.ETAG());
       Serial.print("VALUE: ");
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
@@ -113,6 +114,7 @@ void setup()
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.println("TYPE: " + firebaseData.dataType());
+      Serial.println("ETAG: " + firebaseData.ETAG());
       Serial.print("VALUE: ");
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
@@ -149,6 +151,7 @@ void setup()
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.println("TYPE: " + firebaseData.dataType());
+      Serial.println("ETAG: " + firebaseData.ETAG());
       Serial.print("VALUE: ");
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
@@ -186,6 +189,7 @@ void setup()
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.print("PUSH NAME: ");
       Serial.println(firebaseData.pushName());
+      Serial.println("ETAG: " + firebaseData.ETAG());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -212,6 +216,7 @@ void setup()
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.print("PUSH NAME: ");
       Serial.println(firebaseData.pushName());
+      Serial.println("ETAG: " + firebaseData.ETAG());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -237,6 +242,7 @@ void setup()
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.println("TYPE: " + firebaseData.dataType());
+      //No ETAG available
       Serial.print("VALUE: ");
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
@@ -266,3 +272,4 @@ void setup()
 void loop()
 {
 }
+

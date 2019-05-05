@@ -48,6 +48,7 @@ const char *root_ca = "-----BEGIN CERTIFICATE-----\n"
                       "TBj0/VLZjmmx6BEP3ojY+x1J96relc8geMJgEtslQIxq/H5COEBkEveegeGTLg==\n"
                       "-----END CERTIFICATE-----\n";
 
+
 //Define Firebase Data object
 FirebaseData firebaseData;
 
@@ -70,7 +71,7 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH, root_ca);
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
 
   String path = "/ESP32_Test";
@@ -92,6 +93,43 @@ void setup()
   Serial.println();
 
   Serial.println("------------------------------------");
+  Serial.println("Set integer test...");
+
+  for (uint8_t i = 0; i < 10; i++)
+  {
+
+    if (Firebase.setInt(firebaseData, path + "/Int/Data" + (i + 1), (i + 1) * 10))
+    {
+      Serial.println("PASSED");
+      Serial.println("PATH: " + firebaseData.dataPath());
+      Serial.println("TYPE: " + firebaseData.dataType());
+      Serial.println("ETAG: " + firebaseData.ETAG());
+      Serial.print("VALUE: ");
+      if (firebaseData.dataType() == "int")
+        Serial.println(firebaseData.intData());
+     else if (firebaseData.dataType() == "float")
+        Serial.println(firebaseData.floatData(), 5);
+      else if (firebaseData.dataType() == "double")
+        Serial.println(firebaseData.doubleData(), 9);
+      else if (firebaseData.dataType() == "boolean")
+        Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
+      else if (firebaseData.dataType() == "string")
+        Serial.println(firebaseData.stringData());
+      else if (firebaseData.dataType() == "json")
+        Serial.println(firebaseData.jsonData());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + firebaseData.errorReason());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+  }
+
+  Serial.println("------------------------------------");
   Serial.println("Set double test...");
 
   for (uint8_t i = 0; i < 10; i++)
@@ -102,6 +140,7 @@ void setup()
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.println("TYPE: " + firebaseData.dataType());
+      Serial.println("ETAG: " + firebaseData.ETAG());
       Serial.print("VALUE: ");
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
@@ -138,6 +177,7 @@ void setup()
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.println("TYPE: " + firebaseData.dataType());
+      Serial.println("ETAG: " + firebaseData.ETAG());
       Serial.print("VALUE: ");
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
@@ -175,6 +215,7 @@ void setup()
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.print("PUSH NAME: ");
       Serial.println(firebaseData.pushName());
+      Serial.println("ETAG: " + firebaseData.ETAG());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -201,6 +242,7 @@ void setup()
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.print("PUSH NAME: ");
       Serial.println(firebaseData.pushName());
+      Serial.println("ETAG: " + firebaseData.ETAG());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -226,6 +268,7 @@ void setup()
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.println("TYPE: " + firebaseData.dataType());
+      //No ETAG available
       Serial.print("VALUE: ");
       if (firebaseData.dataType() == "int")
         Serial.println(firebaseData.intData());
@@ -255,3 +298,4 @@ void setup()
 void loop()
 {
 }
+
