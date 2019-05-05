@@ -1,7 +1,7 @@
 /*
  * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.3
  * 
- * May 4, 2019
+ * May 5, 2019
  * 
  * Feature Added:
  * - Cloud Messaging
@@ -212,6 +212,7 @@ bool FirebaseESP32::setRules(FirebaseData &dataObj, const String &rules)
   dataObj.queryFilter.clear();
   return sendRequest(dataObj, ESP32_FIREBASE_STR_103, FirebaseMethod::SET_RULES, FirebaseDataType::JSON, rules.c_str());
 }
+
 
 bool FirebaseESP32::buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, uint8_t firebaseDataType, const String &path, const char *buf, bool queue)
 {
@@ -4617,13 +4618,13 @@ bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, std::vector<const char *>
 
 bool FCMObject::fcm_connect(HTTPClientESP32Ex &client)
 {
-
-  int httpConnected = httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, _port, ESP32_FIREBASE_STR_121, (const char *)NULL);
+  int httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, _port, ESP32_FIREBASE_STR_121, (const char *)NULL);
 
   if (!httpConnected)
   {
     return false;
   }
+  return true;
 }
 void FCMObject::fcm_buildHeader(std::string &header, size_t payloadSize)
 {
