@@ -6,6 +6,7 @@
  * Feature Added:
  * - ETag
  * - Classic HTTP hacks
+ * - Server timestamp
  * 
  * Feature Fixed:
  *  
@@ -53,6 +54,7 @@ struct FirebaseESP32::FirebaseDataType
   static const uint8_t JSON = 7;
   static const uint8_t BLOB = 8;
   static const uint8_t FILE = 9;
+  static const uint8_t TIMESTAMP = 10;
 };
 
 struct FirebaseESP32::FirebaseMethod
@@ -449,6 +451,11 @@ bool FirebaseESP32::pushFile(FirebaseData &dataObj, const String &path, const St
   return buildRequestFile(dataObj, FirebaseMethod::POST, path, fileName, false);
 }
 
+bool FirebaseESP32::pushTimestamp(FirebaseData &dataObj, const String &path)
+{
+  return buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::TIMESTAMP, path, ESP32_FIREBASE_STR_154, false);
+}
+
 bool FirebaseESP32::setInt(FirebaseData &dataObj, const String &path, int intValue)
 {
   size_t bufSize = 50;
@@ -627,6 +634,12 @@ bool FirebaseESP32::setFile(FirebaseData &dataObj, const String &path, const Str
 bool FirebaseESP32::setFile(FirebaseData &dataObj, const String &path, const String &fileName, const String &ETag)
 {
   return buildRequestFile(dataObj, FirebaseMethod::PUT_SILENT, path, fileName, false, ETag.c_str());
+}
+
+bool FirebaseESP32::setTimestamp(FirebaseData &dataObj, const String &path)
+{
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::TIMESTAMP, path, ESP32_FIREBASE_STR_154, false);
+  return flag;
 }
 
 bool FirebaseESP32::updateNode(FirebaseData &dataObj, const String &path, const String &jsonString)
@@ -1182,7 +1195,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
   //Prepare request header
 
   if (method != FirebaseMethod::BACKUP && method != FirebaseMethod::RESTORE && dataType != FirebaseDataType::FILE)
-    buildFirebaseRequest(dataObj, _host, method, path, _auth, payloadStr.length(), header);
+    buildFirebaseRequest(dataObj, _host, method, dataType, path, _auth, payloadStr.length(), header);
   else
   {
 
@@ -1299,9 +1312,9 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     }
 
     if (dataType == FirebaseDataType::FILE)
-      buildFirebaseRequest(dataObj, _host, method, dataObj._path.c_str(), _auth, len, header);
+      buildFirebaseRequest(dataObj, _host, method, dataType, dataObj._path.c_str(), _auth, len, header);
     else
-      buildFirebaseRequest(dataObj, _host, method, dataObj._backupNodePath.c_str(), _auth, len, header);
+      buildFirebaseRequest(dataObj, _host, method, dataType, dataObj._backupNodePath.c_str(), _auth, len, header);
   }
 
   if (method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::PATCH_SILENT || (method == FirebaseMethod::PUT_SILENT && dataType == FirebaseDataType::BLOB))
@@ -2702,7 +2715,7 @@ bool FirebaseESP32::isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQue
   return false;
 }
 
-void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t method, const std::string &path, const std::string &auth, int payloadLength, std::string &request)
+void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t method, uint8_t dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &request)
 {
   uint8_t http_method = 0;
   char *contentLength = new char[20];
@@ -2835,8 +2848,8 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   request += ESP32_FIREBASE_STR_32;
   request += ESP32_FIREBASE_STR_33;
 
-  //ETag
-  if (method == FirebaseMethod::DELETE || method == FirebaseMethod::GET || method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST)
+  //Timestamp cannot use with ETag header, otherwise cases internal server error
+  if (dataType != FirebaseDataType::TIMESTAMP && (method == FirebaseMethod::DELETE || method == FirebaseMethod::GET || method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST))
     request += ESP32_FIREBASE_STR_148;
 
   if (dataObj._etag2.length() > 0 && (method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::DELETE))

@@ -65,13 +65,17 @@ This following devices were tested and work well.
 
 * **Read and write database rules** using **getRules** and **setRules** functions.
 
-* Supports Conditional Requests through **ETag**.
+* **Quit and release all resources** which belong to Firbase data using **end** function.
+
+* Supports **Conditional Requests using ETag**.
+
+* Supports **set and push server's Timestamp**.
 
 * Supports **classic HTTP requests hack** in case of PUT and DELET blocked by Firewall (if device connected behind Firewall).
 
 * **Supports Error Retry and Error Queue to resume all Firebase read/store Error oerations** up to 255 queues. Firebase Error queues can be tracked its status and saved as file for further restore. Data can be resumed from queue operation (get) when global variable is provided. 
 
-* **Quit and release all resources** which belong to Firbase data using **end** function.
+
 
 * Supports **Data Filtering** using the orderBy, limitToFirst, limitToLast, startAt, endAt, and equalTo query parameters.
 
@@ -311,6 +315,12 @@ The functions updateNode, setRules, getRules, backup and restore are not support
 For the ETag usage, see ETag.ino sketch file in examples folder.
 
 
+
+For set server timestamp in database, call Firebase.setTimestamp. The returned timestamp value can get from firebaseData.getInt(). Because of internal server error, ETag is not request during perform setTimestamp function but can get it later by call Firebase.getETag.
+
+The functions getTimestamp and set, push, delete with ETag functions will not queue in Error Queue collection.
+
+
 Below is the example usage to store or set file data from SD card, "/test.txt" to defined database path "/test/file_data".
 
 
@@ -351,6 +361,9 @@ Working with JSON data allow us to read or store multiple data at once because J
 Function setJSON will set/replace value at defined database path with value in JSON data, and also create child nodes.  
 
 While in function pushJSON, all key/value in JSON data  will be appended to the defined database path as new node.
+
+For push server timestamp in database, call Firebase.pushTimestamp. Because of internal server error, ETag is not request during perform setTimestamp function but can get it later by call Firebase.getETag.
+
 
 Below is the example for appending new data (using JSON) to the path "/test/append.
 
@@ -1240,6 +1253,24 @@ bool pushFile(FirebaseData &dataObj, const String &path, const String &fileName)
 
 
 
+ **Append new Firebase server's timestamp to the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Target database path which timestamp will be appended.
+
+return - *`Boolean`* type status indicates the success of operation.
+    
+The new appended node's key will be stored in Firebase Data object, 
+which its value can be accessed via function [FirebaseData object].pushName().
+
+```C++
+bool pushTimestamp(FirebaseData &dataObj, const String &path);
+```
+
+
+
+
 
 
 **Set integer data at the defined database path.**
@@ -1695,6 +1726,24 @@ the operation will failed with HTTP code 412, Precondition Failed (ETag is not m
 bool setFile(FirebaseData &dataObj, const String &path, const String &fileName, const String &ETag);
 ```
 
+
+
+
+
+
+ **Set Firebase server's timestamp to the defined database path.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`path`* - Target database path which timestamp will be set.
+
+return - *`Boolean`* type status indicates the success of operation.
+    
+Call [FirebaseData object].intData will return the integer value of timestamp returned from server.
+
+```C++
+bool setTimestamp(FirebaseData &dataObj, const String &path);
+```
 
 
 

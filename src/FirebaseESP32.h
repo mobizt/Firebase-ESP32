@@ -6,6 +6,7 @@
  * Feature Added:
  * - ETag
  * - Classic HTTP hacks
+ * - Server timestamp
  * 
  * Feature Fixed:
  *  
@@ -215,6 +216,8 @@ static const char ESP32_FIREBASE_STR_150[] PROGMEM = "ETag: ";
 static const char ESP32_FIREBASE_STR_151[] PROGMEM = "null_etag";
 static const char ESP32_FIREBASE_STR_152[] PROGMEM = "Precondition Failed (ETag is not match)";
 static const char ESP32_FIREBASE_STR_153[] PROGMEM = "X-HTTP-Method-Override: ";
+static const char ESP32_FIREBASE_STR_154[] PROGMEM = "{\".sv\": \"timestamp\"}";
+
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -715,6 +718,20 @@ public:
   bool pushFile(FirebaseData &dataObj, const String &path, const String &fileName);
 
   /*
+    Append new Firebase server's timestamp to the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which timestamp will be appended.
+
+    @return - Boolean type status indicates the success of operation.
+    
+    The new appended node's key will be stored in Firebase Data object, 
+    which its value can be accessed via function [FirebaseData object].pushName().
+
+   */
+  bool pushTimestamp(FirebaseData &dataObj, const String &path);
+
+  /*
     Set integer data at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
@@ -1047,6 +1064,20 @@ public:
 
    */
   bool setFile(FirebaseData &dataObj, const String &path, const String &fileName, const String &ETag);
+
+  /*
+    Set Firebase server's timestamp to the defined database path.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param path - Target database path which timestamp will be set.
+
+    @return - Boolean type status indicates the success of operation.
+
+    Call [FirebaseData object].intData will return the integer value of
+    timestamp returned from server.
+
+   */
+  bool setTimestamp(FirebaseData &dataObj, const String &path);
 
   /*
     Update child nodes's key or exising key's value (using JSON data) under the defined database path.
@@ -1760,7 +1791,7 @@ protected:
   bool getUploadResponse(FirebaseData &dataObj);
   void endFileTransfer(FirebaseData &dataObj);
 
-  void buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t _method, const std::string &path, const std::string &auth, int payloadLength, std::string &request);
+  void buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t _method, uint8_t dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &request);
   void resetFirebasedataFlag(FirebaseData &dataObj);
   bool handleNetNotConnected(FirebaseData &dataObj);
   void forceEndHTTP(FirebaseData &dataObj);

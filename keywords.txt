@@ -34,6 +34,7 @@ pushString	KEYWORD2
 pushJSON	KEYWORD2
 pushBlob	KEYWORD2
 pushFile	KEYWORD2
+pushTimestamp	KEYWORD2
 setInt	KEYWORD2
 setFloat	KEYWORD2
 setDouble	KEYWORD2
@@ -42,6 +43,7 @@ setString	KEYWORD2
 setJSON	KEYWORD2
 setBlob	KEYWORD2
 setFile	KEYWORD2
+setTimestamp	KEYWORD2
 updateNode	KEYWORD2
 updateNodeSilent	KEYWORD2
 getInt	KEYWORD2
