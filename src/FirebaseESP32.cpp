@@ -5,6 +5,7 @@
  * 
  * Feature Added:
  * - ETag
+ * - Classic HTTP hacks
  * 
  * Feature Fixed:
  *  
@@ -343,6 +344,11 @@ String FirebaseESP32::getETag(FirebaseData &dataObj, const String &path)
     return dataObj._etag.c_str();
   else
     return String();
+}
+
+void FirebaseESP32::enableClassicRequest(FirebaseData &dataObj, bool flag)
+{
+  dataObj._classicRequest = flag;
 }
 
 bool FirebaseESP32::pushInt(FirebaseData &dataObj, const String &path, int intValue)
@@ -2698,7 +2704,7 @@ bool FirebaseESP32::isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQue
 
 void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t method, const std::string &path, const std::string &auth, int payloadLength, std::string &request)
 {
-
+  uint8_t http_method = 0;
   char *contentLength = new char[20];
   memset(contentLength, 0, 20);
 
@@ -2713,15 +2719,37 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   else
   {
     if (method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::SET_RULES)
-      request = ESP32_FIREBASE_STR_23;
+    {
+      http_method = FirebaseMethod::PUT;
+      if (!dataObj._classicRequest)
+        request = ESP32_FIREBASE_STR_23;
+      else
+        request = ESP32_FIREBASE_STR_24;
+    }
     else if (method == FirebaseMethod::POST)
+    {
+      http_method = FirebaseMethod::POST;
       request = ESP32_FIREBASE_STR_24;
+    }
     else if (method == FirebaseMethod::GET || method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::BACKUP || method == FirebaseMethod::GET_RULES)
+    {
+      http_method = FirebaseMethod::GET;
       request = ESP32_FIREBASE_STR_25;
+    }
     else if (method == FirebaseMethod::PATCH || method == FirebaseMethod::PATCH_SILENT || method == FirebaseMethod::RESTORE)
+    {
+      http_method = FirebaseMethod::PATCH;
       request = ESP32_FIREBASE_STR_26;
+    }
     else if (method == FirebaseMethod::DELETE)
-      request = ESP32_FIREBASE_STR_27;
+    {
+      http_method = FirebaseMethod::DELETE;
+      if (!dataObj._classicRequest)
+        request = ESP32_FIREBASE_STR_23;
+      else
+        request = ESP32_FIREBASE_STR_27;
+    }
+
     request += ESP32_FIREBASE_STR_6;
     dataObj._isStream = false;
   }
@@ -2815,6 +2843,18 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   {
     request += ESP32_FIREBASE_STR_149;
     request += dataObj._etag2;
+    request += ESP32_FIREBASE_STR_21;
+  }
+
+  if (dataObj._classicRequest && http_method != FirebaseMethod::GET && http_method != FirebaseMethod::POST && http_method != FirebaseMethod::PATCH)
+  {
+    request += ESP32_FIREBASE_STR_153;
+
+    if (http_method == FirebaseMethod::PUT)
+      request += ESP32_FIREBASE_STR_23;
+    else if (http_method == FirebaseMethod::DELETE)
+      request += ESP32_FIREBASE_STR_27;
+
     request += ESP32_FIREBASE_STR_21;
   }
 

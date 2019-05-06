@@ -5,6 +5,7 @@
  * 
  * Feature Added:
  * - ETag
+ * - Classic HTTP hacks
  * 
  * Feature Fixed:
  *  
@@ -213,6 +214,7 @@ static const char ESP32_FIREBASE_STR_149[] PROGMEM = "if-match: ";
 static const char ESP32_FIREBASE_STR_150[] PROGMEM = "ETag: ";
 static const char ESP32_FIREBASE_STR_151[] PROGMEM = "null_etag";
 static const char ESP32_FIREBASE_STR_152[] PROGMEM = "Precondition Failed (ETag is not match)";
+static const char ESP32_FIREBASE_STR_153[] PROGMEM = "X-HTTP-Method-Override: ";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -576,6 +578,20 @@ public:
 
   */
   String getETag(FirebaseData &dataObj, const String &path);
+
+  /*
+    Enable the library to use only classic HTTP GET and POST methods.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+
+    @param flag - Boolean value to enable.
+
+    This option used to escape the Firewall restriction (if device is connected through Firewall) that allows only HTTP GET and POST
+    
+    HTTP PATCH request was sent as PATCH which not affected by this option.
+
+  */
+  void enableClassicRequest(FirebaseData &dataObj, bool flag);
 
   /*
     Append new integer value to the defined database path. 
@@ -2054,6 +2070,7 @@ protected:
   bool _pathNotExist = false;
   bool _pause = false;
   bool _file_transfering = false;
+  bool _classicRequest = false;
   uint8_t _dataType = 0;
   uint8_t _dataType2 = 0;
   uint8_t _connectionStatus = 0;

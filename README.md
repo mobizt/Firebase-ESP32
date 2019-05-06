@@ -67,6 +67,8 @@ This following devices were tested and work well.
 
 * Supports Conditional Requests through **ETag**.
 
+* Supports **classic HTTP requests hack** in case of PUT and DELET blocked by Firewall (if device connected behind Firewall).
+
 * **Supports Error Retry and Error Queue to resume all Firebase read/store Error oerations** up to 255 queues. Firebase Error queues can be tracked its status and saved as file for further restore. Data can be resumed from queue operation (get) when global variable is provided. 
 
 * **Quit and release all resources** which belong to Firbase data using **end** function.
@@ -203,6 +205,11 @@ Firebase.reconnectWiFi(true);
 
 Firebase.setMaxErrorQueue(firebaseData, 30);
 
+//8. Optional, use classic HTTP GET and POST requests.
+//This option allows get and delete functions (PUT and DELETE HTTP requests) works for device connected behind the
+//Firewall that allows only GET and POST requests.
+  
+Firebase.enableClassicRequest(firebaseData, true);
 
 ```
 
@@ -1020,6 +1027,27 @@ return *`String`* of unique identifier.
 ```C++
 String getETag(FirebaseData &dataObj, const String &path);
 ```
+
+
+
+
+
+
+
+**Enable the library to use only classic HTTP GET and POST methods.**
+
+param *`dataObj`* - Firebase Data Object to hold data and instances.
+
+param *`flag`* - Boolean value to enable.
+
+This option used to escape the Firewall restriction (if device is connected through Firewall) that allows only HTTP GET and POST
+    
+HTTP PATCH request was sent as PATCH which not affected by this option.
+
+```C++
+void enableClassicRequest(FirebaseData &dataObj, bool flag);
+```
+
 
 
 
