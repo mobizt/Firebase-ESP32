@@ -24,6 +24,8 @@ reconnectWiFi	KEYWORD2
 getRules	KEYWORD2
 setRules	KEYWORD2
 pathExist	KEYWORD2
+getETag	KEYWORD2
+enableClassicRequest	KEYWORD2
 pushInt	KEYWORD2
 pushFloat	KEYWORD2
 pushDouble	KEYWORD2
@@ -85,6 +87,7 @@ getWiFiClient	KEYWORD2
 pauseFirebase	KEYWORD2
 dataType	KEYWORD2
 eventType	KEYWORD2
+ETag	KEYWORD2
 streamPath	KEYWORD2
 dataPath	KEYWORD2
 errorReason	KEYWORD2
