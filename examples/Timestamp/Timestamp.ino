@@ -53,7 +53,7 @@ void setup()
   Firebase.enableClassicRequest(firebaseData, true);
   */
 
-  String path = "/ESP8266_Test";
+  String path = "/ESP32_Test";
   String jsonStr;
 
   Serial.println("------------------------------------");
