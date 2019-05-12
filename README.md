@@ -878,7 +878,7 @@ else
 ```
 
 
-See [Full Examples](/tree/master/examples) for complete usages.
+See [Full Examples](/examples) for complete usages.
 
 See [Function Description](/src/README.md) for all available functions.
 
