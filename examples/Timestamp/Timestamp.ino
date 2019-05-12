@@ -54,7 +54,6 @@ void setup()
   */
 
   String path = "/ESP32_Test";
-  String jsonStr;
 
   Serial.println("------------------------------------");
   Serial.println("Set Timestamp test...");

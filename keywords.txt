@@ -21,6 +21,12 @@ fcm	KEYWORD1
 
 begin	KEYWORD2
 reconnectWiFi	KEYWORD2
+setReadTimeout	KEYWORD2
+setwriteSizeLimit	KEYWORD2
+getShallowData	KEYWORD2
+enableClassicRequest	KEYWORD2
+setPriority	KEYWORD2
+getPriority	KEYWORD2
 getRules	KEYWORD2
 setRules	KEYWORD2
 pathExist	KEYWORD2

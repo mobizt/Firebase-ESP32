@@ -47,8 +47,7 @@ void setup()
     Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
     Firebase.reconnectWiFi(true);
 
-    String path = "/ESP8266_Test";
-    String jsonStr;
+    String path = "/ESP32_Test";
 
     String ETag = "";
     String wrong_ETag = "ANY_WRONG_ETag";

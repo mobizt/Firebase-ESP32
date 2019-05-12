@@ -1,12 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.0.4
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.0
  * 
- * May 6, 2019
+ * May 12, 2019
  * 
  * Feature Added:
  * - ETag
  * - Classic HTTP hacks
  * - Server timestamp
+ * - Shallowed Data
+ * - Priority value
  * 
  * Feature Fixed:
  *  
@@ -55,6 +57,7 @@ struct FirebaseESP32::FirebaseDataType
   static const uint8_t BLOB = 8;
   static const uint8_t FILE = 9;
   static const uint8_t TIMESTAMP = 10;
+  static const uint8_t SHALLOW = 11;
 };
 
 struct FirebaseESP32::FirebaseMethod
@@ -72,6 +75,9 @@ struct FirebaseESP32::FirebaseMethod
   static const uint8_t RESTORE = 10;
   static const uint8_t GET_RULES = 11;
   static const uint8_t SET_RULES = 12;
+  static const uint8_t GET_SHALLOW = 13;
+  static const uint8_t GET_PRIORITY = 14;
+  static const uint8_t SET_PRIORITY = 15;
 };
 
 struct FirebaseESP32::FCMMessageType
@@ -205,19 +211,30 @@ void FirebaseESP32::reconnectWiFi(bool reconnect)
   WiFi.setAutoReconnect(reconnect);
 }
 
+void FirebaseESP32::setReadTimeout(FirebaseData &dataObj, int millisec)
+{
+  if (millisec <= 900000)
+    dataObj._readTimeout = millisec;
+}
+
+void FirebaseESP32::setwriteSizeLimit(FirebaseData &dataObj, const String &size)
+{
+  dataObj._writeLimit = size.c_str();
+}
+
 bool FirebaseESP32::getRules(FirebaseData &dataObj)
 {
   dataObj.queryFilter.clear();
-  return sendRequest(dataObj, ESP32_FIREBASE_STR_103, FirebaseMethod::GET_RULES, FirebaseDataType::JSON, "", "");
+  return sendRequest(dataObj, ESP32_FIREBASE_STR_103, FirebaseMethod::GET_RULES, FirebaseDataType::JSON, "", "", "");
 }
 
 bool FirebaseESP32::setRules(FirebaseData &dataObj, const String &rules)
 {
   dataObj.queryFilter.clear();
-  return sendRequest(dataObj, ESP32_FIREBASE_STR_103, FirebaseMethod::SET_RULES, FirebaseDataType::JSON, rules.c_str(), "");
+  return sendRequest(dataObj, ESP32_FIREBASE_STR_103, FirebaseMethod::SET_RULES, FirebaseDataType::JSON, rules.c_str(), "", "");
 }
 
-bool FirebaseESP32::buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, uint8_t firebaseDataType, const String &path, const char *buf, bool queue, const std::string &etag)
+bool FirebaseESP32::buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, uint8_t firebaseDataType, const std::string &path, const char *buff, bool queue, const std::string &priority, const std::string &etag)
 {
 
   bool flag;
@@ -242,7 +259,7 @@ bool FirebaseESP32::buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, 
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, path.c_str(), firebaseMethod, firebaseDataType, buf, etag);
+    flag = sendRequest(dataObj, path.c_str(), firebaseMethod, firebaseDataType, buff, priority, etag);
     if (flag)
       break;
 
@@ -265,14 +282,14 @@ bool FirebaseESP32::buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, 
 
   if (!queue && !flag && errCount == maxRetry && dataObj._qMan._maxQueue > 0)
     if (firebaseMethod == FirebaseMethod::PUT || firebaseMethod == FirebaseMethod::PUT_SILENT || firebaseMethod == FirebaseMethod::POST || firebaseMethod == FirebaseMethod::PATCH || firebaseMethod == FirebaseMethod::PATCH_SILENT)
-      dataObj.addQueue(firebaseMethod, firebaseDataType, path.c_str(), "", buf, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+      dataObj.addQueue(firebaseMethod, firebaseDataType, path.c_str(), "", buff, false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
   if (flag)
     dataObj._firebaseCall = false;
   return flag;
 }
 
-bool FirebaseESP32::buildRequestFile(FirebaseData &dataObj, uint8_t firebaseMethod, const String &path, const String &fileName, bool queue, const std::string &etag)
+bool FirebaseESP32::buildRequestFile(FirebaseData &dataObj, uint8_t firebaseMethod, const std::string &path, const std::string &fileName, bool queue, const std::string &priority, const std::string &etag)
 {
 
   dataObj.queryFilter.clear();
@@ -300,7 +317,7 @@ bool FirebaseESP32::buildRequestFile(FirebaseData &dataObj, uint8_t firebaseMeth
   for (int i = 0; i < maxRetry; i++)
   {
 
-    flag = sendRequest(dataObj, path.c_str(), firebaseMethod, FirebaseDataType::FILE, "", etag);
+    flag = sendRequest(dataObj, path.c_str(), firebaseMethod, FirebaseDataType::FILE, "", priority, etag);
     if (flag)
       break;
 
@@ -333,7 +350,7 @@ bool FirebaseESP32::buildRequestFile(FirebaseData &dataObj, uint8_t firebaseMeth
 bool FirebaseESP32::pathExist(FirebaseData &dataObj, const String &path)
 {
   dataObj.queryFilter.clear();
-  if (sendRequest(dataObj, path.c_str(), FirebaseMethod::GET_SILENT, FirebaseDataType::STRING, "", ""))
+  if (sendRequest(dataObj, path.c_str(), FirebaseMethod::GET_SILENT, FirebaseDataType::STRING, "", "", ""))
     return !dataObj._pathNotExist;
   else
     return false;
@@ -342,10 +359,17 @@ bool FirebaseESP32::pathExist(FirebaseData &dataObj, const String &path)
 String FirebaseESP32::getETag(FirebaseData &dataObj, const String &path)
 {
   dataObj.queryFilter.clear();
-  if (sendRequest(dataObj, path.c_str(), FirebaseMethod::GET_SILENT, FirebaseDataType::STRING, "", ""))
+  if (sendRequest(dataObj, path.c_str(), FirebaseMethod::GET_SILENT, FirebaseDataType::STRING, "", "", ""))
     return dataObj._etag.c_str();
   else
     return String();
+}
+
+bool FirebaseESP32::getShallowData(FirebaseData &dataObj, const String &path)
+{
+  bool flag = false;
+  flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET_SHALLOW, FirebaseDataType::STRING, "", "", "");
+  return flag;
 }
 
 void FirebaseESP32::enableClassicRequest(FirebaseData &dataObj, bool flag)
@@ -353,73 +377,195 @@ void FirebaseESP32::enableClassicRequest(FirebaseData &dataObj, bool flag)
   dataObj._classicRequest = flag;
 }
 
+bool FirebaseESP32::setPriority(FirebaseData &dataObj, const String &path, float priority)
+{
+  char *num = new char[20];
+  memset(num, 0, 20);
+  dtostrf(priority, 7, 6, num);
+  char *p = new char[path.length() + strlen_P(ESP32_FIREBASE_STR_156) + 1];
+  strcpy(p, path.c_str());
+  strcat_P(p, ESP32_FIREBASE_STR_156);
+  bool flag = buildRequest(dataObj, FirebaseMethod::SET_PRIORITY, FirebaseDataType::FLOAT, p, num, false, "", "");
+  delete[] num;
+  delete[] p;
+  return flag;
+}
+
+bool FirebaseESP32::getPriority(FirebaseData &dataObj, const String &path)
+{
+  char *p = new char[path.length() + strlen_P(ESP32_FIREBASE_STR_156) + 1];
+  strcpy(p, path.c_str());
+  strcat_P(p, ESP32_FIREBASE_STR_156);
+  bool flag = buildRequest(dataObj, FirebaseMethod::GET_PRIORITY, FirebaseDataType::FLOAT, p, "", false, "", "");
+  delete[] p;
+  return flag;
+}
+
 bool FirebaseESP32::pushInt(FirebaseData &dataObj, const String &path, int intValue)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  itoa(intValue, buf, 10);
+  return pushInt(dataObj, path.c_str(), intValue, false, "");
+}
 
-  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::INTEGER, path, buf, false);
-  delete[] buf;
+bool FirebaseESP32::pushInt(FirebaseData &dataObj, const String &path, int intValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = pushInt(dataObj, path.c_str(), intValue, false, "");
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::pushInt(FirebaseData &dataObj, const std::string &path, int intValue, bool queue, const std::string &priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  itoa(intValue, buff, 10);
+  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::INTEGER, path, buff, queue, priority, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::pushFloat(FirebaseData &dataObj, const String &path, float floatValue)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  dtostrf(floatValue, 7, 6, buf);
+  return pushInt(dataObj, path.c_str(), floatValue, false, "");
+}
 
-  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::FLOAT, path, buf, false);
-  delete[] buf;
+bool FirebaseESP32::pushFloat(FirebaseData &dataObj, const String &path, float floatValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = pushFloat(dataObj, path.c_str(), floatValue, false, buff);
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::pushFloat(FirebaseData &dataObj, const std::string &path, float floatValue, bool queue, const std::string &priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(floatValue, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::FLOAT, path, buff, queue, priority, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::pushDouble(FirebaseData &dataObj, const String &path, double doubleValue)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  dtostrf(doubleValue, 12, 9, buf);
+  return pushDouble(dataObj, path.c_str(), doubleValue, false, "");
+}
 
-  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::DOUBLE, path, buf, false);
-  delete[] buf;
+bool FirebaseESP32::pushDouble(FirebaseData &dataObj, const String &path, double doubleValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = pushDouble(dataObj, path.c_str(), doubleValue, false, buff);
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::pushDouble(FirebaseData &dataObj, const std::string &path, double doubleValue, bool queue, const std::string &priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(doubleValue, 12, 9, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::DOUBLE, path, buff, queue, priority, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::pushBool(FirebaseData &dataObj, const String &path, bool boolValue)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
+  return pushBool(dataObj, path.c_str(), boolValue, false, "");
+}
+
+bool FirebaseESP32::pushBool(FirebaseData &dataObj, const String &path, bool boolValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = pushBool(dataObj, path.c_str(), boolValue, false, buff);
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::pushBool(FirebaseData &dataObj, const std::string &path, bool boolValue, bool queue, const std::string &priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
 
   if (boolValue)
-    strcpy(buf, ESP32_FIREBASE_STR_107);
+    strcpy(buff, ESP32_FIREBASE_STR_107);
   else
-    strcpy(buf, ESP32_FIREBASE_STR_106);
+    strcpy(buff, ESP32_FIREBASE_STR_106);
 
-  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::BOOLEAN, path, buf, false);
-  delete[] buf;
+  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::BOOLEAN, path, buff, queue, priority, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::pushString(FirebaseData &dataObj, const String &path, const String &stringValue)
 {
-  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::STRING, path, stringValue.c_str(), false);
+  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::STRING, path.c_str(), stringValue.c_str(), false, "", "");
+  return flag;
+}
+
+bool FirebaseESP32::pushString(FirebaseData &dataObj, const String &path, const String &stringValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::STRING, path.c_str(), stringValue.c_str(), false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::pushJSON(FirebaseData &dataObj, const String &path, const String &jsonString)
 {
-  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::JSON, path, jsonString.c_str(), false);
+  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), false, "", "");
+  return flag;
+}
+
+bool FirebaseESP32::pushJSON(FirebaseData &dataObj, const String &path, const String &jsonString, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::pushBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size)
 {
+  return pushBlob(dataObj, path.c_str(), blob, size, false, "");
+}
 
+bool FirebaseESP32::pushBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = pushBlob(dataObj, path.c_str(), blob, size, false, buff);
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::pushBlob(FirebaseData &dataObj, const std::string &path, uint8_t *blob, size_t size, bool queue, const std::string &priority)
+{
   if (dataObj._maxBlobSize < size)
   {
     dataObj._httpCode = HTTP_CODE_PAYLOAD_TOO_LARGE;
@@ -438,7 +584,7 @@ bool FirebaseESP32::pushBlob(FirebaseData &dataObj, const String &path, uint8_t 
   strcpy_P(tmp, ESP32_FIREBASE_STR_3);
   blobStr += tmp;
 
-  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::BLOB, path, blobStr.c_str(), false);
+  bool flag = buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::BLOB, path.c_str(), blobStr.c_str(), queue, priority, "");
 
   std::string().swap(blobStr);
 
@@ -448,160 +594,298 @@ bool FirebaseESP32::pushBlob(FirebaseData &dataObj, const String &path, uint8_t 
 
 bool FirebaseESP32::pushFile(FirebaseData &dataObj, const String &path, const String &fileName)
 {
-  return buildRequestFile(dataObj, FirebaseMethod::POST, path, fileName, false);
+  return buildRequestFile(dataObj, FirebaseMethod::POST, path.c_str(), fileName.c_str(), false, "", "");
+}
+
+bool FirebaseESP32::pushFile(FirebaseData &dataObj, const String &path, const String &fileName, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequestFile(dataObj, FirebaseMethod::POST, path.c_str(), fileName.c_str(), false, buff, "");
+  delete[] buff;
+  return flag;
 }
 
 bool FirebaseESP32::pushTimestamp(FirebaseData &dataObj, const String &path)
 {
-  return buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::TIMESTAMP, path, ESP32_FIREBASE_STR_154, false);
+  return buildRequest(dataObj, FirebaseMethod::POST, FirebaseDataType::TIMESTAMP, path.c_str(), ESP32_FIREBASE_STR_154, false, "", "");
 }
 
 bool FirebaseESP32::setInt(FirebaseData &dataObj, const String &path, int intValue)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  itoa(intValue, buf, 10);
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::INTEGER, path, buf, false);
-  delete[] buf;
+  return setInt(dataObj, path.c_str(), intValue, false, "", "");
+}
+
+bool FirebaseESP32::setInt(FirebaseData &dataObj, const String &path, int intValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setInt(dataObj, path.c_str(), intValue, false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setInt(FirebaseData &dataObj, const String &path, int intValue, const String &ETag)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  itoa(intValue, buf, 10);
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::INTEGER, path, buf, false, ETag.c_str());
-  delete[] buf;
+  return setInt(dataObj, path.c_str(), intValue, false, "", ETag.c_str());
+}
+
+bool FirebaseESP32::setInt(FirebaseData &dataObj, const String &path, int intValue, float priority, const String &ETag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setInt(dataObj, path.c_str(), intValue, false, buff, ETag.c_str());
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::setInt(FirebaseData &dataObj, const std::string &path, int intValue, bool queue, const std::string &priority, const std::string &etag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  itoa(intValue, buff, 10);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::INTEGER, path, buff, queue, priority, etag);
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setFloat(FirebaseData &dataObj, const String &path, float floatValue)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  dtostrf(floatValue, 7, 6, buf);
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::FLOAT, path, buf, false);
-  delete[] buf;
+  return setFloat(dataObj, path.c_str(), floatValue, false, "", "");
+}
+
+bool FirebaseESP32::setFloat(FirebaseData &dataObj, const String &path, float floatValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setFloat(dataObj, path.c_str(), floatValue, false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setFloat(FirebaseData &dataObj, const String &path, float floatValue, const String &ETag)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  dtostrf(floatValue, 7, 6, buf);
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::FLOAT, path, buf, false, ETag.c_str());
-  delete[] buf;
+  return setFloat(dataObj, path.c_str(), floatValue, false, "", ETag.c_str());
+}
+
+bool FirebaseESP32::setFloat(FirebaseData &dataObj, const String &path, float floatValue, float priority, const String &ETag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setFloat(dataObj, path.c_str(), floatValue, false, buff, ETag.c_str());
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::setFloat(FirebaseData &dataObj, const std::string &path, float floatValue, bool queue, const std::string &priority, const std::string &etag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(floatValue, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::FLOAT, path, buff, queue, priority, etag);
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setDouble(FirebaseData &dataObj, const String &path, double doubleValue)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  dtostrf(doubleValue, 12, 9, buf);
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::DOUBLE, path, buf, false);
-  delete[] buf;
+  return setDouble(dataObj, path.c_str(), doubleValue, false, "", "");
+}
+
+bool FirebaseESP32::setDouble(FirebaseData &dataObj, const String &path, double doubleValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setDouble(dataObj, path.c_str(), doubleValue, false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setDouble(FirebaseData &dataObj, const String &path, double doubleValue, const String &ETag)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  dtostrf(doubleValue, 12, 9, buf);
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::DOUBLE, path, buf, false, ETag.c_str());
-  delete[] buf;
+  return setDouble(dataObj, path.c_str(), doubleValue, false, "", ETag.c_str());
+}
+
+bool FirebaseESP32::setDouble(FirebaseData &dataObj, const String &path, double doubleValue, float priority, const String &ETag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setDouble(dataObj, path.c_str(), doubleValue, false, buff, ETag.c_str());
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::setDouble(FirebaseData &dataObj, const std::string &path, double doubleValue, bool queue, const std::string &priority, const std::string &etag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(doubleValue, 12, 9, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::DOUBLE, path, buff, false, priority, etag);
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setBool(FirebaseData &dataObj, const String &path, bool boolValue)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  if (boolValue)
-    strcpy_P(buf, ESP32_FIREBASE_STR_107);
-  else
-    strcpy_P(buf, ESP32_FIREBASE_STR_106);
+  return setBool(dataObj, path.c_str(), boolValue, false, "", "");
+}
 
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::BOOLEAN, path, buf, false);
-  delete[] buf;
+bool FirebaseESP32::setBool(FirebaseData &dataObj, const String &path, bool boolValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setBool(dataObj, path.c_str(), boolValue, false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setBool(FirebaseData &dataObj, const String &path, bool boolValue, const String &ETag)
 {
-  size_t bufSize = 50;
-  char *buf = new char[bufSize];
-  memset(buf, 0, bufSize);
-  if (boolValue)
-    strcpy_P(buf, ESP32_FIREBASE_STR_107);
-  else
-    strcpy_P(buf, ESP32_FIREBASE_STR_106);
+  return setBool(dataObj, path.c_str(), boolValue, false, "", ETag.c_str());
+}
 
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::BOOLEAN, path, buf, false, ETag.c_str());
-  delete[] buf;
+bool FirebaseESP32::setBool(FirebaseData &dataObj, const String &path, bool boolValue, float priority, const String &ETag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setBool(dataObj, path.c_str(), boolValue, false, buff, ETag.c_str());
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::setBool(FirebaseData &dataObj, const std::string &path, bool boolValue, bool queue, const std::string &priority, const std::string &etag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  if (boolValue)
+    strcpy_P(buff, ESP32_FIREBASE_STR_107);
+  else
+    strcpy_P(buff, ESP32_FIREBASE_STR_106);
+
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::BOOLEAN, path, buff, false, priority, etag);
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setString(FirebaseData &dataObj, const String &path, const String &stringValue)
 {
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::STRING, path, stringValue.c_str(), false);
+  return buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::STRING, path.c_str(), stringValue.c_str(), false, "", "");
+}
+
+bool FirebaseESP32::setString(FirebaseData &dataObj, const String &path, const String &stringValue, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::STRING, path.c_str(), stringValue.c_str(), false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setString(FirebaseData &dataObj, const String &path, const String &stringValue, const String &ETag)
 {
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::STRING, path, stringValue.c_str(), false, ETag.c_str());
+  return buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::STRING, path.c_str(), stringValue.c_str(), false, "", ETag.c_str());
+}
+
+bool FirebaseESP32::setString(FirebaseData &dataObj, const String &path, const String &stringValue, float priority, const String &ETag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::STRING, path.c_str(), stringValue.c_str(), false, buff, ETag.c_str());
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setJSON(FirebaseData &dataObj, const String &path, const String &jsonString)
 {
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::JSON, path, jsonString.c_str(), false);
+  return buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), false, "", "");
+}
+
+bool FirebaseESP32::setJSON(FirebaseData &dataObj, const String &path, const String &jsonString, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setJSON(FirebaseData &dataObj, const String &path, const String &jsonString, const String &ETag)
 {
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::JSON, path, jsonString.c_str(), false, ETag.c_str());
+  return buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), false, "", ETag.c_str());
+}
+
+bool FirebaseESP32::setJSON(FirebaseData &dataObj, const String &path, const String &jsonString, float priority, const String &ETag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), false, buff, ETag.c_str());
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size)
 {
-  if (dataObj._maxBlobSize < size)
-  {
-    dataObj._httpCode = HTTP_CODE_PAYLOAD_TOO_LARGE;
-    return false;
-  }
+  return setBlob(dataObj, path.c_str(), blob, size, false, "", "");
+}
 
-  size_t tmpSize = strlen(ESP32_FIREBASE_STR_92) + 1;
-  char *tmp = new char[tmpSize];
-  memset(tmp, 0, tmpSize);
-
-  std::string blobStr = "";
-  strcpy(tmp, ESP32_FIREBASE_STR_92);
-  blobStr = tmp;
-  blobStr += base64_encode_string((const unsigned char *)blob, size);
-  memset(tmp, 0, tmpSize);
-  strcpy(tmp, ESP32_FIREBASE_STR_3);
-  blobStr += tmp;
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT_SILENT, FirebaseDataType::BLOB, path, blobStr.c_str(), false);
-  delete[] tmp;
-  std::string().swap(blobStr);
+bool FirebaseESP32::setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setBlob(dataObj, path.c_str(), blob, size, false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, const String &ETag)
+{
+  return setBlob(dataObj, path.c_str(), blob, size, false, "", ETag.c_str());
+}
+
+bool FirebaseESP32::setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = setBlob(dataObj, path.c_str(), blob, size, false, buff, ETag.c_str());
+  delete[] buff;
+  return flag;
+}
+
+bool FirebaseESP32::setBlob(FirebaseData &dataObj, const std::string &path, uint8_t *blob, size_t size, bool queue, const std::string &priority, const std::string &etag)
 {
   if (dataObj._maxBlobSize < size)
   {
@@ -618,9 +902,9 @@ bool FirebaseESP32::setBlob(FirebaseData &dataObj, const String &path, uint8_t *
   blobStr = tmp;
   blobStr += base64_encode_string((const unsigned char *)blob, size);
   memset(tmp, 0, tmpSize);
-  strcpy(tmp, ESP32_FIREBASE_STR_3);
+  strcpy_P(tmp, ESP32_FIREBASE_STR_3);
   blobStr += tmp;
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT_SILENT, FirebaseDataType::BLOB, path, blobStr.c_str(), false, ETag.c_str());
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT_SILENT, FirebaseDataType::BLOB, path, blobStr.c_str(), false, priority, etag);
   delete[] tmp;
   std::string().swap(blobStr);
   return flag;
@@ -628,29 +912,70 @@ bool FirebaseESP32::setBlob(FirebaseData &dataObj, const String &path, uint8_t *
 
 bool FirebaseESP32::setFile(FirebaseData &dataObj, const String &path, const String &fileName)
 {
-  return buildRequestFile(dataObj, FirebaseMethod::PUT_SILENT, path, fileName, false);
+  return buildRequestFile(dataObj, FirebaseMethod::PUT_SILENT, path.c_str(), fileName.c_str(), false, "", "");
+}
+
+bool FirebaseESP32::setFile(FirebaseData &dataObj, const String &path, const String &fileName, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequestFile(dataObj, FirebaseMethod::PUT_SILENT, path.c_str(), fileName.c_str(), false, buff, "");
+  delete[] buff;
+  return flag;
 }
 
 bool FirebaseESP32::setFile(FirebaseData &dataObj, const String &path, const String &fileName, const String &ETag)
 {
-  return buildRequestFile(dataObj, FirebaseMethod::PUT_SILENT, path, fileName, false, ETag.c_str());
+  return buildRequestFile(dataObj, FirebaseMethod::PUT_SILENT, path.c_str(), fileName.c_str(), false, "", ETag.c_str());
+}
+
+bool FirebaseESP32::setFile(FirebaseData &dataObj, const String &path, const String &fileName, float priority, const String &ETag)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequestFile(dataObj, FirebaseMethod::PUT_SILENT, path.c_str(), fileName.c_str(), false, buff, ETag.c_str());
+  delete[] buff;
+  return flag;
 }
 
 bool FirebaseESP32::setTimestamp(FirebaseData &dataObj, const String &path)
 {
-  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::TIMESTAMP, path, ESP32_FIREBASE_STR_154, false);
-  return flag;
+  return buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::TIMESTAMP, path.c_str(), ESP32_FIREBASE_STR_154, false, "", "");
 }
 
 bool FirebaseESP32::updateNode(FirebaseData &dataObj, const String &path, const String &jsonString)
 {
-  bool flag = buildRequest(dataObj, FirebaseMethod::PATCH, FirebaseDataType::JSON, path, jsonString.c_str(), false);
+  return buildRequest(dataObj, FirebaseMethod::PATCH, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), "", "", "");
+}
+
+bool FirebaseESP32::updateNode(FirebaseData &dataObj, const String &path, const String &jsonString, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PATCH, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), false, buff, "");
+  delete[] buff;
   return flag;
 }
 
 bool FirebaseESP32::updateNodeSilent(FirebaseData &dataObj, const String &path, const String &jsonString)
 {
-  bool flag = buildRequest(dataObj, FirebaseMethod::PATCH_SILENT, FirebaseDataType::JSON, path, jsonString.c_str(), false);
+  return buildRequest(dataObj, FirebaseMethod::PATCH_SILENT, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), false, "", "");
+}
+
+bool FirebaseESP32::updateNodeSilent(FirebaseData &dataObj, const String &path, const String &jsonString, float priority)
+{
+  size_t buffSize = 50;
+  char *buff = new char[buffSize];
+  memset(buff, 0, buffSize);
+  dtostrf(priority, 7, 6, buff);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PATCH_SILENT, FirebaseDataType::JSON, path.c_str(), jsonString.c_str(), false, buff, "");
+  delete[] buff;
   return flag;
 }
 
@@ -672,7 +997,7 @@ bool FirebaseESP32::getInt(FirebaseData &dataObj, const String &path, int &targe
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::INTEGER, "", "");
+    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::INTEGER, "", "", "");
     target = dataObj.intData();
     if (flag)
       break;
@@ -694,7 +1019,7 @@ bool FirebaseESP32::getInt(FirebaseData &dataObj, const String &path, int &targe
 bool FirebaseESP32::getFloat(FirebaseData &dataObj, const String &path)
 {
   dataObj.queryFilter.clear();
-  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::FLOAT, "", "");
+  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::FLOAT, "", "", "");
   if (dataObj._dataType != FirebaseDataType::INTEGER && dataObj._dataType != FirebaseDataType::FLOAT && dataObj._dataType != FirebaseDataType::DOUBLE)
     flag = false;
   return flag;
@@ -713,7 +1038,7 @@ bool FirebaseESP32::getFloat(FirebaseData &dataObj, const String &path, float &t
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::FLOAT, "", "");
+    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::FLOAT, "", "", "");
     target = dataObj.floatData();
     if (flag)
       break;
@@ -735,7 +1060,7 @@ bool FirebaseESP32::getFloat(FirebaseData &dataObj, const String &path, float &t
 bool FirebaseESP32::getDouble(FirebaseData &dataObj, const String &path)
 {
   dataObj.queryFilter.clear();
-  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::DOUBLE, "", "");
+  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::DOUBLE, "", "", "");
   if (dataObj._dataType != FirebaseDataType::INTEGER && dataObj._dataType != FirebaseDataType::FLOAT && dataObj._dataType != FirebaseDataType::DOUBLE)
     flag = false;
   return flag;
@@ -754,7 +1079,7 @@ bool FirebaseESP32::getDouble(FirebaseData &dataObj, const String &path, double 
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::DOUBLE, "", "");
+    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::DOUBLE, "", "", "");
     target = dataObj.floatData();
     if (flag)
       break;
@@ -776,7 +1101,7 @@ bool FirebaseESP32::getDouble(FirebaseData &dataObj, const String &path, double 
 bool FirebaseESP32::getBool(FirebaseData &dataObj, const String &path)
 {
   dataObj.queryFilter.clear();
-  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::BOOLEAN, "", "");
+  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::BOOLEAN, "", "", "");
   if (dataObj._dataType != FirebaseDataType::BOOLEAN)
     flag = false;
   return flag;
@@ -795,7 +1120,7 @@ bool FirebaseESP32::getBool(FirebaseData &dataObj, const String &path, bool &tar
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::BOOLEAN, "", "");
+    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::BOOLEAN, "", "", "");
     target = dataObj.boolData();
     if (flag)
       break;
@@ -817,7 +1142,7 @@ bool FirebaseESP32::getBool(FirebaseData &dataObj, const String &path, bool &tar
 bool FirebaseESP32::getString(FirebaseData &dataObj, const String &path)
 {
   dataObj.queryFilter.clear();
-  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::STRING, "", "");
+  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::STRING, "", "", "");
   if (dataObj._dataType != FirebaseDataType::STRING)
     flag = false;
   return flag;
@@ -836,7 +1161,7 @@ bool FirebaseESP32::getString(FirebaseData &dataObj, const String &path, String 
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::STRING, "", "");
+    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::STRING, "", "", "");
     target = dataObj.stringData();
     if (flag)
       break;
@@ -858,7 +1183,7 @@ bool FirebaseESP32::getString(FirebaseData &dataObj, const String &path, String 
 bool FirebaseESP32::getJSON(FirebaseData &dataObj, const String &path)
 {
   dataObj.queryFilter.clear();
-  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::JSON, "", "");
+  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::JSON, "", "", "");
   if (dataObj._dataType != FirebaseDataType::JSON)
     flag = false;
   return flag;
@@ -877,7 +1202,7 @@ bool FirebaseESP32::getJSON(FirebaseData &dataObj, const String &path, String &t
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::JSON, "", "");
+    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::JSON, "", "", "");
     target = dataObj.jsonData();
     if (flag)
       break;
@@ -902,7 +1227,7 @@ bool FirebaseESP32::getJSON(FirebaseData &dataObj, const String &path, QueryFilt
   if (query._orderBy != "")
     dataObj.setQuery(query);
 
-  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::JSON, "", "");
+  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::JSON, "", "", "");
   if (dataObj._dataType != FirebaseDataType::JSON)
     flag = false;
   return flag;
@@ -923,7 +1248,7 @@ bool FirebaseESP32::getJSON(FirebaseData &dataObj, const String &path, QueryFilt
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::JSON, "", "");
+    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::JSON, "", "", "");
     target = dataObj.jsonData();
     if (flag)
       break;
@@ -945,7 +1270,7 @@ bool FirebaseESP32::getJSON(FirebaseData &dataObj, const String &path, QueryFilt
 bool FirebaseESP32::getBlob(FirebaseData &dataObj, const String &path)
 {
   dataObj.queryFilter.clear();
-  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::BLOB, "", "");
+  bool flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::BLOB, "", "", "");
   if (dataObj._dataType != FirebaseDataType::BLOB)
     flag = false;
   return flag;
@@ -965,7 +1290,7 @@ bool FirebaseESP32::getBlob(FirebaseData &dataObj, const String &path, std::vect
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::BLOB, "", "");
+    flag = sendRequest(dataObj, path.c_str(), FirebaseMethod::GET, FirebaseDataType::BLOB, "", "", "");
     target = dataObj.blobData();
     if (flag)
       break;
@@ -999,7 +1324,7 @@ bool FirebaseESP32::getFile(FirebaseData &dataObj, const String &nodePath, const
 
   for (int i = 0; i < maxRetry; i++)
   {
-    flag = sendRequest(dataObj, nodePath.c_str(), FirebaseMethod::GET, FirebaseDataType::FILE, "", "");
+    flag = sendRequest(dataObj, nodePath.c_str(), FirebaseMethod::GET, FirebaseDataType::FILE, "", "", "");
     if (flag)
       break;
 
@@ -1017,13 +1342,13 @@ bool FirebaseESP32::getFile(FirebaseData &dataObj, const String &nodePath, const
 bool FirebaseESP32::deleteNode(FirebaseData &dataObj, const String &path)
 {
   dataObj.queryFilter.clear();
-  return sendRequest(dataObj, path.c_str(), FirebaseMethod::DELETE, FirebaseDataType::STRING, "", "");
+  return sendRequest(dataObj, path.c_str(), FirebaseMethod::DELETE, FirebaseDataType::STRING, "", "", "");
 }
 
 bool FirebaseESP32::deleteNode(FirebaseData &dataObj, const String &path, const String &ETag)
 {
   dataObj.queryFilter.clear();
-  return sendRequest(dataObj, path.c_str(), FirebaseMethod::DELETE, FirebaseDataType::STRING, "", ETag.c_str());
+  return sendRequest(dataObj, path.c_str(), FirebaseMethod::DELETE, FirebaseDataType::STRING, "", "", ETag.c_str());
 }
 
 bool FirebaseESP32::beginStream(FirebaseData &dataObj, const String &path)
@@ -1076,7 +1401,7 @@ bool FirebaseESP32::endStream(FirebaseData &dataObj)
   return !flag;
 }
 
-int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &path, const uint8_t method, uint8_t dataType, const std::string &payload)
+int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &path, const uint8_t method, uint8_t dataType, const std::string &payload, const std::string &priority)
 {
 
   dataObj._firebaseError.clear();
@@ -1096,8 +1421,8 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
   uint8_t retryCount = 0;
   uint8_t maxRetry = 5;
 
-  size_t bufSize = 32;
-  char *buf = new char[bufSize];
+  size_t buffSize = 32;
+  char *buff = new char[buffSize];
 
   int len = 0;
   size_t toRead = 0;
@@ -1181,15 +1506,53 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
   }
 
   //Prepare for string and JSON payloads
-  if (method != FirebaseMethod::GET && method != FirebaseMethod::GET_SILENT && method != FirebaseMethod::STREAM &&
+  if (method != FirebaseMethod::GET && method != FirebaseMethod::GET_RULES && method != FirebaseMethod::GET_SHALLOW && method != FirebaseMethod::GET_PRIORITY && method != FirebaseMethod::GET_SILENT && method != FirebaseMethod::STREAM &&
       method != FirebaseMethod::DELETE && method != FirebaseMethod::RESTORE)
   {
-    payloadStr.clear();
-    if (dataType == FirebaseDataType::STRING)
-      payloadStr = ESP32_FIREBASE_STR_3;
-    payloadStr += payload;
-    if (dataType == FirebaseDataType::STRING)
-      payloadStr += ESP32_FIREBASE_STR_3;
+
+    if (priority.length() > 0)
+    {
+      if (dataType == FirebaseDataType::JSON)
+      {
+        if (payload.length() > 0)
+        {
+          payloadStr.clear();
+          payloadStr = payload;
+          int x = payloadStr.find_last_of(ESP32_FIREBASE_STR_127);
+          if (x != std::string::npos && x != 0)
+            for (size_t i = 0; i < payloadStr.length() - x; i++)
+              payloadStr.pop_back();
+
+          payloadStr += ESP32_FIREBASE_STR_157;
+          payloadStr += priority;
+          payloadStr += ESP32_FIREBASE_STR_127;
+        }
+      }
+      else
+      {
+        payloadStr.clear();
+        payloadStr += ESP32_FIREBASE_STR_161;
+
+        if (dataType == FirebaseDataType::STRING)
+          payloadStr += ESP32_FIREBASE_STR_3;
+        payloadStr += payload;
+        if (dataType == FirebaseDataType::STRING)
+          payloadStr += ESP32_FIREBASE_STR_3;
+
+        payloadStr += ESP32_FIREBASE_STR_157;
+        payloadStr += priority;
+        payloadStr += ESP32_FIREBASE_STR_127;
+      }
+    }
+    else
+    {
+      payloadStr.clear();
+      if (dataType == FirebaseDataType::STRING)
+        payloadStr += ESP32_FIREBASE_STR_3;
+      payloadStr += payload;
+      if (dataType == FirebaseDataType::STRING)
+        payloadStr += ESP32_FIREBASE_STR_3;
+    }
   }
 
   //Prepare request header
@@ -1348,26 +1711,26 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
 
     if (dataType == FirebaseDataType::FILE && (method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST))
     {
-      memset(buf, 0, bufSize);
-      strcpy_P(buf, ESP32_FIREBASE_STR_93);
+      memset(buff, 0, buffSize);
+      strcpy_P(buff, ESP32_FIREBASE_STR_93);
 
       if (!apConnected(dataObj))
         return HTTPC_ERROR_CONNECTION_LOST;
 
-      httpCode = dataObj.http.http_sendRequest("", buf);
+      httpCode = dataObj.http.http_sendRequest("", buff);
 
       WiFiClient *netClient = dataObj.http.http_getStreamPtr();
 
       send_base64_encode_file(netClient, dataObj._fileName);
 
-      memset(buf, 0, bufSize);
-      buf[0] = '"';
-      buf[1] = '\0';
+      memset(buff, 0, buffSize);
+      buff[0] = '"';
+      buff[1] = '\0';
 
       if (!apConnected(dataObj))
         return HTTPC_ERROR_CONNECTION_LOST;
 
-      httpCode = dataObj.http.http_sendRequest("", buf);
+      httpCode = dataObj.http.http_sendRequest("", buff);
     }
     else
     {
@@ -1375,17 +1738,17 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
       while (len)
       {
         toRead = len;
-        if (toRead > bufSize)
-          toRead = bufSize - 1;
+        if (toRead > buffSize)
+          toRead = buffSize - 1;
 
-        memset(buf, 0, bufSize);
-        file.read((uint8_t *)buf, toRead);
-        buf[toRead] = '\0';
+        memset(buff, 0, buffSize);
+        file.read((uint8_t *)buff, toRead);
+        buff[toRead] = '\0';
 
         if (!apConnected(dataObj))
           return HTTPC_ERROR_CONNECTION_LOST;
 
-        httpCode = dataObj.http.http_sendRequest("", buf);
+        httpCode = dataObj.http.http_sendRequest("", buff);
 
         len -= toRead;
 
@@ -1397,7 +1760,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     endFileTransfer(dataObj);
   }
 
-  delete[] buf;
+  delete[] buff;
   std::string().swap(payloadStr);
   std::string().swap(header);
   std::string().swap(uri);
@@ -1406,7 +1769,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
 
 EXIT_1:
 
-  delete[] buf;
+  delete[] buff;
   std::string().swap(payloadStr);
   std::string().swap(header);
   std::string().swap(uri);
@@ -1414,7 +1777,7 @@ EXIT_1:
   return HTTPC_ERROR_CONNECTION_REFUSED;
 }
 
-bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, const uint8_t method, uint8_t dataType, const std::string &payload, const std::string &etag)
+bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, const uint8_t method, uint8_t dataType, const std::string &payload, const std::string &priority, const std::string &etag)
 {
 
   bool flag = false;
@@ -1462,6 +1825,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
   dataObj._firebaseCall = true;
   dataObj._qID = 0;
   dataObj._etag2 = etag;
+  dataObj._priority = priority;
 
   //Get the current WiFi client from current firebase data
   //Check for connection status
@@ -1522,7 +1886,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
   if (!apConnected(dataObj))
     return false;
 
-  int httpCode = firebaseConnect(dataObj, path, method, dataType, payload);
+  int httpCode = firebaseConnect(dataObj, path, method, dataType, payload, priority);
 
   if (httpCode == 0)
   {
@@ -1595,7 +1959,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
     return false;
 
   bool flag = false;
-  std::string lineBuf = "";
+  std::string linebuff = "";
   std::string eventType = "";
   std::string jsonRes = "";
 
@@ -1641,13 +2005,13 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
       if (!hasBlob)
       {
         if (c != '\r' && c != '\n')
-          lineBuf.append(1, c);
+          linebuff.append(1, c);
       }
       else
       {
 
         if (c != '"' && c != '\n' && dataObj._httpCode != HTTP_CODE_NO_CONTENT)
-          lineBuf.append(1, c);
+          linebuff.append(1, c);
 
         continue;
       }
@@ -1655,12 +2019,12 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
       if (charPos >= strlen(ESP32_FIREBASE_STR_92) - 1 && !hasBlob)
       {
 
-        if (lineBuf.find(ESP32_FIREBASE_STR_92) == 0)
+        if (linebuff.find(ESP32_FIREBASE_STR_92) == 0)
         {
           hasBlob = true;
           if (dataObj._dataType2 != FirebaseDataType::BLOB)
             dataObj._httpCode = FIREBASE_ERROR_DATA_TYPE_MISMATCH;
-          lineBuf.clear();
+          linebuff.clear();
         }
       }
       charPos++;
@@ -1669,27 +2033,27 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
       {
 
         if (rulesBegin)
-          jsonRes += lineBuf;
+          jsonRes += linebuff;
 
         dataTime = millis();
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_5);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_5);
         if (p1 != std::string::npos)
         {
-          p2 = lineBuf.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
+          p2 = linebuff.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
           if (p2 != std::string::npos)
-            dataObj._httpCode = atoi(lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
+            dataObj._httpCode = atoi(linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
         }
 
         if (dataObj._httpCode == HTTP_CODE_TEMPORARY_REDIRECT)
         {
 
-          p1 = lineBuf.find(ESP32_FIREBASE_STR_95);
+          p1 = linebuff.find(ESP32_FIREBASE_STR_95);
           if (p1 != std::string::npos)
           {
-            dataObj._redirectURL = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_95));
+            dataObj._redirectURL = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_95));
 
-            int res = firebaseConnect(dataObj, dataObj._redirectURL, dataObj._r_method, dataObj._r_dataType, "");
+            int res = firebaseConnect(dataObj, dataObj._redirectURL, dataObj._r_method, dataObj._r_dataType, "", dataObj._priority);
 
             if (res == 0)
               goto EXIT_4;
@@ -1698,54 +2062,54 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           }
         }
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_150);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_150);
         if (p1 != std::string::npos)
-          dataObj._etag = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_150)).c_str();
+          dataObj._etag = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_150)).c_str();
 
         if (dataObj._httpCode == HTTP_CODE_NO_CONTENT)
         {
-          lineBuf.clear();
+          linebuff.clear();
           continue;
         }
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_7);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_7);
         if (p1 != std::string::npos)
         {
-          p1 = lineBuf.find(ESP32_FIREBASE_STR_102);
+          p1 = linebuff.find(ESP32_FIREBASE_STR_102);
           if (p1 != std::string::npos)
           {
-            dataObj._firebaseError = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_102) + 1);
+            dataObj._firebaseError = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_102) + 1);
             dataObj._firebaseError = dataObj._firebaseError.substr(0, dataObj._firebaseError.length() - 1);
           }
 
-          p1 = lineBuf.find(ESP32_FIREBASE_STR_8);
+          p1 = linebuff.find(ESP32_FIREBASE_STR_8);
           if (p1 != std::string::npos)
-            if (lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_8)) == ESP32_FIREBASE_STR_9)
+            if (linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_8)) == ESP32_FIREBASE_STR_9)
               isStream = true;
 
-          p1 = lineBuf.find(ESP32_FIREBASE_STR_10);
+          p1 = linebuff.find(ESP32_FIREBASE_STR_10);
           if (p1 != std::string::npos)
           {
-            if (lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_10)) == ESP32_FIREBASE_STR_11)
+            if (linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_10)) == ESP32_FIREBASE_STR_11)
               dataObj._keepAlive = true;
             else
               dataObj._keepAlive = false;
           }
 
-          p1 = lineBuf.find(ESP32_FIREBASE_STR_12);
+          p1 = linebuff.find(ESP32_FIREBASE_STR_12);
           if (p1 != std::string::npos)
-            dataObj._contentLength = atoi(lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_12)).c_str());
+            dataObj._contentLength = atoi(linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_12)).c_str());
 
-          p1 = lineBuf.find(ESP32_FIREBASE_STR_13);
+          p1 = linebuff.find(ESP32_FIREBASE_STR_13);
           if (p1 != std::string::npos)
           {
-            eventType = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_13));
+            eventType = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_13));
             hasEvent = true;
             isStream = true;
             dataObj._httpCode = HTTP_CODE_OK;
           }
 
-          p1 = lineBuf.find(ESP32_FIREBASE_STR_14);
+          p1 = linebuff.find(ESP32_FIREBASE_STR_14);
           if (p1 != std::string::npos)
           {
             hasEventData = true;
@@ -1754,11 +2118,11 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           }
         }
 
-        if (dataObj._httpCode == HTTP_CODE_OK && lfCount > 0 && lineBuf.length() == 0 && dataObj._r_method == FirebaseMethod::GET_RULES)
+        if (dataObj._httpCode == HTTP_CODE_OK && lfCount > 0 && linebuff.length() == 0 && dataObj._r_method == FirebaseMethod::GET_RULES)
           rulesBegin = true;
 
         if (!hasEventData || !hasEvent)
-          lineBuf.clear();
+          linebuff.clear();
 
         lfCount++;
         charPos = 0;
@@ -1775,16 +2139,16 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
     {
       if (rulesBegin)
       {
-        jsonRes += lineBuf;
-        lineBuf = jsonRes;
+        jsonRes += linebuff;
+        linebuff = jsonRes;
       }
 
       if (dataObj._r_method == FirebaseMethod::SET_RULES)
       {
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_104);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_104);
         if (p1 != std::string::npos)
         {
-          lineBuf.clear();
+          linebuff.clear();
         }
       }
 
@@ -1798,23 +2162,23 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
             dataObj._eventType = eventType;
 
             //Parses json response for path
-            p1 = lineBuf.find(ESP32_FIREBASE_STR_17);
+            p1 = linebuff.find(ESP32_FIREBASE_STR_17);
             if (p1 != std::string::npos)
             {
-              p2 = lineBuf.find(ESP32_FIREBASE_STR_3, p1 + strlen(ESP32_FIREBASE_STR_17));
+              p2 = linebuff.find(ESP32_FIREBASE_STR_3, p1 + strlen(ESP32_FIREBASE_STR_17));
               if (p2 != std::string::npos)
               {
                 dataObj._path.clear();
-                dataObj._path = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_17), p2 - p1 - strlen(ESP32_FIREBASE_STR_17));
+                dataObj._path = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_17), p2 - p1 - strlen(ESP32_FIREBASE_STR_17));
               }
             }
 
             //Parses json response for data
-            p1 = lineBuf.find(ESP32_FIREBASE_STR_18);
+            p1 = linebuff.find(ESP32_FIREBASE_STR_18);
             if (p1 != std::string::npos)
             {
               dataObj._data.clear();
-              dataObj._data = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_18), lineBuf.length() - p1 - strlen(ESP32_FIREBASE_STR_18) - 1);
+              dataObj._data = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_18), linebuff.length() - p1 - strlen(ESP32_FIREBASE_STR_18) - 1);
 
               setDataType(dataObj, dataObj._data);
               bool samePath = dataObj._path == dataObj._path2;
@@ -1826,9 +2190,9 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
               {
                 if (dataObj._data.substr(0, strlen(ESP32_FIREBASE_STR_92)) == ESP32_FIREBASE_STR_92)
                 {
-                  lineBuf.clear();
-                  lineBuf = dataObj._data;
-                  dataObj._data = lineBuf.substr(strlen(ESP32_FIREBASE_STR_92), lineBuf.length() - strlen(ESP32_FIREBASE_STR_92) - 1);
+                  linebuff.clear();
+                  linebuff = dataObj._data;
+                  dataObj._data = linebuff.substr(strlen(ESP32_FIREBASE_STR_92), linebuff.length() - strlen(ESP32_FIREBASE_STR_92) - 1);
                   hasBlob = true;
                   std::vector<uint8_t>().swap(dataObj._blob);
                   dataObj._dataType = FirebaseDataType::BLOB;
@@ -1892,22 +2256,31 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
         if (hasBlob)
         {
           dataObj._dataType = FirebaseDataType::BLOB;
-          base64_decode_string(lineBuf, dataObj._blob);
+          base64_decode_string(linebuff, dataObj._blob);
         }
         else
         {
-          dataObj._data = lineBuf;
-          setDataType(dataObj, lineBuf);
+          dataObj._data = linebuff;
+          setDataType(dataObj, linebuff);
+
+          if (dataObj._priority_val_flag)
+          {
+            char *path = new char[dataObj._path.length()];
+            memset(path, 0, dataObj._path.length());
+            strncpy(path, dataObj._path.c_str(), dataObj._path.length() - strlen_P(ESP32_FIREBASE_STR_156));
+            dataObj._path = path;
+            delete[] path;
+          }
 
           //Push (POST) data?
-          p1 = lineBuf.find(ESP32_FIREBASE_STR_20);
+          p1 = linebuff.find(ESP32_FIREBASE_STR_20);
           if (p1 != std::string::npos)
           {
-            p2 = lineBuf.find(ESP32_FIREBASE_STR_3, p1 + strlen(ESP32_FIREBASE_STR_20));
+            p2 = linebuff.find(ESP32_FIREBASE_STR_3, p1 + strlen(ESP32_FIREBASE_STR_20));
             if (p2 != std::string::npos)
             {
               dataObj._pushName.clear();
-              dataObj._pushName = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_20), p2 - p1 - strlen(ESP32_FIREBASE_STR_20));
+              dataObj._pushName = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_20), p2 - p1 - strlen(ESP32_FIREBASE_STR_20));
               dataObj._dataType = -1;
               dataObj._dataType2 = -1;
               dataObj._data.clear();
@@ -1973,7 +2346,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
 
 EXIT_2:
 
-  std::string().swap(lineBuf);
+  std::string().swap(linebuff);
   std::string().swap(eventType);
   std::string().swap(jsonRes);
 
@@ -1983,13 +2356,13 @@ EXIT_2:
 
 EXIT_3:
 
-  std::string().swap(lineBuf);
+  std::string().swap(linebuff);
   std::string().swap(eventType);
   std::string().swap(jsonRes);
   return true;
 
 EXIT_4:
-  std::string().swap(lineBuf);
+  std::string().swap(linebuff);
   std::string().swap(eventType);
   std::string().swap(jsonRes);
   return getServerResponse(dataObj);
@@ -2016,10 +2389,10 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
 
   dataObj._httpCode = -1000;
   char c = 0;
-  size_t bufSize = 1024;
-  char *buf = new char[bufSize + 1];
+  size_t buffSize = 1024;
+  char *buff = new char[buffSize + 1];
 
-  std::string lineBuf = "";
+  std::string linebuff = "";
   std::string contentType = "";
   std::string contentDisposition = "";
 
@@ -2058,7 +2431,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
       {
         c = netClient->read();
         if (c != '\r' && c != '\n')
-          lineBuf.append(1, c);
+          linebuff.append(1, c);
       }
       else
       {
@@ -2074,10 +2447,10 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
           toRead = count;
           cnt = 0;
           yield();
-          if (toRead > bufSize)
-            toRead = bufSize;
+          if (toRead > buffSize)
+            toRead = buffSize;
 
-          memset(buf, 0, bufSize + 1);
+          memset(buff, 0, buffSize + 1);
           cnt = 0;
 
           while (cnt < toRead)
@@ -2088,12 +2461,12 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
             {
               if (dataObj._fileName == "" && c < 0xff)
               {
-                buf[cnt] = c;
+                buff[cnt] = c;
                 cnt++;
               }
               else if (dataObj._fileName != "" && c != '"')
               {
-                buf[cnt] = c;
+                buff[cnt] = c;
                 cnt++;
               }
             }
@@ -2104,11 +2477,11 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
             count -= cnt;
             dataTime = millis();
             toRead = cnt;
-            buf[cnt] = '\0';
+            buff[cnt] = '\0';
             if (dataObj._fileName == "")
-              file.write((uint8_t *)buf, toRead);
+              file.write((uint8_t *)buff, toRead);
             else
-              base64_decode_file(file, buf, toRead);
+              base64_decode_file(file, buff, toRead);
           }
 
           if (count == 0)
@@ -2121,54 +2494,54 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
 
         dataTime = millis();
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_5);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_5);
         if (p1 != std::string::npos)
         {
-          p2 = lineBuf.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
+          p2 = linebuff.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
           if (p2 != std::string::npos)
           {
-            dataObj._httpCode = atoi(lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
+            dataObj._httpCode = atoi(linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
           }
         }
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_102);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_102);
         if (p1 != std::string::npos)
         {
-          dataObj._firebaseError = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_102) + 1);
+          dataObj._firebaseError = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_102) + 1);
           dataObj._firebaseError = dataObj._firebaseError.substr(0, dataObj._firebaseError.length() - 1);
         }
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_8);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_8);
         if (p1 != std::string::npos)
         {
-          p2 = lineBuf.find(ESP32_FIREBASE_STR_79, p1 + strlen(ESP32_FIREBASE_STR_8));
+          p2 = linebuff.find(ESP32_FIREBASE_STR_79, p1 + strlen(ESP32_FIREBASE_STR_8));
           if (p2 != std::string::npos)
           {
-            contentType = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_8), p2 - p1 - strlen(ESP32_FIREBASE_STR_8)).c_str();
+            contentType = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_8), p2 - p1 - strlen(ESP32_FIREBASE_STR_8)).c_str();
           }
         }
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_12);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_12);
         if (p1 != std::string::npos)
         {
-          contentLength = atoi(lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_12)).c_str());
+          contentLength = atoi(linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_12)).c_str());
           dataObj._backupzFileSize = contentLength;
           count = contentLength;
           if (dataObj._fileName != "")
             count -= strlen(ESP32_FIREBASE_STR_93) - 1;
         }
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_80);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_80);
         if (p1 != std::string::npos)
         {
-          p2 = lineBuf.find(ESP32_FIREBASE_STR_79, p1 + strlen(ESP32_FIREBASE_STR_80));
+          p2 = linebuff.find(ESP32_FIREBASE_STR_79, p1 + strlen(ESP32_FIREBASE_STR_80));
           if (p2 != std::string::npos)
           {
-            contentDisposition = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_80), p2 - p1 - strlen(ESP32_FIREBASE_STR_80)).c_str();
+            contentDisposition = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_80), p2 - p1 - strlen(ESP32_FIREBASE_STR_80)).c_str();
           }
         }
 
-        if (dataObj._httpCode == HTTP_CODE_OK && lineBuf.length() == 0 && contentLength > 0 && contentType == ESP32_FIREBASE_STR_81 && contentDisposition == ESP32_FIREBASE_STR_82)
+        if (dataObj._httpCode == HTTP_CODE_OK && linebuff.length() == 0 && contentLength > 0 && contentType == ESP32_FIREBASE_STR_81 && contentDisposition == ESP32_FIREBASE_STR_82)
         {
           beginPayload = true;
           if (dataObj._fileName != "")
@@ -2178,7 +2551,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
           }
         }
 
-        lineBuf.clear();
+        linebuff.clear();
       }
 
       if (millis() - dataTime > dataObj.http.tcpTimeout)
@@ -2189,9 +2562,9 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
     }
   }
 
-  delete[] buf;
+  delete[] buff;
 
-  std::string().swap(lineBuf);
+  std::string().swap(linebuff);
   std::string().swap(contentType);
   std::string().swap(contentDisposition);
 
@@ -2231,7 +2604,7 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
   int _httpCode = -1000;
   char c = 0;
 
-  std::string lineBuf = "";
+  std::string linebuff = "";
   int p1, p2;
   bool beginPayload = false;
 
@@ -2261,30 +2634,30 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
       c = netClient->read();
 
       if (c != '\r' && c != '\n')
-        lineBuf.append(1, c);
+        linebuff.append(1, c);
 
       if (c == '\n' && !beginPayload)
       {
         dataTime = millis();
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_102);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_102);
         if (p1 != std::string::npos)
         {
-          dataObj._firebaseError = lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_102) + 1);
+          dataObj._firebaseError = linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_102) + 1);
           dataObj._firebaseError = dataObj._firebaseError.substr(0, dataObj._firebaseError.length() - 1);
         }
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_5);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_5);
         if (p1 != std::string::npos)
         {
-          p2 = lineBuf.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
+          p2 = linebuff.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
           if (p2 != std::string::npos)
           {
-            _httpCode = atoi(lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
+            _httpCode = atoi(linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
           }
         }
 
-        lineBuf.clear();
+        linebuff.clear();
       }
 
       if (millis() - dataTime > dataObj.http.tcpTimeout)
@@ -2348,7 +2721,7 @@ bool FirebaseESP32::firebaseConnectStream(FirebaseData &dataObj, const std::stri
 
   bool flag;
   flag = dataObj._streamPath.length() == 0;
-  flag |= firebaseConnect(dataObj, path, FirebaseMethod::STREAM, FirebaseDataType::STRING, "") == 0;
+  flag |= firebaseConnect(dataObj, path, FirebaseMethod::STREAM, FirebaseDataType::STRING, "", "") == 0;
   dataObj._dataMillis = millis();
   return flag;
 }
@@ -2679,7 +3052,7 @@ void FirebaseESP32::processErrorQueue(FirebaseData &dataObj, QueueInfoCallback c
 
         if (item.firebaseDataType == FirebaseDataType::FILE)
         {
-          if (buildRequestFile(dataObj, item.firebaseMethod, item.path.c_str(), item.filename.c_str(), true))
+          if (buildRequestFile(dataObj, item.firebaseMethod, item.path.c_str(), item.filename.c_str(), true, "", ""))
           {
             dataObj.clearQueueItem(item);
             dataObj._qMan.remove(i);
@@ -2687,7 +3060,7 @@ void FirebaseESP32::processErrorQueue(FirebaseData &dataObj, QueueInfoCallback c
         }
         else
         {
-          if (buildRequest(dataObj, item.firebaseMethod, item.firebaseDataType, item.path.c_str(), item.payload.c_str(), true))
+          if (buildRequest(dataObj, item.firebaseMethod, item.firebaseDataType, item.path.c_str(), item.payload.c_str(), true, "", ""))
           {
             dataObj.clearQueueItem(item);
             dataObj._qMan.remove(i);
@@ -2721,6 +3094,11 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   char *contentLength = new char[20];
   memset(contentLength, 0, 20);
 
+  char *temp = new char[20];
+  memset(temp, 0, 20);
+  dataObj._shallow_flag = false;
+  dataObj._priority_val_flag = false;
+
   char *num = new char[20];
 
   request.clear();
@@ -2731,7 +3109,7 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   }
   else
   {
-    if (method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::SET_RULES)
+    if (method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::SET_PRIORITY || method == FirebaseMethod::SET_RULES)
     {
       http_method = FirebaseMethod::PUT;
       if (!dataObj._classicRequest)
@@ -2744,7 +3122,7 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
       http_method = FirebaseMethod::POST;
       request = ESP32_FIREBASE_STR_24;
     }
-    else if (method == FirebaseMethod::GET || method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::BACKUP || method == FirebaseMethod::GET_RULES)
+    else if (method == FirebaseMethod::GET || method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::GET_SHALLOW || method == FirebaseMethod::GET_PRIORITY || method == FirebaseMethod::BACKUP || method == FirebaseMethod::GET_RULES)
     {
       http_method = FirebaseMethod::GET;
       request = ESP32_FIREBASE_STR_25;
@@ -2778,6 +3156,26 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
 
   request += ESP32_FIREBASE_STR_2;
   request += auth;
+
+  if (dataObj._readTimeout > 0)
+  {
+    request += ESP32_FIREBASE_STR_158;
+    itoa(dataObj._readTimeout, temp, 10);
+    request += temp;
+    request += ESP32_FIREBASE_STR_159;
+  }
+
+  if (dataObj._writeLimit.length() > 0)
+  {
+    request += ESP32_FIREBASE_STR_160;
+    request += dataObj._writeLimit;
+  }
+
+  if (method == FirebaseMethod::GET_SHALLOW)
+  {
+    request += ESP32_FIREBASE_STR_155;
+    dataObj._shallow_flag = true;
+  }
 
   if (method == FirebaseMethod::GET && dataObj.queryFilter._orderBy != "")
   {
@@ -2817,6 +3215,7 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
 
   if (method == FirebaseMethod::BACKUP)
   {
+    request += ESP32_FIREBASE_STR_162;
     request += ESP32_FIREBASE_STR_28;
     std::string filename = "";
 
@@ -2849,7 +3248,7 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   request += ESP32_FIREBASE_STR_33;
 
   //Timestamp cannot use with ETag header, otherwise cases internal server error
-  if (dataType != FirebaseDataType::TIMESTAMP && (method == FirebaseMethod::DELETE || method == FirebaseMethod::GET || method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST))
+  if (dataObj.queryFilter._orderBy.length() == 0 && dataType != FirebaseDataType::TIMESTAMP && (method == FirebaseMethod::DELETE || method == FirebaseMethod::GET || method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST))
     request += ESP32_FIREBASE_STR_148;
 
   if (dataObj._etag2.length() > 0 && (method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::DELETE))
@@ -2889,7 +3288,10 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   if (method != FirebaseMethod::BACKUP && method != FirebaseMethod::RESTORE)
     request += ESP32_FIREBASE_STR_38;
 
-  if (method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST || method == FirebaseMethod::PATCH || method == FirebaseMethod::PATCH_SILENT || method == FirebaseMethod::RESTORE || method == FirebaseMethod::SET_RULES)
+  if (method == FirebaseMethod::GET_PRIORITY || method == FirebaseMethod::SET_PRIORITY)
+    dataObj._priority_val_flag = true;
+
+  if (method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST || method == FirebaseMethod::PATCH || method == FirebaseMethod::PATCH_SILENT || method == FirebaseMethod::RESTORE || method == FirebaseMethod::SET_RULES || method == FirebaseMethod::SET_PRIORITY)
   {
     request += ESP32_FIREBASE_STR_12;
     itoa(payloadLength, contentLength, 10);
@@ -2900,6 +3302,7 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
 
   delete[] contentLength;
   delete[] num;
+  delete[] temp;
 }
 
 bool FirebaseESP32::cancelCurrentResponse(FirebaseData &dataObj)
@@ -3005,124 +3408,124 @@ bool FirebaseESP32::sdBegin(void)
   return SD.begin();
 }
 
-void FirebaseESP32::errorToString(int httpCode, std::string &buf)
+void FirebaseESP32::errorToString(int httpCode, std::string &buff)
 {
-  buf.clear();
+  buff.clear();
   switch (httpCode)
   {
   case HTTPC_ERROR_CONNECTION_REFUSED:
-    buf = ESP32_FIREBASE_STR_39;
+    buff = ESP32_FIREBASE_STR_39;
     return;
   case HTTPC_ERROR_SEND_HEADER_FAILED:
-    buf = ESP32_FIREBASE_STR_40;
+    buff = ESP32_FIREBASE_STR_40;
     return;
   case HTTPC_ERROR_SEND_PAYLOAD_FAILED:
-    buf = ESP32_FIREBASE_STR_41;
+    buff = ESP32_FIREBASE_STR_41;
     return;
   case HTTPC_ERROR_NOT_CONNECTED:
-    buf = ESP32_FIREBASE_STR_42;
+    buff = ESP32_FIREBASE_STR_42;
     return;
   case HTTPC_ERROR_CONNECTION_LOST:
-    buf = ESP32_FIREBASE_STR_43;
+    buff = ESP32_FIREBASE_STR_43;
     return;
   case HTTPC_ERROR_NO_HTTP_SERVER:
-    buf = ESP32_FIREBASE_STR_44;
+    buff = ESP32_FIREBASE_STR_44;
     return;
   case HTTP_CODE_BAD_REQUEST:
-    buf = ESP32_FIREBASE_STR_45;
+    buff = ESP32_FIREBASE_STR_45;
     return;
   case HTTP_CODE_NON_AUTHORITATIVE_INFORMATION:
-    buf = ESP32_FIREBASE_STR_46;
+    buff = ESP32_FIREBASE_STR_46;
     return;
   case HTTP_CODE_NO_CONTENT:
-    buf = ESP32_FIREBASE_STR_47;
+    buff = ESP32_FIREBASE_STR_47;
     return;
   case HTTP_CODE_MOVED_PERMANENTLY:
-    buf = ESP32_FIREBASE_STR_48;
+    buff = ESP32_FIREBASE_STR_48;
     return;
   case HTTP_CODE_USE_PROXY:
-    buf = ESP32_FIREBASE_STR_49;
+    buff = ESP32_FIREBASE_STR_49;
     return;
   case HTTP_CODE_TEMPORARY_REDIRECT:
-    buf = ESP32_FIREBASE_STR_50;
+    buff = ESP32_FIREBASE_STR_50;
     return;
   case HTTP_CODE_PERMANENT_REDIRECT:
-    buf = ESP32_FIREBASE_STR_51;
+    buff = ESP32_FIREBASE_STR_51;
     return;
   case HTTP_CODE_UNAUTHORIZED:
-    buf = ESP32_FIREBASE_STR_52;
+    buff = ESP32_FIREBASE_STR_52;
     return;
   case HTTP_CODE_FORBIDDEN:
-    buf = ESP32_FIREBASE_STR_53;
+    buff = ESP32_FIREBASE_STR_53;
     return;
   case HTTP_CODE_NOT_FOUND:
-    buf = ESP32_FIREBASE_STR_54;
+    buff = ESP32_FIREBASE_STR_54;
     return;
   case HTTP_CODE_METHOD_NOT_ALLOWED:
-    buf = ESP32_FIREBASE_STR_55;
+    buff = ESP32_FIREBASE_STR_55;
     return;
   case HTTP_CODE_NOT_ACCEPTABLE:
-    buf = ESP32_FIREBASE_STR_56;
+    buff = ESP32_FIREBASE_STR_56;
     return;
   case HTTP_CODE_PROXY_AUTHENTICATION_REQUIRED:
-    buf = ESP32_FIREBASE_STR_57;
+    buff = ESP32_FIREBASE_STR_57;
     return;
   case HTTP_CODE_REQUEST_TIMEOUT:
-    buf = ESP32_FIREBASE_STR_58;
+    buff = ESP32_FIREBASE_STR_58;
     return;
   case HTTP_CODE_LENGTH_REQUIRED:
-    buf = ESP32_FIREBASE_STR_59;
+    buff = ESP32_FIREBASE_STR_59;
     return;
   case HTTP_CODE_TOO_MANY_REQUESTS:
-    buf = ESP32_FIREBASE_STR_60;
+    buff = ESP32_FIREBASE_STR_60;
     return;
   case HTTP_CODE_REQUEST_HEADER_FIELDS_TOO_LARGE:
-    buf = ESP32_FIREBASE_STR_61;
+    buff = ESP32_FIREBASE_STR_61;
     return;
   case HTTP_CODE_INTERNAL_SERVER_ERROR:
-    buf = ESP32_FIREBASE_STR_62;
+    buff = ESP32_FIREBASE_STR_62;
     return;
   case HTTP_CODE_BAD_GATEWAY:
-    buf = ESP32_FIREBASE_STR_63;
+    buff = ESP32_FIREBASE_STR_63;
     return;
   case HTTP_CODE_SERVICE_UNAVAILABLE:
-    buf = ESP32_FIREBASE_STR_64;
+    buff = ESP32_FIREBASE_STR_64;
     return;
   case HTTP_CODE_GATEWAY_TIMEOUT:
-    buf = ESP32_FIREBASE_STR_65;
+    buff = ESP32_FIREBASE_STR_65;
     return;
   case HTTP_CODE_HTTP_VERSION_NOT_SUPPORTED:
-    buf = ESP32_FIREBASE_STR_66;
+    buff = ESP32_FIREBASE_STR_66;
     return;
   case HTTP_CODE_NETWORK_AUTHENTICATION_REQUIRED:
-    buf = ESP32_FIREBASE_STR_67;
+    buff = ESP32_FIREBASE_STR_67;
     return;
   case HTTP_CODE_PRECONDITION_FAILED:
-    buf = ESP32_FIREBASE_STR_152;
+    buff = ESP32_FIREBASE_STR_152;
     return;
   case HTTPC_ERROR_READ_TIMEOUT:
-    buf = ESP32_FIREBASE_STR_69;
+    buff = ESP32_FIREBASE_STR_69;
     return;
   case FIREBASE_ERROR_DATA_TYPE_MISMATCH:
-    buf = ESP32_FIREBASE_STR_70;
+    buff = ESP32_FIREBASE_STR_70;
     return;
   case FIREBASE_ERROR_PATH_NOT_EXIST:
-    buf = ESP32_FIREBASE_STR_71;
+    buff = ESP32_FIREBASE_STR_71;
     return;
   case HTTPC_ERROR_CONNECTION_INUSED:
-    buf = ESP32_FIREBASE_STR_94;
+    buff = ESP32_FIREBASE_STR_94;
     return;
   case HTTPC_NO_FCM_TOPIC_PROVIDED:
-    buf = ESP32_FIREBASE_STR_144;
+    buff = ESP32_FIREBASE_STR_144;
     return;
   case HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED:
-    buf = ESP32_FIREBASE_STR_145;
+    buff = ESP32_FIREBASE_STR_145;
     return;
   case HTTPC_NO_FCM_SERVER_KEY_PROVIDED:
-    buf = ESP32_FIREBASE_STR_146;
+    buff = ESP32_FIREBASE_STR_146;
     return;
   case HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED:
-    buf = ESP32_FIREBASE_STR_147;
+    buff = ESP32_FIREBASE_STR_147;
     return;
 
   default:
@@ -3463,7 +3866,7 @@ bool FirebaseESP32::backup(FirebaseData &dataObj, const String &nodePath, const 
   dataObj._backupNodePath = nodePath.c_str();
   dataObj._backupFilename.clear();
   dataObj._fileName.clear();
-  bool flag = sendRequest(dataObj, nodePath.c_str(), FirebaseMethod::BACKUP, FirebaseDataType::JSON, "", "");
+  bool flag = sendRequest(dataObj, nodePath.c_str(), FirebaseMethod::BACKUP, FirebaseDataType::JSON, "", "", "");
   return flag;
 }
 
@@ -3473,7 +3876,7 @@ bool FirebaseESP32::restore(FirebaseData &dataObj, const String &nodePath, const
   dataObj._backupNodePath = nodePath.c_str();
   dataObj._backupFilename.clear();
   dataObj._fileName.clear();
-  bool flag = sendRequest(dataObj, nodePath.c_str(), FirebaseMethod::RESTORE, FirebaseDataType::JSON, "", "");
+  bool flag = sendRequest(dataObj, nodePath.c_str(), FirebaseMethod::RESTORE, FirebaseDataType::JSON, "", "", "");
   return flag;
 }
 
@@ -3548,10 +3951,10 @@ bool FirebaseESP32::saveErrorQueue(FirebaseData &dataObj, const String &filename
   }
 
   uint8_t idx = 0;
-  std::string buf = "";
+  std::string buff = "";
 
-  size_t nbufSize = 10;
-  char *nbuf = new char[nbufSize];
+  size_t nbuffSize = 10;
+  char *nbuff = new char[nbuffSize];
 
   for (uint8_t i = 0; i < dataObj._qMan._queueCollection.size(); i++)
   {
@@ -3560,42 +3963,42 @@ bool FirebaseESP32::saveErrorQueue(FirebaseData &dataObj, const String &filename
     if (item.firebaseMethod != FirebaseESP32::FirebaseMethod::GET)
     {
       if (idx > 0)
-        buf.append("\r");
+        buff.append("\r");
 
-      memset(nbuf, 0, nbufSize);
-      itoa(item.firebaseDataType, nbuf, 10);
-      buf.append(nbuf);
-      buf.append("~");
+      memset(nbuff, 0, nbuffSize);
+      itoa(item.firebaseDataType, nbuff, 10);
+      buff.append(nbuff);
+      buff.append("~");
 
-      memset(nbuf, 0, nbufSize);
-      itoa(item.firebaseMethod, nbuf, 10);
-      buf.append(nbuf);
-      buf.append("~");
+      memset(nbuff, 0, nbuffSize);
+      itoa(item.firebaseMethod, nbuff, 10);
+      buff.append(nbuff);
+      buff.append("~");
 
-      buf += item.path.c_str();
-      buf.append("~");
+      buff += item.path.c_str();
+      buff.append("~");
 
-      buf += item.payload.c_str();
-      buf.append("~");
+      buff += item.payload.c_str();
+      buff.append("~");
 
       for (int j = 0; j < item.blob.size(); j++)
       {
-        memset(nbuf, 0, nbufSize);
-        itoa(item.blob[j], nbuf, 10);
+        memset(nbuff, 0, nbuffSize);
+        itoa(item.blob[j], nbuff, 10);
       }
-      buf.append("~");
+      buff.append("~");
 
-      buf += item.filename.c_str();
+      buff += item.filename.c_str();
 
       idx++;
     }
   }
 
-  file.print(buf.c_str());
+  file.print(buff.c_str());
   file.close();
 
-  delete[] nbuf;
-  std::string().swap(buf);
+  delete[] nbuff;
+  std::string().swap(buff);
 
   return true;
 }
@@ -3714,29 +4117,29 @@ std::vector<std::string> FirebaseESP32::splitString(int size, const char *str, c
   uint16_t index = 0;
   uint16_t len = strlen(str);
   int buffSize = (int)(size * 1.4f);
-  char *buf = new char[buffSize];
+  char *buff = new char[buffSize];
   std::vector<std::string> out;
 
   for (uint16_t i = 0; i < len; i++)
   {
     if (str[i] == delim)
     {
-      memset(buf, 0, buffSize);
-      strncpy(buf, (char *)str + index, i - index);
-      buf[i - index] = '\0';
+      memset(buff, 0, buffSize);
+      strncpy(buff, (char *)str + index, i - index);
+      buff[i - index] = '\0';
       index = i + 1;
-      out.push_back(buf);
+      out.push_back(buff);
     }
   }
   if (index < len + 1)
   {
-    memset(buf, 0, buffSize);
-    strncpy(buf, (char *)str + index, len - index);
-    buf[len - index] = '\0';
-    out.push_back(buf);
+    memset(buff, 0, buffSize);
+    strncpy(buff, (char *)str + index, len - index);
+    buff[len - index] = '\0';
+    out.push_back(buff);
   }
 
-  delete[] buf;
+  delete[] buff;
 
   return out;
 }
@@ -3828,54 +4231,54 @@ void FirebaseESP32::send_base64_encode_file(WiFiClient *netClient, const std::st
     return;
 
   size_t chunkSize = 512;
-  size_t fbufSize = 3;
+  size_t fbuffSize = 3;
   size_t byteAdd = 0;
   size_t byteSent = 0;
 
-  unsigned char *buf = new unsigned char[chunkSize];
-  memset(buf, 0, chunkSize);
+  unsigned char *buff = new unsigned char[chunkSize];
+  memset(buff, 0, chunkSize);
 
   size_t len = file.size();
-  size_t fbufIndex = 0;
-  unsigned char *fbuf = new unsigned char[3];
+  size_t fbuffIndex = 0;
+  unsigned char *fbuff = new unsigned char[3];
 
   while (file.available())
   {
-    memset(fbuf, 0, fbufSize);
-    if (len - fbufIndex >= 3)
+    memset(fbuff, 0, fbuffSize);
+    if (len - fbuffIndex >= 3)
     {
-      file.read(fbuf, 3);
+      file.read(fbuff, 3);
 
-      buf[byteAdd++] = ESP32_FIREBASE_base64_table[fbuf[0] >> 2];
-      buf[byteAdd++] = ESP32_FIREBASE_base64_table[((fbuf[0] & 0x03) << 4) | (fbuf[1] >> 4)];
-      buf[byteAdd++] = ESP32_FIREBASE_base64_table[((fbuf[1] & 0x0f) << 2) | (fbuf[2] >> 6)];
-      buf[byteAdd++] = ESP32_FIREBASE_base64_table[fbuf[2] & 0x3f];
+      buff[byteAdd++] = ESP32_FIREBASE_base64_table[fbuff[0] >> 2];
+      buff[byteAdd++] = ESP32_FIREBASE_base64_table[((fbuff[0] & 0x03) << 4) | (fbuff[1] >> 4)];
+      buff[byteAdd++] = ESP32_FIREBASE_base64_table[((fbuff[1] & 0x0f) << 2) | (fbuff[2] >> 6)];
+      buff[byteAdd++] = ESP32_FIREBASE_base64_table[fbuff[2] & 0x3f];
 
       if (len > chunkSize)
       {
         if (byteAdd >= chunkSize)
         {
           byteSent += byteAdd;
-          netClient->write(buf, byteAdd);
-          memset(buf, 0, chunkSize);
+          netClient->write(buff, byteAdd);
+          memset(buff, 0, chunkSize);
           byteAdd = 0;
         }
       }
-      fbufIndex += 3;
+      fbuffIndex += 3;
 
       yield();
     }
     else
     {
 
-      if (len - fbufIndex == 1)
+      if (len - fbuffIndex == 1)
       {
-        fbuf[0] = file.read();
+        fbuff[0] = file.read();
       }
-      else if (len - fbufIndex == 2)
+      else if (len - fbuffIndex == 2)
       {
-        fbuf[0] = file.read();
-        fbuf[1] = file.read();
+        fbuff[0] = file.read();
+        fbuff[1] = file.read();
       }
 
       break;
@@ -3885,32 +4288,32 @@ void FirebaseESP32::send_base64_encode_file(WiFiClient *netClient, const std::st
   file.close();
 
   if (byteAdd > 0)
-    netClient->write(buf, byteAdd);
+    netClient->write(buff, byteAdd);
 
-  if (len - fbufIndex > 0)
+  if (len - fbuffIndex > 0)
   {
 
-    memset(buf, 0, chunkSize);
+    memset(buff, 0, chunkSize);
     byteAdd = 0;
 
-    buf[byteAdd++] = ESP32_FIREBASE_base64_table[fbuf[0] >> 2];
-    if (len - fbufIndex == 1)
+    buff[byteAdd++] = ESP32_FIREBASE_base64_table[fbuff[0] >> 2];
+    if (len - fbuffIndex == 1)
     {
-      buf[byteAdd++] = ESP32_FIREBASE_base64_table[(fbuf[0] & 0x03) << 4];
-      buf[byteAdd++] = '=';
+      buff[byteAdd++] = ESP32_FIREBASE_base64_table[(fbuff[0] & 0x03) << 4];
+      buff[byteAdd++] = '=';
     }
     else
     {
-      buf[byteAdd++] = ESP32_FIREBASE_base64_table[((fbuf[0] & 0x03) << 4) | (fbuf[1] >> 4)];
-      buf[byteAdd++] = ESP32_FIREBASE_base64_table[(fbuf[1] & 0x0f) << 2];
+      buff[byteAdd++] = ESP32_FIREBASE_base64_table[((fbuff[0] & 0x03) << 4) | (fbuff[1] >> 4)];
+      buff[byteAdd++] = ESP32_FIREBASE_base64_table[(fbuff[1] & 0x0f) << 2];
     }
-    buf[byteAdd++] = '=';
+    buff[byteAdd++] = '=';
 
-    netClient->write(buf, byteAdd);
+    netClient->write(buff, byteAdd);
   }
 
-  delete[] buf;
-  delete[] fbuf;
+  delete[] buff;
+  delete[] fbuff;
 }
 
 bool FirebaseESP32::base64_decode_string(const std::string src, std::vector<uint8_t> &out)
@@ -4088,6 +4491,7 @@ void FirebaseData::clear()
   std::string().swap(_eventType);
   std::string().swap(_etag);
   std::string().swap(_etag2);
+  std::string().swap(_priority);
 
   for (uint8_t i = 0; i < _qMan._queueCollection.size(); i++)
   {
@@ -4396,7 +4800,7 @@ String FirebaseData::payload()
 
 String FirebaseData::errorReason()
 {
-  std::string buf = "";
+  std::string buff = "";
 
   if (_httpCode == HTTP_CODE_OK)
   {
@@ -4406,12 +4810,16 @@ String FirebaseData::errorReason()
       _httpCode = FIREBASE_ERROR_PATH_NOT_EXIST;
   }
 
-  Firebase.errorToString(_httpCode, buf);
+  Firebase.errorToString(_httpCode, buff);
 
   if (_firebaseError != "")
-    buf += ", " + _firebaseError;
+  {
+    buff += ESP32_FIREBASE_STR_132;
+    buff += ESP32_FIREBASE_STR_6;
+    buff += _firebaseError;
+  }
 
-  return buf.c_str();
+  return buff.c_str();
 }
 
 int FirebaseData::httpCode()
@@ -4558,17 +4966,21 @@ void QueryFilter::limitToLast(int val)
   delete[] num;
 }
 
-void QueryFilter::startAt(int val)
+void QueryFilter::startAt(float val)
 {
   char *num = new char[20];
-  _startAt = itoa(val, num, 10);
+  memset(num, 0, 20);
+  dtostrf(val, 7, 6, num);
+  _startAt = num;
   delete[] num;
 }
 
-void QueryFilter::endAt(int val)
+void QueryFilter::endAt(float val)
 {
   char *num = new char[20];
-  _endAt = itoa(val, num, 10);
+  memset(num, 0, 20);
+  dtostrf(val, 7, 6, num);
+  _endAt = num;
   delete[] num;
 }
 
@@ -4957,7 +5369,7 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
   }
 
   bool flag = false;
-  std::string lineBuf = "";
+  std::string linebuff = "";
 
   _sendResult = "";
 
@@ -4998,7 +5410,7 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
       c = netClient->read();
 
       if (c != '\r' && c != '\n')
-        lineBuf.append(1, c);
+        linebuff.append(1, c);
 
       charPos++;
 
@@ -5007,19 +5419,19 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
 
         dataTime = millis();
 
-        p1 = lineBuf.find(ESP32_FIREBASE_STR_5);
+        p1 = linebuff.find(ESP32_FIREBASE_STR_5);
         if (p1 != std::string::npos)
         {
-          p2 = lineBuf.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
+          p2 = linebuff.find(ESP32_FIREBASE_STR_6, p1 + strlen(ESP32_FIREBASE_STR_5));
           if (p2 != std::string::npos)
-            httpcode = atoi(lineBuf.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
+            httpcode = atoi(linebuff.substr(p1 + strlen(ESP32_FIREBASE_STR_5), p2 - p1 - strlen(ESP32_FIREBASE_STR_5)).c_str());
         }
 
-        if (httpcode == HTTP_CODE_OK && lfCount > 0 && lineBuf.length() == 0)
+        if (httpcode == HTTP_CODE_OK && lfCount > 0 && linebuff.length() == 0)
           payloadBegin = true;
 
         if (!payloadBegin)
-          lineBuf.clear();
+          linebuff.clear();
 
         lfCount++;
         charPos = 0;
@@ -5032,7 +5444,7 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
       }
     }
 
-    _sendResult = lineBuf;
+    _sendResult = linebuff;
 
     if (!httpcode)
       httpcode = HTTPC_ERROR_NO_HTTP_SERVER;
@@ -5040,7 +5452,7 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
     goto EXIT_5;
   }
 
-  std::string().swap(lineBuf);
+  std::string().swap(linebuff);
 
   if (httpcode == -1000)
   {
@@ -5052,7 +5464,7 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
 
 EXIT_5:
 
-  std::string().swap(lineBuf);
+  std::string().swap(linebuff);
 
   if (httpcode == HTTPC_ERROR_READ_TIMEOUT)
     return false;
