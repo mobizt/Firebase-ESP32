@@ -783,7 +783,7 @@ Serial.println();
 ```
 
 
-Error Queus can be save as file in SD card or Flash memory with function `saveErrorQueue`.
+Error Queus can be saved as file in SD card or Flash memory with function `saveErrorQueue`.
 
 Error Queues store as file can be restored to Error Queue collection with function `restoreErrorQueue`.
 
