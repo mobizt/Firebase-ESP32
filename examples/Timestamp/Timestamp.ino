@@ -92,7 +92,7 @@ void setup()
 
     //Due to some internal server error, ETag cannot get from pushTimestamp
     //Try to get ETag manually
-    Serial.println("ETag: " + Firebase.getETag(firebaseData, path + "/Push/Timestamp"));
+    Serial.println("ETag: " + Firebase.getETag(firebaseData, path + "/Push/Timestamp/" +  firebaseData.pushName()));
     Serial.println("------------------------------------");
     Serial.println();
   }
