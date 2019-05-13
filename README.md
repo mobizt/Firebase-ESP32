@@ -56,7 +56,7 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 
 * **Supports Automatic Stream Resuming.** 
 
-* **Supports Multiple Streaming.**
+* **Supports Multiple Streamings.**
 
 * **Supports Stream Event Callbacks**
 
