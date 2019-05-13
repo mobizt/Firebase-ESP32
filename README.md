@@ -787,7 +787,7 @@ Error Queus can be saved as file in SD card or Flash memory with function `saveE
 
 Error Queues store as file can be restored to Error Queue collection with function `restoreErrorQueue`.
 
-Two types of storage can be asigned with these functions, `QueueStorageType::SPIFFS` and `QueueStorageType::SD`.
+Two types of storage can be assigned with these functions, `QueueStorageType::SPIFFS` and `QueueStorageType::SD`.
 
 Read data (get) operation is not support queues restore
 
