@@ -81,7 +81,7 @@ void setReadTimeout(FirebaseData &dataObj, int millisec);
 
 
 
-#### Set the timeouts of get function.
+#### Set the timeouts of set function.
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
