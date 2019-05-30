@@ -8,7 +8,7 @@
 
 Firebase	KEYWORD1
 FirebaseData	KEYWORD1
-StreamData  KEYWORD1
+StreamData	KEYWORD1
 QueryFilter	KEYWORD1
 QueueManager	KEYWORD1
 HTTPClientESP32Ex	KEYWORD1
