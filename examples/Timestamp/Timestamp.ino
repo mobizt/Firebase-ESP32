@@ -63,12 +63,43 @@ void setup()
     Serial.println("PASSED");
     Serial.println("PATH: " + firebaseData.dataPath());
     Serial.println("TYPE: " + firebaseData.dataType());
-    Serial.print("TIMESTAMP: ");
+
+    //Timestamp saved in millisecond, get its seconds from intData()
+    Serial.print("TIMESTAMP (Seconds): ");
     Serial.println(firebaseData.intData());
+
+    //Or print the total milliseconds from doubleData()
+    //Due to bugs in Serial.print in Arduino library, use printf to print double instead.
+    printf("TIMESTAMP (milliSeconds): %.0lf\n", firebaseData.doubleData());
+
+    //Or print it from payload directly
+    Serial.print("TIMESTAMP (milliSeconds): ");
+    Serial.println(firebaseData.payload());
 
     //Due to some internal server error, ETag cannot get from setTimestamp
     //Try to get ETag manually
     Serial.println("ETag: " + Firebase.getETag(firebaseData, path + "/Set/Timestamp"));
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+  else
+  {
+    Serial.println("FAILED");
+    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+
+  Serial.println("------------------------------------");
+  Serial.println("Get Timestamp (double of milliseconds) test...");
+
+  if (Firebase.getDouble(firebaseData, path + "/Set/Timestamp"))
+  {
+    Serial.println("PASSED");
+    Serial.println("PATH: " + firebaseData.dataPath());
+    Serial.println("TYPE: " + firebaseData.dataType());
+
+    printf("TIMESTAMP: %.0lf\n", firebaseData.doubleData());
     Serial.println("------------------------------------");
     Serial.println();
   }
@@ -92,7 +123,7 @@ void setup()
 
     //Due to some internal server error, ETag cannot get from pushTimestamp
     //Try to get ETag manually
-    Serial.println("ETag: " + Firebase.getETag(firebaseData, path + "/Push/Timestamp/" +  firebaseData.pushName()));
+    Serial.println("ETag: " + Firebase.getETag(firebaseData, path + "/Push/Timestamp/" + firebaseData.pushName()));
     Serial.println("------------------------------------");
     Serial.println();
   }

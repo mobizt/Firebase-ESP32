@@ -98,7 +98,7 @@ void loop()
       else if (firebaseData.dataType() == "float")
         Serial.println(firebaseData.floatData(), 5);
       else if (firebaseData.dataType() == "double")
-        Serial.println(firebaseData.doubleData(), 9);
+        printf("%.9lf\n", firebaseData.doubleData());
       else if (firebaseData.dataType() == "boolean")
         Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
       else if (firebaseData.dataType() == "string")
@@ -146,7 +146,7 @@ void loop()
     else if (firebaseData.dataType() == "float")
       Serial.println(firebaseData.floatData(), 5);
     else if (firebaseData.dataType() == "double")
-      Serial.println(firebaseData.doubleData(), 9);
+      printf("%.9lf\n", firebaseData.doubleData());
     else if (firebaseData.dataType() == "boolean")
       Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
     else if (firebaseData.dataType() == "string")

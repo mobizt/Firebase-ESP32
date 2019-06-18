@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.1.1
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.1.2
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms which library are also available.
@@ -545,7 +545,7 @@ void streamCallback(StreamData data)
   else if (data.dataType() == "float")
     Serial.println(data.floatData(), 5);
   else if (data.dataType() == "double")
-    Serial.println(data.doubleData(), 9);
+    printf("%.9lf\n", data.doubleData());
   else if (data.dataType() == "boolean")
     Serial.println(data.boolData() == 1 ? "true" : "false");
   else if (data.dataType() == "string")
@@ -596,7 +596,7 @@ if (firebaseData.streamAvailable())
   else if (firebaseData.dataType() == "float")
     Serial.println(firebaseData.floatData(), 5);
   else if (firebaseData.dataType() == "double")
-    Serial.println(firebaseData.doubleData(), 9);
+    printf("%.9lf\n", firebaseData.doubleData());
   else if (firebaseData.dataType() == "boolean")
     Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
   else if (firebaseData.dataType() == "string")

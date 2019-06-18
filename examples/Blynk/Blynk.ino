@@ -161,7 +161,7 @@ BLYNK_WRITE(V1)
     else if (firebaseData2.dataType() == "float")
       Serial.println(firebaseData2.floatData(), 5);
     else if (firebaseData2.dataType() == "double")
-      Serial.println(firebaseData2.doubleData(), 9);
+      printf("%.9lf\n", firebaseData2.doubleData());
     else if (firebaseData2.dataType() == "boolean")
       Serial.println(firebaseData2.boolData() == 1 ? "true" : "false");
     else if (firebaseData2.dataType() == "string")

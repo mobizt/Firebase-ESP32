@@ -1,12 +1,16 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.1
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.2
  * 
- * May 13, 2019
+* June 18, 2019
  * 
  * Feature Added:
+ * - Get the seconds of server's timestamp through getInt(). 
  * 
  * Feature Fixed:
- * - Correct Timestamp example
+ * - Int data type returned instead of double for large double with zero decimal place
+ * - Update timestamp example for proper printed value
+ * - Update other examples for double printed value
+ * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -3340,7 +3344,13 @@ void FirebaseESP32::setDataType(FirebaseData &dataObj, const std::string &data)
     else if (data.find(ESP32_FIREBASE_STR_19) != std::string::npos)
       dataObj._dataType = FirebaseDataType::NULL_;
     else
-      dataObj._dataType = FirebaseDataType::INTEGER;
+    {
+      double d = atof(data.c_str());
+      if (d > 0x7fffffff)
+        dataObj._dataType = FirebaseDataType::DOUBLE;
+      else
+        dataObj._dataType = FirebaseDataType::INTEGER;
+    }
 
     if (data == ESP32_FIREBASE_STR_19 && dataObj.queryFilter._orderBy == "")
       dataObj._data.clear();
@@ -4678,7 +4688,16 @@ String FirebaseData::dataPath()
 int FirebaseData::intData()
 {
   if ((_data.length() > 0 && (_dataType == FirebaseESP32::FirebaseDataType::INTEGER || _dataType == FirebaseESP32::FirebaseDataType::FLOAT || _dataType == FirebaseESP32::FirebaseDataType::DOUBLE)))
-    return atoi(_data.c_str());
+  {
+    if (_r_dataType == FirebaseESP32::FirebaseDataType::TIMESTAMP)
+    {
+      double d = atof(_data.c_str());
+      int ts = d / 1000;
+      return ts;
+    }
+    else
+      return atoi(_data.c_str());
+  }
   else
     return 0;
 }
