@@ -1,15 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.3
  * 
-* June 18, 2019
+* August 4, 2019
  * 
  * Feature Added:
- * - Get the seconds of server's timestamp through getInt(). 
+ *
  * 
  * Feature Fixed:
- * - Int data type returned instead of double for large double with zero decimal place
- * - Update timestamp example for proper printed value
- * - Update other examples for double printed value
+ * - Incorrect handles for continuous stream data event
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -1806,7 +1804,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
     {
       tryCount++;
       delay(50);
-      if (tryCount > 60)
+      if (tryCount > 20)
         break;
     }
   }
@@ -1934,7 +1932,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
     //can't establish connection
     dataObj._httpCode = httpCode;
     dataObj._httpConnected = false;
-    delay(100);
+    delay(50);
     dataObj._firebaseCall = false;
     return false;
   }
@@ -1969,6 +1967,11 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
   dataObj._contentLength = -1;
   dataObj._pushName.clear();
 
+  if (dataObj._processResponse)
+    return false;
+
+  dataObj._processResponse = true;
+
   bool hasEvent = false;
   bool hasEventData = false;
   bool hasBlob = false;
@@ -1982,8 +1985,10 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
   if (!dataObj._isStream)
     while (netClient->connected() && !netClient->available() && millis() - dataTime < dataObj.http.tcpTimeout)
     {
-      if (!apConnected(dataObj))
+      if (!apConnected(dataObj)){
+        dataObj._processResponse = false;
         return false;
+      }
       delay(1);
     }
 
@@ -1996,8 +2001,11 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
 
-      if (!apConnected(dataObj))
+      if (!apConnected(dataObj)){
+        dataObj._processResponse = false;
         return false;
+      }
+      
 
       c = netClient->read();
 
@@ -2106,6 +2114,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
             hasEvent = true;
             isStream = true;
             dataObj._httpCode = HTTP_CODE_OK;
+            linebuff.clear();
           }
 
           p1 = linebuff.find(ESP32_FIREBASE_STR_14);
@@ -2114,6 +2123,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
             hasEventData = true;
             isStream = true;
             dataObj._httpCode = HTTP_CODE_OK;
+            break;
           }
         }
 
@@ -2340,14 +2350,17 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
 
   dataObj._httpConnected = false;
   dataObj._streamMillis = millis();
+  dataObj._processResponse = false;
 
-  return flag;
+
+return flag;
 
 EXIT_2:
 
   std::string().swap(linebuff);
   std::string().swap(eventType);
   std::string().swap(jsonRes);
+  dataObj._processResponse = false;
 
   if (dataObj._httpCode == HTTPC_ERROR_READ_TIMEOUT)
     return false;
@@ -2358,12 +2371,14 @@ EXIT_3:
   std::string().swap(linebuff);
   std::string().swap(eventType);
   std::string().swap(jsonRes);
+  dataObj._processResponse = false;
   return true;
 
 EXIT_4:
   std::string().swap(linebuff);
   std::string().swap(eventType);
   std::string().swap(jsonRes);
+  dataObj._processResponse = false;
   return getServerResponse(dataObj);
 }
 
@@ -2778,7 +2793,7 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
         {
           tryCount++;
           delay(50);
-          if (tryCount > 60)
+          if (tryCount > 20)
             break;
         }
       }
@@ -3574,7 +3589,7 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &dataObj, uint8_t messageType)
     {
       tryCount++;
       delay(50);
-      if (tryCount > 60)
+      if (tryCount > 20)
         break;
     }
   }
@@ -3699,7 +3714,7 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
         if (firebaseDataObject[id].get().streamTimeout() && firebaseDataObject[id].get()._timeoutCallback)
           firebaseDataObject[id].get()._timeoutCallback(true);
 
-        if (firebaseDataObject[id].get().streamAvailable() && firebaseDataObject[id].get()._dataAvailableCallback)
+        if (!firebaseDataObject[id].get()._processResponse &&  firebaseDataObject[id].get().streamAvailable() && firebaseDataObject[id].get()._dataAvailableCallback)
         {
 
           StreamData s;

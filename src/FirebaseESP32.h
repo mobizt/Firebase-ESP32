@@ -1,15 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.3
  * 
-* June 18, 2019
+* August 4, 2019
  * 
  * Feature Added:
- * - Get the seconds of server's timestamp through getInt(). 
+ *
  * 
  * Feature Fixed:
- * - Int data type returned instead of double for large double with zero decimal place
- * - Update timestamp example for proper printed value
- * - Update other examples for double printed value
+ * - Incorrect handles for continuous stream data event
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -246,9 +244,9 @@ typedef void (*StreamTimeoutCallback)(bool);
 typedef void (*QueueInfoCallback)(QueueInfo);
 
 static std::vector<std::reference_wrapper<FirebaseData>> firebaseDataObject;
-static uint8_t dataObjectIndex = 0;
-static uint8_t streamIndex = 0;
-static uint8_t errorQueueIndex = 0;
+static uint8_t dataObjectIndex __attribute__((used)) = 0;
+static uint8_t streamIndex __attribute__((used)) = 0;
+static uint8_t errorQueueIndex __attribute__((used)) = 0;
 
 class FCMObject
 {
@@ -2413,6 +2411,7 @@ protected:
   bool _priority_val_flag = false;
   bool _priority_json_flag = false;
   bool _shallow_flag = false;
+  bool _processResponse = false;
   int _readTimeout = -1;
   std::string _writeLimit = "";
 

@@ -25,7 +25,7 @@
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 
 
-const char *root_ca = "-----BEGIN CERTIFICATE-----\n"
+const char root_ca[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
                       "MIIDujCCAqKgAwIBAgILBAAAAAABD4Ym5g0wDQYJKoZIhvcNAQEFBQAwTDEgMB4G\n"
                       "A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjIxEzARBgNVBAoTCkdsb2JhbFNp\n"
                       "Z24xEzARBgNVBAMTCkdsb2JhbFNpZ24wHhcNMDYxMjE1MDgwMDAwWhcNMjExMjE1\n"
