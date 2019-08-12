@@ -12,7 +12,6 @@
 
 //This example shows the basic usage of Blynk platform and Firebase RTDB.
 
-//Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
 #include <WiFi.h>
 #include "FirebaseESP32.h"

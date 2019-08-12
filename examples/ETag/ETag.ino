@@ -12,7 +12,6 @@
 //This example shows how to set and delete data with checking the matching between node path ETag (unique identifier string)
 //and provided Etag
 
-//Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
 #include <WiFi.h>
 #include "FirebaseESP32.h"

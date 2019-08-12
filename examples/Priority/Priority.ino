@@ -14,7 +14,6 @@
 
 //Since data ordering is not supported in Firebase's REST APIs, then the query result will not sorted.
 
-//Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
 #include <WiFi.h>
 #include "FirebaseESP32.h"

@@ -12,7 +12,6 @@
 
 //This example shows how to store and read binary data from file on SD card to database.
 
-//Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
 #include <WiFi.h>
 #include "FirebaseESP32.h"

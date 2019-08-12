@@ -11,8 +11,6 @@
 
 //This example shows how to send Firebase Cloud Messaging.
 
-//Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
-
 #include <WiFi.h>
 #include "FirebaseESP32.h"
 

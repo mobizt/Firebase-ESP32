@@ -17,7 +17,6 @@
 //The time that allows stream to establish is required when using the same Firebase Data object 
 //together with store, read and update operations.
 
-//Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
 #include <WiFi.h>
 #include "FirebaseESP32.h"

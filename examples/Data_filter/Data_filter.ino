@@ -12,7 +12,6 @@
 
 //This example shows how to construct queries to filter data.
 
-//Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
 #include <WiFi.h>
 #include "FirebaseESP32.h"

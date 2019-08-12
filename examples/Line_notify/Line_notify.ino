@@ -11,9 +11,9 @@
 */
 
 /*
- * This shows how to pause the Firbase and send LINE Notify message using the same shared WiFiClient.
- * 1. Install HTTPClientESP32Ex library from https://github.com/mobizt/HTTPClientESP32Ex
- * 2. Install Line notify Arduino library for ESP32 https://github.com/mobizt/LINE-Notify-ESP32
+ * This shows how to pause the Firbase and send LINE Notify.
+ * 1. Install HTTPClientESP32Ex library for use with Line Notify library from https://github.com/mobizt/HTTPClientESP32Ex
+ * 2. Install Line Notify Arduino library for ESP32 https://github.com/mobizt/LINE-Notify-ESP32
  *
  * More about Line Notify service https://notify-bot.line.me/en/
  */
@@ -32,6 +32,8 @@
 
 //Define Firebase Data object
 FirebaseData firebaseData;
+
+HTTPClientESP32Ex client;
 
 String path = "/ESP32_Test";
 
@@ -121,61 +123,37 @@ void loop()
       Serial.println();
     }
 
-    if (firebaseData.pauseFirebase(true))
-    {
+    Serial.println("------------------------------------");
+    Serial.println("Send Line Message...");
 
-      Serial.println("------------------------------------");
-      Serial.println("Send Line Message...");
-
-      //Pause Firebase and use WiFiClient accessed through firebaseData.http
-      uint8_t status = lineNotify.sendLineMessage(firebaseData.http, "Instant sending message after call!");
-      if (status == LineNotifyESP32::LineStatus::SENT_COMPLETED)
-        Serial.println("PASSED");
-      else if (status == LineNotifyESP32::LineStatus::SENT_FAILED)
-        Serial.println("FAILED");
-      else if (status == LineNotifyESP32::LineStatus::CONNECTION_FAILED)
-        Serial.println("FAILED");
-      Serial.println("--------------------------------");
-      Serial.println();
-
-      //Unpause Firebase
-      firebaseData.pauseFirebase(false);
-    }
-    else
-    {
-      Serial.println("Could not pause Firebase");
-      Serial.println();
-    }
+    //Pause Firebase and use WiFiClient accessed through client
+    uint8_t status = lineNotify.sendLineMessage(client, "Instant sending message after call!");
+    if (status == LineNotifyESP32::LineStatus::SENT_COMPLETED)
+      Serial.println("PASSED");
+    else if (status == LineNotifyESP32::LineStatus::SENT_FAILED)
+      Serial.println("FAILED");
+    else if (status == LineNotifyESP32::LineStatus::CONNECTION_FAILED)
+      Serial.println("FAILED");
+    Serial.println("--------------------------------");
+    Serial.println();
   }
 
   if (millis() - sendMessagePrevMillis > 60000)
   {
     sendMessagePrevMillis = millis();
-    if (firebaseData.pauseFirebase(true))
-    {
 
-      Serial.println("------------------------------------");
-      Serial.println("Send Line Message...");
+    Serial.println("------------------------------------");
+    Serial.println("Send Line Message...");
 
-      //Pause Firebase and use WiFiClient accessed through firebaseData.http
-
-      uint8_t status = lineNotify.sendLineMessage(firebaseData.http, "Schedule message sending!");
-      if (status == LineNotifyESP32::LineStatus::SENT_COMPLETED)
-        Serial.println("PASSED");
-      else if (status == LineNotifyESP32::LineStatus::SENT_FAILED)
-        Serial.println("FAILED");
-      else if (status == LineNotifyESP32::LineStatus::CONNECTION_FAILED)
-        Serial.println("FAILED");
-      Serial.println("--------------------------------");
-      Serial.println();
-
-      //Unpause Firebase
-      firebaseData.pauseFirebase(false);
-    }
-    else
-    {
-      Serial.println("Could not pause Firebase");
-    }
+    uint8_t status = lineNotify.sendLineMessage(client, "Schedule message sending!");
+    if (status == LineNotifyESP32::LineStatus::SENT_COMPLETED)
+      Serial.println("PASSED");
+    else if (status == LineNotifyESP32::LineStatus::SENT_FAILED)
+      Serial.println("FAILED");
+    else if (status == LineNotifyESP32::LineStatus::CONNECTION_FAILED)
+      Serial.println("FAILED");
+    Serial.println("--------------------------------");
+    Serial.println();
   }
 
   if (!Firebase.readStream(firebaseData))

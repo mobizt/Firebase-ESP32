@@ -12,7 +12,6 @@
 
 //This example shows how to read stream on other task function.
 
-//Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
 /*
 

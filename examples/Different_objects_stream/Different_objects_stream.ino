@@ -12,7 +12,6 @@
 //This example shows how to use different Firebase Data objects to handle to same streaming path, one for stream connection (database data changes monitoring) and
 //other for store, read, update database operation.
 
-//Required HTTPClientESP32Ex library to be installed  https://github.com/mobizt/HTTPClientESP32Ex
 
 #include <WiFi.h>
 #include "FirebaseESP32.h"
