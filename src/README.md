@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP8266 v 3.1.3
+Google's Firebase Realtime Database Arduino Library for ESP8266 v 3.1.4
 
 
 ## Global functions
@@ -13,27 +13,21 @@ param **`host`** - Your Firebase database project host without http:// or https:
 
 param **`auth`** - Your database secret.
 
-```C++
-void begin(const String &host, const String &auth);
-```
-
-
-
-
-
-
-
-#### Store Firebase's authentication credentials
-
-param **`host`** - Your Firebase database project host without http:// or https:// protocol e.g. Your_ProjectID.firebaseio.com.
-
-param **`auth`** - Your database secret.
-
 param **`rootCA`** - Base64 encoded root certificate string.
 
+param **`rootCAFile`** - Root CA certificate base64 format file.
+
+param **`storageType`** - Type of storage, StorageType::SD and StorageType::SPIFFS.
+
 ```C++
+void begin(const String &host, const String &auth);
+
 void begin(const String &host, const String &auth, const char *rootCA);
+
+void begin(const String &host, const String &auth, const String &rootCAFile, uint8_t storageType);
 ```
+
+
 
 
 

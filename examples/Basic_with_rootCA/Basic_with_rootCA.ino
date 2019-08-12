@@ -71,7 +71,20 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
+  
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH, root_ca);
+
+  /*
+  
+  //To set root CA cert file, base64 encoded format (rootCA.cer in data folder) in this example, use this plugin to upload
+  //https://github.com/me-no-dev/arduino-esp32fs-plugin
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH, "/rootCA.cer",StorageType::SPIFFS);
+  
+  //or add rootCA.cer file to SD card
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH, "/rootCA.cer",StorageType::SD);
+  
+  */
+
   Firebase.reconnectWiFi(true);
 
   //Set database read timeout to 1 minute (max 15 minutes)

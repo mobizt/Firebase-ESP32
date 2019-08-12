@@ -1,13 +1,15 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.4
  * 
-* August 4, 2019
+ * August 12, 2019
  * 
  * Feature Added:
- *
+ * - Add support to read Root CA certificate file from SD and SPIFFS.
+ * - FCM message now can be set notification and data separately.
+ * - Not required external dependency library.
  * 
  * Feature Fixed:
- * - Incorrect handles for continuous stream data event
+ * - Stream is not resume when timeout while WiFi is still connected.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -44,7 +46,7 @@
 #include <WiFi.h>
 #include "FS.h"
 #include "SPIFFS.h"
-#include <HTTPClientESP32Ex.h>
+#include "FirebaseESP32HTTPClient.h"
 #include <functional>
 #include <SD.h>
 #include <vector>
@@ -183,23 +185,23 @@ static const char ESP32_FIREBASE_STR_119[] PROGMEM = "delete";
 
 static const char ESP32_FIREBASE_STR_120[] PROGMEM = "fcm.googleapis.com";
 static const char ESP32_FIREBASE_STR_121[] PROGMEM = "/fcm/send";
-static const char ESP32_FIREBASE_STR_122[] PROGMEM = "{\"notification\":{";
+static const char ESP32_FIREBASE_STR_122[] PROGMEM = "\"notification\":{";
 static const char ESP32_FIREBASE_STR_123[] PROGMEM = "\"title\":\"";
-static const char ESP32_FIREBASE_STR_124[] PROGMEM = "\",\"body\":\"";
-static const char ESP32_FIREBASE_STR_125[] PROGMEM = ",\"icon\":\"";
-static const char ESP32_FIREBASE_STR_126[] PROGMEM = ",\"click_action\":\"";
+static const char ESP32_FIREBASE_STR_124[] PROGMEM = "\"body\":\"";
+static const char ESP32_FIREBASE_STR_125[] PROGMEM = "\"icon\":\"";
+static const char ESP32_FIREBASE_STR_126[] PROGMEM = "\"click_action\":\"";
 static const char ESP32_FIREBASE_STR_127[] PROGMEM = "}";
-static const char ESP32_FIREBASE_STR_128[] PROGMEM = ",\"to\":\"";
+static const char ESP32_FIREBASE_STR_128[] PROGMEM = "\"to\":\"";
 static const char ESP32_FIREBASE_STR_129[] PROGMEM = "application/json";
-static const char ESP32_FIREBASE_STR_130[] PROGMEM = ",\"registration_ids\":[";
+static const char ESP32_FIREBASE_STR_130[] PROGMEM = "\"registration_ids\":[";
 static const char ESP32_FIREBASE_STR_131[] PROGMEM = "Authorization: key=";
 static const char ESP32_FIREBASE_STR_132[] PROGMEM = ",";
 static const char ESP32_FIREBASE_STR_133[] PROGMEM = "]";
 static const char ESP32_FIREBASE_STR_134[] PROGMEM = "/topics/";
-static const char ESP32_FIREBASE_STR_135[] PROGMEM = ",\"data\":";
-static const char ESP32_FIREBASE_STR_136[] PROGMEM = ",\"priority\":\"";
-static const char ESP32_FIREBASE_STR_137[] PROGMEM = ",\"time_to_live\":";
-static const char ESP32_FIREBASE_STR_138[] PROGMEM = ",\"collapse_key\":\"";
+static const char ESP32_FIREBASE_STR_135[] PROGMEM = "\"data\":";
+static const char ESP32_FIREBASE_STR_136[] PROGMEM = "\"priority\":\"";
+static const char ESP32_FIREBASE_STR_137[] PROGMEM = "\"time_to_live\":";
+static const char ESP32_FIREBASE_STR_138[] PROGMEM = "\"collapse_key\":\"";
 static const char ESP32_FIREBASE_STR_139[] PROGMEM = "\"multicast_id\":";
 static const char ESP32_FIREBASE_STR_140[] PROGMEM = "\"success\":";
 static const char ESP32_FIREBASE_STR_141[] PROGMEM = "\"failure\":";
@@ -224,6 +226,7 @@ static const char ESP32_FIREBASE_STR_159[] PROGMEM = "ms";
 static const char ESP32_FIREBASE_STR_160[] PROGMEM = "&writeSizeLimit=";
 static const char ESP32_FIREBASE_STR_161[] PROGMEM = "{\".value\":";
 static const char ESP32_FIREBASE_STR_162[] PROGMEM = "&format=export";
+static const char ESP32_FIREBASE_STR_163[] PROGMEM = "{";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -234,6 +237,12 @@ class FirebaseESP32;
 class FCMObject;
 
 struct QueueStorageType
+{
+  static const uint8_t SPIFFS = 0;
+  static const uint8_t SD = 1;
+};
+
+struct StorageType
 {
   static const uint8_t SPIFFS = 0;
   static const uint8_t SD = 1;
@@ -378,16 +387,15 @@ public:
   friend FirebaseData;
 
 private:
-  bool fcm_connect(HTTPClientESP32Ex &client);
-  bool fcm_connect(HTTPClientESP32Ex &client, std::vector<const char *> _rootCA);
+  bool fcm_connect(FirebaseESP32HTTPClient &net);
 
-  bool fcm_send(HTTPClientESP32Ex &client, int &httpcode, uint8_t messageType);
+  bool fcm_send(FirebaseESP32HTTPClient &net, int &httpcode, uint8_t messageType);
 
   void fcm_buildHeader(std::string &header, size_t payloadSize);
 
   void fcm_buildPayload(std::string &msg, uint8_t messageType);
 
-  bool getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode);
+  bool getFCMServerResponse(FirebaseESP32HTTPClient &net, int &httpcode);
 
   void clear();
 
@@ -511,22 +519,21 @@ public:
 
   /*
     Store Firebase's authentication credentials.
-    
+
     @param host - Your Firebase database project host e.g. Your_ProjectID.firebaseio.com.
     @param auth - Your database secret.
+    @param rootCA - Root CA certificate base64 string (PEM file).
+    @param rootCAFile - Root CA certificate DER file (binary).
+    @param StorageType - Type of storage, StorageType::SD and StorageType::SPIFFS.
 
-   */
+    Root CA certificate DER file is only support in Core SDK v2.5.x
+
+  */
   void begin(const String &host, const String &auth);
 
-  /*
-    Store Firebase's authentication credentials.
-    
-    @param host - Your Firebase database project host e.g. Your_ProjectID.firebaseio.com.
-    @param auth - Your database secret.
-    @param rootCA - Base64 encoded root certificate string.
-
-   */
   void begin(const String &host, const String &auth, const char *rootCA);
+
+  void begin(const String &host, const String &auth, const String &rootCAFile, uint8_t storageType);
 
   /*
     Stop Firebase and release all resources.
@@ -2065,6 +2072,7 @@ protected:
   bool getDownloadResponse(FirebaseData &dataObj);
   bool getUploadResponse(FirebaseData &dataObj);
   void endFileTransfer(FirebaseData &dataObj);
+  void reconnect();
 
   void buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t _method, uint8_t dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &request);
   void resetFirebasedataFlag(FirebaseData &dataObj);
@@ -2074,6 +2082,7 @@ protected:
   int firebaseConnect(FirebaseData &dataObj, const std::string &path, const uint8_t _method, uint8_t dataType, const std::string &payload, const std::string &priority);
   bool cancelCurrentResponse(FirebaseData &dataObj);
   void setDataType(FirebaseData &dataObj, const std::string &data);
+  void setSecure(FirebaseData &dataObj);
   bool commError(FirebaseData &dataObj);
   uint8_t openErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType, uint8_t mode);
   std::vector<std::string> splitString(int size, const char *str, const char delim);
@@ -2082,7 +2091,7 @@ protected:
   void createDirs(std::string dirs);
   bool replace(std::string &str, const std::string &from, const std::string &to);
   std::string base64_encode_string(const unsigned char *src, size_t len);
-  void send_base64_encode_file(WiFiClient *tcp, const std::string &filePath);
+  void send_base64_encode_file(WiFiClient *net, const std::string &filePath);
   bool base64_decode_string(const std::string src, std::vector<uint8_t> &out);
   bool base64_decode_file(File &file, const char *src, size_t len);
 
@@ -2090,7 +2099,10 @@ protected:
 
   std::string _host = "";
   std::string _auth = "";
-  std::vector<const char *> _rootCA = std::vector<const char *>();
+  std::shared_ptr<const char> _rootCA = nullptr;
+  int _certType = -1;
+  std::string _rootCAFile = "";
+  uint8_t _rootCAFileStoreageType = StorageType::SPIFFS;
 
   uint16_t _port = 443;
   bool _reconnectWiFi = false;
@@ -2342,7 +2354,7 @@ public:
 
   FCMObject fcm;
 
-  HTTPClientESP32Ex http;
+  FirebaseESP32HTTPClient _net;
 
   QueryFilter queryFilter;
 

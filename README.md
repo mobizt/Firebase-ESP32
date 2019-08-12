@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.1.3
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.1.4
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms which library are also available.
@@ -26,7 +26,7 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 ## Features
 
 
-* **Not Required Fingerprint and Certificate.**
+* **Not Required Fingerprint and Certificate, CA certificate can be set for more secure connection.**
 
 * **Completed Google REST APIs Implementation.**
 
@@ -66,6 +66,7 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 
 * **Supports Firebase Cloud Messaging.**
 
+* **Supports SD and SPIFFS's CA certificate file.**
 
 
 
@@ -90,8 +91,6 @@ The HTTPClientESP32Ex library was the customized HTTPClient wrapper used for mak
 
 ## Installation
 
-
-This library relies on [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) which needs to install manually.
 
 
 ### Using Library Manager
@@ -137,7 +136,9 @@ For PlatformIO, create folder **"Firebase-ESP32"** in folder **"lib"** and store
 
 
 
-### Dependency Library Installing
+### Dependency Library Installing (for older version, 3.1.3 and below)
+
+For library version below than 3.1.4, it relies on [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) which needs to install manually.
 
 Go to [HTTPClientESP32Ex Github repository](https://github.com/mobizt/HTTPClientESP32Ex)
 

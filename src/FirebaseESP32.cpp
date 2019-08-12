@@ -1,13 +1,15 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.1.4
  * 
-* August 4, 2019
+ * August 12, 2019
  * 
  * Feature Added:
- *
+ * - Add support to read Root CA certificate file from SD and SPIFFS.
+ * - FCM message now can be set notification and data separately.
+ * - Not required external dependency library.
  * 
  * Feature Fixed:
- * - Incorrect handles for continuous stream data event
+ * - Stream is not resume when timeout while WiFi is still connected.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -92,7 +94,7 @@ FirebaseESP32::~FirebaseESP32()
 {
   std::string().swap(_host);
   std::string().swap(_auth);
-  std::vector<const char *>().swap(_rootCA);
+  _rootCA = nullptr;
 }
 
 void FirebaseESP32::begin(const String &host, const String &auth)
@@ -107,7 +109,8 @@ void FirebaseESP32::begin(const String &host, const String &auth)
 
   _host.clear();
   _auth.clear();
-  _rootCA.clear();
+  _rootCAFile.clear();
+  _rootCA = nullptr;
 
   _host = host.c_str();
 
@@ -143,51 +146,24 @@ void FirebaseESP32::begin(const String &host, const String &auth)
 
 void FirebaseESP32::begin(const String &host, const String &auth, const char *rootCA)
 {
-  int p1 = std::string::npos;
-  int p2 = 0;
-  char *h = new char[host.length() + 1];
-  memset(h, 0, host.length() + 1);
-  strcpy(h, host.c_str());
-  char *_h = new char[host.length() + 1];
-  memset(_h, 0, host.length() + 1);
-
-  _host.clear();
-  _auth.clear();
-
-  _host = host.c_str();
-
-  p1 = _host.find(ESP32_FIREBASE_STR_111);
-  if (p1 != std::string::npos)
+  begin(host, auth);
+  if (rootCA)
   {
-    if (h[strlen(h) - 1] == '/')
-      p2 = 1;
-
-    strncpy(_h, h + p1 + strlen(ESP32_FIREBASE_STR_111), strlen(h) - p1 - p2 - strlen(ESP32_FIREBASE_STR_111));
-    _host = _h;
+    _rootCA = std::shared_ptr<const char>(rootCA);
   }
+}
 
-  if (p1 == std::string::npos)
+void FirebaseESP32::begin(const String &host, const String &auth, const String &rootCAFile, uint8_t storageType)
+{
+  begin(host, auth);
+  if (rootCAFile.length() > 0)
   {
-    p1 = _host.find(ESP32_FIREBASE_STR_112);
-    if (p1 != std::string::npos)
-    {
-      if (h[strlen(h) - 1] == '/')
-        p2 = 1;
 
-      strncpy(_h, h + p1 + strlen(ESP32_FIREBASE_STR_112), strlen(h) - p1 - p2 - strlen(ESP32_FIREBASE_STR_112));
-      _host = _h;
-    }
+    _rootCAFile = rootCAFile.c_str();
+    _rootCAFileStoreageType = storageType;
+    if (storageType == StorageType::SD && !_sdOk)
+      _sdOk = sdTest();
   }
-
-  _auth = auth.c_str();
-  _port = FIEBASE_PORT;
-
-  _rootCA.clear();
-  if (strlen(rootCA) > 0)
-    _rootCA.push_back((char *)rootCA);
-
-  delete[] h;
-  delete[] _h;
 }
 
 void FirebaseESP32::end(FirebaseData &dataObj)
@@ -197,8 +173,7 @@ void FirebaseESP32::end(FirebaseData &dataObj)
 
   removeStreamCallback(dataObj);
 
-  WiFiClient *netClient = dataObj.http.http_getStreamPtr();
-  netClient->~WiFiClient();
+  dataObj._net.getStreamPtr()->~WiFiClient();
   dataObj.clear();
 }
 
@@ -243,6 +218,9 @@ bool FirebaseESP32::buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, 
     maxRetry = 1;
 
   unsigned long lastTime = millis();
+
+  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
+    WiFi.reconnect();
 
   if (dataObj._streamCall || dataObj._cfmCall)
     while ((dataObj._streamCall || dataObj._cfmCall) && millis() - lastTime < 1000)
@@ -300,6 +278,9 @@ bool FirebaseESP32::buildRequestFile(FirebaseData &dataObj, uint8_t firebaseMeth
     maxRetry = 1;
 
   unsigned long lastTime = millis();
+
+  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
+    WiFi.reconnect();
 
   if (dataObj._streamCall || dataObj._cfmCall)
     while ((dataObj._streamCall || dataObj._cfmCall) && millis() - lastTime < 1000)
@@ -1378,18 +1359,15 @@ bool FirebaseESP32::endStream(FirebaseData &dataObj)
     return true;
   }
 
-  WiFiClient *netClient = dataObj.http.http_getStreamPtr();
-  if (netClient)
+  if (dataObj._net.getStreamPtr())
   {
-    if (netClient->available() > 0)
-    {
-      netClient->flush();
-      delay(50);
-      netClient->stop();
-    }
+    if (dataObj._net.getStreamPtr()->available() > 0)
+      dataObj._net.getStreamPtr()->read();
+
+    dataObj._net.getStreamPtr()->stop();
   }
 
-  flag = dataObj.http.http_connected();
+  flag = dataObj._net.connected();
   if (!flag)
   {
     dataObj._isStream = false;
@@ -1462,7 +1440,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
       dataObj._streamPathChanged = true;
     if (!dataObj._isStream || dataObj._streamPathChanged)
     {
-      if (dataObj.http.http_connected())
+      if (dataObj._net.connected())
         forceEndHTTP(dataObj);
     }
 
@@ -1491,10 +1469,9 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     dataObj._isStreamTimeout = false;
   }
 
-  if (_rootCA.size() > 0)
-    httpConnected = dataObj.http.http_begin(_host.c_str(), _port, uri.c_str(), (const char *)_rootCA.front());
-  else
-    httpConnected = dataObj.http.http_begin(_host.c_str(), _port, uri.c_str(), (const char *)NULL);
+  setSecure(dataObj);
+
+  httpConnected = dataObj._net.begin(_host.c_str(), _port, uri.c_str());
 
   if (!httpConnected)
   {
@@ -1688,7 +1665,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
   if (!apConnected(dataObj))
     return HTTPC_ERROR_CONNECTION_LOST;
 
-  httpCode = dataObj.http.http_sendRequest(header.c_str(), payloadStr.c_str());
+  httpCode = dataObj._net.sendRequest(header.c_str(), payloadStr.c_str());
 
   retryCount = 0;
   while (httpCode != 0)
@@ -1700,7 +1677,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     if (!apConnected(dataObj))
       return HTTPC_ERROR_CONNECTION_LOST;
 
-    httpCode = dataObj.http.http_sendRequest(header.c_str(), payloadStr.c_str());
+    httpCode = dataObj._net.sendRequest(header.c_str(), payloadStr.c_str());
   }
 
   if (method == FirebaseMethod::RESTORE || (dataType == FirebaseDataType::FILE && (method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST)))
@@ -1714,11 +1691,9 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
       if (!apConnected(dataObj))
         return HTTPC_ERROR_CONNECTION_LOST;
 
-      httpCode = dataObj.http.http_sendRequest("", buff);
+      httpCode = dataObj._net.sendRequest("", buff);
 
-      WiFiClient *netClient = dataObj.http.http_getStreamPtr();
-
-      send_base64_encode_file(netClient, dataObj._fileName);
+      send_base64_encode_file(dataObj._net.getStreamPtr(), dataObj._fileName);
 
       memset(buff, 0, buffSize);
       buff[0] = '"';
@@ -1727,7 +1702,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
       if (!apConnected(dataObj))
         return HTTPC_ERROR_CONNECTION_LOST;
 
-      httpCode = dataObj.http.http_sendRequest("", buff);
+      httpCode = dataObj._net.sendRequest("", buff);
     }
     else
     {
@@ -1745,7 +1720,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
         if (!apConnected(dataObj))
           return HTTPC_ERROR_CONNECTION_LOST;
 
-        httpCode = dataObj.http.http_sendRequest("", buff);
+        httpCode = dataObj._net.sendRequest("", buff);
 
         len -= toRead;
 
@@ -1780,6 +1755,9 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
   bool flag = false;
   dataObj._firebaseError.clear();
 
+  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
+    WiFi.reconnect();
+
   if (dataObj._pause || dataObj._file_transfering)
     return true;
 
@@ -1796,18 +1774,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
   }
 
   //Try to reconnect WiFi if lost connection
-  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
-  {
-    uint8_t tryCount = 0;
-    WiFi.reconnect();
-    while (WiFi.status() != WL_CONNECTED)
-    {
-      tryCount++;
-      delay(50);
-      if (tryCount > 20)
-        break;
-    }
-  }
+  reconnect();
 
   //If WiFi is not connected, return false
   if (!apConnected(dataObj))
@@ -1826,10 +1793,9 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
 
   //Get the current WiFi client from current firebase data
   //Check for connection status
-  WiFiClient *netClient = dataObj.http.http_getStreamPtr();
-  if (netClient)
+  if (dataObj._net.getStreamPtr())
   {
-    if (netClient->connected())
+    if (dataObj._net.getStreamPtr()->connected())
       dataObj._httpConnected = true;
     else
       dataObj._httpConnected = false;
@@ -1851,12 +1817,12 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
       {
         dataObj._streamMillis = millis() + 50;
         dataObj._interruptRequest = true;
-        delay(20);
-        if (dataObj.http.http_connected())
+        
+        if (dataObj._net.connected())
         {
-          delay(20);
+          
           forceEndHTTP(dataObj);
-          if (dataObj.http.http_connected())
+          if (dataObj._net.connected())
             if (!dataObj._isStream)
             {
               dataObj._firebaseCall = false;
@@ -1932,7 +1898,6 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, const std::string &path, 
     //can't establish connection
     dataObj._httpCode = httpCode;
     dataObj._httpConnected = false;
-    delay(50);
     dataObj._firebaseCall = false;
     return false;
   }
@@ -1949,8 +1914,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
   if (!apConnected(dataObj))
     return false;
 
-  WiFiClient *netClient = dataObj.http.http_getStreamPtr();
-  if (!netClient || dataObj._interruptRequest)
+  if (!dataObj._net.getStreamPtr() || dataObj._interruptRequest)
     return cancelCurrentResponse(dataObj);
   if (!handleNetNotConnected(dataObj) || !dataObj._httpConnected)
     return false;
@@ -1983,9 +1947,10 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
   unsigned long dataTime = millis();
 
   if (!dataObj._isStream)
-    while (netClient->connected() && !netClient->available() && millis() - dataTime < dataObj.http.tcpTimeout)
+    while (dataObj._net.getStreamPtr()->connected() && !dataObj._net.getStreamPtr()->available() && millis() - dataTime < dataObj._net.tcpTimeout)
     {
-      if (!apConnected(dataObj)){
+      if (!apConnected(dataObj))
+      {
         dataObj._processResponse = false;
         return false;
       }
@@ -1993,21 +1958,25 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
     }
 
   dataTime = millis();
-  if (netClient->connected() && netClient->available())
+
+  if (dataObj._net.getStreamPtr()->connected() && !dataObj._net.getStreamPtr()->available())
+    dataObj._httpCode = HTTPC_ERROR_READ_TIMEOUT;
+
+  if (dataObj._net.getStreamPtr()->connected() && dataObj._net.getStreamPtr()->available())
   {
 
-    while (netClient->available())
+    while (dataObj._net.getStreamPtr()->available())
     {
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
 
-      if (!apConnected(dataObj)){
+      if (!apConnected(dataObj))
+      {
         dataObj._processResponse = false;
         return false;
       }
-      
 
-      c = netClient->read();
+      c = dataObj._net.getStreamPtr()->read();
 
       if (!hasBlob)
       {
@@ -2137,7 +2106,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
         charPos = 0;
       }
 
-      if (millis() - dataTime > dataObj.http.tcpTimeout)
+      if (millis() - dataTime > dataObj._net.tcpTimeout)
       {
         dataObj._httpCode = HTTPC_ERROR_READ_TIMEOUT;
         break;
@@ -2345,15 +2314,14 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
     goto EXIT_2;
   }
 
-  if (dataObj._httpCode == -1000)
+  if (dataObj._httpCode == -1000 && dataObj._r_method == FirebaseMethod::STREAM)
     flag = true;
 
   dataObj._httpConnected = false;
   dataObj._streamMillis = millis();
   dataObj._processResponse = false;
 
-
-return flag;
+  return flag;
 
 EXIT_2:
 
@@ -2364,7 +2332,7 @@ EXIT_2:
 
   if (dataObj._httpCode == HTTPC_ERROR_READ_TIMEOUT)
     return false;
-  return dataObj._httpCode == HTTP_CODE_OK;
+  return dataObj._httpCode == HTTP_CODE_OK || (dataObj._r_method == FirebaseMethod::STREAM && dataObj._httpCode == -1000);
 
 EXIT_3:
 
@@ -2394,8 +2362,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
   if (!apConnected(dataObj))
     return false;
 
-  WiFiClient *netClient = dataObj.http.http_getStreamPtr();
-  if (!netClient)
+  if (!dataObj._net.getStreamPtr())
   {
     endFileTransfer(dataObj);
     return false;
@@ -2420,7 +2387,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
 
   unsigned long dataTime = millis();
 
-  while (netClient->connected() && !netClient->available() && millis() - dataTime < dataObj.http.tcpTimeout + 5000)
+  while (dataObj._net.getStreamPtr()->connected() && !dataObj._net.getStreamPtr()->available() && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
   {
 
     if (!apConnected(dataObj))
@@ -2430,10 +2397,10 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
   }
 
   dataTime = millis();
-  if (netClient->connected() && netClient->available())
+  if (dataObj._net.getStreamPtr()->connected() && dataObj._net.getStreamPtr()->available())
   {
 
-    while (netClient->available() || count > 0)
+    while (dataObj._net.getStreamPtr()->available() || count > 0)
     {
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
@@ -2443,7 +2410,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
 
       if (!beginPayload)
       {
-        c = netClient->read();
+        c = dataObj._net.getStreamPtr()->read();
         if (c != '\r' && c != '\n')
           linebuff.append(1, c);
       }
@@ -2470,7 +2437,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
           while (cnt < toRead)
           {
 
-            c = netClient->read();
+            c = dataObj._net.getStreamPtr()->read();
             if (c >= 0x20)
             {
               if (dataObj._fileName == "" && c < 0xff)
@@ -2561,14 +2528,14 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
           if (dataObj._fileName != "")
           {
             for (int i = 0; i < strlen(ESP32_FIREBASE_STR_93); i++)
-              netClient->read();
+              dataObj._net.getStreamPtr()->read();
           }
         }
 
         linebuff.clear();
       }
 
-      if (millis() - dataTime > dataObj.http.tcpTimeout)
+      if (millis() - dataTime > dataObj._net.tcpTimeout)
       {
         dataObj._httpCode = HTTPC_ERROR_READ_TIMEOUT;
         break;
@@ -2611,8 +2578,7 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
   if (!apConnected(dataObj))
     return false;
 
-  WiFiClient *netClient = dataObj.http.http_getStreamPtr();
-  if (!netClient)
+  if (!dataObj._net.getStreamPtr())
     return false;
 
   int _httpCode = -1000;
@@ -2625,7 +2591,7 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
   unsigned long dataTime = millis();
 
   if (!dataObj._isStream)
-    while (netClient->connected() && !netClient->available() && millis() - dataTime < dataObj.http.tcpTimeout + 5000)
+    while (dataObj._net.getStreamPtr()->connected() && !dataObj._net.getStreamPtr()->available() && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
     {
       if (!apConnected(dataObj))
         return false;
@@ -2634,10 +2600,10 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
 
   dataTime = millis();
 
-  if (netClient->connected() && netClient->available())
+  if (dataObj._net.getStreamPtr()->connected() && dataObj._net.getStreamPtr()->available())
   {
 
-    while (netClient->available())
+    while (dataObj._net.getStreamPtr()->available())
     {
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
@@ -2645,7 +2611,7 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
       if (!apConnected(dataObj))
         return false;
 
-      c = netClient->read();
+      c = dataObj._net.getStreamPtr()->read();
 
       if (c != '\r' && c != '\n')
         linebuff.append(1, c);
@@ -2674,7 +2640,7 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
         linebuff.clear();
       }
 
-      if (millis() - dataTime > dataObj.http.tcpTimeout)
+      if (millis() - dataTime > dataObj._net.tcpTimeout)
       {
         _httpCode = HTTPC_ERROR_READ_TIMEOUT;
         dataObj._httpCode = HTTPC_ERROR_READ_TIMEOUT;
@@ -2718,7 +2684,7 @@ bool FirebaseESP32::firebaseConnectStream(FirebaseData &dataObj, const std::stri
 
   dataObj._streamStop = false;
 
-  if (dataObj._isStream && path == dataObj._streamPath)
+  if (!dataObj._isStreamTimeout && dataObj._isStream && path == dataObj._streamPath)
     return true;
 
   if (path.length() == 0 || _host.length() == 0 || _auth.length() == 0)
@@ -2731,7 +2697,7 @@ bool FirebaseESP32::firebaseConnectStream(FirebaseData &dataObj, const std::stri
     return false;
 
   if (millis() - dataObj._streamResetMillis > 50)
-    delay(50);
+    delay(20);
 
   bool flag;
   flag = dataObj._streamPath.length() == 0;
@@ -2768,7 +2734,7 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
     dataObj._dataAvailable = false;
     dataObj._isStreamTimeout = false;
     if (dataObj._index == -1)
-      delay(50);
+      delay(20);
     return true;
   }
 
@@ -2785,18 +2751,7 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
       dataObj._isStreamTimeout = true;
       path = dataObj._streamPath;
 
-      if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
-      {
-        uint8_t tryCount = 0;
-        WiFi.reconnect();
-        while (WiFi.status() != WL_CONNECTED)
-        {
-          tryCount++;
-          delay(50);
-          if (tryCount > 20)
-            break;
-        }
-      }
+      reconnect();
 
       if (!apConnected(dataObj))
         return false;
@@ -2835,12 +2790,11 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
 
     dataObj._streamCall = true;
 
-    WiFiClient *netClient = dataObj.http.http_getStreamPtr();
-    if (netClient)
+    if (dataObj._net.getStreamPtr())
     {
-      if (netClient->connected() && !dataObj._isStream)
+      if (dataObj._net.getStreamPtr()->connected() && !dataObj._isStream)
         forceEndHTTP(dataObj);
-      if (!netClient->connected())
+      if (!dataObj._net.getStreamPtr()->connected())
       {
         path = dataObj._streamPath;
         firebaseConnectStream(dataObj, path);
@@ -2888,16 +2842,13 @@ void FirebaseESP32::forceEndHTTP(FirebaseData &dataObj)
   if (!apConnected(dataObj))
     return;
 
-  WiFiClient *netClient = dataObj.http.http_getStreamPtr();
-  if (netClient)
+  if (dataObj._net.getStreamPtr())
   {
-    if (netClient->available() > 0)
-    {
-      netClient->flush();
-      delay(50);
-    }
-    netClient->stop();
-    delay(50);
+    if (dataObj._net.getStreamPtr()->available() > 0)
+      dataObj._net.getStreamPtr()->read();
+
+    dataObj._net.getStreamPtr()->stop();
+    delay(20);
   }
 }
 
@@ -3382,6 +3333,34 @@ void FirebaseESP32::setDataType(FirebaseData &dataObj, const std::string &data)
   dataObj._dataTypeNum = dataObj._dataType;
 }
 
+void FirebaseESP32::setSecure(FirebaseData &dataObj)
+{
+  if (dataObj._net._certType == -1)
+  {
+
+    if (_rootCAFile.length() == 0)
+    {
+      if (_rootCA)
+        dataObj._net.setRootCA(_rootCA.get());
+      else
+        dataObj._net.setRootCA(nullptr);
+    }
+    else
+    {
+      if (_rootCAFileStoreageType == StorageType::SD)
+      {
+        if (!_sdOk)
+          _sdOk = sdTest();
+
+        if (!_sdOk)
+          return;
+      }
+
+      dataObj._net.setRootCAFile(_rootCAFile, _rootCAFileStoreageType);
+    }
+  }
+}
+
 bool FirebaseESP32::commError(FirebaseData &dataObj)
 {
   return dataObj._httpCode == HTTPC_ERROR_CONNECTION_REFUSED || dataObj._httpCode == HTTPC_ERROR_CONNECTION_LOST ||
@@ -3398,7 +3377,7 @@ void FirebaseESP32::resetFirebasedataFlag(FirebaseData &dataObj)
 }
 bool FirebaseESP32::handleNetNotConnected(FirebaseData &dataObj)
 {
-  if (!dataObj.http.http_connected())
+  if (!dataObj._net.connected())
   {
     dataObj._contentLength = -1;
     dataObj._dataType = FirebaseDataType::NULL_;
@@ -3426,6 +3405,22 @@ bool FirebaseESP32::sdBegin(void)
 {
   _sdConfigSet = false;
   return SD.begin();
+}
+
+void FirebaseESP32::reconnect()
+{
+  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
+  {
+    uint8_t tryCount = 0;
+    WiFi.reconnect();
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      tryCount++;
+      delay(20);
+      if (tryCount > 20)
+        break;
+    }
+  }
 }
 
 void FirebaseESP32::errorToString(int httpCode, std::string &buff)
@@ -3581,18 +3576,7 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &dataObj, uint8_t messageType)
   }
 
   //Try to reconnect WiFi if lost connection
-  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
-  {
-    uint8_t tryCount = 0;
-    WiFi.reconnect();
-    while (WiFi.status() != WL_CONNECTED)
-    {
-      tryCount++;
-      delay(50);
-      if (tryCount > 20)
-        break;
-    }
-  }
+  reconnect();
 
   //If WiFi is not connected, return false
   if (!apConnected(dataObj))
@@ -3613,17 +3597,11 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &dataObj, uint8_t messageType)
 
   dataObj._cfmCall = true;
 
-  if (dataObj.http.http_connected())
+  if (dataObj._net.connected())
     forceEndHTTP(dataObj);
 
-  if (_rootCA.size() > 0)
-  {
-    res = dataObj.fcm.fcm_connect(dataObj.http, _rootCA);
-  }
-  else
-  {
-    res = dataObj.fcm.fcm_connect(dataObj.http);
-  }
+  setSecure(dataObj);
+  res = dataObj.fcm.fcm_connect(dataObj._net);
 
   if (!res)
   {
@@ -3632,7 +3610,7 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &dataObj, uint8_t messageType)
     return false;
   }
 
-  res = dataObj.fcm.fcm_send(dataObj.http, dataObj._httpCode, messageType);
+  res = dataObj.fcm.fcm_send(dataObj._net, dataObj._httpCode, messageType);
   dataObj._cfmCall = false;
   return res;
 }
@@ -3714,7 +3692,7 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
         if (firebaseDataObject[id].get().streamTimeout() && firebaseDataObject[id].get()._timeoutCallback)
           firebaseDataObject[id].get()._timeoutCallback(true);
 
-        if (!firebaseDataObject[id].get()._processResponse &&  firebaseDataObject[id].get().streamAvailable() && firebaseDataObject[id].get()._dataAvailableCallback)
+        if (!firebaseDataObject[id].get()._processResponse && firebaseDataObject[id].get().streamAvailable() && firebaseDataObject[id].get()._dataAvailableCallback)
         {
 
           StreamData s;
@@ -4242,7 +4220,7 @@ std::string FirebaseESP32::base64_encode_string(const unsigned char *src, size_t
   return outStr;
 }
 
-void FirebaseESP32::send_base64_encode_file(WiFiClient *netClient, const std::string &filePath)
+void FirebaseESP32::send_base64_encode_file(WiFiClient *net, const std::string &filePath)
 {
 
   File file = SD.open(filePath.c_str(), FILE_READ);
@@ -4279,7 +4257,7 @@ void FirebaseESP32::send_base64_encode_file(WiFiClient *netClient, const std::st
         if (byteAdd >= chunkSize)
         {
           byteSent += byteAdd;
-          netClient->write(buff, byteAdd);
+          net->write(buff, byteAdd);
           memset(buff, 0, chunkSize);
           byteAdd = 0;
         }
@@ -4308,7 +4286,7 @@ void FirebaseESP32::send_base64_encode_file(WiFiClient *netClient, const std::st
   file.close();
 
   if (byteAdd > 0)
-    netClient->write(buff, byteAdd);
+    net->write(buff, byteAdd);
 
   if (len - fbuffIndex > 0)
   {
@@ -4329,7 +4307,7 @@ void FirebaseESP32::send_base64_encode_file(WiFiClient *netClient, const std::st
     }
     buff[byteAdd++] = '=';
 
-    netClient->write(buff, byteAdd);
+    net->write(buff, byteAdd);
   }
 
   delete[] buff;
@@ -4597,19 +4575,15 @@ bool FirebaseData::pauseFirebase(bool pause)
   if (WiFi.status() != WL_CONNECTED)
     return false;
 
-  if (http.http_connected() && pause != _pause)
+  if (_net.connected() && pause != _pause)
   {
 
-    WiFiClient *netClient = http.http_getStreamPtr();
+    if (_net.getStreamPtr()->available() > 0)
+      _net.getStreamPtr()->read();
 
-    if (netClient->available() > 0)
-    {
-      netClient->flush();
-      delay(50);
-    }
-    netClient->stop();
-    delay(50);
-    if (!http.http_connected())
+    _net.getStreamPtr()->stop();
+
+    if (!_net.connected())
     {
       _pause = pause;
       return true;
@@ -5234,19 +5208,9 @@ String FCMObject::getSendResult()
   return _sendResult.c_str();
 }
 
-bool FCMObject::fcm_connect(HTTPClientESP32Ex &client, std::vector<const char *> _rootCA)
+bool FCMObject::fcm_connect(FirebaseESP32HTTPClient &net)
 {
-  int httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, _port, ESP32_FIREBASE_STR_121, (const char *)_rootCA.front());
-
-  if (!httpConnected)
-    return false;
-
-  return true;
-}
-
-bool FCMObject::fcm_connect(HTTPClientESP32Ex &client)
-{
-  int httpConnected = client.http_begin(ESP32_FIREBASE_STR_120, _port, ESP32_FIREBASE_STR_121, (const char *)NULL);
+  int httpConnected = net.begin(ESP32_FIREBASE_STR_120, _port, ESP32_FIREBASE_STR_121);
 
   if (!httpConnected)
   {
@@ -5290,41 +5254,73 @@ void FCMObject::fcm_buildHeader(std::string &header, size_t payloadSize)
 void FCMObject::fcm_buildPayload(std::string &msg, uint8_t messageType)
 {
 
-  if (_notify_title.length() > 0 || _notify_body.length() > 0)
-  {
+  bool noti = _notify_title.length() > 0 || _notify_body.length() > 0 || _notify_icon.length() > 0 || _notify_click_action.length() > 0;
+  size_t c = 0;
+
+  msg += ESP32_FIREBASE_STR_163;
+
+  if (noti)
     msg += ESP32_FIREBASE_STR_122;
+
+  if (noti && _notify_title.length() > 0)
+  {
     msg += ESP32_FIREBASE_STR_123;
     msg += _notify_title;
+    msg += ESP32_FIREBASE_STR_3;
+    c++;
+  }
+
+  if (noti && _notify_body.length() > 0)
+  {
+    if (c > 0)
+      msg += ESP32_FIREBASE_STR_132;
     msg += ESP32_FIREBASE_STR_124;
     msg += _notify_body;
     msg += ESP32_FIREBASE_STR_3;
-
-    if (_notify_icon.length() > 0)
-    {
-      msg += ESP32_FIREBASE_STR_125;
-      msg += _notify_icon;
-      msg += ESP32_FIREBASE_STR_3;
-    }
-
-    if (_notify_click_action.length() > 0)
-    {
-      msg += ESP32_FIREBASE_STR_126;
-      msg += _notify_click_action;
-      msg += ESP32_FIREBASE_STR_3;
-    }
-
-    msg += ESP32_FIREBASE_STR_127;
+    c++;
   }
+
+  if (noti && _notify_icon.length() > 0)
+  {
+    if (c > 0)
+      msg += ESP32_FIREBASE_STR_132;
+    msg += ESP32_FIREBASE_STR_125;
+    msg += _notify_icon;
+    msg += ESP32_FIREBASE_STR_3;
+    c++;
+  }
+
+  if (noti && _notify_click_action.length() > 0)
+  {
+    if (c > 0)
+      msg += ESP32_FIREBASE_STR_132;
+    msg += ESP32_FIREBASE_STR_126;
+    msg += _notify_click_action;
+    msg += ESP32_FIREBASE_STR_3;
+    c++;
+  }
+
+  if (noti)
+    msg += ESP32_FIREBASE_STR_127;
+
+  c = 0;
+
   if (messageType == FirebaseESP32::FCMMessageType::SINGLE)
   {
+    if (noti)
+      msg += ESP32_FIREBASE_STR_132;
+
     msg += ESP32_FIREBASE_STR_128;
-
     msg += _deviceToken[_index];
-
     msg += ESP32_FIREBASE_STR_3;
+
+    c++;
   }
   else if (messageType == FirebaseESP32::FCMMessageType::MULTICAST)
   {
+    if (noti)
+      msg += ESP32_FIREBASE_STR_132;
+
     msg += ESP32_FIREBASE_STR_130;
 
     for (uint16_t i = 0; i < _deviceToken.size(); i++)
@@ -5338,50 +5334,69 @@ void FCMObject::fcm_buildPayload(std::string &msg, uint8_t messageType)
     }
 
     msg += ESP32_FIREBASE_STR_133;
+
+    c++;
   }
   else if (messageType == FirebaseESP32::FCMMessageType::TOPIC)
   {
+    if (noti)
+      msg += ESP32_FIREBASE_STR_132;
+
     msg += ESP32_FIREBASE_STR_128;
-
-    msg += _topic;
-
+    msg += _topic.c_str();
     msg += ESP32_FIREBASE_STR_3;
+
+    c++;
   }
 
   if (_data_msg.length() > 0)
   {
+    if (c > 0)
+      msg += ESP32_FIREBASE_STR_132;
+
     msg += ESP32_FIREBASE_STR_135;
     msg += _data_msg;
+    c++;
   }
 
   if (_priority.length() > 0)
   {
+    if (c > 0)
+      msg += ESP32_FIREBASE_STR_132;
+
     msg += ESP32_FIREBASE_STR_136;
     msg += _priority;
     msg += ESP32_FIREBASE_STR_3;
+    c++;
   }
 
   if (_ttl > -1)
   {
+    if (c > 0)
+      msg += ESP32_FIREBASE_STR_132;
     char *ttl = new char[20];
     memset(ttl, 0, 20);
     msg += ESP32_FIREBASE_STR_137;
     itoa(_ttl, ttl, 10);
     msg += ttl;
     delete[] ttl;
+    c++;
   }
 
   if (_collapse_key.length() > 0)
   {
+    if (c > 0)
+      msg += ESP32_FIREBASE_STR_132;
     msg += ESP32_FIREBASE_STR_138;
     msg += _collapse_key;
     msg += ESP32_FIREBASE_STR_3;
+    c++;
   }
 
   msg += ESP32_FIREBASE_STR_127;
 }
 
-bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
+bool FCMObject::getFCMServerResponse(FirebaseESP32HTTPClient &net, int &httpcode)
 {
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -5389,9 +5404,7 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
     return false;
   }
 
-  WiFiClient *netClient = client.http_getStreamPtr();
-
-  if (!netClient)
+  if (!net.getStreamPtr())
   {
     httpcode = HTTPC_ERROR_CONNECTION_LOST;
     return false;
@@ -5413,7 +5426,7 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
 
   unsigned long dataTime = millis();
 
-  while (netClient->connected() && !netClient->available() && millis() - dataTime < 5000)
+  while (net.getStreamPtr()->connected() && !net.getStreamPtr()->available() && millis() - dataTime < 5000)
   {
     if (WiFi.status() != WL_CONNECTED)
     {
@@ -5424,10 +5437,10 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
   }
 
   dataTime = millis();
-  if (netClient->connected() && netClient->available())
+  if (net.getStreamPtr()->connected() && net.getStreamPtr()->available())
   {
 
-    while (netClient->available())
+    while (net.getStreamPtr()->available())
     {
 
       if (WiFi.status() != WL_CONNECTED)
@@ -5436,7 +5449,7 @@ bool FCMObject::getFCMServerResponse(HTTPClientESP32Ex &client, int &httpcode)
         return false;
       }
 
-      c = netClient->read();
+      c = net.getStreamPtr()->read();
 
       if (c != '\r' && c != '\n')
         linebuff.append(1, c);
@@ -5501,7 +5514,7 @@ EXIT_5:
   return httpcode == HTTP_CODE_OK;
 }
 
-bool FCMObject::fcm_send(HTTPClientESP32Ex &client, int &httpcode, uint8_t messageType)
+bool FCMObject::fcm_send(FirebaseESP32HTTPClient &net, int &httpcode, uint8_t messageType)
 {
 
   std::string msg = "";
@@ -5518,20 +5531,20 @@ bool FCMObject::fcm_send(HTTPClientESP32Ex &client, int &httpcode, uint8_t messa
   }
 
   uint8_t retryCount = 0;
-  httpcode = client.http_sendRequest(header.c_str(), "");
+  httpcode = net.sendRequest(header.c_str(), "");
   while (httpcode != 0)
   {
     retryCount++;
     if (retryCount > 5)
       break;
 
-    httpcode = client.http_sendRequest(header.c_str(), "");
+    httpcode = net.sendRequest(header.c_str(), "");
   }
 
   if (httpcode != 0)
     return false;
 
-  httpcode = client.http_sendRequest("", msg.c_str());
+  httpcode = net.sendRequest("", msg.c_str());
 
   std::string().swap(msg);
   std::string().swap(header);
@@ -5539,7 +5552,7 @@ bool FCMObject::fcm_send(HTTPClientESP32Ex &client, int &httpcode, uint8_t messa
   if (httpcode != 0)
     return false;
 
-  bool res = getFCMServerResponse(client, httpcode);
+  bool res = getFCMServerResponse(net, httpcode);
 
   return res;
 }
