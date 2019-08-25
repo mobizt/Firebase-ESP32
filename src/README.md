@@ -3026,7 +3026,7 @@ return **`instance of an object.`**
 
 
 ```C++
-FirebaseJson &addString(const String &key, const String &value);FirebaseJson &addArray(const String &key, FirebaseJsonArray *arr);
+FirebaseJson &addArray(const String &key, FirebaseJsonArray *arr);
 ```
 
 
