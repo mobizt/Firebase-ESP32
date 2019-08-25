@@ -14,7 +14,7 @@
 
 
 #include <WiFi.h>
-#include "FirebaseESP32.h"
+#include <FirebaseESP32.h>
 
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
@@ -23,6 +23,8 @@
 
 //Define Firebase Data object
 FirebaseData firebaseData;
+
+void printRulesContent(FirebaseData &data);
 
 void setup()
 {
@@ -58,6 +60,8 @@ void setup()
     Serial.println(firebaseData.jsonData());
     rules = firebaseData.jsonData();
     Serial.println("------------------------------------");
+    Serial.println("PARSE: ");
+    printRulesContent(firebaseData);
     Serial.println();
   }
   else
@@ -67,6 +71,8 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println();
   }
+
+  return;
 
   Serial.println("------------------------------------");
   Serial.println("Write Database Rules test...");
@@ -92,4 +98,29 @@ void setup()
 
 void loop()
 {
+}
+
+
+void printRulesContent(FirebaseData &data){
+  size_t tokenCount = data.jsonObject().parse(false).getJsonObjectIteratorCount();
+  String key;
+  String value;
+  FirebaseJsonObject jsonParseResult;
+  Serial.println();
+  for (size_t i = 0; i < tokenCount; i++)
+  {
+    data.jsonObject().jsonObjectiterator(i, key, value);
+    value.replace("\n","");
+    value.replace(" ","");
+    jsonParseResult = data.jsonObject().parseResult();
+    Serial.print("KEY: ");
+    Serial.print(key);
+    Serial.print(", ");
+    Serial.print("VALUE: ");
+    Serial.print(value); 
+    Serial.print(", ");
+    Serial.print("TYPE: ");
+    Serial.println(jsonParseResult.type);        
+
+  }
 }

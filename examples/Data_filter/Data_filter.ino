@@ -14,7 +14,7 @@
 
 
 #include <WiFi.h>
-#include "FirebaseESP32.h"
+#include <FirebaseESP32.h>
 
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
@@ -23,6 +23,8 @@
 
 //Define Firebase Data object
 FirebaseData firebaseData;
+
+void printJsonObjectContent(FirebaseData &data);
 
 void setup()
 {
@@ -46,17 +48,16 @@ void setup()
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
 
-  String jsonStr = "";
+ FirebaseJson json;
 
   Serial.println("------------------------------------");
   Serial.println("Push JSON test...");
 
   for (uint8_t i = 0; i < 30; i++)
   {
+    json.clear().addInt("Data1",i + 1).addInt("Data2",i + 100);
 
-    jsonStr = "{\"Data1\":" + String(i + 1) + ",\"Data2\":\"" + String(i + 100) + "\"}";
-
-    if (Firebase.pushJSON(firebaseData, "/Test/Int", jsonStr))
+    if (Firebase.pushJSON(firebaseData, "/Test/Int", json))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
@@ -113,7 +114,7 @@ void setup()
 
     Serial.println("PASSED");
     Serial.println("JSON DATA: ");
-    Serial.println(firebaseData.jsonData());
+    printJsonObjectContent(firebaseData);
     Serial.println("------------------------------------");
     Serial.println();
   }
@@ -127,12 +128,30 @@ void setup()
 
   //Clear all query parameters
   query.clear();
-
-  //Quit Firebase and release all resources
-  Firebase.end(firebaseData);
-  
 }
 
 void loop()
 {
+}
+
+void printJsonObjectContent(FirebaseData &data){
+  size_t tokenCount = data.jsonObject().parse(false).getJsonObjectIteratorCount();
+  String key;
+  String value;
+  FirebaseJsonObject jsonParseResult;
+  Serial.println();
+  for (size_t i = 0; i < tokenCount; i++)
+  {
+    data.jsonObject().jsonObjectiterator(i,key,value);
+    jsonParseResult = data.jsonObject().parseResult();
+    Serial.print("KEY: ");
+    Serial.print(key);
+    Serial.print(", ");
+    Serial.print("VALUE: ");
+    Serial.print(value); 
+    Serial.print(", ");
+    Serial.print("TYPE: ");
+    Serial.println(jsonParseResult.type);        
+
+  }
 }

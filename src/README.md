@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.1.4
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.2.0
 
 
 ## Global functions
@@ -182,6 +182,8 @@ Call **[FirebaseData object].boolData** to get boolean data.
 Call **[FirebaseData object].stringData** to get string data.
 
 Call **[FirebaseData object].jsonData** to get JSON string data.
+
+Call **[FirebaseData object].jsonObject** to get FirebaseJson object.
 
 ```C++
 bool getShallowData(FirebaseData &dataObj, const String &path); 
@@ -441,10 +443,36 @@ bool pushJSON(FirebaseData &dataObj, const String &path, const String &jsonStrin
 
 
 
-#### Append new child nodes's key and value (using JSON data) and the virtual child ".priority" to the defined database path.
+#### Append new child nodes's key and value (using FirebaseJson object) to the defined database path.
+
+param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+param **`path`** - Target database path which key and value in FirebaseJson object will be appended.
+
+param **`json`** - The appended FirebaseJson object.
+
+return **`Boolean`** type status indicates the success of operation.
+
+The new appended node's key will be stored in Firebase Data object, 
+which its value can be accessed via function [FirebaseData object].pushName().
+
+```C++
+bool pushJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json);
+```
+
+
+
+
+
+
+
+
+#### Append new child nodes's key and value (using JSON data or FirebaseJson object) and the virtual child ".priority" to the defined database path.
 
 ```C++
   bool pushJSON(FirebaseData &dataObj, const String &path, const String &jsonString, float priority);
+
+  bool pushJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
 ```
 
 
@@ -489,9 +517,11 @@ bool pushBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t s
 
 
 
-#### Append new binary data from file stores on SD card to the defined database path
+#### Append new binary data from file stores on SD card/Flash memory to the defined database path
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+@param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
 
 param **`path`** - Target database path which binary data from file will be appended.
 
@@ -503,7 +533,7 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushFile(FirebaseData &dataObj, const String &path, const String &fileName);
+bool pushFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName);
 ```
 
 
@@ -511,10 +541,10 @@ bool pushFile(FirebaseData &dataObj, const String &path, const String &fileName)
 
 
 
-#### Append new binary data from file store on SD card and the virtual child ".priority" to the defined database path.
+#### Append new binary data from file store on SD card/Flash memory and the virtual child ".priority" to the defined database path.
 
 ```C++
-bool pushFile(FirebaseData &dataObj, const String &path, const String &fileName, float priority);
+bool pushFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
 ```
 
 
@@ -952,6 +982,9 @@ stores in database.
 Call [FirebaseData object].jsonData will return the JSON string value of
 payload returned from server.
 
+Call [FirebaseData object].jsonObject will return the FirebaseJson object of
+payload returned from server.
+
 ```C++
 bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString);
 ```
@@ -962,10 +995,30 @@ bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString
 
 
 
-#### Set JSON data and virtual child ".priority" at the defined database path.
+#### Set child nodes's key and value (using FirebaseJson object) to the defined database path
+
+This will replace any child nodes inside the defined path with node' s key
+and value defined in FirebaseJson object.
+
+param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+param **`path`** - Target database path which key and value in FirebaseJson object will be replaced or set.
+
+param **`json`** - The FirebaseJson object.
+
+return **`Boolean`** type status indicates the success of operation.
+
+Call [FirebaseData object].dataType to determine what type of data that successfully
+stores in database. 
+ 
+Call [FirebaseData object].jsonData will return the JSON string value of
+payload returned from server.
+
+Call [FirebaseData object].jsonObject will return the FirebaseJson object of
+payload returned from server.
 
 ```C++
-bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString, float priority);
+bool setJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json);
 ```
 
 
@@ -973,16 +1026,34 @@ bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString
 
 
 
-#### Set child nodes's key and value (using JSON data) to the defined database path if defined database path's ETag matched the ETag value
+
+
+#### Set JSON data or FirebaseJson object and virtual child ".priority" at the defined database path.
+
+```C++
+bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString, float priority);
+
+bool setJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
+```
+
+
+
+
+
+
+
+#### Set child nodes's key and value (using JSON data or FirebaseJson object) to the defined database path if defined database path's ETag matched the ETag value
 
 This will replace any child nodes inside the defined path with node' s key
-and value defined in JSON data.
+and value defined in JSON data or FirebaseJson object.
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
-param **`path`** - Target database path which key and value in JSON data will be replaced or set.
+param **`path`** - Target database path which key and value in JSON data or FirebaseJson objectwill be replaced or set.
 
 param **`jsonString`** - The JSON string to set (should be valid JSON data).
+
+param **`json`** - The FirebaseJson object.
 
 param **`ETag`** - Known unique identifier string (ETag) of defined database path.
 
@@ -994,26 +1065,35 @@ stores in database.
 Call [FirebaseData object].jsonData will return the JSON string value of
 payload returned from server.
 
+Call [FirebaseData object].jsonObject will return the FirebaseJson object of
+payload returned from server.
+
 
 If ETag at the defined database path is not match the provided ETag parameter,
 the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
 
 If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
-Also call [FirebaseData object].jsonData to get the current JSON string value.
+Also call [FirebaseData object].jsonData to get the current JSON string value [FirebaseData object].jsonObject 
+to get the FirebaseJson object.
 
 
 ```C++
 bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString, const String &ETag);
+
+bool setJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json, const String &ETag);
 ```
 
 
 
 
 
-#### Set JSON data and the virtual child ".priority" if defined ETag matches at the defined database path 
+
+#### Set JSON data or FirebaseJson object and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
 bool setJSON(FirebaseData &dataObj, const String &path, const String &jsonString, float priority, const String &ETag);
+
+bool setJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority, const String &ETag);
 ```
 
 
@@ -1097,9 +1177,11 @@ bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t si
 
 
 
-#### Set binary data from file stores on SD card to the defined database path
+#### Set binary data from file stores on SD card/Flash memory to the defined database path
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+@param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
 
 param **`path`** - Target database path which binary data from file will be set.
 
@@ -1110,7 +1192,7 @@ return **`Boolean`** type status indicates the success of operation.
 No payload returned from server.
 
 ```C++
-bool setFile(FirebaseData &dataObj, const String &path, const String &fileName);
+bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName);
 ```
 
 
@@ -1120,7 +1202,7 @@ bool setFile(FirebaseData &dataObj, const String &path, const String &fileName);
 #### Set binary data from file and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setFile(FirebaseData &dataObj, const String &path, const String &fileName, float priority);
+bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
 ```
 
 
@@ -1128,9 +1210,11 @@ bool setFile(FirebaseData &dataObj, const String &path, const String &fileName, 
 
 
 
-#### Set binary data from file stores on SD card to the defined database path if defined database path's ETag matched the ETag value
+#### Set binary data from file stores on SD card/Flash memory to the defined database path if defined database path's ETag matched the ETag value
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+@param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
 
 param **`path`** - Target database path which binary data from file will be set.
 
@@ -1146,7 +1230,7 @@ If ETag at the defined database path is not match the provided ETag parameter,
 the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
 
 ```C++
-bool setFile(FirebaseData &dataObj, const String &path, const String &fileName, const String &ETag);
+bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
 ```
 
 
@@ -1155,7 +1239,7 @@ bool setFile(FirebaseData &dataObj, const String &path, const String &fileName, 
 #### Set binary data from file and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setFile(FirebaseData &dataObj, const String &path, const String &fileName, float priority, const String &ETag);
+bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
 ```
 
 
@@ -1202,6 +1286,9 @@ stores in database.
 Call [FirebaseData object].jsonData will return the json string value of
 payload returned from server.
 
+Call [FirebaseData object].jsonObject will return the FirebaseJson object of
+payload returned from server.
+
 To reduce the network data usage, use updateNodeSilent instead.
 
 ```C++
@@ -1212,10 +1299,44 @@ bool updateNode(FirebaseData &dataObj, const String &path, const String &jsonStr
 
 
 
-#### Update child nodes's key or exising key's value and virtual child ".priority" (using JSON data) under the defined database path.
+
+#### Update child nodes's key or exising key's value (using FirebaseJson object) under the defined database path
+
+param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+param **`path`** - Target database path which key and value in FirebaseJson object will be update.
+
+param **`json`** - The FirebaseJson object used for update.
+
+return **`Boolean`** type status indicates the success of operation.
+
+Call [FirebaseData object].dataType to determine what type of data that successfully
+stores in database. 
+ 
+Call [FirebaseData object].jsonData will return the json string value of
+payload returned from server.
+
+Call [FirebaseData object].jsonObject will return the FirebaseJson object of
+payload returned from server.
+
+To reduce the network data usage, use updateNodeSilent instead.
+
+```C++
+bool updateNode(FirebaseData &dataObj, const String &path, FirebaseJson &json);
+```
+
+
+
+
+
+
+
+#### Update child nodes's key or exising key's value and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
 
 ```C++
 bool updateNode(FirebaseData &dataObj, const String &path, const String &jsonString, float priority);
+
+bool updateNode(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
 ```
 
 
@@ -1242,10 +1363,35 @@ bool updateNodeSilent(FirebaseData &dataObj, const String &path, const String &j
 
 
 
-#### Update child nodes's key and virtual child ".priority" (using JSON data) under the defined database path.
+
+#### Update child nodes's key or exising key's value (using FirebaseJson object) under the defined database path
+
+param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+param **`path`** - Target database path which key and value in FirebaseJson object will be update.
+
+param **`json`** - The FirebaseJson object used for update.
+
+return **`Boolean`** type status indicates the success of operation.
+
+Owing to the objective of this function to reduce the netwok data usage, 
+no payload will be returned from server.
+
+```C++
+bool updateNodeSilent(FirebaseData &dataObj, const String &path, FirebaseJson &json);
+```
+
+
+
+
+
+
+#### Update child nodes's key and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
 
 ```C++
 bool updateNodeSilent(FirebaseData &dataObj, const String &path, const String &jsonString, float priority);
+
+bool updateNodeSilent(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
 ```
 
 
@@ -1512,6 +1658,9 @@ stores in database.
 Call [FirebaseData object].jsonData will return the JSON string value of
 payload returned from server.
 
+Call [FirebaseData object].jsonObject will return the FirebaseJson object of
+payload returned from server.
+
 If the payload returned from server is not json type, 
 the function [FirebaseData object].jsonData will return empty string (String object).
 
@@ -1591,6 +1740,9 @@ Call [FirebaseData object].dataType to determine what type of data that successf
 stores in database. 
 
 Call [FirebaseData object].jsonData will return the JSON string value of
+payload returned from server.
+
+Call [FirebaseData object].jsonObject will return the FirebaseJson object of
 payload returned from server.
 
 If the payload returned from server is not json type, 
@@ -1682,22 +1834,24 @@ bool getBlob(FirebaseData &dataObj, const String &path, std::vector<uint8_t> &ta
 
 
 
-#### Download file data in database at defined database path and save to SD card
+#### Download file data in database at defined database path and save to SD card/Flash memory.
 
-The downloaded data will be decoded to binary and save to SD card, then
+The downloaded data will be decoded to binary and save to SD card/Flash memory, then
 
 please make sure that data at the defined database path is file type.
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
+@param **`storageType`** - Type of storage to write file data, StorageType::SPIFS or StorageType::SD.
+
 param **`nodePath`** - Database path that file data will be downloaded.
 
-param **`fileName`** - File name (full path) to save in SD card.
+param **`fileName`** - File name included its path in SD card/Flash memory.
 
 return **`Boolean`** type status indicates the success of operation.
 
 ```C++
-bool getFile(FirebaseData &dataObj, const String &nodePath, const String &fileName);
+bool getFile(FirebaseData &dataObj, uint8_t storageType, const String &nodePath, const String &fileName);
 ```
 
 
@@ -1903,20 +2057,23 @@ void clearErrorQueue(FirebaseData &dataObj);
 
 
 
-#### Backup (download) database at defined database path to SD card
+#### Backup (download) database at defined database path to SD card/Flash memory
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
+@param **`storageType`** - Type of storage to save file, StorageType::SPIFS or StorageType::SD.
+
 param **`nodePath`** - Database path to be backuped.
 
-param **`dirPath`** - Folder in SD card to save the downloaed file.
+param **`fileName`** - File name to save.
+
+Only 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension) can be saved to SD card.
 
 return **`Boolean`** type status indicates the success of operation.
 
-The backup .json filename is constructed from the database path by replace slash (/) with dot (.).
 
 ```C++
-bool backup(FirebaseData &dataObj, const String &nodePath, const String &dirPath);
+bool backup(FirebaseData &dataObj, uint8_t storageType, const String &nodePath, const String &fileName);
 ```
 
 
@@ -1925,18 +2082,20 @@ bool backup(FirebaseData &dataObj, const String &nodePath, const String &dirPath
 
 
 
-#### Restore database at defined path usin backup file saved on SD card
+#### Restore database at defined path usin backup file saved on SD card/Flash memory
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
+@param **`storageType`** - Type of storage to read file, StorageType::SPIFS or StorageType::SD.
+
 param **`nodePath`** - Database path to  be restored.
 
-param **`dirPath`** - Path/Folder in SD card that the backup file was saved.
+param **`fileName`** - File name to read.
 
 return **`Boolean`** type status indicates the success of operation.
 
 ```C++
-bool restore(FirebaseData &dataObj, const String &nodePath, const String &dirPath);
+bool restore(FirebaseData &dataObj, uint8_t storageType const String &nodePath, const String &fileName);
 ```
 
 
@@ -2017,7 +2176,7 @@ param **`dataObj`** - Firebase Data Object to hold data and instances.
 
 param **`filename`** - File name to be saved.
 
-param **`storageType`** - Type of storage to save file, QueueStorageType::SPIFS or QueueStorageType::SD.
+param **`storageType`** - Type of storage to save file, StorageType::SPIFS or StorageType::SD.
     
 ```C++
 bool saveErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType);
@@ -2032,7 +2191,7 @@ bool saveErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t stora
 
 param **`filename`** - File name to delete.
 
-param **`storageType`** - Type of storage to save file, QueueStorageType::SPIFS or QueueStorageType::SD.
+param **`storageType`** - Type of storage to save file, StorageType::SPIFS or StorageType::SD.
     
 ```C++
 bool deleteStorageFile(const String &filename, uint8_t storageType);
@@ -2048,7 +2207,7 @@ param **`dataObj`** - Firebase Data Object to hold data and instances.
 
 param **`filename`** - File name to be read and restore queues.
 
-param **`storageType`** - Type of storage to read file, QueueStorageType::SPIFS or QueueStorageType::SD.
+param **`storageType`** - Type of storage to read file, StorageType::SPIFS or StorageType::SD.
     
 ```C++
 bool restoreErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType);
@@ -2064,7 +2223,7 @@ param **`dataObj`** - Firebase Data Object to hold data and instances.
 
 param **`filename`** - File name to be read and count for queues.
 
-param **`storageType`** - Type of storage to read file, QueueStorageType::SPIFS or QueueStorageType::SD.
+param **`storageType`** - Type of storage to read file, StorageType::SPIFS or StorageType::SD.
 
 
 return **`Number`** (0-255) of queues store in defined SPIFFS file.
@@ -2207,6 +2366,22 @@ return **`Boolean`** type status indicates the success of operation.
 
 ```C++
 bool pauseFirebase(bool pause);
+```
+
+
+
+
+
+## Firebase Data Object Functions
+
+
+#### Get WiFi client instance
+
+
+return **`WiFi client instance`**.
+
+```C++
+WiFiClient &getWiFiClient();
 ```
 
 
@@ -2383,6 +2558,18 @@ return **`String (String object).`**
 String jsonData();
 ```
 
+
+
+
+
+
+#### Return the Firebase JSON object of server returned payload.
+
+return **`FirebaseJson object.`**
+
+```C++
+FirebaseJson &jsonObject();
+```
 
 
 
@@ -2702,6 +2889,19 @@ void setDataMessage(const String &jsonString);
 
 
 
+
+#### Set the custom data message type information
+    
+param **`json`** - The FirebaseJson object.
+
+```C++
+void setDataMessage(FirebaseJson &json);
+```
+
+
+
+
+
 #### Clear custom data message type information
     
 ```C++
@@ -2765,6 +2965,314 @@ return **`String`** of payload returned from server.
 
 ```C++
 String getSendResult();
+```
+
+
+
+
+
+## JSON object Functions
+
+
+#### Clear buffer data and tokens pointer.
+    
+return **`instance of an object.`** 
+
+```C++
+FirebaseJson &clear();
+```
+
+
+
+
+#### Set JSON data to buffer.
+
+param **`data`** - The JSON object string. 
+    
+return **`instance of an object.`** 
+
+The internal buffer will be overwritten by add functions.
+
+```C++
+FirebaseJson &setJsonData(const String &data);
+```
+
+
+
+
+#### Add the string to JSON object.
+
+param **`key`** - Key string of data. 
+
+param **`value`** - The String data. 
+    
+return **`instance of an object.`** 
+
+
+```C++
+FirebaseJson &addString(const String &key, const String &value);
+```
+
+
+
+
+#### Add the array of objects to JSON object.
+
+param **`key`** - Key string of data. 
+
+param **`arr`** - The FirebaseJsonArray object. 
+    
+return **`instance of an object.`** 
+
+
+```C++
+FirebaseJson &addString(const String &key, const String &value);FirebaseJson &addArray(const String &key, FirebaseJsonArray *arr);
+```
+
+
+
+
+
+#### Add the integer value to JSON object.
+    
+param **`key`** - Key string of data.
+
+param **`value`** - Integer data.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJson &addInt(const String &key, int value);
+```
+
+
+
+
+#### Add the double value to JSON object.
+    
+param **`key`** - Key string of data.
+
+param **`value`** - Double data.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJson &addDouble(const String &key, double value);
+```
+ 
+
+
+
+#### Add the boolean value to JSON object.
+    
+param **`key`** - Key string of data.
+
+param **`value`** - Boolean data.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJson &addBool(const String &key, bool value);
+```
+
+
+
+
+
+#### Add the JSON data to JSON object.
+    
+param **`key`** - Key string of data.
+
+param **`json`** - FirebaseJson object that hold the data to be added to this JSON object.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJson &addJson(const String &key, FirebaseJson *json);
+```
+
+
+#### Get the JSON object's string. 
+
+return **`serialized string of JSON object.`**
+
+```C++
+String toString();
+```
+
+
+
+
+
+#### Parse the internal buffer JSON object.
+    
+param **`skipChild`** - Flag to skip any children nodes under root or array.
+
+param **`len`** - Optional. The expected number of JSON tokens (key and value). Should be number of keys and values + 1.
+
+Default value is 50. If object parse failed, increase this value.     
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJson &parse(bool skipChild = true, size_t len = 0);
+```
+
+
+
+
+
+####  Get the value from key of JSON object.
+    
+param **`key`** - Key string of data to get.
+
+return **`instance of an object.`**
+
+This should call after parse().
+
+```C++
+FirebaseJson &get(const String &key);
+```
+
+
+
+
+#### Set the numbers of JSON tokens (keys + values + 1) to be available for read from jsonObjectIterator.  
+
+return **`numbers of tokens.`**
+
+```C++
+size_t getJsonObjectIteratorCount();
+```
+
+
+
+
+
+#### Read data from JSON objects by providing tokens ID.
+    
+param **`index`** - The referenced token index. This will auto increase to the next token index after read.
+
+param **`key`** - The referenced key data string. This provided the key data output.
+
+param **`value`** - The referenced value string. This provided the value of current key output.   
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJson &jsonObjectiterator(size_t &index,String &key, String &value);
+```
+
+
+
+
+
+#### Get the parse result of JSON object.   
+
+return **`FirebaseJsonObject.`**
+
+The properties available are: stringValue, intValue, doubleValue, boolValue, type, success.
+
+The type property provides the types of value string e.g. string, int, double, boolean, array, object, null and undefined.
+
+The success property provides the success status of get or parse functions.
+
+```C++
+FirebaseJsonObject parseResult();
+```
+
+
+## JSON Array Functions
+
+
+
+#### Add the string value to JSON Array object.
+
+param **`value`** - String data.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJsonArray &addString(const String &value);
+```
+
+
+
+
+#### Add the integer value to JSON Array object.
+
+param **`value`** - Integer data.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJsonArray &addInt(int value);
+```
+
+
+
+
+
+#### Add the double value to JSON Array object.
+
+param **`value`** - double data.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJsonArray &addDouble(double value);
+```
+
+
+
+
+
+#### Add the boolean value to JSON Array object.
+
+param **`value`** - Boolean data.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJsonArray &addBool(bool value);
+```
+
+
+
+
+#### Add the JSON object to JSON Array object.
+
+param **`json`** - FirebaseJson object that holds data to be added to array.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJsonArray &addJson(FirebaseJson *json);
+```
+
+
+
+
+#### Add the JSON array object to JSON Array object.
+
+param **`arr`** - JSON array object that holds data to be added to this JSON array.    
+
+return **`instance of an object.`**
+
+```C++
+FirebaseJsonArray &addArray(FirebaseJsonArray *arr);
+```
+
+
+
+
+
+#### Get the JSON Array object's string.  
+
+return **`string of an object.`**
+
+```C++
+String toString();
 ```
 
 

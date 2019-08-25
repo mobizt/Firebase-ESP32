@@ -14,7 +14,7 @@
 
 
 #include <WiFi.h>
-#include "FirebaseESP32.h"
+#include <FirebaseESP32.h>
 
 /*
    Required ESP32 MailClient library for Arduino
@@ -75,11 +75,11 @@ void setup()
   //Download and save data at defined database path to SD card.
   //{TARGET_NODE_PATH} is the full path of database to backup.
 
-  if (!Firebase.backup(firebaseData, "/TARGET_NODE_PATH", "/PATH_IN_SD_CARD"))
+  if (!Firebase.backup(firebaseData, StorageType::SD, "/TARGET_NODE_PATH", "/PATH_IN_SD_CARD"))
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + firebaseData.fileTransferError());
-	Serial.println("------------------------------------");
+	  Serial.println("------------------------------------");
     Serial.println();
   }
   else
@@ -87,7 +87,7 @@ void setup()
     Serial.println("PASSED");
     Serial.println("SAVE PATH: " + firebaseData.getBackupFilename());
     Serial.println("FILE SIZE: " + String(firebaseData.getBackupFileSize()));
-	Serial.println("------------------------------------");
+	  Serial.println("------------------------------------");
     Serial.println();
 
     //
@@ -122,7 +122,7 @@ void setup()
       smtpData.setSendCallback(sendCallback);
 
       //Start sending Email, can be set callback function to track the status
-      if (!MailClient.sendMail(firebaseData.http, smtpData))
+      if (!MailClient.sendMail(smtpData))
         Serial.println("Error sending Email, " + MailClient.smtpErrorReason());
 
       //Clear all data from Email object to free memory

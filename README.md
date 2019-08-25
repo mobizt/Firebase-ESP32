@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.1.4
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.2.0
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms which library are also available.
@@ -67,6 +67,8 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 * **Supports Firebase Cloud Messaging.**
 
 * **Supports SD and SPIFFS's CA certificate file.**
+
+* **Built-in JSON parser and builder.**
 
 
 
@@ -221,7 +223,9 @@ The database data's payload (response) can be read through the following Firebas
 
 * `firebaseData.stringData`
 
-* `firebaseData.jsonData` and 
+* `firebaseData.jsonData`
+
+* `firebaseData.jsonObject` and
 
 * `firebaseData.blobData`
 
@@ -289,7 +293,7 @@ The following example showed how to store file data to "/test/file_data".
 
 
 ```C++
-if (Firebase.setFile(firebaseData, "/test/file_data", "/test.txt"))
+if (Firebase.setFile(firebaseData, StorageType::SD, "/test/file_data", "/test.txt"))
 {
   File file = SD.open("/test.txt", FILE_READ);
 
@@ -326,13 +330,17 @@ The server's **Timestamp** can be append in database through `Firebase.pushTimes
 The unique key of Timestamp was available after push the Timestamp.
 
 
-The following example showed how to append new data (using JSON) to "/test/append.
+The following example showed how to append new data (using FirebaseJson object) to "/test/append.
 
 
 ```C++
-String jsonData = "{\"parent_001\":\"parent 001 text\", \"parent 002\":{\"child_of_002\":123.456}}";
 
-if (Firebase.pushJSON(firebaseData, "/test/append", jsonData)) {
+FirebaseJson json;
+FirebaseJson json2;
+json2.addDouble("child_of_002",123.456);
+json.addString("parent_001","parent 001 text").addJson("parent 002", &json2);
+
+if (Firebase.pushJSON(firebaseData, "/test/append", json)) {
 
   Serial.println(firebaseData.dataPath());
 
@@ -351,7 +359,7 @@ if (Firebase.pushJSON(firebaseData, "/test/append", jsonData)) {
 
 Firebase's update functions used to pach or update new or existing database path.
 
-These functions, `updateNode` and `updateNodeSilent` are available and work with JSON object (string)
+These functions, `updateNode` and `updateNodeSilent` are available and work with JSON object (FirebaseJson object and string)
 
 If any key provided in JSON object was not existed at defined database path, new key will be created.
 
@@ -364,7 +372,11 @@ The following example showed how to patch data at "/test".
 
 
 ```C++
-String updateData = "{\"data1\":\"value1\", \"data2\":{\"_data2\":\"_value2\"}}";
+
+FirebaseJson updateData;
+FirebaseJson json;
+json.addString("_data2","_value2");
+updateData.addString("data1","value1").addJson("data2", &json);
 
 if (Firebase.updateNode(firebaseData, "/test/update", updateData)) {
 
@@ -500,7 +512,9 @@ After new stream data was available, it can be accessed with the following Fireb
 
 * `firebaseData.stringData`
 
-* `firebaseData.jsonData` and 
+* `firebaseData.jsonData` 
+
+* `firebaseData.jsonObject` and
 
 * `firebaseData.blobData`
 
@@ -788,7 +802,7 @@ Error Queus can be saved as file in SD card or Flash memory with function `saveE
 
 Error Queues store as file can be restored to Error Queue collection with function `restoreErrorQueue`.
 
-Two types of storage can be assigned with these functions, `QueueStorageType::SPIFFS` and `QueueStorageType::SD`.
+Two types of storage can be assigned with these functions, `StorageType::SPIFFS` and `StorageType::SD`.
 
 Read data (get) operation is not support queues restore
 
@@ -797,14 +811,14 @@ The following example showed how to restore and save Error Queues in /test.txt f
 ```C++
 //To restore Error Queues
 
-if (Firebase.errorQueueCount(firebaseData, "/test.txt", QueueStorageType::SPIFFS) > 0)
+if (Firebase.errorQueueCount(firebaseData, "/test.txt", StorageType::SPIFFS) > 0)
 {
-    Firebase.restoreErrorQueue(firebaseData, "/test.txt", QueueStorageType::SPIFFS);
-    Firebase.deleteStorageFile("/test.txt", QueueStorageType::SPIFFS);
+    Firebase.restoreErrorQueue(firebaseData, "/test.txt", StorageType::SPIFFS);
+    Firebase.deleteStorageFile("/test.txt", StorageType::SPIFFS);
 }
 
 //To save Error Queues to file
-Firebase.saveErrorQueue(firebaseData, "/test.txt", QueueStorageType::SPIFFS);
+Firebase.saveErrorQueue(firebaseData, "/test.txt", StorageType::SPIFFS);
 
 ```
 
@@ -837,7 +851,7 @@ For the notification message, title, body, icon (optional), and click_action (op
 
 And clear these notify message data with `firebaseData.fcm.clearNotifyMessage`.
 
-For the data message, provide your custom data as JSON object (string) to `firebaseData.fcm.setDataMessage` which can be clear with `firebaseData.fcm.clearDataMessage`.
+For the data message, provide your custom data as JSON object (FirebaseJson object or string) to `firebaseData.fcm.setDataMessage` which can be clear with `firebaseData.fcm.clearDataMessage`.
 
 The other options are `priority`, `collapse key`, `Time to Live` of message and `topic` to send message to, can be set from the following functions.
 

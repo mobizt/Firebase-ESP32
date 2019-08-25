@@ -93,6 +93,7 @@ sendTopic	KEYWORD2
 
 getWiFiClient	KEYWORD2
 pauseFirebase	KEYWORD2
+getWiFiClient   KEYWORD2
 dataType	KEYWORD2
 eventType	KEYWORD2
 ETag	KEYWORD2

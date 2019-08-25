@@ -44,6 +44,11 @@
 
 class FirebaseESP32HTTPClient : public HTTPClient
 {
+
+friend class FirebaseESP8266;
+friend class FirebaseData;
+friend class FCMObject;
+
 public:
   FirebaseESP32HTTPClient();
   ~FirebaseESP32HTTPClient();
