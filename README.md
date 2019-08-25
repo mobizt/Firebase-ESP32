@@ -82,12 +82,6 @@ For Arduino IDE, ESP32 Core SDK can be installed through **Boards Manager**.
 For PlatfoemIO IDE, ESP32 Core SDK can be installed through **PIO Home** > **Platforms** > **Espressif 32**.
 
 
-This library also required [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) to be installed. 
-
-The HTTPClientESP32Ex library was the customized HTTPClient wrapper used for making SSL connection.
-
-
-
 
 
 
@@ -135,27 +129,6 @@ Go to menu **Files** -> **Examples** -> **Firebase-ESP32-master** and choose one
 
 
 For PlatformIO, create folder **"Firebase-ESP32"** in folder **"lib"** and store **[these files](https://github.com/mobizt/Firebase-ESP32/tree/master/src)** in there.
-
-
-
-### Dependency Library Installing (for older version, 3.1.3 and below)
-
-For library version below than 3.1.4, it relies on [HTTPClientESP32Ex library](https://github.com/mobizt/HTTPClientESP32Ex) which needs to install manually.
-
-Go to [HTTPClientESP32Ex Github repository](https://github.com/mobizt/HTTPClientESP32Ex)
-
-Click on **Clone or download** dropdown at the top of repository, select **Download ZIP** and save file on your computer.
-
-For Arduino IDE, goto menu **Sketch** -> **Include Library** -> **Add .ZIP Library...** 
-
-Choose **HTTPClientESP32Ex-master.zip** that previously downloaded.
-
-
-For PlatformIO IDE, create folder **"HTTPClientESP32Ex"** in folder **"lib"** 
-
-Store **HTTPClientESP32Ex.h** and **HTTPClientESP32Ex.cpp** from **HTTPClientESP32Ex-master.zip** in that folder.
-
-
 
 
 
