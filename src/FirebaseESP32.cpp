@@ -1,16 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.2.0
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.2.1
  * 
- * August 25, 2019
+ * September 1, 2019
  * 
+ *
  * Feature Added:
- * - Add JSON builder and parser.
- * - Add support SPIFFS for backup and restore, file set and get.
- * 
+ *
+ *
  * Feature Fixed:
- * - Fixed pointer unhandle error.
- * - Fixed Memory error.
- * 
+ *
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -208,7 +206,7 @@ bool FirebaseESP32::setRules(FirebaseData &dataObj, const String &rules)
 bool FirebaseESP32::buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, uint8_t firebaseDataType, const std::string &path, const char *buff, bool queue, const std::string &priority, const std::string &etag)
 {
 
-  bool flag;
+  bool flag = false;
   dataObj.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -269,7 +267,7 @@ bool FirebaseESP32::buildRequestFile(FirebaseData &dataObj, uint8_t storageType,
   dataObj.queryFilter.clear();
   dataObj._fileName = fileName.c_str();
 
-  bool flag;
+  bool flag = false;
 
   uint8_t errCount = 0;
   uint8_t maxRetry = dataObj._maxRetry;
@@ -1015,7 +1013,7 @@ bool FirebaseESP32::getInt(FirebaseData &dataObj, const String &path)
 bool FirebaseESP32::getInt(FirebaseData &dataObj, const String &path, int &target)
 {
 
-  bool flag;
+  bool flag = false;
   dataObj.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1056,7 +1054,7 @@ bool FirebaseESP32::getFloat(FirebaseData &dataObj, const String &path)
 bool FirebaseESP32::getFloat(FirebaseData &dataObj, const String &path, float &target)
 {
 
-  bool flag;
+  bool flag = false;
   dataObj.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1097,7 +1095,7 @@ bool FirebaseESP32::getDouble(FirebaseData &dataObj, const String &path)
 bool FirebaseESP32::getDouble(FirebaseData &dataObj, const String &path, double &target)
 {
 
-  bool flag;
+  bool flag = false;
   dataObj.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1138,7 +1136,7 @@ bool FirebaseESP32::getBool(FirebaseData &dataObj, const String &path)
 bool FirebaseESP32::getBool(FirebaseData &dataObj, const String &path, bool &target)
 {
 
-  bool flag;
+  bool flag = false;
   dataObj.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1179,7 +1177,7 @@ bool FirebaseESP32::getString(FirebaseData &dataObj, const String &path)
 bool FirebaseESP32::getString(FirebaseData &dataObj, const String &path, String &target)
 {
 
-  bool flag;
+  bool flag = false;
   dataObj.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1220,7 +1218,7 @@ bool FirebaseESP32::getJSON(FirebaseData &dataObj, const String &path)
 bool FirebaseESP32::getJSON(FirebaseData &dataObj, const String &path, String &target)
 {
 
-  bool flag;
+  bool flag = false;
   dataObj.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1267,7 +1265,7 @@ bool FirebaseESP32::getJSON(FirebaseData &dataObj, const String &path, QueryFilt
   if (query._orderBy != "")
     dataObj.setQuery(query);
 
-  bool flag;
+  bool flag = false;
 
   uint8_t errCount = 0;
   uint8_t maxRetry = dataObj._maxRetry;
@@ -1309,7 +1307,7 @@ bool FirebaseESP32::getBlob(FirebaseData &dataObj, const String &path, std::vect
 
   dataObj.queryFilter.clear();
 
-  bool flag;
+  bool flag = false;
 
   uint8_t errCount = 0;
   uint8_t maxRetry = dataObj._maxRetry;
@@ -1343,7 +1341,7 @@ bool FirebaseESP32::getFile(FirebaseData &dataObj, uint8_t storageType, const St
   dataObj._fileName.clear();
   dataObj._fileName = fileName.c_str();
 
-  bool flag;
+  bool flag = false;
 
   uint8_t errCount = 0;
   uint8_t maxRetry = dataObj._maxRetry;
@@ -2790,7 +2788,7 @@ bool FirebaseESP32::firebaseConnectStream(FirebaseData &dataObj, const std::stri
   if (millis() - dataObj._streamResetMillis > 50)
     delay(20);
 
-  bool flag;
+  bool flag = false;
   flag = dataObj._streamPath.length() == 0;
   flag |= firebaseConnect(dataObj, path, FirebaseMethod::STREAM, FirebaseDataType::STRING, "", "") == 0;
   dataObj._dataMillis = millis();
