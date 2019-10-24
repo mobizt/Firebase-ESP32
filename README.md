@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.2.1
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.5.0
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms which library are also available.
@@ -26,12 +26,6 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 ## Features
 
 
-* **Not Required Fingerprint and Certificate, CA certificate can be set for more secure connection.**
-
-* **Completed Google REST APIs Implementation.**
-
-* **No Delay for Contiuous Read and Store Data.**
-
 * **Supports Read (get), Store (set), Append (push), Patch (update) and Delete Data**
 
 * **Supports Primitive data types: Integer, Float, Double, Boolean, String and JSON.**
@@ -40,42 +34,32 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 
 * **Support Read and Write Database Rules.**
 
-* **Supports Conditional Requests (ETag).**
-
-* **Supports Set and Get Data Priority.**
-
-* **Supports Read and Store Data Limits.**
-
-* **Supports Set and Push Server's Timestamp.**
-
-* **Supports Classic HTTP requests Override.**
-
-* **Supports Error Retry and Restorable Queues.** 
-
-* **Supports Query or Data Filtering.**
-
-* **Supports Automatic Stream Resuming.** 
-
-* **Supports Multiple Streamings.**
+* **Supports ETag, Priority, Data Limits, Timestamp, Filtering, etc.**
 
 * **Supports Stream Event Callbacks**
-
-* **Supports Pause and Resume Firebase Operations.**
 
 * **Supports Data Backup and Restore.**
 
 * **Supports Firebase Cloud Messaging.**
 
-* **Supports SD and SPIFFS's CA certificate file.**
+* **Supports SD and SPIFFS's CA certificate file (for Core SDK v2.5.x).**
 
-* **Built-in JSON parser and builder.**
+* **Built-in easiest JSON parser and builder.**
+
+
+
+## Changes from earlier version
+
+For library v 2.6.0 (comes with FirebaseJson v 2.2.0) and later, FirebaseJson object will be used to handle JSON data instead of JSON string which, the following functions are affected:
+
+getJson, setJson, pushJson, updateNode and updateNodeSilent.
 
 
 
 ## Dependencies
 
 
-This library required **ESP32 Core SDK version 1.0.1 and above**.
+This library required **ESP32 Core SDK version 1.0.1 or above**.
 
 For Arduino IDE, ESP32 Core SDK can be installed through **Boards Manager**. 
 
@@ -92,7 +76,7 @@ For PlatfoemIO IDE, ESP32 Core SDK can be installed through **PIO Home** > **Pla
 ### Using Library Manager
 
 
-At Arduino IDE goto menu **Sketch** -> **Include Library** -> **Manage Libraries...**
+At Arduino IDE, go to menu **Sketch** -> **Include Library** -> **Manage Libraries...**
 
 
 In Library Manager Window, search **"firebase"** in the search form then select **"Firebase ESP32 Client"** 
@@ -114,13 +98,13 @@ Or at **PIO Home** -> **Library** -> **Registry** then search **Firebase ESP32 C
 
 
 
-### Manual installing
+### Manual installation
 
 
-For Arduino IDE, click on **Clone or download** dropdown at the top of repository, select **Download ZIP**.
+For Arduino IDE, download zip file from repository (Github page) by select **Clone or download** dropdown at the top of repository, select **Download ZIP**.
 
 
-From Arduino IDE, goto menu **Sketch** -> **Include Library** -> **Add .ZIP Library...**
+From Arduino IDE, select menu **Sketch** -> **Include Library** -> **Add .ZIP Library...**
 
 Choose **Firebase-ESP32-master.zip** that previously downloaded.
 
@@ -128,7 +112,7 @@ Choose **Firebase-ESP32-master.zip** that previously downloaded.
 Go to menu **Files** -> **Examples** -> **Firebase-ESP32-master** and choose one from examples.
 
 
-For PlatformIO, create folder **"Firebase-ESP32"** in folder **"lib"** and store **[these files](https://github.com/mobizt/Firebase-ESP32/tree/master/src)** in there.
+For PlatformIO, in folder **"lib"**, create new folder named **"Firebase-ESP32"** and add **[these files](https://github.com/mobizt/Firebase-ESP32/tree/master/src)** in that folder.
 
 
 
@@ -171,12 +155,12 @@ Firebase.enableClassicRequest(firebaseData, true);
 ### Read Data
 
 
-Various types of data can be read through Firebase's get functions.
+Data at specific node in Firebase RTDB can be read through these get functions.
 
-These functions are `getInt`, `getFlot`, `getDouble`, `getBool`, `getString`, `getJSON`, `getBlob` and `getFile`
+The functions included `get`, `getInt`, `getFlot`, `getDouble`, `getBool`, `getString`, `getJSON`, `getArray`, `getBlob`, `getFile`.
 
 
-These functions return boolean indicates the success of operation which will be `true` if all of the following conditions matched.
+These functions return boolean value indicates the success of operation which will be `true` if all of the following conditions were met.
 
 * Server returns HTTP status 200
 
@@ -184,7 +168,7 @@ These functions return boolean indicates the success of operation which will be 
 
 
 
-The database data's payload (response) can be read through the following Firebase Data object's functions.
+The database data's payload (response) can be read or access through the following Firebase Data object's functions.
 
 * `firebaseData.intData`
 
@@ -196,17 +180,27 @@ The database data's payload (response) can be read through the following Firebas
 
 * `firebaseData.stringData`
 
-* `firebaseData.jsonData`
+* `firebaseData.jsonString`
 
-* `firebaseData.jsonObject` and
+* `firebaseData.jsonObject`
+
+* `firebaseData.jsonObjectPtr`
+
+* `firebaseData.jsonArray` 
+
+* `firebaseData.jsonArrayPtr`
+
+* `firebaseData.jsonData` (for keeping parse/get result)
+
+and
 
 * `firebaseData.blobData`
 
 
-Read the data which its type is not match the data type in database from above functions will return empty string or zero.
+Read the data which its type is not match the data type in database from above functions will return empty (string, object or array).
 
 
-The data type of returned payload data can be read through `firebaseData.getDataType`.
+The data type of returning payload can be determined by `firebaseData.getDataType`.
 
 
 BLOB and file stream data are store as special base64 encode string which only supported and implemented by this library.
@@ -234,12 +228,12 @@ The following example showed how to read integer value from "/test/int".
 
 ### Store Data
 
-Various types of data can be store through Firebase's set functions.
+To store data at specific node in Firebase RTDB, use these set functions.
 
-These functions are `setInt`, `setFlot`, `setDouble`, `setBool`, `setString`, `setJSON`, `setBlob` and `setFile`.
+The function included `set`, `setInt`, `setFlot`, `setDouble`, `setBool`, `setString`, `setJSON`, `setArray`, `setBlob` and `setFile`. 
 
 
-These functions return boolean indicates the success of operation which will be `true` if all of the following conditions matched.
+The above functions return boolean value indicates the success of operation which will be `true` if all of the following conditions matched.
 
 * Server returns HTTP status 200
 
@@ -262,13 +256,15 @@ The server's **Timestamp** can be store in database through `Firebase.setTimesta
 
 The returned **Timestamp** value can get from `firebaseData.getInt()`. 
 
-The following example showed how to store file data to "/test/file_data".
+The following example showed how to store file data to Flash memory at "/test/file_data".
 
 
 ```C++
-if (Firebase.setFile(firebaseData, StorageType::SD, "/test/file_data", "/test.txt"))
+
+if (Firebase.setFile(firebaseData, StorateType::SPIFFS, "/test/file_data", "/test.txt"))
 {
-  File file = SD.open("/test.txt", FILE_READ);
+  //SPIFFS.begin(); //not need to begin again due to it has been called in function.
+  File file = SPIFFS.open("/test.txt", "r");
 
   while (file.available())
   {     
@@ -286,21 +282,21 @@ if (Firebase.setFile(firebaseData, StorageType::SD, "/test/file_data", "/test.tx
 
 ### Append Data
 
-Various types of data can be appened through Firebase's push functions.
+To append new data to specific node in Firebase RTDB, use these push functions.
 
-These functions are `pushInt`, `pushFlot`, `pushDouble`, `pushBool`, `pushString`, `pushJSON`, `pushBlob` and `pushFile`.
+The function included `push`, `pushInt`, `pushFlot`, `pushDouble`, `pushBool`, `pushString`, `pushJSON`, `pushArray`, `pushBlob`, and `pushFile`.
 
-These functions return boolean indicates the success of operation.
+These functions return boolean value indicates the success of operation.
 
-The **unique key** of new appended node can get through `firebaseData.pushName`.
+The **unique key** of new appended node can be determined from `firebaseData.pushName`.
 
 As get functions, the Firebase's push functions support **priority**.
 
-**ETag** was not available after push unless read **ETag** at that new unique key later through `Firebase.getETag`.
+**ETag** was not available after push unless read the **ETag** at that new appended unique key later with `Firebase.getETag`.
 
 The server's **Timestamp** can be append in database through `Firebase.pushTimestamp`.
 
-The unique key of Timestamp was available after push the Timestamp.
+The unique key of Timestamp can be determined after Timestamp was appended.
 
 
 The following example showed how to append new data (using FirebaseJson object) to "/test/append.
@@ -310,8 +306,10 @@ The following example showed how to append new data (using FirebaseJson object) 
 
 FirebaseJson json;
 FirebaseJson json2;
-json2.addDouble("child_of_002",123.456);
-json.addString("parent_001","parent 001 text").addJson("parent 002", &json2);
+
+json2.set("child_of_002", 123.456);
+json.set("parent_001", "parent 001 text");
+json.set("parent 002", json2);
 
 if (Firebase.pushJSON(firebaseData, "/test/append", json)) {
 
@@ -330,15 +328,15 @@ if (Firebase.pushJSON(firebaseData, "/test/append", json)) {
 
 ### Patch Data
 
-Firebase's update functions used to pach or update new or existing database path.
+Firebase's update functions used to pach or update new or existing data at defined database path.
 
-These functions, `updateNode` and `updateNodeSilent` are available and work with JSON object (FirebaseJson object and string)
+These functions, `updateNode` and `updateNodeSilent` are available and work with JSON object (FirebaseJson object only)
 
-If any key provided in JSON object was not existed at defined database path, new key will be created.
+If any key provided at defined database path in JSON object was not existed, new key will be created.
 
 The server returns JSON data payload which was successfully patched.
 
-Return of large JSON payload will cost the network data, use `updateNodeSilent` instead to save the network data.
+Return of large JSON payload will cost the network data, alternative function `updateNodeSilent` should be used to save the network data.
 
 
 The following example showed how to patch data at "/test".
@@ -348,8 +346,9 @@ The following example showed how to patch data at "/test".
 
 FirebaseJson updateData;
 FirebaseJson json;
-json.addString("_data2","_value2");
-updateData.addString("data1","value1").addJson("data2", &json);
+json.set("_data2","_value2");
+updateData.set("data1","value1");
+updateData.set("data2", json);
 
 if (Firebase.updateNode(firebaseData, "/test/update", updateData)) {
 
@@ -357,7 +356,7 @@ if (Firebase.updateNode(firebaseData, "/test/update", updateData)) {
 
   Serial.println(firebaseData.dataType());
 
-  Serial.println(firebaseData.jsonData()); 
+  Serial.println(firebaseData.jsonString()); 
 
 } else {
   Serial.println(firebaseData.errorReason());
@@ -383,7 +382,7 @@ Firebase.deleteNode(firebaseData, "/test/append");
 
 ### Filtering Data
 
-The quey parameters that can be set through the QueryFilter class.
+To filter or query the data, the following quey parameters are available through the QueryFilter class.
 
 These parameters are `orderBy`, `limitToFirst`, `limitToLast`, `startAt`, `endAt`, and `equalTo`.
 
@@ -413,7 +412,7 @@ The above `orderBy` parameter can be combined with the following parameters for 
 
 
 
-The following example showed how to using queries parameter in QueryFilter class to filter the data at "/test/data"
+The following example showed how to use queries parameter in QueryFilter class to filter the data at "/test/data"
 
 ```C++
 //Assume that children that have key "sensor" are under "/test/data"
@@ -437,7 +436,7 @@ query.limitToLast(5);
 if (Firebase.getJSON(firebaseData, "/test/data", query))
 {
   //Success, then try to read the JSON payload value
-  Serial.println(firebaseData.jsonData());
+  Serial.println(firebaseData.jsonString());
 }
 else
 {
@@ -451,21 +450,18 @@ query.clear();
 
 
 
-### Stream Data
 
+This library uses HTTP GET request with stream header to connect the stream.
 
+The Firebase's functions that involved the stream operation are `beginStream`, `setStreamCallback` and/or `readStream`.
 
-This library uses HTTP GET request with stream header to request the stream event and data at defined database path.
+Function `beginStream` is to subscribe the stream changes at defined database path.
 
-The Firebase's functions that handle the stream are `beginStream`, `setStreamCallback` and/or `readStream`.
-
-Function `beginStream` used to subscribe the stream changes at defined database path.
-
-Function `setStreamCallback` used to assign the callback function that accept the **StreamData** class as parameter.
+Function `setStreamCallback` is to assign the callback function that accept the **StreamData** class as parameter.
 
 The **StreamData** contains stream event and data and interface function calls are similar to Firebase Data object.
 
-To check the stream manually, use function `readStream`.
+To check the stream manually, use `readStream`.
 
 Function `readStream` used in loop() task to continuous read the stream changes event and data.
 
@@ -473,7 +469,8 @@ After `readStream`, determine the availability of stream with Firebase Data obje
 
 Function `firebaseData.streamAvailable` returned true when new stream data was available. 
 
-After new stream data was available, it can be accessed with the following Firebase Data object functions.
+When new stream data was available, its data and event can be accessed from Firebase Data object functions.
+
 
 * `firebaseData.intData`
 
@@ -485,14 +482,26 @@ After new stream data was available, it can be accessed with the following Fireb
 
 * `firebaseData.stringData`
 
-* `firebaseData.jsonData` 
+* `firebaseData.jsonString`
 
-* `firebaseData.jsonObject` and
+* `firebaseData.jsonObject`
+
+* `firebaseData.jsonObjectPtr`
+
+* `firebaseData.jsonArray` 
+
+* `firebaseData.jsonArrayPtr`
+
+* `firebaseData.jsonData` (for keeping parse/get result)
+
+and
 
 * `firebaseData.blobData`
 
 
 Function `endStream` ends the stream operation.
+
+
 
 The following example showed how to subscribe the stream changes at "/test/data" with callback function.
 
@@ -539,7 +548,7 @@ void streamCallback(StreamData data)
   else if (data.dataType() == "string")
     Serial.println(data.stringData());
   else if (data.dataType() == "json")
-    Serial.println(data.jsonData());
+    Serial.println(data.jsonString());
 
 }
 
@@ -590,7 +599,7 @@ if (firebaseData.streamAvailable())
   else if (firebaseData.dataType() == "string")
     Serial.println(firebaseData.stringData());
   else if (firebaseData.dataType() == "json")
-    Serial.println(firebaseData.jsonData());
+    Serial.println(firebaseData.jsonString());
     
 }
 ```

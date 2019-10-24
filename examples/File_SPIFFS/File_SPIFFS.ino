@@ -24,7 +24,7 @@
 //Define Firebase Data object
 FirebaseData firebaseData;
 
-String path = "/ESP32_Test";
+String path = "/Test";
 
 File file;
 

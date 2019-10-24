@@ -6,6 +6,8 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2019 mobizt
+ * 
+ * This example is for FirebaseESP32 Arduino library v 3.5.0 and later
  *
 */
 
@@ -27,80 +29,11 @@ FirebaseData firebaseData2;
 
 unsigned long sendDataPrevMillis1;
 
-void printJsonObjectContent(FirebaseData &data);
-void printJsonObjectContent2(StreamData &data);
-
 uint16_t count1;
-
-String json;
 
 String path = "";
 
-void streamTimeoutCallback(bool timeout)
-{
-  if (timeout)
-  {
-    Serial.println();
-    Serial.println("Stream Data 1 timeout, resume streaming...");
-    Serial.println();
-  }
-}
-
-void streamCallback(StreamData data)
-{
-  Serial.println("Stream Data 1 available...");
-  Serial.println("STREAM PATH: " + data.streamPath());
-  Serial.println("EVENT PATH: " + data.dataPath());
-  Serial.println("DATA TYPE: " + data.dataType());
-  Serial.println("EVENT TYPE: " + data.eventType());
-  Serial.print("VALUE: ");
-  if (data.dataType() == "int")
-    Serial.println(data.intData());
-  else if (data.dataType() == "float")
-    Serial.println(data.floatData(), 5);
-  else if (data.dataType() == "double")
-    printf("%.9lf\n", data.doubleData());
-  else if (data.dataType() == "boolean")
-    Serial.println(data.boolData() == 1 ? "true" : "false");
-  else if (data.dataType() == "string")
-    Serial.println(data.stringData());
-  else if (data.dataType() == "json")
-    printJsonObjectContent2(data);
-  else if (data.dataType() == "blob")
-  {
-    //See blob examples
-  }
-  Serial.println();
-}
-
-/*
-
-void errorQueueCallback (QueueInfo queueinfo){
-
-  if (queueinfo.isQueueFull())
-  {
-    Serial.println("Queue is full");
-  }
-
-  Serial.print("Remaining queues: ");
-  Serial.println(queueinfo.totalQueues());
-
-  Serial.print("Being processed queue ID: ");
-  Serial.println(queueinfo.currentQueueID());  
-
-  Serial.print("Data type:");
-  Serial.println(queueinfo.dataType()); 
-
-  Serial.print("Method: ");
-  Serial.println(queueinfo.firebaseMethod());
-
-  Serial.print("Path: ");
-  Serial.println(queueinfo.dataPath());
-
-  Serial.println();
-}
-
-*/
+void printResult(FirebaseData &data);
 
 void setup()
 {
@@ -124,10 +57,6 @@ void setup()
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
 
-  //Firebase.setMaxRetry(firebaseData1, 3);
-  //Firebase.setMaxErrorQueue(firebaseData1, 10);
-  //Firebase.beginAutoRunErrorQueue(firebaseData1, errorQueueCallback);
-
   Serial.println("------------------------------------");
   Serial.println("Begin stream 1...");
   if (!Firebase.beginStream(firebaseData2, path + "/Stream/data1"))
@@ -142,21 +71,85 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println();
   }
-
-  //Firebase.setStreamCallback(firebaseData2, streamCallback);
-  Firebase.setStreamCallback(firebaseData2, streamCallback, streamTimeoutCallback);
 }
 
 void loop()
 {
 
+  if (!Firebase.readStream(firebaseData2))
+  {
+    Serial.println("Can't read stream data");
+    Serial.println("REASON: " + firebaseData2.errorReason());
+    Serial.println();
+  }
+
+  if (firebaseData2.streamTimeout())
+  {
+    Serial.println("Stream timeout, resume streaming...");
+    Serial.println();
+  }
+
+  if (firebaseData2.streamAvailable())
+  {
+    Serial.println("------------------------------------");
+    Serial.println("Stream Data Available...");
+    Serial.println("STREAM PATH: " + firebaseData2.streamPath());
+    Serial.println("EVENT PATH: " + firebaseData2.dataPath());
+    Serial.println("DATA TYPE: " + firebaseData2.dataType());
+    Serial.println("EVENT TYPE: " + firebaseData2.eventType());
+    Serial.print("VALUE: ");
+    printResult(firebaseData2);
+    if (firebaseData2.dataType() == "blob")
+    {
+      std::vector<uint8_t> blob = firebaseData2.blobData();
+
+      Serial.println();
+
+      for (int i = 0; i < blob.size(); i++)
+      {
+        if (i > 0 && i % 16 == 0)
+          Serial.println();
+
+        if (i < 16)
+          Serial.print("0");
+
+        Serial.print(blob[i], HEX);
+        Serial.print(" ");
+      }
+      Serial.println();
+    }
+    Serial.println("------------------------------------");
+    Serial.println();
+  }
+
   if (millis() - sendDataPrevMillis1 > 15000)
   {
     sendDataPrevMillis1 = millis();
 
-    FirebaseJson json;
-    json.addInt("data1-1",count1).addInt("data1-2",count1 + 1).addInt("data1-3",count1 + 2);
+    //Create demo data
+    uint8_t data[256];
+    for (int i = 0; i < 256; i++)
+      data[i] = i;
+    data[255] = rand();
 
+    Serial.println("------------------------------------");
+    Serial.println("Set Blob Data 1...");
+    if (Firebase.setBlob(firebaseData1, path + "/Stream/data1", data, sizeof(data)))
+    {
+      Serial.println("PASSED");
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + firebaseData1.errorReason());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+
+    FirebaseJson json;
+    json.add("data1-1", count1).add("data1-2", count1 + 1).add("data1-3", count1 + 2);
     Serial.println("------------------------------------");
     Serial.println("Update Data 1...");
     if (Firebase.updateNode(firebaseData1, path + "/Stream/data1", json))
@@ -165,18 +158,7 @@ void loop()
       Serial.println("PATH: " + firebaseData1.dataPath());
       Serial.println("TYPE: " + firebaseData1.dataType());
       Serial.print("VALUE: ");
-      if (firebaseData1.dataType() == "int")
-        Serial.println(firebaseData1.intData());
-      else if (firebaseData1.dataType() == "float")
-        Serial.println(firebaseData1.floatData(), 5);
-      else if (firebaseData1.dataType() == "double")
-        printf("%.9lf\n", firebaseData1.doubleData());
-      else if (firebaseData1.dataType() == "boolean")
-        Serial.println(firebaseData1.boolData() == 1 ? "true" : "false");
-      else if (firebaseData1.dataType() == "string")
-        Serial.println(firebaseData1.stringData());
-      else if (firebaseData1.dataType() == "json")
-        printJsonObjectContent(firebaseData1);
+      printResult(firebaseData1);
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -184,60 +166,95 @@ void loop()
     {
       Serial.println("FAILED");
       Serial.println("REASON: " + firebaseData1.errorReason());
-      /*
-      if (Firebase.getErrorQueueID(firebaseData1) > 0)
-      {
-        Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(firebaseData1)));
-      }
-      */
       Serial.println("------------------------------------");
       Serial.println();
     }
 
-    count1+=3;
+    Serial.print("Free Heap: ");
+    Serial.println(ESP.getFreeHeap());
+    Serial.println();
+
+    count1 += 3;
   }
 }
 
-void printJsonObjectContent(FirebaseData &data){
-  size_t tokenCount = data.jsonObject().parse(false).getJsonObjectIteratorCount();
-  String key;
-  String value;
-  FirebaseJsonObject jsonParseResult;
-  Serial.println();
-  for (size_t i = 0; i < tokenCount; i++)
-  {
-    data.jsonObject().jsonObjectiterator(i,key,value);
-    jsonParseResult = data.jsonObject().parseResult();
-    Serial.print("KEY: ");
-    Serial.print(key);
-    Serial.print(", ");
-    Serial.print("VALUE: ");
-    Serial.print(value); 
-    Serial.print(", ");
-    Serial.print("TYPE: ");
-    Serial.println(jsonParseResult.type);        
+void printResult(FirebaseData &data)
+{
 
+  if (data.dataType() == "int")
+    Serial.println(data.intData());
+  else if (data.dataType() == "float")
+    Serial.println(data.floatData(), 5);
+  else if (data.dataType() == "double")
+    printf("%.9lf\n", data.doubleData());
+  else if (data.dataType() == "boolean")
+    Serial.println(data.boolData() == 1 ? "true" : "false");
+  else if (data.dataType() == "string")
+    Serial.println(data.stringData());
+  else if (data.dataType() == "json")
+  {
+    Serial.println();
+    FirebaseJson &json = data.jsonObject();
+    //Print all object data
+    Serial.println("Pretty printed JSON data:");
+    String jsonStr;
+    json.toString(jsonStr, true);
+    Serial.println(jsonStr);
+    Serial.println();
+    Serial.println("Iterate JSON data:");
+    Serial.println();
+    size_t len = json.iteratorBegin();
+    String key, value = "";
+    int type = 0;
+    for (size_t i = 0; i < len; i++)
+    {
+      json.iteratorGet(i, type, key, value);
+      Serial.print(i);
+      Serial.print(", ");
+      Serial.print("Type: ");
+      Serial.print(type == JSON_OBJECT ? "object" : "array");
+      if (type == JSON_OBJECT)
+      {
+        Serial.print(", Key: ");
+        Serial.print(key);
+      }
+      Serial.print(", Value: ");
+      Serial.println(value);
+    }
+    json.iteratorEnd();
   }
-}
-
-void printJsonObjectContent2(StreamData &data){
-  size_t tokenCount = data.jsonObject().parse(false).getJsonObjectIteratorCount();
-  String key;
-  String value;
-  FirebaseJsonObject jsonParseResult;
-  Serial.println();
-  for (size_t i = 0; i < tokenCount; i++)
+  else if (data.dataType() == "array")
   {
-    data.jsonObject().jsonObjectiterator(i,key,value);
-    jsonParseResult = data.jsonObject().parseResult();
-    Serial.print("KEY: ");
-    Serial.print(key);
-    Serial.print(", ");
-    Serial.print("VALUE: ");
-    Serial.print(value); 
-    Serial.print(", ");
-    Serial.print("TYPE: ");
-    Serial.println(jsonParseResult.type);        
+    Serial.println();
+    //get array data from FirebaseData using FirebaseJsonArray object
+    FirebaseJsonArray &arr = data.jsonArray();
+    //Print all array values
+    Serial.println("Pretty printed Array:");
+    String arrStr;
+    arr.toString(arrStr, true);
+    Serial.println(arrStr);
+    Serial.println();
+    Serial.println("Iterate array values:");
+    Serial.println();
+    for (size_t i = 0; i < arr.size(); i++)
+    {
+      Serial.print(i);
+      Serial.print(", Value: ");
 
+      FirebaseJsonData &jsonData = data.jsonData();
+      //Get the result data from FirebaseJsonArray object
+      arr.get(jsonData, i);
+      if (jsonData.typeNum == JSON_BOOL)
+        Serial.println(jsonData.boolValue ? "true" : "false");
+      else if (jsonData.typeNum == JSON_INT)
+        Serial.println(jsonData.intValue);
+      else if (jsonData.typeNum == JSON_DOUBLE)
+        printf("%.9lf\n", jsonData.doubleValue);
+      else if (jsonData.typeNum == JSON_STRING ||
+               jsonData.typeNum == JSON_NULL ||
+               jsonData.typeNum == JSON_OBJECT ||
+               jsonData.typeNum == JSON_ARRAY)
+        Serial.println(jsonData.stringValue);
+    }
   }
 }

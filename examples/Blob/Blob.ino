@@ -6,9 +6,10 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2019 mobizt
+ * 
+ * This example is for FirebaseESP32 Arduino library v 3.5.0 and later
  *
 */
-
 
 //This example shows how to store and read binary data from memory to database.
 
@@ -23,14 +24,10 @@
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 
-
 //Define Firebase Data object
 FirebaseData firebaseData;
 
-void printJsonObjectContent(FirebaseData &data);
-
-String path = "/ESP32_Test";
-
+String path = "/Test";
 
 void setup()
 {
@@ -62,7 +59,7 @@ void setup()
   for (int i = 0; i < 256; i++)
     data[i] = i;
 
-  //Set binary data to database
+  //Set binary data to database (also can use Firebase.set)
   if (Firebase.setBlob(firebaseData, path + "/Binary/Blob/data", data, sizeof(data)))
   {
     Serial.println("PASSED");
@@ -80,26 +77,14 @@ void setup()
   Serial.println("------------------------------------");
   Serial.println("Get BLOB data test...");
 
-  //Get binary data from database
+  //Get binary data from database (also can use Firebase.get)
   if (Firebase.getBlob(firebaseData, path + "/Binary/Blob/data"))
   {
     Serial.println("PASSED");
     Serial.println("PATH: " + firebaseData.dataPath());
     Serial.println("TYPE: " + firebaseData.dataType());
     Serial.print("VALUE: ");
-    if (firebaseData.dataType() == "int")
-      Serial.println(firebaseData.intData());
-    else if (firebaseData.dataType() == "float")
-      Serial.println(firebaseData.floatData(), 5);
-    else if (firebaseData.dataType() == "double")
-      printf("%.9lf\n", firebaseData.doubleData());
-    else if (firebaseData.dataType() == "boolean")
-      Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
-    else if (firebaseData.dataType() == "string")
-      Serial.println(firebaseData.stringData());
-    else if (firebaseData.dataType() == "json")
-      printJsonObjectContent(firebaseData);
-    else if (firebaseData.dataType() == "blob")
+    if (firebaseData.dataType() == "blob")
     {
 
       std::vector<uint8_t> blob = firebaseData.blobData();
@@ -126,7 +111,7 @@ void setup()
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + firebaseData.errorReason());
-    Serial.println("--------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
 
@@ -137,7 +122,7 @@ void setup()
   for (int i = 0; i < 256; i++)
     data[i] = 255 - i;
 
-  //Append binary data to database
+  //Append binary data to database (also can use Firebase.push)
   if (Firebase.pushBlob(firebaseData, path + "/Binary/Blob/Logs", data, sizeof(data)))
   {
     Serial.println("PASSED");
@@ -149,26 +134,14 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println("Get appended BLOB data test...");
 
-    //Get appended binary data from database
+    //Get appended binary data from database (also can use Firebase.get)
     if (Firebase.getBlob(firebaseData, path + "/Binary/Blob/Logs/" + firebaseData.pushName()))
     {
       Serial.println("PASSED");
       Serial.println("PATH: " + firebaseData.dataPath());
       Serial.println("TYPE: " + firebaseData.dataType());
       Serial.print("VALUE: ");
-      if (firebaseData.dataType() == "int")
-        Serial.println(firebaseData.intData());
-      else if (firebaseData.dataType() == "float")
-        Serial.println(firebaseData.floatData(), 5);
-      else if (firebaseData.dataType() == "double")
-        printf("%.9lf\n", firebaseData.doubleData());
-      else if (firebaseData.dataType() == "boolean")
-        Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
-      else if (firebaseData.dataType() == "string")
-        Serial.println(firebaseData.stringData());
-      else if (firebaseData.dataType() == "json")
-        printJsonObjectContent(firebaseData);
-      else if (firebaseData.dataType() == "blob")
+      if (firebaseData.dataType() == "blob")
       {
 
         std::vector<uint8_t> blob = firebaseData.blobData();
@@ -191,7 +164,7 @@ void setup()
     {
       Serial.println("FAILED");
       Serial.println("REASON: " + firebaseData.errorReason());
-      Serial.println("--------------------------------");
+      Serial.println("------------------------------------");
       Serial.println();
     }
   }
@@ -202,34 +175,8 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println();
   }
-
-  //Quit Firebase and release all resources
-  Firebase.end(firebaseData);
-  
 }
 
 void loop()
 {
-}
-
-void printJsonObjectContent(FirebaseData &data){
-  size_t tokenCount = data.jsonObject().parse(false).getJsonObjectIteratorCount();
-  String key;
-  String value;
-  FirebaseJsonObject jsonParseResult;
-  Serial.println();
-  for (size_t i = 0; i < tokenCount; i++)
-  {
-    data.jsonObject().jsonObjectiterator(i,key,value);
-    jsonParseResult = data.jsonObject().parseResult();
-    Serial.print("KEY: ");
-    Serial.print(key);
-    Serial.print(", ");
-    Serial.print("VALUE: ");
-    Serial.print(value); 
-    Serial.print(", ");
-    Serial.print("TYPE: ");
-    Serial.println(jsonParseResult.type);        
-
-  }
 }

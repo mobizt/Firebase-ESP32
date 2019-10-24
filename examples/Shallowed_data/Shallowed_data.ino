@@ -6,6 +6,8 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2019 mobizt
+ * 
+ * This example is for FirebaseESP32 Arduino library v 3.5.0 and later
  *
 */
 
@@ -20,7 +22,6 @@
 #define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-
 
 //Define Firebase Data object
 FirebaseData firebaseData;
@@ -102,18 +103,14 @@ void getNode(String &key)
     {
 
       FirebaseJson json;
-
-      json.setJsonData(firebaseData.jsonData());
-
-      json.parse();
-      size_t count =json.getJsonObjectIteratorCount();
+      size_t count = json.iteratorBegin(firebaseData.jsonString().c_str());
       String _key;
       String _val;
+      int _type = 0;
 
       for (size_t i = 0; i< count; i++)
       {
-        
-        json.jsonObjectiterator(i,_key,_val);
+        json.iteratorGet(i,_type, _key,_val);
 
         if (_val == "true")
         {
@@ -127,6 +124,7 @@ void getNode(String &key)
           }
         }
       }
+      json.iteratorEnd();
     }
   }
   else

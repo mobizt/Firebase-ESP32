@@ -6,6 +6,8 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2019 mobizt
+ * 
+ * This example is for FirebaseESP32 Arduino library v 3.5.0 and later
  *
 */
 
@@ -23,8 +25,6 @@
 
 //Define Firebase Data object
 FirebaseData firebaseData;
-
-void printRulesContent(FirebaseData &data);
 
 void setup()
 {
@@ -57,11 +57,35 @@ void setup()
   {
     Serial.println("PASSED");
     Serial.println("DATABASE RULES: ");
-    Serial.println(firebaseData.jsonData());
-    rules = firebaseData.jsonData();
+
+    FirebaseJson &json = firebaseData.jsonObject();
+    json.toString(rules, true);
+    Serial.println(rules);
+
+    Serial.println();
     Serial.println("------------------------------------");
     Serial.println("PARSE: ");
-    printRulesContent(firebaseData);
+
+    size_t len = json.iteratorBegin();
+    String key, value = "";
+    int type = 0;
+    for (size_t i = 0; i < len; i++)
+    {
+      json.iteratorGet(i, type, key, value);
+      Serial.print(i);
+      Serial.print(", ");
+      Serial.print("Type: ");
+      Serial.print(type == JSON_OBJECT ? "object" : "array");
+      if (type == JSON_OBJECT)
+      {
+        Serial.print(", Key: ");
+        Serial.print(key);
+      }
+      Serial.print(", Value: ");
+      Serial.println(value);
+    }
+
+    json.iteratorEnd();
     Serial.println();
   }
   else
@@ -72,7 +96,6 @@ void setup()
     Serial.println();
   }
 
-  return;
 
   Serial.println("------------------------------------");
   Serial.println("Write Database Rules test...");
@@ -90,37 +113,8 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println();
   }
-
-  //Quit Firebase and release all resources
-  Firebase.end(firebaseData);
-  
 }
 
 void loop()
 {
-}
-
-
-void printRulesContent(FirebaseData &data){
-  size_t tokenCount = data.jsonObject().parse(false).getJsonObjectIteratorCount();
-  String key;
-  String value;
-  FirebaseJsonObject jsonParseResult;
-  Serial.println();
-  for (size_t i = 0; i < tokenCount; i++)
-  {
-    data.jsonObject().jsonObjectiterator(i, key, value);
-    value.replace("\n","");
-    value.replace(" ","");
-    jsonParseResult = data.jsonObject().parseResult();
-    Serial.print("KEY: ");
-    Serial.print(key);
-    Serial.print(", ");
-    Serial.print("VALUE: ");
-    Serial.print(value); 
-    Serial.print(", ");
-    Serial.print("TYPE: ");
-    Serial.println(jsonParseResult.type);        
-
-  }
 }

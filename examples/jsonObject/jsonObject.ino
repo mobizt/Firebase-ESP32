@@ -7,6 +7,8 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2019 mobizt
+ * 
+ * This example is for FirebaseESP32 Arduino library v 3.5.0 and later
  *
 */
 
@@ -23,6 +25,8 @@
 
 //Define Firebase Data object
 FirebaseData firebaseData;
+
+void printResult(FirebaseData &data);
 
 void setup()
 {
@@ -46,63 +50,41 @@ void setup()
     Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
     Firebase.reconnectWiFi(true);
 
-    String path = "/ESP8266_Test/Json";
+    String path = "/Test/Json";
 
-    String jsonData = "";
-    
+    String jsonStr = "";
 
-    FirebaseJson json;
-    FirebaseJson json2;
-    FirebaseJson json3;
-    FirebaseJson json4;
-    FirebaseJsonArray jsonArr;
-    FirebaseJsonArray jsonArr2;
+    FirebaseJson json1;
 
-    json2.addString("test1","hello world").addString("test2","nice to see you");
+    FirebaseJsonData jsonObj;
 
-    jsonArr2.addInt(99).addBool(true).addDouble(190.24555673).addString("Firebase");
-
-
-    jsonArr.addJson(&json2).addString("welcome").addArray(&jsonArr2);
-
-    json3.addDouble("myVal",212.224).addString("myStr","good");
-
-    json4.setJsonData("{\"simpleData\":\"this is string\"}");//Manual set raw json string.
-   
-
-    json.clear().addInt("data1",100).addArray("myArray",&jsonArr).addJson("anotherData",&json3).addJson("data2",&json4);
-
-
+    json1.set("Hi/myInt", 200);
+    json1.set("Hi/myDouble", 0.0023);
+    json1.set("Who/are/[0]", "you");
+    json1.set("Who/are/[1]", "they");
+    json1.set("Who/is/[0]", "she");
+    json1.set("Who/is/[1]", "he");
+    json1.set("This/is/[0]", false);
+    json1.set("This/is/[1]", true);
+    json1.set("This/is/[2]", "my house");
+    json1.set("This/is/[3]/my", "world");
 
     Serial.println("------------------------------------");
     Serial.println("JSON Data");
-    Serial.println(json.toString());
+    json1.toString(jsonStr, true);
+    Serial.println(jsonStr);
     Serial.println("------------------------------------");
-    
 
-
-   
     Serial.println("------------------------------------");
     Serial.println("Set JSON test...");
 
-    if (Firebase.setJSON(firebaseData, path, json))
+    if (Firebase.set(firebaseData, path, json1))
     {
         Serial.println("PASSED");
         Serial.println("PATH: " + firebaseData.dataPath());
         Serial.println("TYPE: " + firebaseData.dataType());
         Serial.print("VALUE: ");
-        if (firebaseData.dataType() == "int")
-            Serial.println(firebaseData.intData());
-        else if (firebaseData.dataType() == "float")
-            Serial.println(firebaseData.floatData(), 5);
-        else if (firebaseData.dataType() == "double")
-            printf("%.9lf\n", firebaseData.doubleData());
-        else if (firebaseData.dataType() == "boolean")
-            Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
-        else if (firebaseData.dataType() == "string")
-            Serial.println(firebaseData.stringData());
-        else if (firebaseData.dataType() == "json")
-            Serial.println(firebaseData.jsonData());
+        printResult(firebaseData);
         Serial.println("------------------------------------");
         Serial.println();
     }
@@ -113,35 +95,22 @@ void setup()
         Serial.println("------------------------------------");
         Serial.println();
     }
-
-
 
     Serial.println("------------------------------------");
     Serial.println("Get JSON test...");
 
-    if (Firebase.getJSON(firebaseData, path))
+    if (Firebase.get(firebaseData, path))
     {
         Serial.println("PASSED");
         Serial.println("PATH: " + firebaseData.dataPath());
         Serial.println("TYPE: " + firebaseData.dataType());
         Serial.print("VALUE: ");
-        if (firebaseData.dataType() == "int")
-            Serial.println(firebaseData.intData());
-        else if (firebaseData.dataType() == "float")
-            Serial.println(firebaseData.floatData(), 5);
-        else if (firebaseData.dataType() == "double")
-            printf("%.9lf\n", firebaseData.doubleData());
-        else if (firebaseData.dataType() == "boolean")
-            Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
-        else if (firebaseData.dataType() == "string")
-            Serial.println(firebaseData.stringData());
-        else if (firebaseData.dataType() == "json"){
-           
-           jsonData = firebaseData.jsonData(); //store for next test
-           Serial.println(firebaseData.jsonData());
-
+        if (firebaseData.dataType() == "json")
+        {
+            jsonStr = firebaseData.jsonString();
+            printResult(firebaseData);
         }
-            
+
         Serial.println("------------------------------------");
         Serial.println();
     }
@@ -153,110 +122,101 @@ void setup()
         Serial.println();
     }
 
-    FirebaseJsonObject jsonParseResult;
+    Serial.println("------------------------------------");
+    Serial.println("Try to parse return data and get value..");
 
+    json1.setJsonData(jsonStr);
 
-     Serial.println("------------------------------------");
-     Serial.println("Iterate all get back json data...");
+    json1.get(jsonObj, "This/is/[3]/my");
+    Serial.println("This/is/[3]/my: " + jsonObj.stringValue);
 
-      json2.clear().setJsonData(jsonData);
-      json2.parse();
-      size_t count =json2.getJsonObjectIteratorCount();
-      String key;
-      String value;
-
-      for (size_t i = 0; i < count; i++)
-      {
-        
-        json2.jsonObjectiterator(i,key,value);
-        jsonParseResult = json2.parseResult();
-
-        Serial.print("KEY: ");
-        Serial.print(key);
-        Serial.print(", ");
-        Serial.print("VALUE: ");
-        Serial.print(value); 
-        Serial.print(", ");
-        Serial.print("TYPE: ");
-        Serial.println(jsonParseResult.type);        
-
-      }
-
-     Serial.println("------------------------------------");
-     Serial.println();
-
+    json1.get(jsonObj, "Hi/myDouble");
+    Serial.print("Hi/myDouble: ");
+    Serial.println(jsonObj.doubleValue, 4);
 
     Serial.println("------------------------------------");
-    Serial.println("Parse for some child node...");
-
-    
-    json2.parse().get("anotherData").get("myVal");    
-
-    jsonParseResult = json2.parseResult();
-
-    if(jsonParseResult.success){
-     
-      Serial.println("1. Parse json data result for node /anotherData/myVal");
-      Serial.print("TYPE: ");
-      Serial.println(jsonParseResult.type);
-      Serial.print("VALUE: ");
-      Serial.println(jsonParseResult.stringValue);
-      //Serial.println(jsonParseResult.doubleValue);
-
-    }else{
-      Serial.println("1. Parse json data for node /anotherData/myVal was failed!");
-    } 
-
-    //Set parse with false to get data through all children nodes, 
-    //otherwise this would be failed to get child node data because of it's under data2 node.
-    json2.parse(false).get("simpleData"); 
-
-
-    jsonParseResult = json2.parseResult();
-
     Serial.println();
+}
 
-    if(jsonParseResult.success){
-     
-      Serial.println("2. Parse json data result for node /data2/simpleData with skipChild set to false");
-      Serial.print("TYPE: ");
-      Serial.println(jsonParseResult.type);
-      Serial.print("VALUE: ");
-      Serial.println(jsonParseResult.stringValue);
-      //Serial.println(jsonParseResult.doubleValue);
+void printResult(FirebaseData &data)
+{
 
-    }else{
-      Serial.println("2. Parse json data for node /data2/simpleData was failed!");
-    }    
+    if (data.dataType() == "int")
+        Serial.println(data.intData());
+    else if (data.dataType() == "float")
+        Serial.println(data.floatData(), 5);
+    else if (data.dataType() == "double")
+        printf("%.9lf\n", data.doubleData());
+    else if (data.dataType() == "boolean")
+        Serial.println(data.boolData() == 1 ? "true" : "false");
+    else if (data.dataType() == "string")
+        Serial.println(data.stringData());
+    else if (data.dataType() == "json")
+    {
+        Serial.println();
+        FirebaseJson &json = data.jsonObject();
+        //Print all object data
+        Serial.println("Pretty printed JSON data:");
+        String jsonStr;
+        json.toString(jsonStr, true);
+        Serial.println(jsonStr);
+        Serial.println();
+        Serial.println("Iterate JSON data:");
+        Serial.println();
+        size_t len = json.iteratorBegin();
+        String key, value = "";
+        int type = 0;
+        for (size_t i = 0; i < len; i++)
+        {
+            json.iteratorGet(i, type, key, value);
+            Serial.print(i);
+            Serial.print(", ");
+            Serial.print("Type: ");
+            Serial.print(type == JSON_OBJECT ? "object" : "array");
+            if (type == JSON_OBJECT)
+            {
+                Serial.print(", Key: ");
+                Serial.print(key);
+            }
+            Serial.print(", Value: ");
+            Serial.println(value);
+        }
+        json.iteratorEnd();
+    }
+    else if (data.dataType() == "array")
+    {
+        Serial.println();
+        //get array data from FirebaseData using FirebaseJsonArray object
+        FirebaseJsonArray &arr = data.jsonArray();
+        //Print all array values
+        Serial.println("Pretty printed Array:");
+        String arrStr;
+        arr.toString(arrStr, true);
+        Serial.println(arrStr);
+        Serial.println();
+        Serial.println("Iterate array values:");
+        Serial.println();
+        for (size_t i = 0; i < arr.size(); i++)
+        {
+            Serial.print(i);
+            Serial.print(", Value: ");
 
-
-
-    //Any json object inside array also can be accessed by set parse(false),
-    //The next test will ignore it and the result was failed as expected.
-    json2.parse().get("test2"); 
-
-
-    jsonParseResult = json2.parseResult();
-
-    Serial.println();
-
-    if(jsonParseResult.success){
-     
-      Serial.println("3. Parse json data result for node /myArray/test2 with skipChild set to true, or ignored");
-      Serial.print("TYPE: ");
-      Serial.println(jsonParseResult.type);
-      Serial.print("VALUE: ");
-      Serial.println(jsonParseResult.stringValue);
-      //Serial.println(jsonParseResult.doubleValue);
-
-    }else{
-      Serial.println("3. Parse json data for node /myArray/test2 was failed as expected!");
-    }     
-        
-     Serial.println("------------------------------------");
-     Serial.println();
-
-
+            FirebaseJsonData &jsonData = data.jsonData();
+            //Get the result data from FirebaseJsonArray object
+            arr.get(jsonData, i);
+            if (jsonData.typeNum == JSON_BOOL)
+                Serial.println(jsonData.boolValue ? "true" : "false");
+            else if (jsonData.typeNum == JSON_INT)
+                Serial.println(jsonData.intValue);
+            else if (jsonData.typeNum == JSON_DOUBLE)
+                printf("%.9lf\n", jsonData.doubleValue);
+            else if (jsonData.typeNum == JSON_STRING ||
+                     jsonData.typeNum == JSON_NULL ||
+                     jsonData.typeNum == JSON_OBJECT ||
+                     jsonData.typeNum == JSON_ARRAY)
+                Serial.println(jsonData.stringValue);
+        }
+    }
 }
 
 void loop()

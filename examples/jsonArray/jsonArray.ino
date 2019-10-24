@@ -1,3 +1,4 @@
+
 /*
  * Created by K. Suwatchai (Mobizt)
  * 
@@ -7,38 +8,41 @@
  * 
  * Copyright (c) 2019 mobizt
  * 
- * This example is for FirebaseESP32 Arduino library v 3.5.0 and later
+ * This example is for FirebaseESP8266 Arduino library v 2.6.0 and later
  *
 */
 
-//This example shows how set node's priority and filtering the data based on priority of child nodes.
-//The priority is virtual node with the key ".priority" and can't see in Console.
+//This example shows how to set array data through FirebaseJsonArray object then read the data back and parse them.
 
-//Since data ordering is not supported in Firebase's REST APIs, then the query result will not sorted.
+//FirebaseESP8266.h must be included before ESP8266WiFi.h
+#include "FirebaseESP8266.h"
+#include <ESP8266WiFi.h>
 
-
-#include <WiFi.h>
-#include <FirebaseESP32.h>
-
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com" //Do not include https:// in FIREBASE_HOST
+#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
 
 
-//Define Firebase Data object
+//Define Firebase Data Object
 FirebaseData firebaseData;
 
-FirebaseJson json;
+
+FirebaseJsonArray arr;
 
 void printResult(FirebaseData &data);
+
+
+unsigned long sendDataPrevMillis = 0;
+
+String path = "/Test/Array";
+
+uint16_t count = 0;
 
 void setup()
 {
 
     Serial.begin(115200);
-    Serial.println();
-    Serial.println();
 
     WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
     Serial.print("Connecting to Wi-Fi");
@@ -55,27 +59,36 @@ void setup()
     Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
     Firebase.reconnectWiFi(true);
 
-    String path = "/Test";
-
-    Serial.println("------------------------------------");
-    Serial.println("Set priority test...");
-
-    for (int i = 0; i < 15; i++)
+    if (!Firebase.beginStream(firebaseData, path))
     {
+        Serial.println("------------------------------------");
+        Serial.println("Can't begin stream connection...");
+        Serial.println("REASON: " + firebaseData.errorReason());
+        Serial.println("------------------------------------");
+        Serial.println();
+    }
+}
 
-        float priority = 15 - i;
-        String key = "item_" + String(i + 1);
-        String val = "value_" + String(i + 1);
-        json.clear();
-        json.set(key, val);
-        String Path = path + "/Items/priority_" + String(15 - i);
+void loop()
+{
 
-        if (Firebase.setJSON(firebaseData, Path, json, priority))
+    if (millis() - sendDataPrevMillis > 15000)
+    {
+        sendDataPrevMillis = millis();
+        count++;
+
+        Serial.println("------------------------------------");
+        Serial.println("Set Array...");
+
+        arr.clear();
+        arr.set("/[0]", count);
+        arr.set("/[1]", "hello");
+        arr.set("/[4]", 76.54);
+        if (Firebase.set(firebaseData, path + "/Data", arr))
         {
             Serial.println("PASSED");
             Serial.println("PATH: " + firebaseData.dataPath());
             Serial.println("TYPE: " + firebaseData.dataType());
-            Serial.println("CURRENT ETag: " + firebaseData.ETag());
             Serial.print("VALUE: ");
             printResult(firebaseData);
             Serial.println("------------------------------------");
@@ -88,29 +101,53 @@ void setup()
             Serial.println("------------------------------------");
             Serial.println();
         }
+
+        Serial.println("------------------------------------");
+        Serial.println("Get Array...");
+        if (Firebase.get(firebaseData,  path + "/Data"))
+        {   
+            Serial.println("PASSED");
+            Serial.println("PATH: " + firebaseData.dataPath());
+            Serial.println("TYPE: " + firebaseData.dataType());
+            Serial.print("VALUE: ");
+            printResult(firebaseData);               
+            Serial.println("------------------------------------");
+            Serial.println();
+        }
+        else
+        {
+            Serial.println("FAILED");
+            Serial.println("REASON: " + firebaseData.errorReason());
+            Serial.println("------------------------------------");
+            Serial.println();
+        }
     }
 
-    //Qury child nodes under "/Test/Item" with priority between 3.0 and 8.0
-    //Since data ordering is not supported in Firebase's REST APIs, then the query result will not sorted.
-    QueryFilter query;
-    query.orderBy("$priority").startAt(3.0).endAt(8.0);
-
-    Serial.println("------------------------------------");
-    Serial.println("Filtering based on priority test...");
-
-    if (Firebase.getJSON(firebaseData, path + "/Items", query))
+    if (!Firebase.readStream(firebaseData))
     {
-
-        Serial.println("PASSED");
-        Serial.println("JSON DATA: ");
-        printResult(firebaseData);
+        Serial.println("------------------------------------");
+        Serial.println("Can't read stream data...");
+        Serial.println("REASON: " + firebaseData.errorReason());
         Serial.println("------------------------------------");
         Serial.println();
     }
-    else
+
+    if (firebaseData.streamTimeout())
     {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + firebaseData.errorReason());
+        Serial.println("Stream timeout, resume streaming...");
+        Serial.println();
+    }
+
+    if (firebaseData.streamAvailable())
+    {
+        Serial.println("------------------------------------");
+        Serial.println("Stream Data available...");
+        Serial.println("STREAM PATH: " + firebaseData.streamPath());
+        Serial.println("EVENT PATH: " + firebaseData.dataPath());
+        Serial.println("DATA TYPE: " + firebaseData.dataType());
+        Serial.println("EVENT TYPE: " + firebaseData.eventType());
+        Serial.print("VALUE: ");
+        printResult(firebaseData);
         Serial.println("------------------------------------");
         Serial.println();
     }
@@ -195,8 +232,4 @@ void printResult(FirebaseData &data)
                 Serial.println(jsonData.stringValue);
         }
     }
-}
-
-void loop()
-{
 }
