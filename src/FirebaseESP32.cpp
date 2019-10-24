@@ -1995,11 +1995,8 @@ bool FirebaseESP32::beginStream(FirebaseData &dataObj, const String &path)
 
 bool FirebaseESP32::readStream(FirebaseData &dataObj)
 {
-  if (dataObj._streamStop)
-    return true;
-
-  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
-    WiFi.reconnect();
+ if (!reconnect(dataObj))
+        return false;
 
   return getServerStreamResponse(dataObj);
 }
@@ -2035,6 +2032,7 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
 
   if (dataObj._pause)
     return 0;
+    
 
   if (!apConnected(dataObj))
     return HTTPC_ERROR_CONNECTION_LOST;
@@ -2121,6 +2119,9 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     dataObj._isStreamTimeout = false;
   }
 
+  if (!reconnect(dataObj))
+    return HTTPC_ERROR_CONNECTION_LOST;
+
   setSecure(dataObj);
 
   httpConnected = dataObj._net.begin(_host.c_str(), _port, uri.c_str());
@@ -2182,6 +2183,9 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
   }
 
   //Prepare request header
+
+  if (!reconnect(dataObj))
+    return HTTPC_ERROR_CONNECTION_LOST;
 
   if (method != FirebaseMethod::BACKUP && method != FirebaseMethod::RESTORE && dataType != FirebaseDataType::FILE)
     buildFirebaseRequest(dataObj, _host, method, dataType, path, _auth, payloadStr.length(), header);
@@ -3471,6 +3475,9 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
 
     dataObj._streamMillis = ml;
     std::string path = "";
+
+    if (!reconnect(dataObj))
+            return false;
 
     //Stream timeout
     if (dataObj._dataMillis > 0 && millis() - dataObj._dataMillis > KEEP_ALIVE_TIMEOUT)
