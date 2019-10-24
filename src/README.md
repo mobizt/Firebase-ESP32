@@ -578,7 +578,7 @@ bool push(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size,
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
-@param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
+param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
 
 param **`path`** - Target database path which binary data from file will be appended.
 
@@ -1342,7 +1342,7 @@ bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, 
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
-@param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
+param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
 
 param **`path`** - Target database path which binary data from file will be set.
 
@@ -1379,7 +1379,7 @@ bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const S
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
-@param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
+param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
 
 param **`path`** - Target database path which binary data from file will be set.
 
@@ -2101,7 +2101,7 @@ please make sure that data at the defined database path is file type.
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
-@param **`storageType`** - Type of storage to write file data, StorageType::SPIFS or StorageType::SD.
+param **`storageType`** - Type of storage to write file data, StorageType::SPIFS or StorageType::SD.
 
 param **`nodePath`** - Database path that file data will be downloaded.
 
@@ -2320,7 +2320,7 @@ void clearErrorQueue(FirebaseData &dataObj);
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
-@param **`storageType`** - Type of storage to save file, StorageType::SPIFS or StorageType::SD.
+param **`storageType`** - Type of storage to save file, StorageType::SPIFS or StorageType::SD.
 
 param **`nodePath`** - Database path to be backuped.
 
@@ -2345,7 +2345,7 @@ bool backup(FirebaseData &dataObj, uint8_t storageType, const String &nodePath, 
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
-@param **`storageType`** - Type of storage to read file, StorageType::SPIFS or StorageType::SD.
+param **`storageType`** - Type of storage to read file, StorageType::SPIFS or StorageType::SD.
 
 param **`nodePath`** - Database path to  be restored.
 
