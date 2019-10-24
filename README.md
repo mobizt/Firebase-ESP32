@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.5.0
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.5.1
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms which library are also available.
@@ -50,7 +50,7 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 
 ## Changes from earlier version
 
-For library v 3.5.0 (comes with FirebaseJson v 2.2.1) or later, FirebaseJson object will be used to handle JSON data instead of JSON string which, the following functions are affected:
+For library v 3.5.1 (comes with FirebaseJson v 2.2.2) or later, FirebaseJson object will be used to handle JSON data instead of JSON string which, the following functions are affected:
 
 getJson, setJson, pushJson, updateNode and updateNodeSilent.
 
@@ -873,6 +873,288 @@ else
   Serial.println(firebaseData.errorReason());
 }
 ```
+
+
+## Parse, Create and Edit JSON Objects
+
+
+This library includes FirebaseJson Arduino library, the easiest JSON parser, builder and editor.
+
+FirebaseJson usages are so simple as you read, store and update(edit) the JSON node in Firebase RTDB.
+
+Since you declare the FirebaseJson (object) or FirebaseJsonArray, use the functions `setJsonData`, `add`, `set` and `remove`
+to build or edit JSON object and use `get` to parse the node's contents. 
+
+Defined the relative path of the specific node to `add`, `set`, `remove` and `get` functions to add, set, remove and get its contents.
+
+
+Function `FirebaseJson.setJsonData` is to set the JSON string to JSON object.
+
+
+Function `FirebaseJson.add` is used for add the new node with the contents e.g. String, Number (int and double), Boolean, Array and Object to the defined relative path.
+
+
+Function `FirebaseJson.set` is used for edit, overwrite, create new (if not exist) node with contents e.g. String, Number (int and double), Boolean, Array and Object at the defined relative path.
+
+
+Function `FirebaseJson.remove` is used for remove node and all its children contents at the defined relative path. 
+
+
+Function `FirebaseJson.toString` is used for (pretty or plain) print out the JSON object as Arduino string (this function takes String param).
+
+
+Functions `FirebaseJson.iteratorBegin`, `FirebaseJson.iteratorGet` and `FirebaseJson.iteratorEnd` are used for parse all JSON object contents as list which can be iterated with index.
+
+
+Function `FirebaseJson.clear` is used for clear JSON object contents.
+
+
+Function `FirebaseJsonArray.add` is used for adding the new contents e.g. String, Number (int and double), Boolean, Array and Object to JSON array.
+
+
+Function `FirebaseJsonArray.set` is for edit, overwrite, create new (if not exist) contents e.g. String, Number (int and double), Boolean, Array and Object at the defined relative path or defined index of JSON array.
+
+
+
+Function `FirebaseJsonArray.remove` is used for remove array's contents at the defined relative path or defined index of JSON array.
+
+
+
+Function `FirebaseJsonArray.toString` is used for (pretty or plain) print out the JSON array object as Arduino string (this function takes String param).
+
+
+Function `FirebaseJsonArray.clear` is used for clear JSON object contents.
+
+
+To acquired the JSON object or JSON Array from FirebaseData object which returned from get, set, push operations, these following functions are required.
+
+`FirebaseData.jsonObject`
+
+`FirebaseData.jsonObjectPtr`
+
+`FirebaseData.jsonArray` and
+
+`FirebaseData.jsonArrayPtr`
+
+Function `FirebaseData.jsonObject` and `FirebaseData.jsonObjectPtr` will provide FirebaseJson (object) and FirebaseJson pointer respectively.
+
+Function `FirebaseData.jsonArray` and `FirebaseData.jsonArrayPtr` will provide FirebaseJson Array and FirebaseJson Array pointer respectively.
+
+
+
+The following example show how to use FirebaseJson.
+
+```C++
+//Declare FirebaseJson object (global or local)
+FirebaseJson json;
+
+//Add key1 with value 100 to JSON object
+json.add("name", "Living Room");
+
+//Add temp with value 80 and unit with value Celcius to JSON object
+//Note: temp2 is not the child of temp1 as in previous version.
+json.add("temp1", 120).add("temp2", 40);
+
+//To add nested child contents directly
+json.set("unit/temp1", "Farenheit");
+json.set("unit/temp2", "Celcius");
+
+//To print out as prettify string
+String jsonStr;
+json.toString(jsonStr, true);
+Serial.println(jsonStr);
+
+/*
+This is the result of above code
+
+{
+    "name": "Living Room",
+    "temp1": 120,
+    "temp2": 40,
+    "unit": {
+        "temp1": "Farenheit",
+        "temp2": "Celcius"
+    }
+}
+*/
+
+//To set array to the above JSON using FirebaseJson directly
+//Set (add) array indexes 0,1,2,5,7 under temp1
+json.set("temp1/[0]", 47);
+json.set("temp1/[1]", 28);
+json.set("temp1/[2]", 34);
+json.set("temp1/[5]", 23);
+json.set("temp1/[7]", 25);
+
+//Print out as prettify string
+json.toString(jsonStr, true);
+Serial.println(jsonStr);
+
+/*
+The result of above code
+
+{
+    "name": "Living Room",
+    "temp1": [
+        47,
+        28,
+        34,
+        null,
+        null,
+        23,
+        null,
+        25
+    ],
+    "temp2": 40,
+    "unit": {
+        "temp2": "Celcius"
+    }
+}
+*/
+
+//Try to remove temp1 array at index 1
+json.remove("temp1/[1]");
+
+//Try to remove temp2
+json.remove("temp2");
+
+//Print out as prettify string
+json.toString(jsonStr, true);
+Serial.println(jsonStr);
+
+/*
+The result of above code
+
+{
+    "name": "Living Room",
+    "temp1": [
+        47,
+        34,
+        null,
+        null,
+        23,
+        null,
+        25
+    ],
+    "unit": {
+        "temp1": "Farenheit",
+        "temp2": "Celcius"
+    }
+}
+*/
+
+//Now parse/read the contents from specific node
+
+FirebaseJsonData jsonData;
+
+json.get(jsonData, "unit/temp2");
+
+if(jsonData.success)
+{
+  //Type of parsed data
+  Serial.println(jsonData.type);
+  //Its value
+  Serial.println(jsonData.stringValue);
+  //Serial.println(jsonData.intValue);
+  //Serial.println(jsonData.boolValue);
+  //Serial.println(jsonData.doubleValue);
+
+}
+
+
+
+```
+
+
+The following example show how to use FirebaseJsonArray.
+
+```C++
+//Declare FirebaseJsonArray object (global or local)
+FirebaseJsonArray arr;
+
+//Add some data
+arr.add("banana");
+arr.add("mango");
+arr.add("coconut");
+
+
+//Change the array contents
+arr.set("[1]/food", "salad");
+arr.set("[2]", "apple");
+arr.set("[4]/[0]/[1]/amount", 20);
+
+//To print out as prettify string
+String arrStr;
+arr.toString(arrStr, true);
+Serial.println(arrStr);
+
+/*
+This is the result of above code
+
+[
+    "banana",
+    {
+        "food": "salad"
+    },
+    "apple",
+    null,
+    [
+        [
+            null,
+            {
+                "amount": 20
+            }
+        ]
+    ]
+]
+*/
+
+//Remove array content
+arr.remove("[4]/[0]/[1]/amount");
+
+//Print out as prettify string
+arr.toString(arrStr, true);
+Serial.println(arrStr);
+
+/*
+The result of above code
+
+[
+    "banana",
+    {
+        "food": "salad"
+    },
+    "apple",
+    null,
+    [
+        [
+            null
+        ]
+    ]
+]
+*/
+
+//Now parse/read the array contents at some index
+
+FirebaseJsonData jsonData;
+
+arr.get(jsonData, "[1]/food");
+
+if(jsonData.success)
+{
+  //Type of parsed data
+  Serial.println(jsonData.type);
+  //Its value
+  Serial.println(jsonData.stringValue);
+  //Serial.println(jsonData.intValue);
+  //Serial.println(jsonData.boolValue);
+  //Serial.println(jsonData.doubleValue);
+
+}
+
+
+```
+
 
 
 See [Full Examples](/examples) for complete usages.

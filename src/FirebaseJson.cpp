@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.2.1
+ * FirebaseJson, version 2.2.2
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using relative path.
  * 
- * October 24, 2019
+ * October 25, 2019
  * 
  * Features
  * - None recursive operations
@@ -314,7 +314,7 @@ bool FirebaseJson::get(FirebaseJsonData &jsonData, const String &path, bool pret
     if (_jsonData.success)
     {
         if (_jsonData._type == JSMN_STRING && _jsonData._dbuf.c_str()[0] == '"' && _jsonData._dbuf.c_str()[_jsonData._dbuf.length() - 1] == '"')
-            _jsonData.stringValue = _jsonData._dbuf.substr(1, _jsonData.stringValue.length() - 2).c_str();
+            _jsonData.stringValue = _jsonData._dbuf.substr(1, _jsonData._dbuf.length() - 2).c_str();
         else
             _jsonData.stringValue = _jsonData._dbuf.c_str();
         jsonData = _jsonData;
@@ -463,10 +463,23 @@ void FirebaseJson::_jsmn_parse(bool collectTk)
     _tokens.reset();
     _collectTk = collectTk;
     _eltk.clear();
-    int cnt = jsmn_parse(_parser.get(), buf, bufLen, (jsmntok_t *)NULL, 0) + 5;
-    _tokens = std::unique_ptr<jsmntok_t>(new jsmntok_t[cnt + 1]);
+    int cnt = jsmn_parse(_parser.get(), buf, bufLen, (jsmntok_t *)NULL, 0);
+    if(cnt < 0)
+    {
+        int a =0;
+        int b =0;
+        for(size_t i=0;i< bufLen;i++)
+        {
+            if(buf[i]==',')
+                a++;
+            else if (buf[i]=='[' || buf[i]=='{')
+                b++;
+        }
+        cnt = 10 + (2 * (a+1)) + b;
+    }
+    _tokens = std::unique_ptr<jsmntok_t>(new jsmntok_t[cnt + 10]);
     jsmn_init(_parser.get());
-    _tokenCount = jsmn_parse(_parser.get(), buf, bufLen, _tokens.get(), cnt + 1);
+    _tokenCount = jsmn_parse(_parser.get(), buf, bufLen, _tokens.get(), cnt + 10);
     _paresRes = true;
     if (_tokenCount < 0)
         _paresRes = false;
@@ -989,10 +1002,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
                         _TkRefOk = true;
                         char *dat1 = new char[h->end - h->start + 10];
                         memset(dat1, 0, h->end - h->start + 10);
-                        if (buf[h->start - 1] != '"')
-                            strncpy(dat1, buf + h->start, h->end - h->start);
-                        else
-                            strncpy(dat1, buf + h->start - 1, h->end - h->start + 2);
+                        strncpy(dat1, buf + h->start, h->end - h->start);                   
                         _jsonData.stringValue = dat1;
                         delete[] dat1;
                         _jsonData._type = h->type;
@@ -1054,10 +1064,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
                         h = &_tokens.get()[i + 1];
                         char *dat2 = new char[h->end - h->start + 10];
                         memset(dat2, 0, h->end - h->start + 10);
-                        if (buf[h->start - 1] != '"')
-                            strncpy(dat2, buf + h->start, h->end - h->start);
-                        else
-                            strncpy(dat2, buf + h->start - 1, h->end - h->start + 2);
+                        strncpy(dat2, buf + h->start, h->end - h->start); 
                         _jsonData.stringValue = dat2;
                         delete[] dat2;
                         _jsonData._type = h->type;
@@ -1924,7 +1931,6 @@ void FirebaseJson::_parse(const char *path, PRINT_MODE printMode)
             else
                 _parse(_pathTk[i].c_str(), i, -1, printMode);
         }
-
         _jsonData.success = _parseCompleted == len;
     }
     _el.clear();
@@ -2001,6 +2007,7 @@ void FirebaseJson::_parse(const char *key, int depth, int index, PRINT_MODE prin
             if (_tokenMatch)
                 break;
         }
+        
         delete[] buf;
         delete[] qt;
         delete[] tab;
@@ -2858,7 +2865,7 @@ bool FirebaseJsonArray::_get(FirebaseJsonData &jsonData, const char *path)
     if (_json._jsonData.success)
     {
         _json._rawbuf = _jbuf.substr(1, _jbuf.length() - 2).c_str();
-        if (_json._jsonData._type == JSMN_STRING)
+        if (_json._jsonData._type == JSMN_STRING && _json._jsonData.stringValue.c_str()[0]=='"' && _json._jsonData.stringValue.c_str()[_json._jsonData.stringValue.length()-1]=='"')
             _json._jsonData.stringValue = _json._jsonData.stringValue.substring(1, _json._jsonData.stringValue.length() - 1).c_str();
         jsonData = _json._jsonData;
     }
