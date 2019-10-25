@@ -2612,7 +2612,7 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, uint8_t storageType, cons
   return flag;
 }
 
-bool FirebaseESP32::clientAvilable(FirebaseData &dataObj, bool available)
+bool FirebaseESP32::clientAvailable(FirebaseData &dataObj, bool available)
 {
   if (!reconnect(dataObj))
   {
@@ -2677,7 +2677,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
   unsigned long dataTime = millis();
 
   if (!dataObj._isStream)
-    while (clientAvilable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout)
+    while (clientAvailable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout)
     {
       if (!apConnected(dataObj))
         return false;
@@ -2686,13 +2686,13 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
 
   dataTime = millis();
 
-  if (clientAvilable(dataObj, false) && !dataObj._isStream)
+  if (clientAvailable(dataObj, false) && !dataObj._isStream)
     dataObj._httpCode = HTTPC_ERROR_READ_TIMEOUT;
 
-  if (clientAvilable(dataObj, true))
+  if (clientAvailable(dataObj, true))
   {
 
-    while (clientAvilable(dataObj, true))
+    while (clientAvailable(dataObj, true))
     {
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
@@ -3125,7 +3125,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
 
   unsigned long dataTime = millis();
 
-  while (clientAvilable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
+  while (clientAvailable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
   {
 
     if (!apConnected(dataObj))
@@ -3134,10 +3134,10 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
   }
 
   dataTime = millis();
-  if (clientAvilable(dataObj, true))
+  if (clientAvailable(dataObj, true))
   {
 
-    while (clientAvilable(dataObj, true) || count > 0)
+    while (clientAvailable(dataObj, true) || count > 0)
     {
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
@@ -3339,7 +3339,7 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
   unsigned long dataTime = millis();
 
   if (!dataObj._isStream)
-    while (clientAvilable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
+    while (clientAvailable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
     {
       if (!apConnected(dataObj))
         return false;
@@ -3348,10 +3348,10 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
 
   dataTime = millis();
 
-  if (clientAvilable(dataObj, true))
+  if (clientAvailable(dataObj, true))
   {
 
-    while (clientAvilable(dataObj, true))
+    while (clientAvailable(dataObj, true))
     {
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);

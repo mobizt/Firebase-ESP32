@@ -2482,7 +2482,7 @@ protected:
   bool getServerResponse(FirebaseData &dataObj);
   bool getDownloadResponse(FirebaseData &dataObj);
   bool getUploadResponse(FirebaseData &dataObj);
-  bool clientAvilable(FirebaseData &dataObj, bool available);
+  bool clientAvailable(FirebaseData &dataObj, bool available);
   void endFileTransfer(FirebaseData &dataObj);
   bool reconnect(FirebaseData &dataObj);
   bool reconnect();
