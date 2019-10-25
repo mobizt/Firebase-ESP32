@@ -1,5 +1,5 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.5.1
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.5.2
  * 
  * October 25, 2019
  * 
@@ -12,7 +12,8 @@
  * - Fixed multi-stream data object.
  * - Corrupted Firebase rules data.
  * - Invalid data type parse from payload with white-spaces.
- * - Remove recursive stream operation that may lead to stack overflow
+ * - Remove recursive stream operation that may lead to stack overflow.
+ * - Fix the WiFi lost connection exception error reset.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -856,7 +857,6 @@ public:
 
   bool push(FirebaseData &dataObj, const String &path, const String &stringValue, float priority);
 
-
   /*
     Append new child nodes's key and value (using FirebaseJson object) to the defined database path.
 
@@ -1142,7 +1142,6 @@ public:
 
   bool set(FirebaseData &dataObj, const String &path, double doubleValue, float priority);
 
-  
   /*
     Set double data at the defined database path if defined database path's ETag matched the ETag value.
 
@@ -1317,7 +1316,6 @@ public:
 
   bool set(FirebaseData &dataObj, const String &path, const String &stringValue, float priority, const String &ETag);
 
-
   /*
 
     Set child nodes's key and value (using FirebaseJson object) to the defined database path.
@@ -1347,7 +1345,7 @@ public:
     Set JSON data or FirebaseJson object and virtual child ".priority" at the defined database path.
 
   */
-  
+
   bool setJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
 
   bool set(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
@@ -2032,7 +2030,6 @@ public:
   */
   bool getArray(FirebaseData &dataObj, const String &path, QueryFilter &query, FirebaseJsonArray *target);
 
-
   /*
     Read the blob (binary data) at the defined database path.
 
@@ -2427,7 +2424,7 @@ public:
 
   void errorToString(int httpCode, std::string &buff);
 
-    template <typename T>
+  template <typename T>
   bool set(FirebaseData &dataObj, const String &path, T value);
 
   template <typename T>
@@ -2485,6 +2482,7 @@ protected:
   bool getServerResponse(FirebaseData &dataObj);
   bool getDownloadResponse(FirebaseData &dataObj);
   bool getUploadResponse(FirebaseData &dataObj);
+  bool clientAvilable(FirebaseData &dataObj, bool available);
   void endFileTransfer(FirebaseData &dataObj);
   bool reconnect(FirebaseData &dataObj);
   bool reconnect();
@@ -2546,7 +2544,6 @@ public:
     @return - Boolean type status indicates the success of operation.
    */
   bool pauseFirebase(bool pause);
-
 
   /*
 
@@ -2640,7 +2637,6 @@ public:
 
   */
   double doubleData();
-  
 
   /*
 
@@ -2668,7 +2664,7 @@ public:
   */
   String jsonString();
 
-    /*
+  /*
 
     Return the Firebase JSON object of server returned payload.
 

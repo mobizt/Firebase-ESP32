@@ -1,5 +1,5 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.5.1
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.5.2
  * 
  * October 25, 2019
  * 
@@ -12,7 +12,8 @@
  * - Fixed multi-stream data object.
  * - Corrupted Firebase rules data.
  * - Invalid data type parse from payload with white-spaces.
- * - Remove recursive stream operation that may lead to stack overflow
+ * - Remove recursive stream operation that may lead to stack overflow.
+ * - Fix the WiFi lost connection exception error reset.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -1465,14 +1466,14 @@ bool FirebaseESP32::setFile(FirebaseData &dataObj, uint8_t storageType, const St
 
 bool FirebaseESP32::setTimestamp(FirebaseData &dataObj, const String &path)
 {
-    size_t tmpSize = strlen_P(ESP32_FIREBASE_STR_154) + 1;
-    char *tmp = new char[tmpSize];
-    memset(tmp, 0, tmpSize);
+  size_t tmpSize = strlen_P(ESP32_FIREBASE_STR_154) + 1;
+  char *tmp = new char[tmpSize];
+  memset(tmp, 0, tmpSize);
 
-    strcpy_P(tmp, ESP32_FIREBASE_STR_154);
-    bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::TIMESTAMP, path.c_str(), tmp, false, "", "");
-    delete[] tmp;
-    return flag;
+  strcpy_P(tmp, ESP32_FIREBASE_STR_154);
+  bool flag = buildRequest(dataObj, FirebaseMethod::PUT, FirebaseDataType::TIMESTAMP, path.c_str(), tmp, false, "", "");
+  delete[] tmp;
+  return flag;
 }
 
 bool FirebaseESP32::updateNode(FirebaseData &dataObj, const String path, FirebaseJson &json)
@@ -1995,8 +1996,8 @@ bool FirebaseESP32::beginStream(FirebaseData &dataObj, const String &path)
 
 bool FirebaseESP32::readStream(FirebaseData &dataObj)
 {
- if (!reconnect(dataObj))
-        return false;
+  if (!reconnect(dataObj))
+    return false;
 
   return getServerStreamResponse(dataObj);
 }
@@ -2032,7 +2033,6 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
 
   if (dataObj._pause)
     return 0;
-    
 
   if (!apConnected(dataObj))
     return HTTPC_ERROR_CONNECTION_LOST;
@@ -2612,13 +2612,33 @@ bool FirebaseESP32::sendRequest(FirebaseData &dataObj, uint8_t storageType, cons
   return flag;
 }
 
+bool FirebaseESP32::clientAvilable(FirebaseData &dataObj, bool available)
+{
+  if (!reconnect(dataObj))
+  {
+    dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
+    return false;
+  }
+
+  if (!dataObj._net.getStreamPtr())
+  {
+    dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
+    return false;
+  }
+
+  if (available)
+    return dataObj._net.getStreamPtr()->connected() && dataObj._net.getStreamPtr()->available();
+  else
+    return dataObj._net.getStreamPtr()->connected() && !dataObj._net.getStreamPtr()->available();
+}
+
 bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
 {
 
   if (dataObj._pause)
     return true;
 
-  if (!apConnected(dataObj))
+  if (!reconnect(dataObj))
   {
     dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
     return false;
@@ -2657,31 +2677,31 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
   unsigned long dataTime = millis();
 
   if (!dataObj._isStream)
-    while (dataObj._net.getStreamPtr()->connected() && !dataObj._net.getStreamPtr()->available() && millis() - dataTime < dataObj._net.tcpTimeout)
+    while (clientAvilable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout)
     {
       if (!apConnected(dataObj))
-      {
-        dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
         return false;
-      }
       delay(1);
     }
 
   dataTime = millis();
 
-  if (dataObj._net.getStreamPtr()->connected() && !dataObj._net.getStreamPtr()->available() && !dataObj._isStream)
+  if (clientAvilable(dataObj, false) && !dataObj._isStream)
     dataObj._httpCode = HTTPC_ERROR_READ_TIMEOUT;
 
-  if (dataObj._net.getStreamPtr()->connected() && dataObj._net.getStreamPtr()->available())
+  if (clientAvilable(dataObj, true))
   {
 
-    while (dataObj._net.getStreamPtr()->available())
+    while (clientAvilable(dataObj, true))
     {
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
 
-      if (!apConnected(dataObj))
+      if (!reconnect(dataObj))
+      {
+        dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
         return false;
+      }
 
       res = dataObj._net.getStreamPtr()->read();
 
@@ -3105,7 +3125,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
 
   unsigned long dataTime = millis();
 
-  while (dataObj._net.getStreamPtr()->connected() && !dataObj._net.getStreamPtr()->available() && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
+  while (clientAvilable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
   {
 
     if (!apConnected(dataObj))
@@ -3114,10 +3134,10 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
   }
 
   dataTime = millis();
-  if (dataObj._net.getStreamPtr()->connected() && dataObj._net.getStreamPtr()->available())
+  if (clientAvilable(dataObj, true))
   {
 
-    while (dataObj._net.getStreamPtr()->available() || count > 0)
+    while (clientAvilable(dataObj, true) || count > 0)
     {
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
@@ -3319,7 +3339,7 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
   unsigned long dataTime = millis();
 
   if (!dataObj._isStream)
-    while (dataObj._net.getStreamPtr()->connected() && !dataObj._net.getStreamPtr()->available() && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
+    while (clientAvilable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
     {
       if (!apConnected(dataObj))
         return false;
@@ -3328,10 +3348,10 @@ bool FirebaseESP32::getUploadResponse(FirebaseData &dataObj)
 
   dataTime = millis();
 
-  if (dataObj._net.getStreamPtr()->connected() && dataObj._net.getStreamPtr()->available())
+  if (clientAvilable(dataObj, true))
   {
 
-    while (dataObj._net.getStreamPtr()->available())
+    while (clientAvilable(dataObj, true))
     {
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
@@ -3449,6 +3469,12 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
   if (dataObj._streamStop)
     return true;
 
+  if (!reconnect(dataObj))
+  {
+    dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
+    return false;
+  }
+
   unsigned long ml = millis();
   if (dataObj._streamMillis == 0)
     dataObj._streamMillis = ml;
@@ -3477,7 +3503,10 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
     std::string path = "";
 
     if (!reconnect(dataObj))
-            return false;
+    {
+      dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
+      return false;
+    }
 
     //Stream timeout
     if (dataObj._dataMillis > 0 && millis() - dataObj._dataMillis > KEEP_ALIVE_TIMEOUT)
@@ -3485,9 +3514,6 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
       dataObj._dataMillis = millis();
       dataObj._isStreamTimeout = true;
       path = dataObj._streamPath;
-
-      if (!reconnect(dataObj))
-        return false;
 
       if (dataObj._firebaseCall || dataObj._fcmCall)
         return false;
@@ -5565,7 +5591,6 @@ std::string FirebaseData::getDataType(uint8_t type)
   default:
     return std::string();
   }
-  
 }
 
 std::string FirebaseData::getMethod(uint8_t method)
