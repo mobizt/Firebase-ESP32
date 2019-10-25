@@ -11,9 +11,12 @@ FirebaseData	KEYWORD1
 StreamData  KEYWORD1
 QueryFilter	KEYWORD1
 QueueManager	KEYWORD1
-HTTPClientESP32Ex	KEYWORD1
 QueueInfo	KEYWORD1
 fcm	KEYWORD1
+FirebaseJson	KEYWORD1
+FirebaseJsonArray	KEYWORD1
+FirebaseJsonData  KEYWORD1
+
 
 ###############################################
 # Methods and Functions for Firebase (KEYWORD2)
@@ -172,3 +175,42 @@ FirebaseDataType	LITERAL1
 FirebaseMethod	LITERAL1
 QueueStorageType	LITERAL1
 QueueItem	LITERAL1
+
+
+###########################################################
+# Methods for FirebaseJSON and FirebaseJsonArray (KEYWORD2)
+###########################################################
+
+clear   KEYWORD2
+setJsonData KEYWORD2
+add KEYWORD2
+toString    KEYWORD2
+get KEYWORD2
+parse   KEYWORD2
+iteratorBegin  KEYWORD2
+iteratorEnd  KEYWORD2
+iteratorGet KEYWORD2
+set KEYWORD2
+remove  KEYWORD2
+size    KEYWORD2
+stringValue KEYWORD2
+intValue    KEYWORD2
+doubleValue KEYWORD2
+boolValue   KEYWORD2
+type    KEYWORD2
+typeNum KEYWORD2
+success KEYWORD2
+getArray    KEYWORD2
+getJson KEYWORD2
+
+######################################
+# Constants (LITERAL1)
+#######################################
+JSON_UNDEFINED  LITERAL1
+JSON_OBJECT  LITERAL1
+JSON_ARRAY  LITERAL1
+JSON_STRING  LITERAL1
+JSON_INT  LITERAL1
+JSON_DOUBLE  LITERAL1
+JSON_BOOL  LITERAL1
+JSON_NULL  LITERAL1
