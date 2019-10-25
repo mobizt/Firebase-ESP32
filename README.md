@@ -875,6 +875,8 @@ else
 ```
 
 
+
+
 ## Parse, Create and Edit JSON Objects
 
 
@@ -951,11 +953,11 @@ FirebaseJson json;
 //Add key1 with value 100 to JSON object
 json.add("name", "Living Room");
 
-//Add temp with value 80 and unit with value Celcius to JSON object
+//Add temp1 with value 120 and temp1 with 40 to JSON object
 //Note: temp2 is not the child of temp1 as in previous version.
 json.add("temp1", 120).add("temp2", 40);
 
-//To add nested child contents directly
+//Add nested child contents directly
 json.set("unit/temp1", "Farenheit");
 json.set("unit/temp2", "Celcius");
 
@@ -979,12 +981,12 @@ This is the result of above code
 */
 
 //To set array to the above JSON using FirebaseJson directly
-//Set (add) array indexes 0,1,2,5,7 under temp1
+//Set (add) array indexes 0,1,2,5,7 under temp1, the original value will be replaced with new one.
 json.set("temp1/[0]", 47);
 json.set("temp1/[1]", 28);
 json.set("temp1/[2]", 34);
-json.set("temp1/[5]", 23);
-json.set("temp1/[7]", 25);
+json.set("temp1/[5]", 23); //null will be created at array index 3,4 due to it's not yet assigned
+json.set("temp1/[7]", 25); //null will be created at array index 6
 
 //Print out as prettify string
 json.toString(jsonStr, true);
@@ -1001,15 +1003,16 @@ The result of above code
         34,
         null,
         null,
-        23,
+         23,
         null,
         25
-    ],
+     ],
     "temp2": 40,
     "unit": {
+        "temp1": "Farenheit",
         "temp2": "Celcius"
     }
-}
+ }
 */
 
 //Try to remove temp1 array at index 1
@@ -1026,15 +1029,15 @@ Serial.println(jsonStr);
 The result of above code
 
 {
-    "name": "Living Room",
+     "name": "Living Room",
     "temp1": [
-        47,
-        34,
-        null,
-        null,
-        23,
-        null,
-        25
+         47,
+         34,
+         null,
+         null,
+         23,
+         null,
+         25
     ],
     "unit": {
         "temp1": "Farenheit",
@@ -1043,23 +1046,65 @@ The result of above code
 }
 */
 
-//Now parse/read the contents from specific node
-
+//Now parse/read the contents from specific node unit/temp2
+//FirebaseJsonData is required to keep the parse results which can be access later
 FirebaseJsonData jsonData;
 
 json.get(jsonData, "unit/temp2");
 
-if(jsonData.success)
+if (jsonData.success)
 {
-  //Type of parsed data
+  //Print tType of parsed data e.g string, int, double, bool, object, array, null and undefined
   Serial.println(jsonData.type);
-  //Its value
+  //Print its content e.g.string, int, double, bool whereas object, array and null also can access as string
   Serial.println(jsonData.stringValue);
   //Serial.println(jsonData.intValue);
-  //Serial.println(jsonData.boolValue);
+  /Serial.println(jsonData.boolValue);
   //Serial.println(jsonData.doubleValue);
-
 }
+
+//The above code will show
+/*
+string
+Celcius
+*/
+
+//To get the array temp from FirebaseJson
+
+json.get(jsonData, "temp1");
+
+//Prepare FirebaseJsonArray to take the array from FirebaseJson
+FirebaseJsonArray myArr;
+
+//Get array data
+jsonData.getArray(myArr);
+
+//Call get with FirebaseJsonData to parse the array at defined index i
+for (size_t i = 0; i < myArr.size(); i++)
+{
+  //jsonData now used as temporary object to get the parse results
+  myArr.get(jsonData, i);
+
+  //Print its value
+  Serial.print("Array index: ");
+  Serial.print(i);
+  Serial.print(", type: ");
+  Serial.print(jsonData.type);
+  Serial.print(", value: ");
+  Serial.println(jsonData.stringValue);
+}
+
+/*
+The result of above code
+Array index: 0, type: int, value: 47
+Array index: 1, type: int, value: 34
+Array index: 2, type: null, value: null
+Array index: 3, type: null, value: null
+Array index: 4, type: int, value: 23
+Array index: 5, type: null, value: null
+Array index: 6, type: int, value: 25
+*/
+ 
 
 
 
@@ -1080,10 +1125,12 @@ arr.add("coconut");
 
 //Change the array contents
 arr.set("[1]/food", "salad");
-arr.set("[2]", "apple");
+arr.set("[1]/sweet", "cake");
+arr.set("[1]/appetizer", "snack");
+arr.set("[2]", "apple"); // or arr.set(2, "apple");
 arr.set("[4]/[0]/[1]/amount", 20);
 
-//To print out as prettify string
+//Print out array as prettify string
 String arrStr;
 arr.toString(arrStr, true);
 Serial.println(arrStr);
@@ -1094,7 +1141,9 @@ This is the result of above code
 [
     "banana",
     {
-        "food": "salad"
+        "food": "salad",
+        "sweet": "cake",
+        "appetizer": "snack"
     },
     "apple",
     null,
@@ -1109,7 +1158,7 @@ This is the result of above code
 ]
 */
 
-//Remove array content
+//Remove array content at /4/0/1/amount
 arr.remove("[4]/[0]/[1]/amount");
 
 //Print out as prettify string
@@ -1122,7 +1171,9 @@ The result of above code
 [
     "banana",
     {
-        "food": "salad"
+        "food": "salad",
+        "sweet": "cake",
+        "appetizer": "snack"
     },
     "apple",
     null,
@@ -1132,6 +1183,7 @@ The result of above code
         ]
     ]
 ]
+
 */
 
 //Now parse/read the array contents at some index
@@ -1151,6 +1203,57 @@ if(jsonData.success)
   //Serial.println(jsonData.doubleValue);
 
 }
+
+//The above code will show
+/*
+string
+salad
+*/
+
+
+//To get the JSON object at array index 1 from FirebaseJsonArray
+arr.get(jsonData, "[1]");// or arr.get(jsonData, 1);
+
+//Prepare FirebaseJson to take the JSON object from FirebaseJsonArray
+FirebaseJson myJson;
+
+//Get FirebaseJson data
+jsonData.getJSON(myJson);
+
+//Parse the JSON object as list
+//Get the number of items
+size_t len = myJson.iteratorBegin();
+String key, value = "";
+int type = 0;
+for (size_t i = 0; i < len; i++)
+{
+  //Get the item at index i, whereas key and value are the returned data
+  myJson.iteratorGet(i, type, key, value);
+  //Print the data
+  Serial.print(i);
+  Serial.print(", ");
+  Serial.print("Type: ");
+  Serial.print(type == JSON_OBJECT ? "object" : "array");
+  if (type == JSON_OBJECT)
+  {
+    Serial.print(", Key: ");
+    Serial.print(key);
+  }
+  Serial.print(", Value: ");
+  Serial.println(value);
+}
+//Clear all list to free memory
+myJson.iteratorEnd();
+
+
+/*
+The result of above code
+
+0, Type: object, Key: food, Value: salad
+1, Type: object, Key: sweet, Value: cake
+2, Type: object, Key: appetizer, Value: snack
+
+*/
 
 
 ```
