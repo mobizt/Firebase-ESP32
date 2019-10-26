@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.2.2
+ * FirebaseJson, version 2.2.3
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using relative path.
  * 
- * October 25, 2019
+ * October 26, 2019
  * 
  * Features
  * - None recursive operations
@@ -39,10 +39,14 @@
 
 #include "FirebaseJson.h"
 
-FirebaseJson::FirebaseJson(){};
+FirebaseJson::FirebaseJson()
+{
+    _init();
+}
 
 FirebaseJson::FirebaseJson(std::string &data)
 {
+    _init();
     _setJsonData(data);
 }
 
@@ -52,6 +56,108 @@ FirebaseJson::~FirebaseJson()
     _parser.reset();
     _parser.release();
     _parser = nullptr;
+    _finalize();
+}
+
+void FirebaseJson::_init()
+{
+    _qt = new char[3];
+    _tab = new char[6];
+    _brk1 = new char[3];
+    _brk2 = new char[3];
+    _brk3 = new char[3];
+    _brk4 = new char[3];
+    _cm = new char[3];
+    _nl = new char[3];
+    _nll = new char[6];
+    _pr = new char[4];
+    _pr2 = new char[3];
+    _pd = new char[4];
+    _pf = new char[4];
+    _cm = new char[3];
+    _fls = new char[7];
+    _tr = new char[6];
+    _string = new char[7];
+    _int = new char[5];
+    _dbl = new char[8];
+    _bl = new char[6];
+    _obj = new char[8];
+    _arry = new char[7];
+    _undef = new char[11];
+    _dot = new char[3];
+    memset(_qt, 0, 3);
+    memset(_brk1, 0, 3);
+    memset(_brk2, 0, 3);
+    memset(_brk3, 0, 3);
+    memset(_brk4, 0, 3);
+    memset(_cm, 0, 3);
+    memset(_pr2, 0, 3);
+    memset(_tab, 0, 6);
+    memset(_nl, 0, 3);
+    memset(_nll, 0, 6);
+    memset(_pr, 0, 4);
+    memset(_pd, 0, 4);
+    memset(_pf, 0, 4);
+    memset(_fls, 0, 7);
+    memset(_tr, 0, 6);
+    memset(_string, 0, 7);
+    memset(_int, 0, 5);
+    memset(_dbl, 0, 8);
+    memset(_bl, 0, 6);
+    memset(_obj, 0, 8);
+    memset(_arry, 0, 7);
+    memset(_undef, 0, 11);
+    memset(_dot, 0, 3);
+    strcpy_P(_qt, FirebaseJson_STR_2);
+    strcpy_P(_brk1, FirebaseJson_STR_8);
+    strcpy_P(_brk2, FirebaseJson_STR_9);
+    strcpy_P(_brk3, FirebaseJson_STR_10);
+    strcpy_P(_brk4, FirebaseJson_STR_11);
+    strcpy_P(_cm, FirebaseJson_STR_1);
+    strcpy_P(_pr2, FirebaseJson_STR_3);
+    strcpy_P(_tab, FirebaseJson_STR_22);
+    strcpy_P(_nl, FirebaseJson_STR_24);
+    strcpy_P(_nll, FirebaseJson_STR_18);
+    strcpy_P(_pr, FirebaseJson_STR_25);
+    strcpy_P(_pd, FirebaseJson_STR_4);
+    strcpy_P(_pf, FirebaseJson_STR_5);
+    strcpy_P(_fls, FirebaseJson_STR_6);
+    strcpy_P(_tr, FirebaseJson_STR_7);
+    strcpy_P(_string, FirebaseJson_STR_12);
+    strcpy_P(_int, FirebaseJson_STR_13);
+    strcpy_P(_dbl, FirebaseJson_STR_14);
+    strcpy_P(_bl, FirebaseJson_STR_15);
+    strcpy_P(_obj, FirebaseJson_STR_16);
+    strcpy_P(_arry, FirebaseJson_STR_17);
+    strcpy_P(_undef, FirebaseJson_STR_19);
+    strcpy_P(_dot, FirebaseJson_STR_20);
+}
+
+void FirebaseJson::_finalize()
+{
+    delete[] _qt;
+    delete[] _brk1;
+    delete[] _brk2;
+    delete[] _brk3;
+    delete[] _brk4;
+    delete[] _cm;
+    delete[] _pr2;
+    delete[] _tab;
+    delete[] _nl;
+    delete[] _nll;
+    delete[] _pr;
+    delete[] _pd;
+    delete[] _pf;
+    delete[] _fls;
+    delete[] _tr;
+    delete[] _string;
+    delete[] _int;
+    delete[] _dbl;
+    delete[] _bl;
+    delete[] _obj;
+    delete[] _arry;
+    delete[] _undef;
+    delete[] _dot;
 }
 
 FirebaseJson &FirebaseJson::_setJsonData(std::string &data)
@@ -63,18 +169,12 @@ FirebaseJson &FirebaseJson::setJsonData(const String &data)
 {
     if (data.length() > 0)
     {
-        char *tmp = new char[10];
-        memset(tmp, 0, 10);
-        strcpy_P(tmp, FirebaseJson_STR_8);
-        int p1 = _strpos(data.c_str(), tmp, 0);
-        memset(tmp, 0, 10);
-        strcpy_P(tmp, FirebaseJson_STR_9);
-        int p2 = _rstrpos(data.c_str(), tmp, data.length() - 1);
+        int p1 = _strpos(data.c_str(), _brk1, 0);
+        int p2 = _rstrpos(data.c_str(), _brk2, data.length() - 1);
         if (p1 != -1)
             p1 += 1;
         if (p1 != -1 && p2 != -1)
             _rawbuf = data.substring(p1, p2).c_str();
-        delete[] tmp;
     }
     else
         _rawbuf.clear();
@@ -173,12 +273,8 @@ void FirebaseJson::_addInt(const std::string &key, int value)
     size_t bufSize = 50;
     char *buf = new char[bufSize];
     memset(buf, 0, bufSize);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_4);
-    sprintf(buf, b, value);
+    sprintf(buf, _pd, value);
     _add(key.c_str(), buf, key.length(), 60, false, true);
-    delete[] b;
     delete[] buf;
 }
 
@@ -187,36 +283,23 @@ void FirebaseJson::_addDouble(const std::string &key, double value)
     size_t bufSize = 50;
     char *buf = new char[bufSize];
     memset(buf, 0, bufSize);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_5);
-    sprintf(buf, b, value);
+    sprintf(buf, _pf, value);
     _add(key.c_str(), buf, key.length(), 60, false, true);
-    delete[] b;
     delete[] buf;
 }
 
 void FirebaseJson::_addBool(const std::string &key, bool value)
 {
-    size_t bufSize = 20;
-    char *buf = new char[bufSize];
-    memset(buf, 0, bufSize);
     if (value)
-        strcat_P(buf, FirebaseJson_STR_7);
+        _add(key.c_str(), _tr, key.length(), 6, false, true);
     else
-        strcat_P(buf, FirebaseJson_STR_6);
-    _add(key.c_str(), buf, key.length(), bufSize, false, true);
-    delete[] buf;
+        _add(key.c_str(), _fls, key.length(), 7, false, true);
+
 }
 
 void FirebaseJson::_addNull(const std::string &key)
 {
-    size_t bufSize = 20;
-    char *buf = new char[bufSize];
-    memset(buf, 0, bufSize);
-    strcat_P(buf, FirebaseJson_STR_18);
-    _add(key.c_str(), buf, key.length(), bufSize, false, true);
-    delete[] buf;
+    _add(key.c_str(), _nll, key.length(), 6, false, true);
 }
 
 void FirebaseJson::_addJson(const std::string &key, FirebaseJson *json)
@@ -254,16 +337,16 @@ void FirebaseJson::_toStdString(std::string &s, bool isJson)
     char *buf = new char[bufSize];
     memset(buf, 0, bufSize);
     if (isJson)
-        strcat_P(buf, FirebaseJson_STR_8);
+        strcat(buf, _brk1);
     else
-        strcat_P(buf, FirebaseJson_STR_10);
+        strcat(buf, _brk3);
     s += buf;
     s += _rawbuf;
     memset(buf, 0, bufSize);
     if (isJson)
-        strcat_P(buf, FirebaseJson_STR_9);
+        strcat(buf, _brk2);
     else
-        strcat_P(buf, FirebaseJson_STR_11);
+        strcat(buf, _brk4);
     s += buf;
     delete[] buf;
 }
@@ -277,16 +360,16 @@ FirebaseJson &FirebaseJson::_add(const char *key, const char *value, size_t klen
         strcpy_P(buf, FirebaseJson_STR_1);
     if (isJson)
     {
-        strcat_P(buf, FirebaseJson_STR_2);
+        strcat(buf, _qt);
         strcat(buf, key);
-        strcat_P(buf, FirebaseJson_STR_2);
-        strcat_P(buf, FirebaseJson_STR_3);
+        strcat(buf, _qt);
+        strcat_P(buf, _pr2);
     }
     if (isString)
-        strcat_P(buf, FirebaseJson_STR_2);
+        strcat(buf, _qt);
     strcat(buf, value);
     if (isString)
-        strcat_P(buf, FirebaseJson_STR_2);
+        strcat(buf, _qt);
     _rawbuf += buf;
     delete[] buf;
     return *this;
@@ -336,39 +419,6 @@ size_t FirebaseJson::iteratorBegin(const char *data)
     _toStdString(s);
     int bufLen = s.length() + 20;
     char *buf = new char[bufLen];
-    char *qt = new char[3];
-    char *tab = new char[6];
-    char *brk1 = new char[3];
-    char *brk2 = new char[3];
-    char *brk3 = new char[3];
-    char *brk4 = new char[3];
-    char *cm = new char[3];
-    char *nl = new char[3];
-    char *nll = new char[6];
-    char *pr = new char[4];
-    char *pr2 = new char[3];
-    memset(qt, 0, 3);
-    memset(brk1, 0, 3);
-    memset(brk2, 0, 3);
-    memset(brk3, 0, 3);
-    memset(brk4, 0, 3);
-    memset(cm, 0, 3);
-    memset(pr2, 0, 3);
-    memset(tab, 0, 6);
-    memset(nl, 0, 3);
-    memset(nll, 0, 6);
-    memset(pr, 0, 4);
-    strcpy_P(qt, FirebaseJson_STR_2);
-    strcpy_P(brk1, FirebaseJson_STR_8);
-    strcpy_P(brk2, FirebaseJson_STR_9);
-    strcpy_P(brk3, FirebaseJson_STR_10);
-    strcpy_P(brk4, FirebaseJson_STR_11);
-    strcpy_P(cm, FirebaseJson_STR_23);
-    strcpy_P(pr2, FirebaseJson_STR_3);
-    strcpy_P(tab, FirebaseJson_STR_22);
-    strcpy_P(nl, FirebaseJson_STR_24);
-    strcpy_P(nll, FirebaseJson_STR_18);
-    strcpy_P(pr, FirebaseJson_STR_25);
     char *nbuf = new char[2];
     memset(nbuf, 0, 2);
     memset(buf, 0, bufLen);
@@ -378,20 +428,9 @@ size_t FirebaseJson::iteratorBegin(const char *data)
     _collectTk = true;
     _eltk.clear();
     for (uint16_t i = 0; i < _tokenCount; i++)
-        _parseToken(i, buf, depth, qt, tab, brk1, brk2, brk3, brk4, cm, nl, nll, pr, pr2, nbuf, -2, PRINT_MODE_NONE);
+        _parseToken(i, buf, depth, nbuf, -2, PRINT_MODE_NONE);
     _el.clear();
     delete[] buf;
-    delete[] qt;
-    delete[] tab;
-    delete[] brk1;
-    delete[] brk2;
-    delete[] brk3;
-    delete[] brk4;
-    delete[] cm;
-    delete[] nl;
-    delete[] nll;
-    delete[] pr;
-    delete[] pr2;
     delete[] nbuf;
     return _eltk.size();
 }
@@ -464,18 +503,18 @@ void FirebaseJson::_jsmn_parse(bool collectTk)
     _collectTk = collectTk;
     _eltk.clear();
     int cnt = jsmn_parse(_parser.get(), buf, bufLen, (jsmntok_t *)NULL, 0);
-    if(cnt < 0)
+    if (cnt < 0)
     {
-        int a =0;
-        int b =0;
-        for(size_t i=0;i< bufLen;i++)
+        int a = 0;
+        int b = 0;
+        for (int i = 0; i < bufLen; i++)
         {
-            if(buf[i]==',')
+            if (buf[i] == ',')
                 a++;
-            else if (buf[i]=='[' || buf[i]=='{')
+            else if (buf[i] == '[' || buf[i] == '{')
                 b++;
         }
-        cnt = 10 + (2 * (a+1)) + b;
+        cnt = 10 + (2 * (a + 1)) + b;
     }
     _tokens = std::unique_ptr<jsmntok_t>(new jsmntok_t[cnt + 10]);
     jsmn_init(_parser.get());
@@ -563,7 +602,7 @@ void FirebaseJson::_getTkIndex(int depth, tk_index_t &tk)
     }
 }
 
-bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode, char *qt, char *cm, char *pr, char *pr2, char *nl, char *nll, char *tab, char *brk2, char *brk4, bool advanceCount)
+bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode, bool advanceCount)
 {
     int len = -1;
     bool skip = false;
@@ -593,15 +632,15 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                         if (len > 0)
                         {
                             if (ref)
-                                _jsonData._dbuf += cm;
+                                _jsonData._dbuf += _cm;
                             if (_el[i].type == JSMN_OBJECT)
                             {
                                 if (printMode == PRINT_MODE_PRETTY)
-                                    _jsonData._dbuf += nl;
+                                    _jsonData._dbuf += _nl;
                                 if (printMode == PRINT_MODE_PRETTY && !ref)
                                 {
                                     for (int j = 0; j < depth + 1; j++)
-                                        _jsonData._dbuf += tab;
+                                        _jsonData._dbuf += _tab;
                                 }
                             }
                         }
@@ -614,24 +653,24 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                                 if (printMode == PRINT_MODE_PRETTY)
                                 {
                                     for (int j = 0; j < depth + 2; j++)
-                                        _jsonData._dbuf += tab;
+                                        _jsonData._dbuf += _tab;
                                 }
-                                _jsonData._dbuf += qt;
+                                _jsonData._dbuf += _qt;
                                 _jsonData._dbuf += searchKey;
-                                _jsonData._dbuf += qt;
+                                _jsonData._dbuf += _qt;
                                 if (printMode == PRINT_MODE_PRETTY)
-                                    _jsonData._dbuf += pr;
+                                    _jsonData._dbuf += _pr;
                                 else
-                                    _jsonData._dbuf += pr2;
+                                    _jsonData._dbuf += _pr2;
                                 if (_parseCompleted == (int)_pathTk.size())
                                     _jsonData._dbuf += replace;
                                 else
                                     _insertChilds(replace, printMode);
                                 if (printMode == PRINT_MODE_PRETTY)
                                 {
-                                    _jsonData._dbuf += nl;
+                                    _jsonData._dbuf += _nl;
                                     for (int j = 0; j < depth + 1; j++)
-                                        _jsonData._dbuf += tab;
+                                        _jsonData._dbuf += _tab;
                                 }
                             }
                             else
@@ -640,9 +679,9 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                                 {
                                     if (printMode == PRINT_MODE_PRETTY)
                                     {
-                                        _jsonData._dbuf += nl;
+                                        _jsonData._dbuf += _nl;
                                         for (int j = 0; j < depth + 2; j++)
-                                            _jsonData._dbuf += tab;
+                                            _jsonData._dbuf += _tab;
                                     }
                                     if (k == searchIndex - 1)
                                     {
@@ -653,8 +692,8 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                                     }
                                     else
                                     {
-                                        _jsonData._dbuf += nll;
-                                        _jsonData._dbuf += cm;
+                                        _jsonData._dbuf += _nll;
+                                        _jsonData._dbuf += _cm;
                                     }
                                 }
                             }
@@ -663,19 +702,19 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                                 _parseCompleted = _pathTk.size();
                         }
                         if (_el[i].type == JSMN_OBJECT)
-                            _jsonData._dbuf += brk2;
+                            _jsonData._dbuf += _brk2;
                         else
                         {
                             if (len > 0)
                             {
                                 if (printMode == PRINT_MODE_PRETTY)
                                 {
-                                    _jsonData._dbuf += nl;
+                                    _jsonData._dbuf += _nl;
                                     for (int j = 0; j < depth + 1; j++)
-                                        _jsonData._dbuf += tab;
+                                        _jsonData._dbuf += _tab;
                                 }
                             }
-                            _jsonData._dbuf += brk4;
+                            _jsonData._dbuf += _brk4;
                         }
                     }
                     return true;
@@ -687,7 +726,7 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
     return false;
 }
 
-bool FirebaseJson::_updateTkIndex2(std::string &str, uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode, char *qt, char *cm, char *pr, char *pr2, char *nl, char *nll, char *tab, char *brk2, char *brk4)
+bool FirebaseJson::_updateTkIndex2(std::string &str, uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode)
 {
     int len = -1;
     bool skip = false;
@@ -717,13 +756,13 @@ bool FirebaseJson::_updateTkIndex2(std::string &str, uint16_t index, int &depth,
                         if (len > 0)
                         {
                             if (printMode == PRINT_MODE_PRETTY)
-                                str += nl;
+                                str += _nl;
                             if (_el[i].type == JSMN_OBJECT)
                             {
                                 if (printMode == PRINT_MODE_PRETTY && !ref)
                                 {
                                     for (int j = 0; j < depth + 1; j++)
-                                        str += tab;
+                                        str += _tab;
                                 }
                             }
                             else
@@ -731,16 +770,16 @@ bool FirebaseJson::_updateTkIndex2(std::string &str, uint16_t index, int &depth,
                                 if (printMode == PRINT_MODE_PRETTY)
                                 {
                                     for (int j = 0; j < depth + 1; j++)
-                                        str += tab;
+                                        str += _tab;
                                 }
                             }
                         }
                         if (ref)
                             _setRef(depth, false);
                         if (_el[i].type == JSMN_OBJECT)
-                            str += brk2;
+                            str += _brk2;
                         else
-                            str += brk4;
+                            str += _brk4;
                     }
                     return true;
                 }
@@ -751,7 +790,7 @@ bool FirebaseJson::_updateTkIndex2(std::string &str, uint16_t index, int &depth,
     return false;
 }
 
-bool FirebaseJson::_updateTkIndex3(uint16_t index, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode, char *qt, char *cm, char *pr, char *pr2, char *nl, char *nll, char *tab, char *brk2, char *brk4)
+bool FirebaseJson::_updateTkIndex3(uint16_t index, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode)
 {
     int len = -1;
     bool skip = false;
@@ -783,13 +822,13 @@ bool FirebaseJson::_updateTkIndex3(uint16_t index, int &depth, char *searchKey, 
                         if (len > 0)
                         {
                             if (printMode == PRINT_MODE_PRETTY)
-                                _jsonData._dbuf += nl;
+                                _jsonData._dbuf += _nl;
                             if (_el[i].type == JSMN_OBJECT)
                             {
                                 if (printMode == PRINT_MODE_PRETTY && !ref)
                                 {
                                     for (int j = 0; j < depth + 1 - (_skipDepth + 1); j++)
-                                        _jsonData._dbuf += tab;
+                                        _jsonData._dbuf += _tab;
                                 }
                             }
                             else
@@ -797,7 +836,7 @@ bool FirebaseJson::_updateTkIndex3(uint16_t index, int &depth, char *searchKey, 
                                 if (printMode == PRINT_MODE_PRETTY)
                                 {
                                     for (int j = 0; j < depth + 1 - (_skipDepth + 1); j++)
-                                        _jsonData._dbuf += tab;
+                                        _jsonData._dbuf += _tab;
                                 }
                             }
                         }
@@ -805,9 +844,9 @@ bool FirebaseJson::_updateTkIndex3(uint16_t index, int &depth, char *searchKey, 
                             _setRef(depth, false);
 
                         if (_el[i].type == JSMN_OBJECT)
-                            _jsonData._dbuf += brk2;
+                            _jsonData._dbuf += _brk2;
                         else
-                            _jsonData._dbuf += brk4;
+                            _jsonData._dbuf += _brk4;
                     }
                     return true;
                 }
@@ -846,34 +885,17 @@ void FirebaseJson::_insertChilds(char *data, PRINT_MODE printMode)
 
 void FirebaseJson::_addArrNodes(std::string &str, std::string &str2, int index, char *data, PRINT_MODE printMode)
 {
-    char *brk3 = new char[3];
-    char *brk4 = new char[3];
-    char *tab = new char[6];
-    char *nl = new char[3];
-    char *nll = new char[6];
-    char *cm = new char[3];
-    memset(brk3, 0, 3);
-    memset(brk4, 0, 3);
-    memset(tab, 0, 6);
-    memset(nl, 0, 3);
-    memset(nll, 0, 6);
-    memset(cm, 0, 3);
-    strcpy_P(brk3, FirebaseJson_STR_10);
-    strcpy_P(brk4, FirebaseJson_STR_11);
-    strcpy_P(tab, FirebaseJson_STR_22);
-    strcpy_P(nl, FirebaseJson_STR_24);
-    strcpy_P(nll, FirebaseJson_STR_18);
-    strcpy_P(cm, FirebaseJson_STR_23);
+   
     int i = _getArrIndex(index);
-    str += brk3;
+    str += _brk3;
     if (printMode == PRINT_MODE_PRETTY)
-        str += nl;
+        str += _nl;
     for (int k = 0; k <= i; k++)
     {
         if (printMode == PRINT_MODE_PRETTY)
         {
             for (int j = 0; j < index + 1; j++)
-                str += tab;
+                str += _tab;
         }
         if (k == i)
         {
@@ -884,86 +906,52 @@ void FirebaseJson::_addArrNodes(std::string &str, std::string &str2, int index, 
         }
         else
         {
-            str += nll;
-            str += cm;
+            str += _nll;
+            str += _cm;
         }
 
         if (printMode == PRINT_MODE_PRETTY)
-            str += nl;
+            str += _nl;
     }
 
     if (printMode == PRINT_MODE_PRETTY)
     {
         for (int j = 0; j < index; j++)
-            str += tab;
+            str += _tab;
     }
-    str += brk4;
-    delete[] brk3;
-    delete[] brk4;
-    delete[] tab;
-    delete[] nl;
-    delete[] nll;
-    delete[] cm;
+    str += _brk4;
 }
 
 void FirebaseJson::_addObjNodes(std::string &str, std::string &str2, int index, char *data, PRINT_MODE printMode)
 {
-    char *brk1 = new char[3];
-    char *brk2 = new char[3];
-    char *tab = new char[6];
-    char *nl = new char[3];
-    char *qt = new char[3];
-    char *pr = new char[4];
-    char *pr2 = new char[3];
-    memset(brk1, 0, 3);
-    memset(brk2, 0, 3);
-    memset(tab, 0, 6);
-    memset(nl, 0, 3);
-    memset(qt, 0, 3);
-    memset(pr, 0, 4);
-    memset(pr2, 0, 3);
-    strcpy_P(brk1, FirebaseJson_STR_8);
-    strcpy_P(brk2, FirebaseJson_STR_9);
-    strcpy_P(tab, FirebaseJson_STR_22);
-    strcpy_P(nl, FirebaseJson_STR_24);
-    strcpy_P(qt, FirebaseJson_STR_2);
-    strcpy_P(pr, FirebaseJson_STR_25);
-    strcpy_P(pr2, FirebaseJson_STR_3);
-    str += brk1;
+    str += _brk1;
     if (printMode == PRINT_MODE_PRETTY)
     {
-        str += nl;
+        str += _nl;
         for (int j = 0; j < index + 1; j++)
-            str += tab;
+            str += _tab;
     }
-    str += qt;
+    str += _qt;
     str += _pathTk[index].c_str();
-    str += qt;
+    str += _qt;
     if (printMode == PRINT_MODE_PRETTY)
-        str += pr;
+        str += _pr;
     else
-        str += pr2;
+        str += _pr2;
     if (index == (int)_pathTk.size() - 1)
         str += data;
     else
         str += str2;
     if (printMode == PRINT_MODE_PRETTY)
     {
-        str += nl;
+        str += _nl;
         for (int j = 0; j < index; j++)
-            str += tab;
+            str += _tab;
     }
-    str += brk2;
-    delete[] brk1;
-    delete[] brk2;
-    delete[] tab;
-    delete[] nl;
-    delete[] qt;
-    delete[] pr;
-    delete[] pr2;
+    str += _brk2;
 }
 
-void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, char *tab, char *brk1, char *brk2, char *brk3, char *brk4, char *cm, char *nl, char *nll, char *pr, char *pr2, char *searchKey, int searchIndex, PRINT_MODE printMode)
+void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode)
 {
     tk_index_t tk;
     _getTkIndex(depth, tk);
@@ -1002,7 +990,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
                         _TkRefOk = true;
                         char *dat1 = new char[h->end - h->start + 10];
                         memset(dat1, 0, h->end - h->start + 10);
-                        strncpy(dat1, buf + h->start, h->end - h->start);                   
+                        strncpy(dat1, buf + h->start, h->end - h->start);
                         _jsonData.stringValue = dat1;
                         delete[] dat1;
                         _jsonData._type = h->type;
@@ -1064,7 +1052,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
                         h = &_tokens.get()[i + 1];
                         char *dat2 = new char[h->end - h->start + 10];
                         memset(dat2, 0, h->end - h->start + 10);
-                        strncpy(dat2, buf + h->start, h->end - h->start); 
+                        strncpy(dat2, buf + h->start, h->end - h->start);
                         _jsonData.stringValue = dat2;
                         delete[] dat2;
                         _jsonData._type = h->type;
@@ -1116,20 +1104,20 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
             if (!tk.omark && i > 0 && resLen > 0)
             {
                 if (tk.oindex > 0)
-                    _jsonData._dbuf += cm;
+                    _jsonData._dbuf += _cm;
                 if (printMode == PRINT_MODE_PRETTY && h->size >= 0)
-                    _jsonData._dbuf += nl;
+                    _jsonData._dbuf += _nl;
                 if (printMode == PRINT_MODE_PRETTY && h->size >= 0)
                 {
                     for (int j = 0; j < depth - (_skipDepth + 1); j++)
-                        _jsonData._dbuf += tab;
-                    _jsonData._dbuf += tab;
+                        _jsonData._dbuf += _tab;
+                    _jsonData._dbuf += _tab;
                 }
             }
             if (h->type == JSMN_OBJECT)
-                _jsonData._dbuf += brk1;
+                _jsonData._dbuf += _brk1;
             else
-                _jsonData._dbuf += brk3;
+                _jsonData._dbuf += _brk3;
         }
         el_t e;
         e.index = i;
@@ -1147,7 +1135,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
         depth++;
         if (h->size == 0)
         {
-            while (_updateTkIndex3(i, depth, searchKey, searchIndex, printMode, qt, cm, pr, pr2, nl, nll, tab, brk2, brk4))
+            while (_updateTkIndex3(i, depth, searchKey, searchIndex, printMode))
             {
                 delayMicroseconds(1);
             }
@@ -1166,20 +1154,20 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
             if (printMode != PRINT_MODE_NONE && tk.skip && !oskip)
             {
                 if (tk.oindex > 0)
-                    _jsonData._dbuf += cm;
+                    _jsonData._dbuf += _cm;
                 if (printMode == PRINT_MODE_PRETTY)
-                    _jsonData._dbuf += nl;
+                    _jsonData._dbuf += _nl;
                 if (printMode == PRINT_MODE_PRETTY && h->size > 0)
                 {
                     for (int j = 0; j < depth - (_skipDepth + 1); j++)
-                        _jsonData._dbuf += tab;
-                    _jsonData._dbuf += tab;
+                        _jsonData._dbuf += _tab;
+                    _jsonData._dbuf += _tab;
                 }
                 _jsonData._dbuf += tmp;
                 if (printMode == PRINT_MODE_PRETTY)
-                    _jsonData._dbuf += pr;
+                    _jsonData._dbuf += _pr;
                 else
-                    _jsonData._dbuf += pr2;
+                    _jsonData._dbuf += _pr2;
             }
             if (_collectTk)
             {
@@ -1206,7 +1194,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
                     _jsonData._dbuf += tmp;
                 }
                 i++;
-                while (_updateTkIndex3(i, depth, searchKey, searchIndex, printMode, qt, cm, pr, pr2, nl, nll, tab, brk2, brk4))
+                while (_updateTkIndex3(i, depth, searchKey, searchIndex, printMode))
                 {
                     delayMicroseconds(1);
                 }
@@ -1226,20 +1214,20 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
             {
                 if (tk.oindex > 0 && resLen > 0)
                 {
-                    _jsonData._dbuf += cm;
+                    _jsonData._dbuf += _cm;
                 }
                 if (printMode == PRINT_MODE_PRETTY && resLen > 0)
-                    _jsonData._dbuf += nl;
+                    _jsonData._dbuf += _nl;
 
                 if (printMode == PRINT_MODE_PRETTY && tk.olen > 0 && resLen > 0)
                 {
                     for (int j = 0; j < depth - (_skipDepth + 1); j++)
-                        _jsonData._dbuf += tab;
-                    _jsonData._dbuf += tab;
+                        _jsonData._dbuf += _tab;
+                    _jsonData._dbuf += _tab;
                 }
                 _jsonData._dbuf += tmp;
             }
-            while (_updateTkIndex3(i, depth, searchKey, searchIndex, printMode, qt, cm, pr, pr2, nl, nll, tab, brk2, brk4))
+            while (_updateTkIndex3(i, depth, searchKey, searchIndex, printMode))
             {
                 delayMicroseconds(1);
             }
@@ -1260,7 +1248,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *qt, cha
     _refToken = -1;
 }
 
-void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *qt, char *tab, char *brk1, char *brk2, char *brk3, char *brk4, char *cm, char *nl, char *nll, char *pr, char *pr2, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex, bool removeTk)
+void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex, bool removeTk)
 {
     if (_tokenMatch)
         return;
@@ -1398,22 +1386,22 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *qt, c
             if (!tk.omark && i > 0)
             {
                 if (tk.oindex > 0)
-                    _jsonData._dbuf += cm;
+                    _jsonData._dbuf += _cm;
                 if (printMode == PRINT_MODE_PRETTY && h->size >= 0)
-                    _jsonData._dbuf += nl;
+                    _jsonData._dbuf += _nl;
                 if (printMode == PRINT_MODE_PRETTY && h->size >= 0)
                 {
                     for (int j = 0; j < depth; j++)
-                        _jsonData._dbuf += tab;
-                    _jsonData._dbuf += tab;
+                        _jsonData._dbuf += _tab;
+                    _jsonData._dbuf += _tab;
                 }
             }
             if (_refToken == -1)
             {
                 if (h->type == JSMN_OBJECT)
-                    _jsonData._dbuf += brk1;
+                    _jsonData._dbuf += _brk1;
                 else
-                    _jsonData._dbuf += brk3;
+                    _jsonData._dbuf += _brk3;
             }
             else if (_refToken != -1 && searchIndex > -1)
                 _jsonData._dbuf += replace;
@@ -1434,7 +1422,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *qt, c
         depth++;
         if (h->size == 0)
         {
-            while (_updateTkIndex(i, depth, searchKey, searchIndex, replace, printMode, qt, cm, pr, pr2, nl, nll, tab, brk2, brk4, removeTk))
+            while (_updateTkIndex(i, depth, searchKey, searchIndex, replace, printMode, removeTk))
             {
                 delayMicroseconds(1);
             }
@@ -1459,20 +1447,20 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *qt, c
             if (printMode != PRINT_MODE_NONE && !tk.skip)
             {
                 if (tk.oindex > 0)
-                    _jsonData._dbuf += cm;
+                    _jsonData._dbuf += _cm;
                 if (printMode == PRINT_MODE_PRETTY)
-                    _jsonData._dbuf += nl;
+                    _jsonData._dbuf += _nl;
                 if (printMode == PRINT_MODE_PRETTY && h->size > 0)
                 {
                     for (int j = 0; j < depth; j++)
-                        _jsonData._dbuf += tab;
-                    _jsonData._dbuf += tab;
+                        _jsonData._dbuf += _tab;
+                    _jsonData._dbuf += _tab;
                 }
                 _jsonData._dbuf += tmp;
                 if (printMode == PRINT_MODE_PRETTY)
-                    _jsonData._dbuf += pr;
+                    _jsonData._dbuf += _pr;
                 else
-                    _jsonData._dbuf += pr2;
+                    _jsonData._dbuf += _pr2;
             }
             memset(tmp, 0, h->end - h->start + 10);
             strncpy(tmp, buf + h->start, h->end - h->start);
@@ -1501,7 +1489,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *qt, c
                         _jsonData._dbuf += tmp;
                 }
                 i++;
-                while (_updateTkIndex(i, depth, searchKey, searchIndex, replace, printMode, qt, cm, pr, pr2, nl, nll, tab, brk2, brk4, removeTk))
+                while (_updateTkIndex(i, depth, searchKey, searchIndex, replace, printMode, removeTk))
                 {
                     delayMicroseconds(1);
                 }
@@ -1519,13 +1507,13 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *qt, c
                     if (printMode != PRINT_MODE_NONE && (depth > 0 || tk.oindex == tk.olen - 1))
                     {
                         if (printMode == PRINT_MODE_PRETTY)
-                            _jsonData._dbuf += nl;
+                            _jsonData._dbuf += _nl;
                         if (printMode == PRINT_MODE_PRETTY)
                         {
                             for (int j = 0; j < depth; j++)
-                                _jsonData._dbuf += tab;
+                                _jsonData._dbuf += _tab;
                         }
-                        _jsonData._dbuf += brk2;
+                        _jsonData._dbuf += _brk2;
                     }
                 }
                 _setMark(depth, true);
@@ -1536,14 +1524,14 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *qt, c
             if (printMode != PRINT_MODE_NONE && !tk.skip)
             {
                 if (tk.oindex > 0)
-                    _jsonData._dbuf += cm;
+                    _jsonData._dbuf += _cm;
                 if (printMode == PRINT_MODE_PRETTY)
-                    _jsonData._dbuf += nl;
+                    _jsonData._dbuf += _nl;
                 if (printMode == PRINT_MODE_PRETTY && tk.olen > 0)
                 {
                     for (int j = 0; j < depth; j++)
-                        _jsonData._dbuf += tab;
-                    _jsonData._dbuf += tab;
+                        _jsonData._dbuf += _tab;
+                    _jsonData._dbuf += _tab;
                 }
 
                 if (_refToken == i + 1)
@@ -1556,7 +1544,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *qt, c
                 else
                     _jsonData._dbuf += tmp;
             }
-            while (_updateTkIndex(i, depth, searchKey, searchIndex, replace, printMode, qt, cm, pr, pr2, nl, nll, tab, brk2, brk4, removeTk))
+            while (_updateTkIndex(i, depth, searchKey, searchIndex, replace, printMode, removeTk))
             {
                 delayMicroseconds(1);
             }
@@ -1570,7 +1558,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *qt, c
     _refToken = -1;
 }
 
-void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *qt, char *tab, char *brk1, char *brk2, char *brk3, char *brk4, char *cm, char *nl, char *nll, char *pr, char *pr2, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex, bool removeTk)
+void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth,  char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex, bool removeTk)
 {
     bool ncm = false;
     tk_index_t tk;
@@ -1597,22 +1585,22 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *qt, ch
             if (!tk.omark && i > 0)
             {
                 if (flag)
-                    _tbuf += cm;
+                    _tbuf += _cm;
                 if (printMode == PRINT_MODE_PRETTY && h->size >= 0)
-                    _tbuf += nl;
+                    _tbuf += _nl;
                 if (printMode == PRINT_MODE_PRETTY && h->size >= 0)
                 {
                     for (int j = 0; j < depth; j++)
-                        _tbuf += tab;
-                    _tbuf += tab;
+                        _tbuf += _tab;
+                    _tbuf += _tab;
                 }
             }
             if (_refToken == -1)
             {
                 if (h->type == JSMN_OBJECT)
-                    _tbuf += brk1;
+                    _tbuf += _brk1;
                 else
-                    _tbuf += brk3;
+                    _tbuf += _brk3;
             }
             else if (_refToken != -1 && searchIndex > -1)
                 _tbuf += replace;
@@ -1633,7 +1621,7 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *qt, ch
         depth++;
         if (h->size == 0)
         {
-            while (_updateTkIndex2(_tbuf, i, depth, searchKey, searchIndex, replace, printMode, qt, cm, pr, pr2, nl, nll, tab, brk2, brk4))
+            while (_updateTkIndex2(_tbuf, i, depth, searchKey, searchIndex, replace, printMode))
             {
                 delayMicroseconds(1);
             }
@@ -1652,20 +1640,20 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *qt, ch
             if (printMode != PRINT_MODE_NONE && !tk.skip)
             {
                 if (flag)
-                    _tbuf += cm;
+                    _tbuf += _cm;
                 if (printMode == PRINT_MODE_PRETTY)
-                    _tbuf += nl;
+                    _tbuf += _nl;
                 if (printMode == PRINT_MODE_PRETTY && h->size > 0)
                 {
                     for (int j = 0; j < depth; j++)
-                        _tbuf += tab;
-                    _tbuf += tab;
+                        _tbuf += _tab;
+                    _tbuf += _tab;
                 }
                 _tbuf += tmp;
                 if (printMode == PRINT_MODE_PRETTY)
-                    _tbuf += pr;
+                    _tbuf += _pr;
                 else
-                    _tbuf += pr2;
+                    _tbuf += _pr2;
             }
             memset(tmp, 0, h->end - h->start + 10);
             strncpy(tmp, buf + h->start, h->end - h->start);
@@ -1685,7 +1673,7 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *qt, ch
                     _tbuf += tmp;
                 }
                 i++;
-                while (_updateTkIndex2(_tbuf, i, depth, searchKey, searchIndex, replace, printMode, qt, cm, pr, pr2, nl, nll, tab, brk2, brk4))
+                while (_updateTkIndex2(_tbuf, i, depth, searchKey, searchIndex, replace, printMode))
                 {
                     delayMicroseconds(1);
                 }
@@ -1700,13 +1688,13 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *qt, ch
                     if (printMode != PRINT_MODE_NONE && (depth > 0 || tk.oindex == tk.olen - 1))
                     {
                         if (printMode == PRINT_MODE_PRETTY)
-                            _tbuf += nl;
+                            _tbuf += _nl;
                         if (printMode == PRINT_MODE_PRETTY)
                         {
                             for (int j = 0; j < depth; j++)
-                                _tbuf += tab;
+                                _tbuf += _tab;
                         }
-                        _tbuf += brk2;
+                        _tbuf += _brk2;
                     }
                 }
                 _setMark(depth, true);
@@ -1717,18 +1705,18 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *qt, ch
             if (printMode != PRINT_MODE_NONE && !tk.skip)
             {
                 if (flag)
-                    _tbuf += cm;
+                    _tbuf += _cm;
                 if (printMode == PRINT_MODE_PRETTY)
-                    _tbuf += nl;
+                    _tbuf += _nl;
                 if (printMode == PRINT_MODE_PRETTY && tk.olen > 0)
                 {
                     for (int j = 0; j < depth; j++)
-                        _tbuf += tab;
-                    _tbuf += tab;
+                        _tbuf += _tab;
+                    _tbuf += _tab;
                 }
                 _tbuf += tmp;
             }
-            while (_updateTkIndex2(_tbuf, i, depth, searchKey, searchIndex, replace, printMode, qt, cm, pr, pr2, nl, nll, tab, brk2, brk4))
+            while (_updateTkIndex2(_tbuf, i, depth, searchKey, searchIndex, replace, printMode))
             {
                 delayMicroseconds(1);
             }
@@ -1787,39 +1775,7 @@ void FirebaseJson::_get(const char *key, int depth, int index)
         memset(buf, 0, bufLen);
         strcpy(buf, s.c_str());
         std::string().swap(s);
-        char *qt = new char[3];
-        char *tab = new char[6];
-        char *brk1 = new char[3];
-        char *brk2 = new char[3];
-        char *brk3 = new char[3];
-        char *brk4 = new char[3];
-        char *cm = new char[3];
-        char *nl = new char[3];
-        char *nll = new char[6];
-        char *pr = new char[4];
-        char *pr2 = new char[3];
-        memset(qt, 0, 3);
-        memset(brk1, 0, 3);
-        memset(brk2, 0, 3);
-        memset(brk3, 0, 3);
-        memset(brk4, 0, 3);
-        memset(cm, 0, 3);
-        memset(pr2, 0, 3);
-        memset(tab, 0, 6);
-        memset(nl, 0, 3);
-        memset(nll, 0, 6);
-        memset(pr, 0, 4);
-        strcpy_P(qt, FirebaseJson_STR_2);
-        strcpy_P(brk1, FirebaseJson_STR_8);
-        strcpy_P(brk2, FirebaseJson_STR_9);
-        strcpy_P(brk3, FirebaseJson_STR_10);
-        strcpy_P(brk4, FirebaseJson_STR_11);
-        strcpy_P(cm, FirebaseJson_STR_23);
-        strcpy_P(pr2, FirebaseJson_STR_3);
-        strcpy_P(tab, FirebaseJson_STR_22);
-        strcpy_P(nl, FirebaseJson_STR_24);
-        strcpy_P(nll, FirebaseJson_STR_18);
-        strcpy_P(pr, FirebaseJson_STR_25);
+
         if (_jsonData.success)
         {
             _jsonData._dbuf.clear();
@@ -1828,23 +1784,12 @@ void FirebaseJson::_get(const char *key, int depth, int index)
                 _nextToken = 0;
             for (uint16_t i = _nextToken; i < _tokenCount; i++)
             {
-                _parseToken(i, buf, _nextDepth, qt, tab, brk1, brk2, brk3, brk4, cm, nl, nll, pr, pr2, (char *)key, index, PRINT_MODE_NONE);
+                _parseToken(i, buf, _nextDepth, (char *)key, index, PRINT_MODE_NONE);
                 if (_tokenMatch)
                     break;
             }
         }
         delete[] buf;
-        delete[] qt;
-        delete[] tab;
-        delete[] brk1;
-        delete[] brk2;
-        delete[] brk3;
-        delete[] brk4;
-        delete[] cm;
-        delete[] nl;
-        delete[] nll;
-        delete[] pr;
-        delete[] pr2;
         if (!_tokenMatch)
         {
             _paresRes = false;
@@ -1965,61 +1910,17 @@ void FirebaseJson::_parse(const char *key, int depth, int index, PRINT_MODE prin
         memset(buf, 0, bufLen);
         strcpy(buf, s.c_str());
         std::string().swap(s);
-        char *qt = new char[3];
-        char *tab = new char[6];
-        char *brk1 = new char[3];
-        char *brk2 = new char[3];
-        char *brk3 = new char[3];
-        char *brk4 = new char[3];
-        char *cm = new char[3];
-        char *nl = new char[3];
-        char *nll = new char[6];
-        char *pr = new char[4];
-        char *pr2 = new char[3];
-        memset(qt, 0, 3);
-        memset(brk1, 0, 3);
-        memset(brk2, 0, 3);
-        memset(brk3, 0, 3);
-        memset(brk4, 0, 3);
-        memset(cm, 0, 3);
-        memset(pr2, 0, 3);
-        memset(tab, 0, 6);
-        memset(nl, 0, 3);
-        memset(nll, 0, 6);
-        memset(pr, 0, 4);
-        strcpy_P(qt, FirebaseJson_STR_2);
-        strcpy_P(brk1, FirebaseJson_STR_8);
-        strcpy_P(brk2, FirebaseJson_STR_9);
-        strcpy_P(brk3, FirebaseJson_STR_10);
-        strcpy_P(brk4, FirebaseJson_STR_11);
-        strcpy_P(cm, FirebaseJson_STR_23);
-        strcpy_P(pr2, FirebaseJson_STR_3);
-        strcpy_P(tab, FirebaseJson_STR_22);
-        strcpy_P(nl, FirebaseJson_STR_24);
-        strcpy_P(nll, FirebaseJson_STR_18);
-        strcpy_P(pr, FirebaseJson_STR_25);
         _parseDepth = depth;
         if (_nextToken < 0)
             _nextToken = 0;
         for (uint16_t i = _nextToken; i < _tokenCount; i++)
         {
-            _parseToken(i, buf, _nextDepth, qt, tab, brk1, brk2, brk3, brk4, cm, nl, nll, pr, pr2, (char *)key, index, printMode);
+            _parseToken(i, buf, _nextDepth, (char *)key, index, printMode);
             if (_tokenMatch)
                 break;
         }
-        
+
         delete[] buf;
-        delete[] qt;
-        delete[] tab;
-        delete[] brk1;
-        delete[] brk2;
-        delete[] brk3;
-        delete[] brk4;
-        delete[] cm;
-        delete[] nl;
-        delete[] nll;
-        delete[] pr;
-        delete[] pr2;
         if (!_tokenMatch)
         {
             _paresRes = false;
@@ -2040,60 +1941,16 @@ void FirebaseJson::_compile(const char *key, int depth, int index, const char *r
         memset(buf, 0, bufLen);
         strcpy(buf, s.c_str());
         std::string().swap(s);
-        char *qt = new char[3];
-        char *tab = new char[6];
-        char *brk1 = new char[3];
-        char *brk2 = new char[3];
-        char *brk3 = new char[3];
-        char *brk4 = new char[3];
-        char *cm = new char[3];
-        char *nl = new char[3];
-        char *nll = new char[6];
-        char *pr = new char[4];
-        char *pr2 = new char[3];
-        memset(qt, 0, 3);
-        memset(brk1, 0, 3);
-        memset(brk2, 0, 3);
-        memset(brk3, 0, 3);
-        memset(brk4, 0, 3);
-        memset(cm, 0, 3);
-        memset(pr2, 0, 3);
-        memset(tab, 0, 6);
-        memset(nl, 0, 3);
-        memset(nll, 0, 6);
-        memset(pr, 0, 4);
-        strcpy_P(qt, FirebaseJson_STR_2);
-        strcpy_P(brk1, FirebaseJson_STR_8);
-        strcpy_P(brk2, FirebaseJson_STR_9);
-        strcpy_P(brk3, FirebaseJson_STR_10);
-        strcpy_P(brk4, FirebaseJson_STR_11);
-        strcpy_P(cm, FirebaseJson_STR_23);
-        strcpy_P(pr2, FirebaseJson_STR_3);
-        strcpy_P(tab, FirebaseJson_STR_22);
-        strcpy_P(nl, FirebaseJson_STR_24);
-        strcpy_P(nll, FirebaseJson_STR_18);
-        strcpy_P(pr, FirebaseJson_STR_25);
         _parseDepth = depth;
         if (_nextToken < 0)
             _nextToken = 0;
         for (uint16_t i = _nextToken; i < _tokenCount; i++)
         {
-            _compileToken(i, buf, _nextDepth, qt, tab, brk1, brk2, brk3, brk4, cm, nl, nll, pr, pr2, (char *)key, index, printMode, (char *)replace, refTokenIndex, removeTk);
+            _compileToken(i, buf, _nextDepth, (char *)key, index, printMode, (char *)replace, refTokenIndex, removeTk);
             if (_tokenMatch)
                 break;
         }
         delete[] buf;
-        delete[] qt;
-        delete[] tab;
-        delete[] brk1;
-        delete[] brk2;
-        delete[] brk3;
-        delete[] brk4;
-        delete[] cm;
-        delete[] nl;
-        delete[] nll;
-        delete[] pr;
-        delete[] pr2;
         if (!_tokenMatch)
         {
             _paresRes = false;
@@ -2113,58 +1970,14 @@ void FirebaseJson::_remove(const char *key, int depth, int index, const char *re
         memset(buf, 0, bufLen);
         strcpy(buf, s.c_str());
         std::string().swap(s);
-        char *qt = new char[3];
-        char *tab = new char[6];
-        char *brk1 = new char[3];
-        char *brk2 = new char[3];
-        char *brk3 = new char[3];
-        char *brk4 = new char[3];
-        char *cm = new char[3];
-        char *nl = new char[3];
-        char *nll = new char[6];
-        char *pr = new char[4];
-        char *pr2 = new char[3];
-        memset(qt, 0, 3);
-        memset(brk1, 0, 3);
-        memset(brk2, 0, 3);
-        memset(brk3, 0, 3);
-        memset(brk4, 0, 3);
-        memset(cm, 0, 3);
-        memset(pr2, 0, 3);
-        memset(tab, 0, 6);
-        memset(nl, 0, 3);
-        memset(nll, 0, 6);
-        memset(pr, 0, 4);
-        strcpy_P(qt, FirebaseJson_STR_2);
-        strcpy_P(brk1, FirebaseJson_STR_8);
-        strcpy_P(brk2, FirebaseJson_STR_9);
-        strcpy_P(brk3, FirebaseJson_STR_10);
-        strcpy_P(brk4, FirebaseJson_STR_11);
-        strcpy_P(cm, FirebaseJson_STR_23);
-        strcpy_P(pr2, FirebaseJson_STR_3);
-        strcpy_P(tab, FirebaseJson_STR_22);
-        strcpy_P(nl, FirebaseJson_STR_24);
-        strcpy_P(nll, FirebaseJson_STR_18);
-        strcpy_P(pr, FirebaseJson_STR_25);
         _parseDepth = depth;
         if (_nextToken < 0)
             _nextToken = 0;
         for (uint16_t i = _nextToken; i < _tokenCount; i++)
         {
-            _removeToken(i, buf, _nextDepth, qt, tab, brk1, brk2, brk3, brk4, cm, nl, nll, pr, pr2, (char *)key, index, PRINT_MODE_PLAIN, (char *)replace, refTokenIndex, removeTk);
+            _removeToken(i, buf, _nextDepth, (char *)key, index, PRINT_MODE_PLAIN, (char *)replace, refTokenIndex, removeTk);
         }
         delete[] buf;
-        delete[] qt;
-        delete[] tab;
-        delete[] brk1;
-        delete[] brk2;
-        delete[] brk3;
-        delete[] brk4;
-        delete[] cm;
-        delete[] nl;
-        delete[] nll;
-        delete[] pr;
-        delete[] pr2;
     }
 }
 
@@ -2261,9 +2074,9 @@ void FirebaseJson::_setString(const std::string &path, const std::string &value)
 {
     char *tmp = new char[value.length() + 20];
     memset(tmp, 0, value.length() + 20);
-    strcpy_P(tmp, FirebaseJson_STR_2);
+    strcpy(tmp, _qt);
     strcat(tmp, value.c_str());
-    strcat_P(tmp, FirebaseJson_STR_2);
+    strcat(tmp, _qt);
     _set(path.c_str(), tmp);
     delete[] tmp;
     std::string().swap(_jsonData._dbuf);
@@ -2273,11 +2086,7 @@ void FirebaseJson::_setInt(const std::string &path, int value)
 {
     char *tmp = new char[50];
     memset(tmp, 0, 50);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_4);
-    sprintf(tmp, b, value);
-    delete[] b;
+    sprintf(tmp, _pd, value);
     _set(path.c_str(), tmp);
     delete[] tmp;
     std::string().swap(_jsonData._dbuf);
@@ -2287,16 +2096,12 @@ void FirebaseJson::_setDouble(const std::string &path, double value)
 {
     char *tmp = new char[50];
     memset(tmp, 0, 50);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_5);
-    sprintf(tmp, b, value);
+    sprintf(tmp, _pf, value);
     int i = strlen(tmp) - 1;
     while (tmp[i] == '0' && i > 0)
         i--;
     if (i < (int)strlen(tmp) - 1)
         tmp[i + 1] = '\0';
-    delete[] b;
     _set(path.c_str(), tmp);
     delete[] tmp;
     std::string().swap(_jsonData._dbuf);
@@ -2304,24 +2109,16 @@ void FirebaseJson::_setDouble(const std::string &path, double value)
 
 void FirebaseJson::_setBool(const std::string &path, bool value)
 {
-    char *tmp = new char[20];
-    memset(tmp, 0, 20);
     if (value)
-        strcat_P(tmp, FirebaseJson_STR_7);
+        _set(path.c_str(), _tr);
     else
-        strcat_P(tmp, FirebaseJson_STR_6);
-    _set(path.c_str(), tmp);
-    delete[] tmp;
+        _set(path.c_str(), _fls);
     std::string().swap(_jsonData._dbuf);
 }
 
 void FirebaseJson::_setNull(const std::string &path)
 {
-    char *tmp = new char[20];
-    memset(tmp, 0, 20);
-    strcat_P(tmp, FirebaseJson_STR_18);
-    _set(path.c_str(), tmp);
-    delete[] tmp;
+    _set(path.c_str(), _nll);
     std::string().swap(_jsonData._dbuf);
 }
 
@@ -2518,27 +2315,26 @@ void FirebaseJson::_setElementType()
     switch (_jsonData._type)
     {
     case JSMN_UNDEFINED:
-        strcpy_P(buf, FirebaseJson_STR_19);
+        strcpy(buf, _undef);
         _jsonData.typeNum = JSON_UNDEFINED;
         break;
     case JSMN_OBJECT:
-        strcpy_P(buf, FirebaseJson_STR_16);
+        strcpy(buf, _obj);
         _jsonData.typeNum = JSON_OBJECT;
         break;
     case JSMN_ARRAY:
-        strcpy_P(buf, FirebaseJson_STR_17);
+        strcpy(buf, _arry);
         _jsonData.typeNum = JSON_ARRAY;
         break;
     case JSMN_STRING:
-        strcpy_P(buf, FirebaseJson_STR_12);
+        strcpy(buf, _string);
         _jsonData.typeNum = JSON_STRING;
         break;
     case JSMN_PRIMITIVE:
-        strcpy_P(tmp, FirebaseJson_STR_7);
-        if (!typeSet && strcmp(tmp2, tmp) == 0)
+        if (!typeSet && strcmp(tmp2, _tr) == 0)
         {
             typeSet = true;
-            strcpy_P(buf, FirebaseJson_STR_15);
+            strcpy(buf, _bl);
             _jsonData.typeNum = JSON_BOOL;
             _jsonData.boolValue = true;
             _jsonData.doubleValue = 1.0;
@@ -2546,35 +2342,30 @@ void FirebaseJson::_setElementType()
         }
         else
         {
-            memset(tmp, 0, 20);
-            strcpy_P(tmp, FirebaseJson_STR_6);
-            if (!typeSet && strcmp(tmp2, tmp) == 0)
+            if (!typeSet && strcmp(tmp2, _fls) == 0)
             {
                 typeSet = true;
-                strcpy_P(buf, FirebaseJson_STR_15);
+                strcpy(buf, _bl);
                 _jsonData.typeNum = JSON_BOOL;
                 _jsonData.boolValue = false;
                 _jsonData.doubleValue = 0.0;
                 _jsonData.intValue = 0;
             }
         }
-        memset(tmp, 0, 20);
-        strcpy_P(tmp, FirebaseJson_STR_20);
+        strcpy(tmp, _dot);
         if (!typeSet && _strpos(tmp2, tmp, 0) > -1)
         {
             typeSet = true;
-            strcpy_P(buf, FirebaseJson_STR_14);
+            strcpy(buf, _dbl);
             _jsonData.typeNum = JSON_DOUBLE;
             _jsonData.doubleValue = atof(tmp2);
             _jsonData.intValue = atoi(tmp2);
             _jsonData.boolValue = atof(tmp2) > 0 ? true : false;
         }
-        memset(tmp, 0, 20);
-        strcpy_P(tmp, FirebaseJson_STR_18);
-        if (!typeSet && strcmp(tmp2, tmp) == 0)
+        if (!typeSet && strcmp(tmp2, _nll) == 0)
         {
             typeSet = true;
-            strcpy_P(buf, FirebaseJson_STR_18);
+            strcpy(buf, _nll);
             _jsonData.typeNum = JSON_NULL;
         }
         if (!typeSet)
@@ -2583,7 +2374,7 @@ void FirebaseJson::_setElementType()
             double d = atof(tmp2);
             if (d > 0x7fffffff)
             {
-                strcpy_P(buf, FirebaseJson_STR_14);
+                strcpy(buf, _dbl);
                 _jsonData.doubleValue = d;
                 _jsonData.intValue = atoi(tmp2);
                 _jsonData.boolValue = atof(tmp2) > 0 ? true : false;
@@ -2594,7 +2385,7 @@ void FirebaseJson::_setElementType()
                 _jsonData.intValue = atoi(tmp2);
                 _jsonData.doubleValue = atof(tmp2);
                 _jsonData.boolValue = atof(tmp2) > 0 ? true : false;
-                strcpy_P(buf, FirebaseJson_STR_13);
+                strcpy(buf, _int);
                 _jsonData.typeNum = JSON_INT;
             }
         }
@@ -2656,11 +2447,68 @@ char *FirebaseJson::_rstrstr(const char *haystack, const char *needle)
     return 0;
 }
 
-FirebaseJsonArray::FirebaseJsonArray(){};
+FirebaseJsonArray::FirebaseJsonArray()
+{
+    _init();
+}
 FirebaseJsonArray::~FirebaseJsonArray()
 {
+    _finalize();
     std::string().swap(_jbuf);
 };
+
+void FirebaseJsonArray::_init()
+{
+    _pd = new char[4];
+    _pf = new char[4];
+    _fls = new char[7];
+    _tr = new char[6];
+    _brk3 = new char[3];
+    _brk4 = new char[3];
+    _nll = new char[6];
+    _root = new char[9];
+    _root2 = new char[6];
+    _qt = new char[3];
+    _slash = new char[3];
+    memset(_pd, 0, 4);
+    memset(_pf, 0, 4);
+    memset(_fls, 0, 7);
+    memset(_tr, 0, 6);
+    memset(_brk3, 0, 3);
+    memset(_brk4, 0, 3);
+    memset(_nll, 0, 6);
+    memset(_root, 0, 9);
+    memset(_root2, 0, 6);
+    memset(_qt, 0, 3);
+    memset(_slash, 0, 3);
+
+    strcpy_P(_pd, FirebaseJson_STR_4);
+    strcpy_P(_pf, FirebaseJson_STR_5);
+    strcpy_P(_fls, FirebaseJson_STR_6);
+    strcpy_P(_tr, FirebaseJson_STR_7);
+    strcpy_P(_brk3, FirebaseJson_STR_10);
+    strcpy_P(_brk4, FirebaseJson_STR_11);
+    strcpy_P(_nll, FirebaseJson_STR_18);
+    strcpy_P(_root, FirebaseJson_STR_21);
+    strcpy_P(_root2, FirebaseJson_STR_26);
+    strcpy_P(_qt, FirebaseJson_STR_2);
+    strcpy_P(_slash, FirebaseJson_STR_27);
+}
+
+void FirebaseJsonArray::_finalize()
+{
+    delete[] _pd;
+    delete[] _pf;
+    delete[] _fls;
+    delete[] _tr;
+    delete[] _brk3;
+    delete[] _brk4;
+    delete[] _nll;
+    delete[] _root;
+    delete[] _root2;
+    delete[] _qt;
+    delete[] _slash;
+}
 
 FirebaseJsonArray &FirebaseJsonArray::add()
 {
@@ -2744,12 +2592,8 @@ void FirebaseJsonArray::_addInt(int value)
     size_t bufSize = 50;
     char *buf = new char[bufSize];
     memset(buf, 0, bufSize);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_4);
-    sprintf(buf, b, value);
+    sprintf(buf, _pd, value);
     _json._addArrayStr(buf, 60, false);
-    delete[] b;
     delete[] buf;
 }
 
@@ -2759,38 +2603,24 @@ void FirebaseJsonArray::_addDouble(double value)
     size_t bufSize = 50;
     char *buf = new char[bufSize];
     memset(buf, 0, bufSize);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_5);
-    sprintf(buf, b, value);
+    sprintf(buf, _pf, value);
     _json._addArrayStr(buf, 60, false);
-    delete[] b;
     delete[] buf;
 }
 
 void FirebaseJsonArray::_addBool(bool value)
 {
     _arrLen++;
-    size_t bufSize = 20;
-    char *buf = new char[bufSize];
-    memset(buf, 0, bufSize);
     if (value)
-        strcat_P(buf, FirebaseJson_STR_7);
+        _json._addArrayStr(_tr, 6, false);
     else
-        strcat_P(buf, FirebaseJson_STR_6);
-    _json._addArrayStr(buf, bufSize, false);
-    delete[] buf;
+        _json._addArrayStr(_fls, 7, false);
 }
 
 void FirebaseJsonArray::_addNull()
 {
     _arrLen++;
-    size_t bufSize = 20;
-    char *buf = new char[bufSize];
-    memset(buf, 0, bufSize);
-    strcat_P(buf, FirebaseJson_STR_18);
-    _json._addArrayStr(buf, bufSize, false);
-    delete[] buf;
+    _json._addArrayStr(_nll, 6, false);
 }
 
 void FirebaseJsonArray::_addJson(FirebaseJson *json)
@@ -2819,15 +2649,11 @@ bool FirebaseJsonArray::get(FirebaseJsonData &jsonData, int index)
 {
     char *tmp = new char[50];
     std::string path = "";
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_10);
-    path += tmp;
+    path += _brk3;
     memset(tmp, 0, 50);
     itoa(index, tmp, 10);
     path += tmp;
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_11);
-    path += tmp;
+    path += _brk4;
     bool ret = _get(jsonData, path.c_str());
     std::string().swap(path);
     delete[] tmp;
@@ -2836,18 +2662,11 @@ bool FirebaseJsonArray::get(FirebaseJsonData &jsonData, int index)
 
 bool FirebaseJsonArray::_get(FirebaseJsonData &jsonData, const char *path)
 {
-    char *tmp = new char[50];
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_21);
     _json._toStdString(_jbuf, false);
-    _json._rawbuf = tmp;
+    _json._rawbuf = _root;
     _json._rawbuf += _jbuf;
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_26);
-    std::string path2 = tmp;
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_27);
-    path2 += tmp;
+    std::string path2 = _root2;
+    path2 += _slash;
     path2 += path;
     _json.clearPathTk();
     _json._strToTk(path2.c_str(), _json._pathTk, '/');
@@ -2865,12 +2684,11 @@ bool FirebaseJsonArray::_get(FirebaseJsonData &jsonData, const char *path)
     if (_json._jsonData.success)
     {
         _json._rawbuf = _jbuf.substr(1, _jbuf.length() - 2).c_str();
-        if (_json._jsonData._type == JSMN_STRING && _json._jsonData.stringValue.c_str()[0]=='"' && _json._jsonData.stringValue.c_str()[_json._jsonData.stringValue.length()-1]=='"')
+        if (_json._jsonData._type == JSMN_STRING && _json._jsonData.stringValue.c_str()[0] == '"' && _json._jsonData.stringValue.c_str()[_json._jsonData.stringValue.length() - 1] == '"')
             _json._jsonData.stringValue = _json._jsonData.stringValue.substring(1, _json._jsonData.stringValue.length() - 1).c_str();
         jsonData = _json._jsonData;
     }
 ex_:
-    delete[] tmp;
     _json.clearPathTk();
     _json._tokens.reset();
     _json._tokens = nullptr;
@@ -2888,16 +2706,13 @@ void FirebaseJsonArray::toString(String &buf, bool prettify)
     memset(tmp, 0, 20);
     std::string().swap(_json._jsonData._dbuf);
     std::string().swap(_json._tbuf);
-    strcpy_P(tmp, FirebaseJson_STR_21);
     _json._toStdString(_jbuf, false);
-    _json._rawbuf = tmp;
+    _json._rawbuf = _root;
     _json._rawbuf += _jbuf;
-    memset(tmp, 0, 20);
-    strcpy_P(tmp, FirebaseJson_STR_26);
     if (prettify)
-        _json._parse(tmp, PRINT_MODE_PRETTY);
+        _json._parse(_root2, PRINT_MODE_PRETTY);
     else
-        _json._parse(tmp, PRINT_MODE_PLAIN);
+        _json._parse(_root2, PRINT_MODE_PLAIN);
     std::string().swap(_json._tbuf);
     std::string().swap(_jbuf);
     _json.clearPathTk();
@@ -2918,15 +2733,11 @@ FirebaseJsonArray &FirebaseJsonArray::clear()
 void FirebaseJsonArray::_set2(int index, const char *value, bool isStr)
 {
     char *tmp = new char[50];
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_10);
-    std::string path = tmp;
+    std::string path = _brk3;
     memset(tmp, 0, 50);
     itoa(index, tmp, 10);
     path += tmp;
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_11);
-    path += tmp;
+    path += _brk4;
     _set(path.c_str(), value, isStr);
     std::string().swap(path);
     delete[] tmp;
@@ -2935,25 +2746,18 @@ void FirebaseJsonArray::_set2(int index, const char *value, bool isStr)
 void FirebaseJsonArray::_set(const char *path, const char *value, bool isStr)
 {
     _json._jsonData.success = false;
-    char *tmp = new char[50];
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_21);
     _json._toStdString(_jbuf, false);
-    _json._rawbuf = tmp;
+    _json._rawbuf = _root;
     _json._rawbuf += _jbuf;
     char *tmp2 = new char[strlen(value) + 10];
     memset(tmp2, 0, strlen(value) + 10);
     if (isStr)
-        strcpy_P(tmp2, FirebaseJson_STR_2);
+        strcpy_P(tmp2, _qt);
     strcat(tmp2, value);
     if (isStr)
-        strcat_P(tmp2, FirebaseJson_STR_2);
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_26);
-    std::string path2 = tmp;
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_27);
-    path2 += tmp;
+        strcat_P(tmp2, _qt);
+    std::string path2 = _root2;
+    path2 += _slash;
     path2 += path;
     _json.clearPathTk();
     _json._strToTk(path2, _json._pathTk, '/');
@@ -2966,11 +2770,9 @@ void FirebaseJsonArray::_set(const char *path, const char *value, bool isStr)
     std::string().swap(path2);
     if (_json._jsonData.success)
     {
-        memset(tmp, 0, 50);
-        strcpy_P(tmp, FirebaseJson_STR_26);
         std::string().swap(_json._jsonData._dbuf);
         std::string().swap(_json._tbuf);
-        _json._parse(tmp, PRINT_MODE_PLAIN);
+        _json._parse(_root2, PRINT_MODE_PLAIN);
         if (_json._jsonData.success)
         {
             _arrLen = _json._jsonData._len;
@@ -2980,7 +2782,6 @@ void FirebaseJsonArray::_set(const char *path, const char *value, bool isStr)
     else
         _json._rawbuf = _jbuf.substr(1, _jbuf.length() - 2);
 ex_2:
-    delete[] tmp;
     std::string().swap(_json._jsonData._dbuf);
     std::string().swap(_json._tbuf);
     std::string().swap(_jbuf);
@@ -3127,11 +2928,7 @@ void FirebaseJsonArray::_setInt(int index, int value)
 {
     char *tmp = new char[50];
     memset(tmp, 0, 50);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_4);
-    sprintf(tmp, b, value);
-    delete[] b;
+    sprintf(tmp, _pd, value);
     _set2(index, tmp, false);
     delete[] tmp;
 }
@@ -3140,11 +2937,7 @@ void FirebaseJsonArray::_setInt(const String &path, int value)
 {
     char *tmp = new char[50];
     memset(tmp, 0, 50);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_4);
-    sprintf(tmp, b, value);
-    delete[] b;
+    sprintf(tmp, _pd, value);
     _set(path.c_str(), tmp, false);
     delete[] tmp;
 }
@@ -3153,16 +2946,12 @@ void FirebaseJsonArray::_setDouble(int index, double value)
 {
     char *tmp = new char[50];
     memset(tmp, 0, 50);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_5);
-    sprintf(tmp, b, value);
+    sprintf(tmp, _pf, value);
     int i = strlen(tmp) - 1;
     while (tmp[i] == '0' && i > 0)
         i--;
     if (i < (int)strlen(tmp) - 1)
         tmp[i + 1] = '\0';
-    delete[] b;
     _set2(index, tmp, false);
     delete[] tmp;
 }
@@ -3171,60 +2960,40 @@ void FirebaseJsonArray::_setDouble(const String &path, double value)
 {
     char *tmp = new char[50];
     memset(tmp, 0, 50);
-    char *b = new char[10];
-    memset(b, 0, 10);
-    strcat_P(b, FirebaseJson_STR_5);
-    sprintf(tmp, b, value);
+    sprintf(tmp, _pf, value);
     int i = strlen(tmp) - 1;
     while (tmp[i] == '0' && i > 0)
         i--;
     if (i < (int)strlen(tmp) - 1)
         tmp[i + 1] = '\0';
-    delete[] b;
     _set(path.c_str(), tmp, false);
     delete[] tmp;
 }
 
 void FirebaseJsonArray::_setBool(int index, bool value)
 {
-    char *tmp = new char[20];
-    memset(tmp, 0, 20);
     if (value)
-        strcat_P(tmp, FirebaseJson_STR_7);
+        _set2(index, _tr, false);
     else
-        strcat_P(tmp, FirebaseJson_STR_6);
-    _set2(index, tmp, false);
-    delete[] tmp;
+        _set2(index, _fls, false);
 }
 
 void FirebaseJsonArray::_setBool(const String &path, bool value)
 {
-    char *tmp = new char[20];
-    memset(tmp, 0, 20);
     if (value)
-        strcat_P(tmp, FirebaseJson_STR_7);
+        _set(path.c_str(), _tr, false);
     else
-        strcat_P(tmp, FirebaseJson_STR_6);
-    _set(path.c_str(), tmp, false);
-    delete[] tmp;
+        _set(path.c_str(), _fls, false);
 }
 
 void FirebaseJsonArray::_setNull(int index)
 {
-    char *tmp = new char[20];
-    memset(tmp, 0, 20);
-    strcat_P(tmp, FirebaseJson_STR_18);
-    _set2(index, tmp, false);
-    delete[] tmp;
+    _set2(index, _nll, false);
 }
 
 void FirebaseJsonArray::_setNull(const String &path)
 {
-    char *tmp = new char[20];
-    memset(tmp, 0, 20);
-    strcat_P(tmp, FirebaseJson_STR_18);
-    _set(path.c_str(), tmp, false);
-    delete[] tmp;
+    _set(path.c_str(), _nll, false);
 }
 
 void FirebaseJsonArray::_setJson(int index, FirebaseJson *json)
@@ -3263,15 +3032,11 @@ bool FirebaseJsonArray::remove(int index)
 {
     char *tmp = new char[50];
     std::string path = "";
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_10);
-    path += tmp;
+    path += _brk3;
     memset(tmp, 0, 50);
     itoa(index, tmp, 10);
     path += tmp;
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_11);
-    path += tmp;
+    path += _brk4;
     bool ret = _remove(path.c_str());
     std::string().swap(path);
     delete[] tmp;
@@ -3285,31 +3050,22 @@ bool FirebaseJsonArray::remove(const String &path)
 
 bool FirebaseJsonArray::_remove(const char *path)
 {
-    char *tmp = new char[50];
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_21);
     _json._toStdString(_jbuf, false);
-    _json._rawbuf = tmp;
+    _json._rawbuf = _root;
     _json._rawbuf += _jbuf;
     char *tmp2 = new char[2];
     memset(tmp2, 0, 2);
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_26);
-    std::string path2 = tmp;
-    memset(tmp, 0, 50);
-    strcpy_P(tmp, FirebaseJson_STR_27);
-    path2 += tmp;
+    std::string path2 = _root2;
+    path2 += _slash;
     path2 += path;
     _json._jsonData.success = _json.remove(path2.c_str());
     delete[] tmp2;
     std::string().swap(path2);
     if (_json._jsonData.success)
     {
-        memset(tmp, 0, 50);
-        strcpy_P(tmp, FirebaseJson_STR_26);
         std::string().swap(_json._jsonData._dbuf);
         std::string().swap(_json._tbuf);
-        _json._parse(tmp, PRINT_MODE_PLAIN);
+        _json._parse(_root2, PRINT_MODE_PLAIN);
         if (_json._jsonData.success)
         {
             _arrLen = _json._jsonData._len;
@@ -3318,7 +3074,6 @@ bool FirebaseJsonArray::_remove(const char *path)
     }
     else
         _json._rawbuf = _jbuf.substr(1, _jbuf.length() - 2);
-    delete[] tmp;
     return _json._jsonData.success;
 }
 

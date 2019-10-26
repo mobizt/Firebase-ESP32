@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.2.2
+ * FirebaseJson, version 2.2.3
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using relative path.
  * 
- * October 25, 2019
+ * October 26, 2019
  * 
  * Features
  * - None recursive operations
@@ -66,7 +66,6 @@ static const char FirebaseJson_STR_19[] PROGMEM = "undefined";
 static const char FirebaseJson_STR_20[] PROGMEM = ".";
 static const char FirebaseJson_STR_21[] PROGMEM = "\"root\":";
 static const char FirebaseJson_STR_22[] PROGMEM = "    ";
-static const char FirebaseJson_STR_23[] PROGMEM = ",";
 static const char FirebaseJson_STR_24[] PROGMEM = "\n";
 static const char FirebaseJson_STR_25[] PROGMEM = ": ";
 static const char FirebaseJson_STR_26[] PROGMEM = "root";
@@ -557,6 +556,31 @@ private:
     bool _remLastTk = false;
     bool _collectTk = false;
     bool _paresRes = false;
+
+    char *_qt = nullptr;
+    char *_tab = nullptr;
+    char *_brk1 = nullptr;
+    char *_brk2 = nullptr;
+    char *_brk3 = nullptr;
+    char *_brk4 = nullptr;
+    char *_cm = nullptr;
+    char *_nl = nullptr;
+    char *_nll = nullptr;
+    char *_pr = nullptr;
+    char *_pr2 = nullptr;
+    char *_pd = nullptr;
+    char *_pf = nullptr;
+    char *_fls = nullptr;
+    char *_tr = nullptr;
+    char *_string = nullptr;
+    char *_int = nullptr;
+    char *_dbl = nullptr;
+    char *_bl = nullptr;
+    char *_obj = nullptr;
+    char *_arry = nullptr;
+    char *_undef = nullptr;
+    char *_dot = nullptr;
+
     std::string _rawbuf = "";
     std::string _tbuf = "";
     tk_index_t _lastTk;
@@ -567,6 +591,8 @@ private:
     std::unique_ptr<jsmn_parser> _parser = std::unique_ptr<jsmn_parser>(new jsmn_parser());
     std::shared_ptr<jsmntok_t> _tokens = nullptr;
 
+    void _init();
+    void _finalize();
     FirebaseJson &_setJsonData(std::string &data);
     FirebaseJson &_add(const char *key, const char *value, size_t klen, size_t vlen, bool isString = true, bool isJson = true);
     FirebaseJson &_addArrayStr(const char *value, size_t len, bool isString);
@@ -593,9 +619,9 @@ private:
     void _compile(const char *key, int depth, int index, const char *replace, PRINT_MODE printMode, int refTokenIndex = -1, bool removeTk = false);
     void _remove(const char *key, int depth, int index, const char *replace, int refTokenIndex = -1, bool removeTk = false);
     void _jsmn_parse(bool collectTk = false);
-    bool _updateTkIndex(uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode, char *qt, char *cm, char *pr, char *pr2, char *nl, char *nll, char *tab, char *brk2, char *brk4, bool advanceCount);
-    bool _updateTkIndex2(std::string &str, uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode, char *qt, char *cm, char *pr, char *pr2, char *nl, char *nll, char *tab, char *brk2, char *brk4);
-    bool _updateTkIndex3(uint16_t index, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode, char *qt, char *cm, char *pr, char *pr2, char *nl, char *nll, char *tab, char *brk2, char *brk4);
+    bool _updateTkIndex(uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode, bool advanceCount);
+    bool _updateTkIndex2(std::string &str, uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode);
+    bool _updateTkIndex3(uint16_t index, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode);
     void _getTkIndex(int depth, tk_index_t &tk);
     void _setMark(int depth, bool mark);
     void _setSkip(int depth, bool skip);
@@ -603,9 +629,9 @@ private:
     void _insertChilds(char *data, PRINT_MODE printMode);
     void _addObjNodes(std::string &str, std::string &str2, int index, char *data, PRINT_MODE printMode);
     void _addArrNodes(std::string &str, std::string &str2, int index, char *data, PRINT_MODE printMode);
-    void _compileToken(uint16_t &i, char *buf, int &depth, char *qt, char *tab, char *brk1, char *brk2, char *brk3, char *brk4, char *cm, char *nl, char *nll, char *pr, char *pr2, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex = -1, bool removeTk = false);
-    void _parseToken(uint16_t &i, char *buf, int &depth, char *qt, char *tab, char *brk1, char *brk2, char *brk3, char *brk4, char *cm, char *nl, char *nll, char *pr, char *pr2, char *searchKey, int searchIndex, PRINT_MODE printMode);
-    void _removeToken(uint16_t &i, char *buf, int &depth, char *qt, char *tab, char *brk1, char *brk2, char *brk3, char *brk4, char *cm, char *nl, char *nll, char *pr, char *pr2, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex = -1, bool removeTk = false);
+    void _compileToken(uint16_t &i, char *buf, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex = -1, bool removeTk = false);
+    void _parseToken(uint16_t &i, char *buf, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode);
+    void _removeToken(uint16_t &i, char *buf, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex = -1, bool removeTk = false);
     single_child_parent_t _findSCParent(int depth);
     bool _isArrTk(int index);
     bool _isStrTk(int index);
@@ -627,6 +653,8 @@ class FirebaseJsonArray
 public:
     FirebaseJsonArray();
     ~FirebaseJsonArray();
+    void _init();
+    void _finalize();
 
     friend class FirebaseJson;
     friend class FirebaseJsonData;
@@ -983,6 +1011,17 @@ private:
     std::string _jbuf = "";
     FirebaseJson _json;
     size_t _arrLen = 0;
+    char *_pd = nullptr;
+    char *_pf = nullptr;
+    char *_fls = nullptr;
+    char *_tr = nullptr;
+    char *_brk3 = nullptr;
+    char *_brk4 = nullptr;
+    char *_nll = nullptr;
+    char *_root = nullptr;
+    char *_root2 = nullptr;
+    char *_qt = nullptr;
+    char *_slash = nullptr;
 
     void _addString(const std::string &value);
     void _addInt(int value);
