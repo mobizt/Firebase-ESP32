@@ -3465,7 +3465,7 @@ param **`prettify`** - The bool flag for prettify string in FirebaseJsonData's s
 
 return **`boolean status of operation.`**
 
-    The FirebaseJsonData object hold the returned data which can be read from the following properties.
+    The FirebaseJsonData object holds the returned data which can be read from the following properties.
 
     jsonData.stringValue - contains the returned string.
 
