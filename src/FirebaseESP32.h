@@ -7,7 +7,7 @@
  * 
  * 
  * Feature Fixed: 
- * - Fix memory leak isue in FirebaseJson.
+ * - Fix memory leak issue in FirebaseJson.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
