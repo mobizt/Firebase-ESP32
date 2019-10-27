@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.2.3
+ * FirebaseJson, version 2.2.4
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using relative path.
  * 
- * October 26, 2019
+ * October 27, 2019
  * 
  * Features
  * - None recursive operations
@@ -68,13 +68,12 @@ void FirebaseJson::_init()
     _brk3 = new char[3];
     _brk4 = new char[3];
     _cm = new char[3];
+    _pr2 = new char[3];
     _nl = new char[3];
     _nll = new char[6];
     _pr = new char[4];
-    _pr2 = new char[3];
     _pd = new char[4];
     _pf = new char[4];
-    _cm = new char[3];
     _fls = new char[7];
     _tr = new char[6];
     _string = new char[7];
@@ -86,13 +85,13 @@ void FirebaseJson::_init()
     _undef = new char[11];
     _dot = new char[3];
     memset(_qt, 0, 3);
+    memset(_tab, 0, 6);
     memset(_brk1, 0, 3);
     memset(_brk2, 0, 3);
     memset(_brk3, 0, 3);
     memset(_brk4, 0, 3);
     memset(_cm, 0, 3);
     memset(_pr2, 0, 3);
-    memset(_tab, 0, 6);
     memset(_nl, 0, 3);
     memset(_nll, 0, 6);
     memset(_pr, 0, 4);
@@ -109,13 +108,13 @@ void FirebaseJson::_init()
     memset(_undef, 0, 11);
     memset(_dot, 0, 3);
     strcpy_P(_qt, FirebaseJson_STR_2);
+    strcpy_P(_tab, FirebaseJson_STR_22);
     strcpy_P(_brk1, FirebaseJson_STR_8);
     strcpy_P(_brk2, FirebaseJson_STR_9);
     strcpy_P(_brk3, FirebaseJson_STR_10);
     strcpy_P(_brk4, FirebaseJson_STR_11);
     strcpy_P(_cm, FirebaseJson_STR_1);
     strcpy_P(_pr2, FirebaseJson_STR_3);
-    strcpy_P(_tab, FirebaseJson_STR_22);
     strcpy_P(_nl, FirebaseJson_STR_24);
     strcpy_P(_nll, FirebaseJson_STR_18);
     strcpy_P(_pr, FirebaseJson_STR_25);
@@ -136,13 +135,13 @@ void FirebaseJson::_init()
 void FirebaseJson::_finalize()
 {
     delete[] _qt;
+    delete[] _tab;
     delete[] _brk1;
     delete[] _brk2;
     delete[] _brk3;
     delete[] _brk4;
     delete[] _cm;
     delete[] _pr2;
-    delete[] _tab;
     delete[] _nl;
     delete[] _nll;
     delete[] _pr;

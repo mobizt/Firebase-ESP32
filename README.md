@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.5.3
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.5.4
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms which library are also available.
@@ -50,7 +50,7 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 
 ## Changes from earlier version
 
-For library v 3.5.3 (comes with FirebaseJson v 2.2.3) or later, FirebaseJson object will be used to handle JSON data instead of JSON string which, the following functions are affected:
+For library v 3.5.4 (comes with FirebaseJson v 2.2.4) or later, FirebaseJson object will be used to handle JSON data instead of JSON string which, the following functions are affected:
 
 getJson, setJson, pushJson, updateNode and updateNodeSilent.
 
@@ -1029,7 +1029,7 @@ Serial.println(jsonStr);
 The result of above code
 
 {
-     "name": "Living Room",
+    "name": "Living Room",
     "temp1": [
          47,
          34,
@@ -1059,8 +1059,9 @@ if (jsonData.success)
   //Print its content e.g.string, int, double, bool whereas object, array and null also can access as string
   Serial.println(jsonData.stringValue);
   //Serial.println(jsonData.intValue);
-  /Serial.println(jsonData.boolValue);
-  //Serial.println(jsonData.doubleValue);
+  //Serial.println(jsonData.boolValue);
+  //Serial.println(jsonData.doubleValue
+  );
 }
 
 //The above code will show
