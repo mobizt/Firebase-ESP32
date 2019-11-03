@@ -1,13 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.5.4
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.5.5
  * 
- * October 27, 2019
+ * November 3, 2019
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed: 
- * - Fix memory leak issue in FirebaseJson.
+ * - Large file (SPIFFS and SD) get's truncated data.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -3116,12 +3116,13 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
   int count = 0;
   size_t toRead = count;
   int cnt = 0;
+  size_t tmo = 30000 + dataObj._net.tcpTimeout;
+  int res = 0;
 
   unsigned long dataTime = millis();
 
-  while (clientAvailable(dataObj, false) && millis() - dataTime < dataObj._net.tcpTimeout + 5000)
+  while (clientAvailable(dataObj, false) && millis() - dataTime < tmo)
   {
-
     if (!apConnected(dataObj))
       return false;
     delay(1);
@@ -3136,8 +3137,11 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
       if (dataObj._interruptRequest)
         return cancelCurrentResponse(dataObj);
 
-      if (!apConnected(dataObj))
+      if (!reconnect(dataObj))
+      {
+        dataObj._httpCode = HTTPC_ERROR_CONNECTION_LOST;
         return false;
+      }
 
       if (!beginPayload)
       {
@@ -3163,60 +3167,52 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
             toRead = buffSize;
 
           memset(buff, 0, buffSize + 1);
+          toRead = count;
           cnt = 0;
-
+          yield();
+          if (toRead > buffSize)
+            toRead = buffSize;
+          memset(buff, 0, buffSize + 1);
           while (cnt < toRead)
           {
-
-            c = dataObj._net.getStreamPtr()->read();
-            if (c >= 0x20)
-            {
-              if (dataObj._fileName == "" && c < 0xff)
-              {
-                buff[cnt] = c;
-                cnt++;
-              }
-              else if (dataObj._fileName != "" && c != '"')
-              {
-                buff[cnt] = c;
-                cnt++;
-              }
-            }
+            res = dataObj._net.getStreamPtr()->read();
+            if (res < 0)
+              continue;
+            c = (char)res;
+            if (dataObj._fileName == "" || (dataObj._fileName != "" && c != '"'))
+              buff[cnt] = c;
+            cnt++;
           }
 
-          if (cnt > 0)
+          dataTime = millis();
+          count -= cnt;
+          toRead = cnt;
+          buff[cnt] = '\0';
+
+          if (dataObj._storageType == StorageType::SPIFFS)
           {
-            count -= cnt;
-            dataTime = millis();
-            toRead = cnt;
-            buff[cnt] = '\0';
-
-            if (dataObj._storageType == StorageType::SPIFFS)
-            {
-              if (dataObj._fileName == "")
-                file.write((uint8_t *)buff, toRead);
-              else
-                base64_decode_SPIFFS(file, buff, toRead);
-            }
-            else if (dataObj._storageType == StorageType::SD)
-            {
-              if (dataObj._fileName == "")
-                file.write((uint8_t *)buff, toRead);
-              else
-                base64_decode_file(file, buff, toRead);
-            }
+            if (dataObj._fileName == "")
+              file.write((uint8_t *)buff, toRead);
+            else
+              base64_decode_SPIFFS(file, buff, toRead);
+          }
+          else if (dataObj._storageType == StorageType::SD)
+          {
+            if (dataObj._fileName == "")
+              file.write((uint8_t *)buff, toRead);
+            else
+              base64_decode_file(file, buff, toRead);
           }
 
-          if (count == 0)
+          if (cnt == 0)
             break;
+          continue;
         }
       }
 
       if (c == '\n' && !beginPayload)
       {
-
         dataTime = millis();
-
         p1 = linebuff.find(ESP32_FIREBASE_STR_5);
         if (p1 != std::string::npos)
         {
@@ -3249,9 +3245,6 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
         {
           contentLength = atoi(linebuff.substr(p1 + strlen_P(ESP32_FIREBASE_STR_12)).c_str());
           dataObj._backupzFileSize = contentLength;
-          count = contentLength;
-          if (dataObj._fileName != "")
-            count -= strlen_P(ESP32_FIREBASE_STR_93) - 1;
         }
 
         p1 = linebuff.find(ESP32_FIREBASE_STR_80);
@@ -3271,6 +3264,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
           {
             for (int i = 0; i < strlen_P(ESP32_FIREBASE_STR_93); i++)
               dataObj._net.getStreamPtr()->read();
+            count = contentLength - strlen_P(ESP32_FIREBASE_STR_93);
           }
         }
 
@@ -4766,7 +4760,7 @@ bool FirebaseESP32::saveErrorQueue(FirebaseData &dataObj, const String &filename
   }
   else if (storageType == StorageType::SPIFFS)
   {
-    SPIFFS.begin();
+    SPIFFS.begin(true);
     file = SPIFFS.open(filename.c_str(), "w");
   }
 
