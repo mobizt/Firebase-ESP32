@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.2.4
+ * FirebaseJson, version 2.2.5
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using relative path.
  * 
- * October 27, 2019
+ * November 12, 2019
  * 
  * Features
  * - None recursive operations
@@ -293,7 +293,6 @@ void FirebaseJson::_addBool(const std::string &key, bool value)
         _add(key.c_str(), _tr, key.length(), 6, false, true);
     else
         _add(key.c_str(), _fls, key.length(), 7, false, true);
-
 }
 
 void FirebaseJson::_addNull(const std::string &key)
@@ -675,25 +674,29 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                             }
                             else
                             {
-                                for (int k = _el[i].oindex - 1; k < searchIndex; k++)
+                                if (!_arrReplaced)
                                 {
-                                    if (printMode == PRINT_MODE_PRETTY)
+                                    for (int k = _el[i].oindex - 1; k < searchIndex; k++)
                                     {
-                                        _jsonData._dbuf += _nl;
-                                        for (int j = 0; j < depth + 2; j++)
-                                            _jsonData._dbuf += _tab;
-                                    }
-                                    if (k == searchIndex - 1)
-                                    {
-                                        if (_parseCompleted == (int)_pathTk.size())
-                                            _jsonData._dbuf += replace;
+                                        if (printMode == PRINT_MODE_PRETTY)
+                                        {
+                                            _jsonData._dbuf += _nl;
+                                            for (int j = 0; j < depth + 2; j++)
+                                                _jsonData._dbuf += _tab;
+                                        }
+                                        if (k == searchIndex - 1)
+                                        {
+                                            if (_parseCompleted == (int)_pathTk.size())
+                                                _jsonData._dbuf += replace;
+                                            else
+                                                _insertChilds(replace, printMode);
+                                            _arrReplaced = true;
+                                        }
                                         else
-                                            _insertChilds(replace, printMode);
-                                    }
-                                    else
-                                    {
-                                        _jsonData._dbuf += _nll;
-                                        _jsonData._dbuf += _cm;
+                                        {
+                                            _jsonData._dbuf += _nll;
+                                            _jsonData._dbuf += _cm;
+                                        }
                                     }
                                 }
                             }
@@ -885,7 +888,7 @@ void FirebaseJson::_insertChilds(char *data, PRINT_MODE printMode)
 
 void FirebaseJson::_addArrNodes(std::string &str, std::string &str2, int index, char *data, PRINT_MODE printMode)
 {
-   
+
     int i = _getArrIndex(index);
     str += _brk3;
     if (printMode == PRINT_MODE_PRETTY)
@@ -1558,7 +1561,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *searc
     _refToken = -1;
 }
 
-void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth,  char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex, bool removeTk)
+void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex, bool removeTk)
 {
     bool ncm = false;
     tk_index_t tk;
@@ -1854,6 +1857,7 @@ void FirebaseJson::_parse(const char *path, PRINT_MODE printMode)
     _parentIndex = -1;
     _TkRefOk = false;
     _parseCompleted = 0;
+    _arrReplaced = false;
     _refTkIndex = -1;
     _remTkIndex = -1;
     _remFirstTk = false;
@@ -2155,6 +2159,7 @@ void FirebaseJson::_set(const char *path, const char *data)
     _parentIndex = -1;
     _TkRefOk = false;
     _parseCompleted = 0;
+    _arrReplaced = false;
     _refTkIndex = -1;
     _remTkIndex = -1;
     _remFirstTk = false;
@@ -2183,6 +2188,7 @@ void FirebaseJson::_set(const char *path, const char *data)
         _parentIndex = -1;
         _TkRefOk = false;
         _parseCompleted = 0;
+        _arrReplaced = false;
         _refTkIndex = -1;
         _tokenMatch = false;
         _paresRes = true;
@@ -2230,6 +2236,7 @@ bool FirebaseJson::remove(const String &path)
     _parentIndex = -1;
     _TkRefOk = false;
     _parseCompleted = 0;
+    _arrReplaced = false;
     _refTkIndex = -1;
     _remTkIndex = -1;
     _remFirstTk = false;
@@ -2257,6 +2264,7 @@ bool FirebaseJson::remove(const String &path)
         _parentIndex = -1;
         _TkRefOk = false;
         _parseCompleted = 0;
+        _arrReplaced = false;
         _refTkIndex = -1;
         _tokenMatch = false;
         _paresRes = true;
