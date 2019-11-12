@@ -1061,7 +1061,6 @@ if (jsonData.success)
   //Serial.println(jsonData.intValue);
   //Serial.println(jsonData.boolValue);
   //Serial.println(jsonData.doubleValue
-  );
 }
 
 //The above code will show
