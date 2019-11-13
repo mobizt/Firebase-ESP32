@@ -55,6 +55,17 @@ For library v 3.5.6 (comes with FirebaseJson v 2.2.5) or later, FirebaseJson obj
 getJson, setJson, pushJson, updateNode and updateNodeSilent.
 
 
+## Basic Examples
+
+Don't be confused with other Firebase Arduino libraries, this library has different working functions, the following examples provide the basic usages.
+
+[ESP8266 (ESP32) with Firebase realtime database: IoT Controlled RGB LEDs](https://www.javacodegeeks.com/2019/07/esp8266-esp32-firebase-realtime-database-iot.html) <--- *There is some incorrect information in this article code, host in Firebase.begin should not contains http:// or https://
+
+[Serverless IoTs with Firebase Realtime Database and ESP32 - Part 1](https://medium.com/@vibrologic/serverless-iots-with-firebase-realtime-database-and-esp32-2d86eda06ff1)
+
+[Serverless IoTs with Firebase Realtime Database and ESP32 - Part 2](https://medium.com/@vibrologic/serverless-iots-with-firebase-realtime-database-and-esp32-def049181b57)
+
+
 
 ## Dependencies
 
@@ -119,6 +130,12 @@ For PlatformIO, in folder **"lib"**, create new folder named **"Firebase-ESP32"*
 
 
 ## Usages
+
+
+See [Full Examples](/examples) for complete usages.
+
+See [Function Description](/src/README.md) for all available functions.
+
 
 
 ### Initialization
@@ -1258,17 +1275,6 @@ The result of above code
 
 ```
 
-
-
-See [Full Examples](/examples) for complete usages.
-
-See [Function Description](/src/README.md) for all available functions.
-
-[ESP8266 (ESP32) with Firebase realtime database: IoT Controlled RGB LEDs](https://www.javacodegeeks.com/2019/07/esp8266-esp32-firebase-realtime-database-iot.html)
-
-[Serverless IoTs with Firebase Realtime Database and ESP32 - Part 1](https://medium.com/@vibrologic/serverless-iots-with-firebase-realtime-database-and-esp32-2d86eda06ff1)
-
-[Serverless IoTs with Firebase Realtime Database and ESP32 - Part 2](https://medium.com/@vibrologic/serverless-iots-with-firebase-realtime-database-and-esp32-def049181b57)
 
 
 ## License
