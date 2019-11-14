@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.5.7
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.5.8
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms which library are also available.
@@ -50,7 +50,7 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 
 ## Changes from earlier version
 
-For library v 3.5.7 (comes with FirebaseJson v 2.2.6) or later, FirebaseJson object will be used to handle JSON data instead of JSON string which, the following functions are affected:
+For library v 3.5.8 (comes with FirebaseJson v 2.2.7) or later, FirebaseJson object will be used to handle JSON data instead of JSON string which, the following functions are affected:
 
 getJson, setJson, pushJson, updateNode and updateNodeSilent.
 
