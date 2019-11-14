@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.2.5
+ * FirebaseJson, version 2.2.6
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using relative path.
  * 
- * November 12, 2019
+ * November 14, 2019
  * 
  * Features
  * - None recursive operations
@@ -647,34 +647,36 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                         {
                             if (!advanceCount)
                                 _parseCompleted++;
-                            if (_el[i].type == JSMN_OBJECT)
+
+                            if (!_arrReplaced)
                             {
-                                if (printMode == PRINT_MODE_PRETTY)
+                                if (_el[i].type == JSMN_OBJECT && !_arrReplaced)
                                 {
-                                    for (int j = 0; j < depth + 2; j++)
-                                        _jsonData._dbuf += _tab;
+                                    if (printMode == PRINT_MODE_PRETTY)
+                                    {
+                                        for (int j = 0; j < depth + 2; j++)
+                                            _jsonData._dbuf += _tab;
+                                    }
+                                    _jsonData._dbuf += _qt;
+                                    _jsonData._dbuf += searchKey;
+                                    _jsonData._dbuf += _qt;
+                                    if (printMode == PRINT_MODE_PRETTY)
+                                        _jsonData._dbuf += _pr;
+                                    else
+                                        _jsonData._dbuf += _pr2;
+                                    if (_parseCompleted == (int)_pathTk.size())
+                                        _jsonData._dbuf += replace;
+                                    else
+                                        _insertChilds(replace, printMode);
+                                    _arrReplaced = true;
+                                    if (printMode == PRINT_MODE_PRETTY)
+                                    {
+                                        _jsonData._dbuf += _nl;
+                                        for (int j = 0; j < depth + 1; j++)
+                                            _jsonData._dbuf += _tab;
+                                    }
                                 }
-                                _jsonData._dbuf += _qt;
-                                _jsonData._dbuf += searchKey;
-                                _jsonData._dbuf += _qt;
-                                if (printMode == PRINT_MODE_PRETTY)
-                                    _jsonData._dbuf += _pr;
                                 else
-                                    _jsonData._dbuf += _pr2;
-                                if (_parseCompleted == (int)_pathTk.size())
-                                    _jsonData._dbuf += replace;
-                                else
-                                    _insertChilds(replace, printMode);
-                                if (printMode == PRINT_MODE_PRETTY)
-                                {
-                                    _jsonData._dbuf += _nl;
-                                    for (int j = 0; j < depth + 1; j++)
-                                        _jsonData._dbuf += _tab;
-                                }
-                            }
-                            else
-                            {
-                                if (!_arrReplaced)
                                 {
                                     for (int k = _el[i].oindex - 1; k < searchIndex; k++)
                                     {
@@ -704,6 +706,7 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                             if (!advanceCount)
                                 _parseCompleted = _pathTk.size();
                         }
+
                         if (_el[i].type == JSMN_OBJECT)
                             _jsonData._dbuf += _brk2;
                         else
@@ -1537,12 +1540,13 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *searc
                     _jsonData._dbuf += _tab;
                 }
 
-                if (_refToken == i + 1)
+                if (_refToken == i + 1 && !_arrInserted)
                 {
                     if (!insertFlag)
                         _jsonData._dbuf += replace;
                     else
                         _insertChilds(replace, printMode);
+                    _arrInserted = true;
                 }
                 else
                     _jsonData._dbuf += tmp;
@@ -2160,6 +2164,7 @@ void FirebaseJson::_set(const char *path, const char *data)
     _TkRefOk = false;
     _parseCompleted = 0;
     _arrReplaced = false;
+    _arrInserted = false;
     _refTkIndex = -1;
     _remTkIndex = -1;
     _remFirstTk = false;
