@@ -59,6 +59,10 @@ getJson, setJson, pushJson, updateNode and updateNodeSilent.
 
 Don't be confused with other Firebase Arduino libraries, this library has different working functions, the following examples provide the basic usages.
 
+
+[ESP32 | FLUTTER | FIREBASE - Temperature & Humidity Check App](https://www.youtube.com/watch?v=nVrACWPXi8g&feature=youtu.be)
+
+
 [ESP8266 (ESP32) with Firebase realtime database: IoT Controlled RGB LEDs](https://www.javacodegeeks.com/2019/07/esp8266-esp32-firebase-realtime-database-iot.html) <--- *There is some incorrect information in this article code, host in Firebase.begin should not contains http:// or https://
 
 [Serverless IoTs with Firebase Realtime Database and ESP32 - Part 1](https://medium.com/@vibrologic/serverless-iots-with-firebase-realtime-database-and-esp32-2d86eda06ff1)
@@ -900,6 +904,10 @@ else
 This library includes FirebaseJson Arduino library, the easiest JSON parser, builder and editor.
 
 FirebaseJson usages are so simple as you read, store and update(edit) the JSON node in Firebase RTDB.
+
+It doesn't use the recursive call to parse or desialize complex or nested JSON objects and arrays. 
+
+This makes the library can use with limited stack memory device. 
 
 Since you declare the FirebaseJson (object) or FirebaseJsonArray, use the functions `setJsonData`, `add`, `set` and `remove`
 to build or edit JSON object and use `get` to parse the node's contents. 
