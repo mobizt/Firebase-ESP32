@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.5.8
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.5.9
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms which library are also available.
@@ -50,7 +50,7 @@ This library supports ESP32 MCU from Espressif. The following are platforms whic
 
 ## Changes from earlier version
 
-For library v 3.5.8 (comes with FirebaseJson v 2.2.7) or later, FirebaseJson object will be used to handle JSON data instead of JSON string which, the following functions are affected:
+For library v 3.5.9 (comes with FirebaseJson v 2.2.7) or later, FirebaseJson object will be used to handle JSON data instead of JSON string which, the following functions are affected:
 
 getJson, setJson, pushJson, updateNode and updateNodeSilent.
 
@@ -700,7 +700,7 @@ This library provides two approaches to run or process Error Queues with two fun
 * `beginAutoRunErrorQueue`
 * `processErrorQueue`
 
-The function `beginAutoRunErrorQueue` will run or process queues automatically and can be call once. 
+The function `beginAutoRunErrorQueue` will run or process queues automatically and can be called once. 
 
 While function `processErrorQueue` will run or process queues and should call inside the loop().
 
