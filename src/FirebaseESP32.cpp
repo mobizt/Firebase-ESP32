@@ -5886,7 +5886,7 @@ bool StreamData::boolData()
 String StreamData::stringData()
 {
   if (_dataType == FirebaseESP32::FirebaseDataType::STRING)
-    return _data.c_str();
+    return _data.substr(1, _data.length() - 2).c_str();
   else
     return std::string().c_str();
 }
