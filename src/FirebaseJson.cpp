@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.2.7
+ * FirebaseJson, version 2.2.8
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using relative path.
  * 
- * November 15, 2019
+ * December 19, 2019
  * 
  * Features
  * - None recursive operations
@@ -2107,9 +2107,18 @@ void FirebaseJson::_setDouble(const std::string &path, double value)
     sprintf(tmp, _pf, value);
     int i = strlen(tmp) - 1;
     while (tmp[i] == '0' && i > 0)
+    {
+        if (tmp[i - 1] == '.'){
+            i--;
+            break;
+        }
+        if (tmp[i - 1] != '0')
+            break;
         i--;
+    }
     if (i < (int)strlen(tmp) - 1)
-        tmp[i + 1] = '\0';
+        tmp[i] = '\0';
+
     _set(path.c_str(), tmp);
     delete[] tmp;
     std::string().swap(_jsonData._dbuf);
