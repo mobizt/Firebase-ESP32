@@ -1,13 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.0
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.1
  * 
- * December 19, 2019
+ * December 20, 2019
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed: 
- * - Fix FirebaseJson SetDouble bug
+ * - Fix empty data when none POST payload contains name key.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -2987,17 +2987,20 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           }
 
           //Push (POST) data?
-          p1 = linebuff.find(ESP32_FIREBASE_STR_20);
-          if (p1 != std::string::npos)
+          if (dataObj._r_method == FirebaseMethod::POST)
           {
-            p2 = linebuff.find(ESP32_FIREBASE_STR_3, p1 + strlen_P(ESP32_FIREBASE_STR_20));
-            if (p2 != std::string::npos)
+            p1 = linebuff.find(ESP32_FIREBASE_STR_20);
+            if (p1 != std::string::npos)
             {
-              dataObj._pushName.clear();
-              dataObj._pushName = linebuff.substr(p1 + strlen_P(ESP32_FIREBASE_STR_20), p2 - p1 - strlen_P(ESP32_FIREBASE_STR_20));
-              dataObj._dataType = -1;
-              dataObj._dataType2 = -1;
-              dataObj._data.clear();
+              p2 = linebuff.find(ESP32_FIREBASE_STR_3, p1 + strlen_P(ESP32_FIREBASE_STR_20));
+              if (p2 != std::string::npos)
+              {
+                dataObj._pushName.clear();
+                dataObj._pushName = linebuff.substr(p1 + strlen_P(ESP32_FIREBASE_STR_20), p2 - p1 - strlen_P(ESP32_FIREBASE_STR_20));
+                dataObj._dataType = 0;
+                dataObj._dataType2 = 0;
+                dataObj._data.clear();
+              }
             }
           }
         }
@@ -3013,8 +3016,8 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           dataObj._path.clear();
           dataObj._data.clear();
           dataObj._pushName.clear();
-          dataObj._dataType = -1;
-          dataObj._dataType2 = -1;
+          dataObj._dataType = 0;
+          dataObj._dataType2 = 0;
           dataObj._dataAvailable = false;
         }
       }
