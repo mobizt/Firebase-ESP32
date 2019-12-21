@@ -109,6 +109,12 @@ doubleData	KEYWORD2
 boolData	KEYWORD2
 stringData	KEYWORD2
 jsonData	KEYWORD2
+jsonObjectPtr   KEYWORD2
+jsonObject   KEYWORD2
+jsonArrayPtr    KEYWORD2
+jsonArray    KEYWORD2
+jsonDataPtr KEYWORD2
+jsonString  KEYWORD2
 blobData	KEYWORD2
 pushName	KEYWORD2
 isStream	KEYWORD2

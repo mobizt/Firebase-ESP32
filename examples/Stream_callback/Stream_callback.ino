@@ -224,7 +224,7 @@ void printResult(StreamData &data)
   else if (data.dataType() == "json")
   {
     Serial.println();
-    FirebaseJson *json = data.jsonObject();
+    FirebaseJson *json = data.jsonObjectPtr();
     //Print all object data
     Serial.println("Pretty printed JSON data:");
     String jsonStr;
@@ -257,7 +257,7 @@ void printResult(StreamData &data)
   {
     Serial.println();
     //get array data from FirebaseData using FirebaseJsonArray object
-    FirebaseJsonArray *arr = data.jsonArray();
+    FirebaseJsonArray *arr = data.jsonArrayPtr();
     //Print all array values
     Serial.println("Pretty printed Array:");
     String arrStr;
@@ -272,7 +272,7 @@ void printResult(StreamData &data)
       Serial.print(i);
       Serial.print(", Value: ");
 
-      FirebaseJsonData *jsonData = data.jsonData();
+      FirebaseJsonData *jsonData = data.jsonDataPtr();
       //Get the result data from FirebaseJsonArray object
       arr->get(*jsonData, i);
       if (jsonData->typeNum == JSON_BOOL)
