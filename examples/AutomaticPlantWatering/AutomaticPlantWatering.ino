@@ -128,7 +128,7 @@ void setup()
 
         //pump index, id, gpio, state, pump config
         setPump(0, "Pump1", 16, 0, &pumpConfig);
-        setPump(1, "Pump2", 12, 0, &pumpConfig);
+        setPump(1, "Pump2", 17, 0, &pumpConfig);
 
         Firebase.set(firebaseData2, path + "/config/pump", pumpConfig);
     }
