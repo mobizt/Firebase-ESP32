@@ -483,15 +483,15 @@ void loadSchedule(FirebaseData &data)
 void loadPump(FirebaseData &data)
 {
 
-    FirebaseJsonArray *scheduleConfig = data.jsonArrayPtr();
+    FirebaseJsonArray *pumpConfig = data.jsonArrayPtr();
     FirebaseJson json;
 
     Serial.println("Pump config:");
 
-    for (size_t i = 0; i < scheduleConfig->size(); i++)
+    for (size_t i = 0; i < pumpConfig->size(); i++)
     {
         FirebaseJsonData &jsonData = data.jsonData();
-        scheduleConfig->get(jsonData, i);
+        pumpConfig->get(jsonData, i);
         Serial.println(jsonData.stringValue);
         json.setJsonData(jsonData.stringValue);
         json.get(jsonData, "id");
