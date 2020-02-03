@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload with STARTTLS support
  * 
- * v 1.0.0
+ * v 1.0.1
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -57,11 +57,10 @@ public:
     * Initialization of new http connection.
     * \param host - Host name without protocols.
     * \param port - Server's port.
-    * \param uri - The URI of resource.
     * \return True as default.
     * If no certificate string provided, use (const char*)NULL to CAcert param 
     */
-  bool begin(const char *host, uint16_t port, const char *uri);
+  bool begin(const char *host, uint16_t port);
 
   /**
     * Check the http connection status.
@@ -107,7 +106,6 @@ protected:
   std::shared_ptr<char> _cer;
 
   std::string _host = "";
-  std::string _uri = "";
   uint16_t _port = 0;
 };
 

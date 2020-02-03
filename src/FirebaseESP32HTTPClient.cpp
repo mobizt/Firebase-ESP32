@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload with STARTTLS support
  * 
- * v 1.0.0
+ * v 1.0.1
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -87,19 +87,16 @@ FirebaseESP32HTTPClient::~FirebaseESP32HTTPClient()
     if (_client)
         _client->stop();
     std::string().swap(_host);
-    std::string().swap(_uri);
     std::string().swap(_rootCAFile);
     _cer.reset(new char);
     _cer = nullptr;
     transportTraits.reset(nullptr);
 }
 
-bool FirebaseESP32HTTPClient::begin(const char *host, uint16_t port, const char *uri)
+bool FirebaseESP32HTTPClient::begin(const char *host, uint16_t port)
 {
     _host = host;
     _port = port;
-    _uri = uri;
-
     return true;
 }
 

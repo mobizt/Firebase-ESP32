@@ -205,9 +205,9 @@ void setPumpState(int pumpIndex, int state)
 
     Firebase.set(firebaseData2, path + "/status/" + pumpInfo[pumpIndex].id, state);
     if (state == 0)
-        Serial.println(pumpInfo[pumpIndex].id + " Off");
+        Serial.println(pumpInfo[pumpIndex].id + " OFF");
     else if (state == 1)
-        Serial.println(pumpInfo[pumpIndex].id + " On");
+        Serial.println(pumpInfo[pumpIndex].id + " ON");
 }
 
 void streamCallback(StreamData data)
@@ -236,9 +236,9 @@ void streamCallback(StreamData data)
                 setPumpState(i, data.intData());
                 String status = pumpInfo[i].id;
                 if (data.intData() == 0)
-                    status += " Off";
+                    status += " OFF";
                 else if (data.intData() == 1)
-                    status += " On";
+                    status += " ON";
                 Firebase.set(firebaseData2, path + "/status/terminal", status);
             }
         }
@@ -406,7 +406,7 @@ void runSchedule()
                 {
                     if (presetTime[i].active != pumpInfo[presetTime[i].pump_index].state)
                     {
-                        String status = pumpInfo[presetTime[i].pump_index].id + " activated - " + String(presetTime[i].duration) + " sec from ";
+                        String status = pumpInfo[presetTime[i].pump_index].id + " ON - " + String(presetTime[i].duration) + " sec from ";
 
                         if (target_timeinfo.tm_hour < 10)
                             status += "0";
@@ -439,7 +439,7 @@ void runSchedule()
                         presetTime[i].state = 1;
                         Firebase.set(firebaseData2, path + "/control/" + pumpInfo[presetTime[i].pump_index].id, presetTime[i].inactive);
                         setPumpState(presetTime[i].pump_index, presetTime[i].inactive);
-                        String status = pumpInfo[presetTime[i].pump_index].id + " deactivated";
+                        String status = pumpInfo[presetTime[i].pump_index].id + " OFF";
                         Firebase.set(firebaseData2, path + "/status/terminal", status);
                     }
                 }
@@ -450,6 +450,9 @@ void runSchedule()
 
 void loadSchedule(FirebaseData &data)
 {
+    int presetNum = sizeof(presetTime) / sizeof(presetTime[0]);
+    for (int i = 0; i < presetNum; i++)
+        presetTime[i].state = 0;
 
     FirebaseJsonArray *scheduleConfig = data.jsonArrayPtr();
     FirebaseJson json;
@@ -482,6 +485,9 @@ void loadSchedule(FirebaseData &data)
 
 void loadPump(FirebaseData &data)
 {
+    int pumpNum = sizeof(pumpInfo) / sizeof(pumpInfo[0]);
+    for (int i = 0; i < pumpNum; i++)
+        pumpInfo[i].id = "";
 
     FirebaseJsonArray *pumpConfig = data.jsonArrayPtr();
     FirebaseJson json;

@@ -1,13 +1,16 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.3
  * 
- * December 21, 2019
+ * February 3, 2020
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed: 
- * - Fix unhandle stream callback data (FirebaseJsonArray and FirebaseJsonData).
+ * - Fix the insufficient size of FirebaseJson's reserved JSMN token.
+ * - Fix incorrect operation in Firebase.pushFloat.
+ * - Fix memory leaks possibilities.
+ * - Empty backup file size.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -243,10 +246,6 @@ struct StorageType
   static const uint8_t SD = 1;
 };
 
-typedef void (*StreamEventCallback)(StreamData);
-typedef void (*StreamTimeoutCallback)(bool);
-typedef void (*QueueInfoCallback)(QueueInfo);
-
 static std::vector<std::reference_wrapper<FirebaseData>> firebaseDataObject;
 static uint8_t dataObjectIndex __attribute__((used)) = 0;
 static uint8_t streamIndex __attribute__((used)) = 0;
@@ -307,15 +306,15 @@ public:
   /*
     Add recipient's device registration token or instant ID token.
     
-    @param deviceToken - Recipient's device registration token to addd that message will be sent to.
+    @param deviceToken - Recipient's device registration token to add that message will be sent to.
 
    */
   void addDeviceToken(const String &deviceToken);
 
   /*
-    Remove recipient's device registration token or instant ID token.
+    Remove the recipient's device registration token or instant ID token.
     
-    @param index - Index (start from zero) of recipient's device registration token that added to FCM Data Object of Firebase Data object.
+    @param index - Index (start from zero) of the recipient's device registration token that added to FCM Data Object of Firebase Data object.
 
    */
   void removeDeviceToken(uint16_t index);
@@ -340,7 +339,7 @@ public:
     
     @param title - The title text of notification message.
     @param body - The body text of notification message.
-    @param icon - The name and/or included URI/URL of icon to show on notify message.
+    @param icon - The name and/or included URI/URL of the icon to show on notifying message.
 
    */
   void setNotifyMessage(const String &title, const String &body, const String &icon);
@@ -350,8 +349,8 @@ public:
     
     @param title - The title text of notification message.
     @param body - The body text of notification message.
-    @param icon - The name and/or included URI/URL of icon to show on notify message.
-    @param click_action - The URL or intent to accept click event on notification message.
+    @param icon - The name and/or included URI/URL of the icon to show on notifying message.
+    @param click_action - The URL or intent to accept click event on the notification message.
 
    */
   void setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action);
@@ -385,7 +384,7 @@ public:
   void clearDataMessage();
 
   /*
-    Set the prioiry of message (notification and custom data).
+    Set the priority of the message (notification and custom data).
     
     @param priority - The priority string i.e. normal and high.
 
@@ -393,7 +392,7 @@ public:
   void setPriority(const String &priority);
 
   /*
-    Set the collapse key of message (notification and custom data).
+    Set the collapse key of the message (notification and custom data).
     
     @param key - String of collapse key.
 
@@ -401,7 +400,7 @@ public:
   void setCollapseKey(const String &key);
 
   /*
-    Set the Time To Live of message (notification and custom data).
+    Set the Time To Live of the message (notification and custom data).
     
     @param seconds - Number of seconds from 0 to 2,419,200 (4 weeks).
 
@@ -409,7 +408,7 @@ public:
   void setTimeToLive(uint32_t seconds);
 
   /*
-    Set topic of message will be send to.
+    Set the topic of the message will be sent to.
     
     @param topic - Topic string.
 
@@ -419,7 +418,7 @@ public:
   /*
     Get the send result.
     
-    @return String of payload returned from server.
+    @return String of payload returned from the server.
 
   */
   String getSendResult();
@@ -554,9 +553,18 @@ private:
 class FirebaseESP32
 {
 public:
+  friend class StreamData;
+  friend class FirebaseData;
+  friend class FCMObject;
+  friend class QueryFilter;
+
   struct FirebaseDataType;
   struct FirebaseMethod;
   struct FCMMessageType;
+
+  typedef void (*StreamEventCallback)(StreamData);
+  typedef void (*StreamTimeoutCallback)(bool);
+  typedef void (*QueueInfoCallback)(QueueInfo);
 
   FirebaseESP32();
   ~FirebaseESP32();
@@ -569,8 +577,6 @@ public:
     @param rootCA - Root CA certificate base64 string (PEM file).
     @param rootCAFile - Root CA certificate DER file (binary).
     @param StorageType - Type of storage, StorageType::SD and StorageType::SPIFFS.
-
-    Root CA certificate DER file is only support in Core SDK v2.5.x
 
   */
   void begin(const String &host, const String &auth);
@@ -596,17 +602,17 @@ public:
   void reconnectWiFi(bool reconnect);
 
   /*
-    Set the timeouts of get function.
+    Set the timeouts of Firebase.get function.
 
     @param dataObj - Firebase Data Object to hold data and instances.
 
-    @param millisec - The missiseconds to limit the request (0 - 900,000 ms or 15 min).
+    @param millisec - The milliseconds to limit the request (0 - 900,000 ms or 15 min).
 
   */
   void setReadTimeout(FirebaseData &dataObj, int millisec);
 
   /*
-    Set the timeouts of get function.
+    Set the timeouts of Firebase.get function.
 
     @param dataObj - Firebase Data Object to hold data and instances.
 
@@ -622,10 +628,10 @@ public:
     
     @param dataObj - Firebase Data Object to hold data and instances.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].jsonData will return the JSON string value of
-    database rules returned from server.
+    database rules returned from the server.
 
    */
   bool getRules(FirebaseData &dataObj);
@@ -634,21 +640,20 @@ public:
     Write the database rules.
     
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param rules - Database rules in jSON String format.
+    @param rules - Database rules in JSON String format.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
    */
   bool setRules(FirebaseData &dataObj, const String &rules);
 
   /*
-    Determine whether defined database path is existed or not.
+    Determine whether the defined database path exists or not.
     
     @param dataObj - Firebase Data Object to hold data and instances.
     @param path - Database path to be checked.
 
-    @return - Boolean type result indicates whether the defined database
-    path was existed or not.
+    @return - Boolean type result indicates whether the defined database path existed or not.
 
    */
   bool pathExist(FirebaseData &dataObj, const String &path);
@@ -662,13 +667,13 @@ public:
   String getETag(FirebaseData &dataObj, const String &path);
 
   /*
-    Get the shallowed data at defined node path.
+    Get the shallowed data at a defined node path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
 
     @param path - Database path being read the data.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Return the child data with its value or JSON object (its values will be truncated to true).
 
@@ -684,7 +689,7 @@ public:
 
     @param flag - Boolean value to enable.
 
-    This option used to escape the Firewall restriction (if device is connected through Firewall) that allows only HTTP GET and POST
+    This option used to escape the Firewall restriction (if the device is connected through Firewall) that allows only HTTP GET and POST
     
     HTTP PATCH request was sent as PATCH which not affected by this option.
 
@@ -695,12 +700,12 @@ public:
     Set the virtual child node ".priority" to the defined database path. 
     
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which to set the prioity value.
+    @param path - Target database path which to set the priority value.
     @param priority - The priority value.
     
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    This allows us to set priority to any node other than priority that set through setJSON, pushJSON, updateNode and updateNodeSilent functions.
+    This allows us to set priority to any node other than a priority that set through setJSON, pushJSON, updateNode, and updateNodeSilent functions.
     
     The returned priority value from server can read from function [FirebaseData object].priority().
 
@@ -711,9 +716,9 @@ public:
     Read the virtual child node ".priority" value at the defined database path. 
     
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which to set the prioity value.
+    @param path - Target database path which to set the priority value.
     
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     The priority value from server can read from function [FirebaseData object].priority().
 
@@ -727,7 +732,7 @@ public:
     @param path - Target database path which integer value will be appended.
     @param intValue - The appended value.
     
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
     The new appended node's key will be stored in Firebase Data object, 
     which its value can be accessed via function [FirebaseData object].pushName().
@@ -750,10 +755,10 @@ public:
     Append new float value to the defined database path.
     
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which float value will be appended.
+    @param path - Target database path in which float value will be appended.
     @param floatValue - The appended value.
     
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
     The new appended node's key will be stored in Firebase Data object, 
     which its value can be accessed via function [FirebaseData object].pushName().
@@ -776,10 +781,10 @@ public:
     Append new double value (8 bytes) to the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which float value will be appended.
+    @param path - Target database path in which float value will be appended.
     @param doubleValue - The appended value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     The new appended node's key will be stored in Firebase Data object,
     which its value can be accessed via function [FirebaseData object].pushName().
@@ -805,7 +810,7 @@ public:
     @param path - Target database path which Boolean value will be appended.
     @param boolValue - The appended value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     The new appended node's key will be stored in Firebase Data object,
     which its value can be accessed via function [FirebaseData object].pushName().
@@ -817,7 +822,7 @@ public:
 
   /*
 
-    Append new Boolean value and the virtual child ".priority" to the defined database path.
+    Append the new Boolean value and the virtual child ".priority" to the defined database path.
 
   */
   bool pushBool(FirebaseData &dataObj, const String &path, bool boolValue, float priority);
@@ -825,13 +830,13 @@ public:
   bool push(FirebaseData &dataObj, const String &path, bool boolValue, float priority);
 
   /*
-    Append new string (text) to the defined database path.
+    Append a new string (text) to the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param path - Target database path which string will be appended.
     @param StringValue - The appended value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
     The new appended node's key stored in Firebase Data object, 
     which can be accessed via function [FirebaseData object].pushName().
@@ -842,6 +847,8 @@ public:
   bool push(FirebaseData &dataObj, const String &path, const char *stringValue);
 
   bool push(FirebaseData &dataObj, const String &path, const String &stringValue);
+
+  bool push(FirebaseData &dataObj, const String &path, const StringSumHelper &stringValue);
 
   /*
 
@@ -854,14 +861,16 @@ public:
 
   bool push(FirebaseData &dataObj, const String &path, const String &stringValue, float priority);
 
+  bool push(FirebaseData &dataObj, const String &path, const StringSumHelper &stringValue, float priority);
+
   /*
-    Append new child nodes's key and value (using FirebaseJson object) to the defined database path.
+    Append new child node key and value (using FirebaseJson object) to the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param path - Target database path which key and value in FirebaseJson object will be appended.
     @param json - The appended FirebaseJson object.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     The new appended node's key will be stored in Firebase Data object,
     which its value can be accessed via function [FirebaseData object].pushName().
@@ -873,7 +882,7 @@ public:
 
   /*
 
-    Append new child nodes's key and value (using JSON data or FirebaseJson object) and the virtual child ".priority" to the defined database path.
+    Append new child node key and value (using JSON data or FirebaseJson object) and the virtual child ".priority" to the defined database path.
 
   */
 
@@ -883,7 +892,7 @@ public:
 
   /*
 
-    Append child nodes's array (using FirebaseJsonArray object) to the defined database path.
+    Append child node array (using FirebaseJsonArray object) to the defined database path.
 
     This will replace any child nodes inside the defined path with array defined in FirebaseJsonArray object.
 
@@ -891,7 +900,7 @@ public:
     @param path - Target database path which key and value in FirebaseJsonArray object will be appended.
     @param arr - The appended FirebaseJsonArray object.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     The new appended node's key will be stored in Firebase Data object,
     which its value can be accessed via function [FirebaseData object].pushName().
@@ -919,7 +928,7 @@ public:
     @param blob - Byte array of data.
     @param size - Size of byte array.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
     The new appended node's key will be stored in Firebase Data object, 
     which its value can be accessed via function [FirebaseData object].pushName().
@@ -939,14 +948,14 @@ public:
   bool push(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority);
 
   /*
-    Append new binary data from file store on SD card/Flash memory to the defined database path.
+    Append new binary data from file stored on SD card/Flash memory to the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param storageType - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
-    @param path - Target database path which binary data from file will be appended.
+    @param path - Target database path which binary data from the file will be appended.
     @param fileName - File name (full file path) in SD card/Flash memory.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
     The new appended node's key will be stored in Firebase Data object, 
     which its value can be accessed via function [FirebaseData object].pushName().
@@ -958,7 +967,7 @@ public:
 
   /*
 
-    Append new binary data from file store on SD card/Flash memory and the virtual child ".priority" to the defined database path.
+    Append new binary data from file stored on SD card/Flash memory and the virtual child ".priority" to the defined database path.
 
   */
   bool pushFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
@@ -966,12 +975,12 @@ public:
   bool push(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
 
   /*
-    Append new Firebase server's timestamp to the defined database path.
+    Append the new Firebase server's timestamp to the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param path - Target database path which timestamp will be appended.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
     The new appended node's key will be stored in Firebase Data object, 
     which its value can be accessed via function [FirebaseData object].pushName().
@@ -986,10 +995,9 @@ public:
     @param path - Target database path which integer data will be set.
     @param intValue - Integer value to set.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database. 
     
     Call [FirebaseData object].intData will return the integer value of
     payload returned from server.
@@ -1016,15 +1024,14 @@ public:
     @param intValue - Integer value to set.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database. 
     
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
-    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
     Also call [FirebaseData object].intData to get the current integer value.
     
 
@@ -1046,13 +1053,12 @@ public:
     Set float data at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which float data will be set.
+    @param path - Target database path in which float data will be set.
     @param floatValue - Float value to set.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data successfully stores in the database. 
     
     Call [FirebaseData object].floatData will return the float value of
     payload returned from server.
@@ -1075,22 +1081,21 @@ public:
     Set float data at the defined database path if defined database path's ETag matched the ETag value.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which float data will be set.
+    @param path - Target database path in which float data will be set.
     @param floatValue - Float value to set.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data successfully stores in the database. 
     
     Call [FirebaseData object].floatData will return the float value of
     payload returned from server.
 
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
-    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
     Also call [FirebaseData object].floatData to get the current float value.
 
    */
@@ -1111,16 +1116,16 @@ public:
     Set double data at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which float data will be set.
+    @param path - Target database path in which float data will be set.
     @param doubleValue - Double value to set.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
     Call [FirebaseData object].doubleData will return the double value of
-    payload returned from server.
+    the payload returned from the server.
 
     Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
     use printf("%.9lf\n", firebaseData.doubleData()); for print the returned double value up to 9 decimal places.
@@ -1143,22 +1148,22 @@ public:
     Set double data at the defined database path if defined database path's ETag matched the ETag value.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which float data will be set.
+    @param path - Target database path in which float data will be set.
     @param doubleValue - Double value to set.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
     Call [FirebaseData object].doubleData will return the double value of
-    payload returned from server.
+    the payload returned from the server.
 
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
-    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
     Also call [FirebaseData object].doubeData to get the current double value.
 
   */
@@ -1182,13 +1187,12 @@ public:
     @param path - Target database path which Boolean data will be set.
     @param boolValue - Boolean value to set.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    Call [FirebaseData object].dataType to determine what type of data successfully stores in the database.
 
     Call [FirebaseData object].boolData will return the Boolean value of
-    payload returned from server.
+    the payload returned from the server.
 
   */
   bool setBool(FirebaseData &dataObj, const String &path, bool boolValue);
@@ -1212,18 +1216,18 @@ public:
     @param boolValue - Boolean value to set.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
     Call [FirebaseData object].boolData will return the Boolean value of
-    payload returned from server.
+    the payload returned from the server.
 
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
-    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
     Also call [FirebaseData object].doubeData to get the current boolean value.
 
   */
@@ -1244,16 +1248,15 @@ public:
     Set string (text) at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which string data will be set.
+    @param path - Target database path in which string data will be set.
     @param stringValue - String or text to set.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database. 
     
     Call [FirebaseData object].stringData will return the string value of
-    payload returned from server.
+    the payload returned from server.
 
    */
   bool setString(FirebaseData &dataObj, const String &path, const String &stringValue);
@@ -1261,6 +1264,8 @@ public:
   bool set(FirebaseData &dataObj, const String &path, const char *stringValue);
 
   bool set(FirebaseData &dataObj, const String &path, const String &stringValue);
+
+  bool set(FirebaseData &dataObj, const String &path, const StringSumHelper &stringValue);
 
   /*
 
@@ -1273,27 +1278,28 @@ public:
 
   bool set(FirebaseData &dataObj, const String &path, const String &stringValue, float priority);
 
+  bool set(FirebaseData &dataObj, const String &path, const StringSumHelper &stringValue, float priority);
+
   /*
     Set string (text) at the defined database path if defined database path's ETag matched the ETag value.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which string data will be set.
+    @param path - Target database path in which string data will be set.
     @param stringValue - String or text to set.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database. 
     
     Call [FirebaseData object].stringData will return the string value of
-    payload returned from server.
+    the payload returned from the server.
 
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
-    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
-    Also call [FirebaseData object].stringData to get the current string value.
+    If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    Also, call [FirebaseData object].stringData to get the current string value.
 
    */
   bool setString(FirebaseData &dataObj, const String &path, const String &stringValue, const String &ETag);
@@ -1301,6 +1307,8 @@ public:
   bool set(FirebaseData &dataObj, const String &path, const char *stringValue, const String &ETag);
 
   bool set(FirebaseData &dataObj, const String &path, const String &stringValue, const String &ETag);
+
+  bool set(FirebaseData &dataObj, const String &path, const StringSumHelper &stringValue, const String &ETag);
 
   /*
 
@@ -1313,9 +1321,11 @@ public:
 
   bool set(FirebaseData &dataObj, const String &path, const String &stringValue, float priority, const String &ETag);
 
+  bool set(FirebaseData &dataObj, const String &path, const StringSumHelper &stringValue, float priority, const String &ETag);
+
   /*
 
-    Set child nodes's key and value (using FirebaseJson object) to the defined database path.
+    Set the child node key and value (using FirebaseJson object) to the defined database path.
 
     This will replace any child nodes inside the defined path with node' s key
     and value defined in FirebaseJson object.
@@ -1324,10 +1334,10 @@ public:
     @param path - Target database path which key and value in FirebaseJson object will be replaced or set.
     @param json - The FirebaseJson object.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
     Call [FirebaseData object].jsonData will return the JSON string value of
     payload returned from server.
@@ -1349,7 +1359,7 @@ public:
 
   /*
 
-    Set child nodes's key and value (using JSON data or FirebaseJson object) to the defined database path if defined database path's ETag matched the ETag value.
+    Set child node key and value (using JSON data or FirebaseJson object) to the defined database path if defined database path's ETag matched the ETag value.
 
     This will replace any child nodes inside the defined path with node' s key
     and value defined in JSON data or FirebaseJson object.
@@ -1360,18 +1370,17 @@ public:
     @param json - The FirebaseJson object.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database. 
     
     Call [FirebaseData object].jsonData will return the JSON string value of
     payload returned from server.
 
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
-    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
     Also call [FirebaseData object].jsonData to get the current JSON string value.
 
    */
@@ -1392,7 +1401,7 @@ public:
 
   /*
 
-    Set child nodes's array (using FirebaseJsonArray object) to the defined database path.
+    Set child node array (using FirebaseJsonArray object) to the defined database path.
 
     This will replace any child nodes inside the defined path with array defined in FirebaseJsonArray object.
 
@@ -1400,10 +1409,10 @@ public:
     @param path - Target database path which key and value in FirebaseJsonArray object will be replaced or set.
     @param arr - The FirebaseJsonArray object.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
     Call [FirebaseData object].jsonArray will return pointer to FirebaseJsonArray object contains array
     payload returned from server, get the array payload using FirebaseJsonArray *arr = firebaseData.jsonArray();
@@ -1434,18 +1443,17 @@ public:
     @param arr - The FirebaseJsonArray object.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    Call [FirebaseData object].dataType to determine what type of data successfully stores in the database.
 
     Call [FirebaseData object].jsonArray will return pointer to FirebaseJsonArray object contains array
     payload returned from server, get the array payload using FirebaseJsonArray *arr = firebaseData.jsonArray();
 
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
-    If operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
+    If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
     Also call [FirebaseData object].jsonArray to get the pointer to FirebaseJsonArray object of current array value.
 
    */
@@ -1467,16 +1475,16 @@ public:
   /*
     Set blob (binary data) at the defined database path.
 
-    This will replace any child nodes inside the defined path with blob or binary data.
+    This will replace any child nodes inside the defined path with a blob of binary data.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param path - Target database path which binary data will be set.
     @param blob - Byte array of data.
-    @param size - Size of byte array.
+    @param size - Size of the byte array.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    No payload returned from server.
+    No payload returned from the server.
 
   */
   bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size);
@@ -1495,20 +1503,20 @@ public:
   /*
     Set blob (binary data) at the defined database path if defined database path's ETag matched the ETag value.
 
-    This will replace any child nodes inside the defined path with blob or binary data.
+    This will replace any child nodes inside the defined path with a blob of binary data.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param path - Target database path which binary data will be set.
     @param blob - Byte array of data.
-    @param size - Size of byte array.
+    @param size - Size of the byte array.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
-    No payload returned from server.
+    No payload returned from the server.
 
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
    */
   bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, const String &ETag);
@@ -1525,16 +1533,16 @@ public:
   bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
 
   /*
-    Set binary data from file store on SD card/Flash memory to the defined database path.
+    Set binary data from file stored on SD card/Flash memory to the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param storageType - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
-    @param path - Target database path which binary data from file will be set.
+    @param path - Target database path in which binary data from the file will be set.
     @param fileName - File name included its path in SD card/Flash memory
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    No payload returned from server.
+    No payload returned from the server.
 
   */
   bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName);
@@ -1543,7 +1551,7 @@ public:
 
   /*
 
-    Set binary data from file and virtual child ".priority" at the defined database path.
+    Set binary data from the file and virtual child ".priority" at the defined database path.
 
   */
   bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
@@ -1551,20 +1559,20 @@ public:
   bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
 
   /*
-    Set binary data from file store on SD card/Flash memory to the defined database path if defined database path's ETag matched the ETag value.
+    Set binary data from file stored on SD card/Flash memory to the defined database path if defined database path's ETag matched the ETag value.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param storageType - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
-    @param path - Target database path which binary data from file will be set.
+    @param path - Target database path in which binary data from the file will be set.
     @param fileName - File name included its path in SD card/Flash memory.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
     
-    No payload returned from server.
+    No payload returned from the server.
 
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
    */
   bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
@@ -1573,7 +1581,7 @@ public:
 
   /*
 
-    Set binary data from file and the virtual child ".priority" if defined ETag matches at the defined database path 
+    Set binary data from a file and the virtual child ".priority" if defined ETag matches at the defined database path 
 
   */
   bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
@@ -1586,7 +1594,7 @@ public:
     @param dataObj - Firebase Data Object to hold data and instances.
     @param path - Target database path which timestamp will be set.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].intData will return the integer value of timestamp in seconds
     or [FirebaseData object].doubleData to get millisecond timestamp.
@@ -1597,66 +1605,65 @@ public:
    */
   bool setTimestamp(FirebaseData &dataObj, const String &path);
   /*
-    Update child nodes's key or exising key's value (using FirebaseJson object) under the defined database path.
+    Update the child node key or existing key's value (using FirebaseJson object) under the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which key and value in FirebaseJson object will be update.
-    @param json - The FirebaseJson object used for update.
+    @param path - Target database path which key and value in FirebaseJson object will be updated.
+    @param json - The FirebaseJson object used for the update.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
     Call [FirebaseData object].jsonData will return the json string value of
     payload returned from server.
 
-    To reduce the network data usage, use updateNodeSilent instead.
+    To reduce network data usage, use updateNodeSilent instead.
 
   */
   bool updateNode(FirebaseData &dataObj, const String path, FirebaseJson &json);
 
   /*
 
-    Update child nodes's key or exising key's value and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
+    Update child node key or existing key's value and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
 
   */
 
   bool updateNode(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
 
   /*
-    Update child nodes's key or exising key's value (using FirebaseJson object) under the defined database path.
+    Update the child node key or existing key's value (using FirebaseJson object) under the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Target database path which key and value in FirebaseJson object will be update.
-    @param json - The FirebaseJson object used for update.
+    @param path - Target database path which key and value in FirebaseJson object will be updated.
+    @param json - The FirebaseJson object used for the update.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Owing to the objective of this function to reduce the netwok data usage,
-    no payload will be returned from server.
+    Owing to the objective of this function to reduce network data usage,
+    no payload will be returned from the server.
 
   */
   bool updateNodeSilent(FirebaseData &dataObj, const String &path, FirebaseJson &json);
 
   /*
 
-    Update child nodes's key or exising key's value and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
+    Update child node key or existing key's value and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
 
   */
 
   bool updateNodeSilent(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
 
   /*
-    Read the any type of value at the defined database path.
+    Read any type of value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the float value is being read.
+    @param path - Database path in which the float value is being read.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database. 
     
     Call [FirebaseData object].intData, [FirebaseData object].floatData, [FirebaseData object].doubleData,
     [FirebaseData object].boolData, [FirebaseData object].stringData, [FirebaseData object].jsonObject (pointer), 
@@ -1670,12 +1677,11 @@ public:
     Read the integer value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the float value is being read.
+    @param path - Database path in which the float value is being read.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database. 
     
     Call [FirebaseData object].intData will return the integer value of
     payload returned from server.
@@ -1690,12 +1696,12 @@ public:
     Read the integer value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the float value is being read.
+    @param path - Database path in which the float value is being read.
     @param target - The integer type variable to store value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    If the type of payload returned from server is not integer, float and double, 
+    If the type of payload returned from the server is not an integer, float and double, 
     the target variable's value will be zero (0).
 
   */
@@ -1705,12 +1711,11 @@ public:
     Read the float value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the float value is being read.
+    @param path - Database path in which the float value is being read.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database. 
     
     Call [FirebaseData object].floatData will return the float value of
     payload returned from server.
@@ -1725,13 +1730,13 @@ public:
     Read the float value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the float value is being read.
+    @param path - Database path in which the float value is being read.
     @param target - The float type variable to store value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
 
-    If the type of payload returned from server is not integer, float and double, 
+    If the type of payload returned from the server is not an integer, float and double, 
     the target variable's value will be zero (0).
 
    */
@@ -1741,15 +1746,14 @@ public:
     Read the double value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the float value is being read.
+    @param path - Database path in which the float value is being read.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data successfully stores in the database. 
     
     Call [FirebaseData object].doubleData will return the double value of
-    payload returned from server.
+    the payload returned from the server.
 
     If the payload returned from server is not integer, float and double, 
     the function [FirebaseData object].doubleData will return zero (0).
@@ -1764,13 +1768,13 @@ public:
     Read the float value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the float value is being read.
+    @param path - Database path in which the float value is being read.
     @param target - The double type variable to store value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
 
-    If the type of payload returned from server is not integer, float and double, 
+    If the type of payload returned from the server is not an integer, float and double, 
     the target variable's value will be zero (0).
 
    */
@@ -1780,17 +1784,16 @@ public:
     Read the Boolean value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the Boolean value is being read.
+    @param path - Database path in which the Boolean value is being read.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data that successfully stores in the database. 
     
     Call [FirebaseData object].boolData will return the Boolean value of
-    payload returned from server.
+    the payload returned from the server.
 
-    If the type of payload returned from server is not Boolean, 
+    If the type of payload returned from the server is not Boolean, 
     the function [FirebaseData object].boolData will return false.
 
    */
@@ -1800,48 +1803,48 @@ public:
     Read the Boolean value at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the Boolean value is being read.
+    @param path - Database path in which the Boolean value is being read.
     @param target - The boolean type variable to store value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
 
-    If the type of payload returned from server is not Boolean, 
+    If the type of payload returned from the server is not Boolean, 
     the target variable's value will be false.
 
    */
   bool getBool(FirebaseData &dataObj, const String &path, bool &target);
 
   /*
-    Read the string or text at the defined database path.
+    Read the string of text at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the string value is being read.
+    @param path - Database path in which the string value is being read.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
     Call [FirebaseData object].stringData will return the string value of
-    payload returned from server.
+    the payload returned from the server.
 
-    If the type of payload returned from server is not string,
+    If the type of payload returned from the server is not a string,
     the function [FirebaseData object].stringData will return empty string (String object).
 
   */
   bool getString(FirebaseData &dataObj, const String &path);
 
   /*
-    Read the string or text at the defined database path.
+    Read the string at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the string value is being read.
+    @param path - Database path in which the string value is being read.
     @param target - The String object to store value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    If the type of payload returned from server is not string,
+    If the type of payload returned from the server is not a string,
     the target String object's value will be empty.
 
   */
@@ -1852,15 +1855,14 @@ public:
     The returned payload JSON string represents the child nodes and their value.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the JSON string value is being read.
+    @param path - Database path in which the JSON string value is being read.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    Call [FirebaseData object].dataType to determine what type of data successfully stores in the database.
 
     Call [FirebaseData object].jsonObject will return the pointer to FirebaseJson object contains the value of
-    payload returned from server.
+    the payload returned from the server.
 
     If the type of payload returned from server is not json,
     the function [FirebaseData object].jsonObject will contain empty object.
@@ -1870,16 +1872,16 @@ public:
 
   /*
     Read the JSON string at the defined database path.
-    The returned the pointer to FirebaseJson that contains json payload represents the child nodes and their value.
+    The returned the pointer to FirebaseJson that contains JSON payload represents the child nodes and their value.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the JSON string value is being read.
-    @param target - The FirebaseJson object pointer to get json data.
+    @param path - Database path in which the JSON string value is being read.
+    @param target - The FirebaseJson object pointer to get JSON data.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    If the type of payload returned from server is not json,
-    the target FirebaseJson object will contain empty object.
+    If the type of payload returned from the server is not JSON,
+    the target FirebaseJson object will contain an empty object.
 
 
   */
@@ -1887,21 +1889,21 @@ public:
 
   /*
     Read the JSON string at the defined database path.
-    The returned the pointer to FirebaseJson that contains json payload represents the child nodes and their value.
+    The returned the pointer to FirebaseJson that contains JSON payload represents the child nodes and their value.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the JSON string value is being read.
+    @param path - Database path in which the JSON string value is being read.
     @param query - QueryFilter class to set query parameters to filter data.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Available query parameters for filtering the data are the following.
 
-    QueryFilter.orderBy -       Required parameter to specify which data used for data filtering included child key, key and value.
+    QueryFilter.orderBy -       Required parameter to specify which data used for data filtering included child key, key, and value.
                                 Use "$key" for filtering data by keys of all nodes at the defined database path.
                                 Use "$value" for filtering data by value of all nodes at the defined database path.
                                 Use "$priority" for filtering data by "virtual child" named .priority of all nodes.
-                                Use  any child key to filter by that key.
+                                Use any child key to filter by that key.
 
 
     QueryFilter.limitToFirst -  The total children (number) to filter from the first child.
@@ -1912,10 +1914,9 @@ public:
 
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
-    Call [FirebaseData object].jsonObject will return the pointer to FirebaseJson object contains the value of
-    payload returned from server.
+    Call [FirebaseData object].jsonObject will return the pointer to FirebaseJson object contains the value of the payload returned from the server.
 
     If the type of payload returned from server is not json,
     the function [FirebaseData object].jsonObject will contain empty object.
@@ -1928,13 +1929,13 @@ public:
      Read the JSON string at the defined database path as above
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the JSON string value is being read.
-    @param target - The FirebaseJson object pointer to get json data.
+    @param path - Database path in which the JSON string value is being read.
+    @param target - The FirebaseJson object pointer to get JSON data.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    If the type of payload returned from server is not json,
-    the target FirebaseJson object will contain empty object.
+    If the type of payload returned from the server is not JSON,
+    the target FirebaseJson object will contain an empty object.
 
   */
   bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &query, FirebaseJson *target);
@@ -1943,33 +1944,33 @@ public:
     Read the array data at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the array is being read.
+    @param path - Database path in which the array is being read.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
     Call [FirebaseData object].jsonArray will return the pointer to FirebaseJsonArray object contains array value of
     payload returned from server.
 
-    If the type of payload returned from server is not array,
+    If the type of payload returned from the server is not an array,
     the array element in [FirebaseData object].jsonArray will be empty.
 
   */
   bool getArray(FirebaseData &dataObj, const String &path);
 
   /*
-    Read the array data at the defined database path, and assign data to target.
+    Read the array data at the defined database path, and assign data to the target.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the array is being read.
+    @param path - Database path in which the array is being read.
     @param target - The FirebaseJsonArray object pointer to get array value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    If the type of payload returned from server is not array,
-    the target FirebaseJsonArray object will contain empty array.
+    If the type of payload returned from the server is not an array,
+    the target FirebaseJsonArray object will contain an empty array.
 
   */
   bool getArray(FirebaseData &dataObj, const String &path, FirebaseJsonArray *target);
@@ -1978,18 +1979,18 @@ public:
     Read the array data at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the array is being read.
+    @param path - Database path in which the array is being read.
     @param query - QueryFilter class to set query parameters to filter data.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
     Available query parameters for filtering the data are the following.
 
-    QueryFilter.orderBy -       Required parameter to specify which data used for data filtering included child key, key and value.
+    QueryFilter.orderBy -       Required parameter to specify which data used for data filtering included child key, key, and value.
                                 Use "$key" for filtering data by keys of all nodes at the defined database path.
                                 Use "$value" for filtering data by value of all nodes at the defined database path.
                                 Use "$priority" for filtering data by "virtual child" named .priority of all nodes.
-                                Use  any child key to filter by that key.
+                                Use any child key to filter by that key.
 
 
     QueryFilter.limitToFirst -  The total children (number) to filter from the first child.
@@ -2000,12 +2001,12 @@ public:
 
 
     Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database.
+    stores in the database.
 
     Call [FirebaseData object].jsonArray will return the pointer to FirebaseJsonArray object contains array of
     payload returned from server.
 
-    If the type of payload returned from server is not array,
+    If the type of payload returned from the server is not an array,
     the function [FirebaseData object].jsonArray will contain empty array.
 
 
@@ -2016,13 +2017,13 @@ public:
     Read the array data at the defined database path as above
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the array is being read.
+    @param path - Database path in which the array is being read.
     @param target - The FirebaseJsonArray object to get array value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    If the type of payload returned from server is not array,
-    the target FirebaseJsonArray object will contain empty array.
+    If the type of payload returned from the server is not an array,
+    the target FirebaseJsonArray object will contain an empty array.
 
   */
   bool getArray(FirebaseData &dataObj, const String &path, QueryFilter &query, FirebaseJsonArray *target);
@@ -2031,12 +2032,11 @@ public:
     Read the blob (binary data) at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the binary data is being read.
+    @param path - Database path in which the binary data is being read.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Call [FirebaseData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [FirebaseData object].dataType to determine what type of data successfully stores in the database. 
     
     Call [FirebaseData object].blobData will return the dynamic array of unsigned 8-bit data (i.e. std::vector<uint8_t>) of
     payload returned from server.
@@ -2051,30 +2051,30 @@ public:
     Read the blob (binary data) at the defined database path.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path which the binary data is being read.
+    @param path - Database path in which the binary data is being read.
     @param target - Dynamic array of unsigned 8-bit data (i.e. std::vector<uint8_t>) to store value.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
 
-    If the type of payload returned from server is not blob,
-    the target variable value will be empty array.
+    If the type of payload returned from the server is not a blob,
+    the target variable value will be an empty array.
 
   */
   bool getBlob(FirebaseData &dataObj, const String &path, std::vector<uint8_t> &target);
 
   /*
-    Download file data in database at defined database path and save to SD card/Flash memory.
+    Download file data in a database at the defined database path and save it to SD card/Flash memory.
 
     The downloaded data will be decoded to binary and save to SD card/Flash memory, then
-    please make sure that data at the defined database path is file type.
+    please make sure that data at the defined database path is the file type.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param storageType - Type of storage to write file data, StorageType::SPIFS or StorageType::SD.
     @param nodePath - Database path that file data will be downloaded.
     @param fileName - File name (full path) to save in SD card/Flash memory.
 
-    @return Boolean type status indicates the success of operation.
+    @return Boolean type status indicates the success of the operation.
 
    */
   bool getFile(FirebaseData &dataObj, uint8_t storageType, const String &nodePath, const String &fileName);
@@ -2085,7 +2085,7 @@ public:
     @param dataObj - Firebase Data Object to hold data and instances.
     @param path - Database path to be deleted.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
    */
   bool deleteNode(FirebaseData &dataObj, const String &path);
@@ -2097,10 +2097,10 @@ public:
     @param path - Database path to be deleted.
     @param ETag - Known unique identifier string (ETag) of defined database path.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    If ETag at the defined database path is not match the provided ETag parameter,
-    the operation will failed with HTTP code 412, Precondition Failed (ETag is not match).
+    If ETag at the defined database path does not match the provided ETag parameter,
+    the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
    */
   bool deleteNode(FirebaseData &dataObj, const String &path, const String &ETag);
@@ -2109,26 +2109,24 @@ public:
     Start monitoring the value changes at the defined path and its children.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param path - Database path being monitor.
+    @param path - Database path to monitor.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
    */
   bool beginStream(FirebaseData &dataObj, const String &path);
 
   /*
-    Read the stream event data at defined database path. 
+    Read the stream event data at the defined database path. 
 
     Once beginStream was called e.g. in setup(), the readStream function
     should call inside the loop function.
 
     @param dataObj - Firebase Data Object to hold data and instances.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
-    Using the same Firebase Data object for stream read/monitoring associated 
-    with getXXX, setXXX, pushXXX, updateNode and deleteNode will break or quit 
-    the current stream connection. 
+    Using the same Firebase Data object for stream read/monitoring associated with getXXX, setXXX, pushXXX, updateNode, and deleteNode will break or quit the current stream connection. 
     
     The stream will be resumed or reconnected automatically when calling readStream.
 
@@ -2136,13 +2134,13 @@ public:
   bool readStream(FirebaseData &dataObj);
 
   /*
-    End the stream connection at defined path.
+    End the stream connection at a defined path.
     
-    Can be restart again by calling beginStream.
+    It can be restart again by calling beginStream.
 
     @param dataObj - Firebase Data Object to hold data and instances.
 
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
    */
   bool endStream(FirebaseData &dataObj);
@@ -2153,19 +2151,17 @@ public:
     setStreamCallback should be called before Firebase.beginStream.
     
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param dataAvailablecallback - Callback function that accepts streamData parameter.
-    @param timeoutCallback - Callback function will be called when stream connection was timeout (optional).
+    @param dataAvailablecallback - a Callback function that accepts streamData parameter.
+    @param timeoutCallback - Callback function will be called when the stream connection was timeout (optional).
 
     dataAvailablecallback will be called When data in the defined path changed or the stream path changed or stream connection
     was resumed from getXXX, setXXX, pushXXX, updateNode, deleteNode.
 
-    The payload returned from server will be one of these integer, float, string, json and blob types.
+    The payload returned from the server will be one of these integer, float, string, JSON and blob types.
 
-    Call [streamData object].dataType to determine what type of data that successfully
-    stores in database. 
+    Call [streamData object].dataType to determine what type of data successfully stores in the database. 
     
-    Call [streamData object].xxxData will return the appropiated data type of
-    payload returned from server.
+    Call [streamData object].xxxData will return the appropriate data type of the payload returned from the server.
 
    */
   void setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL);
@@ -2178,95 +2174,33 @@ public:
   void removeStreamCallback(FirebaseData &dataObj);
 
   /*
-    Start the Firbase Error Queues Auto Run Process.
-
-    @param dataObj - Firebase Data Object to hold data and instances.
-    @param callback - Callback function that accepts QueueInfo Object as parameter, optional.
-
-    The following functions are available from QueueInfo Object accepted by callback.
-
-    queueInfo.totalQueues(), get the total Error Queues in Error Queue Collection.
-
-    queueInfo.currentQueueID(), get current Error Queue ID that being process.
-
-    queueInfo.isQueueFull(), determine whether Error Queue Collection is full or not.
-
-    queueInfo.dataType(), get string of the Frebase call data type that being process of current Error Queue.
-
-    queueInfo.method(), get string of the Firebase call method that being process of current Error Queue.
-
-    queueInfo.path(), get string of the Firebase call path that being process of current Error Queue.
-
-   */
-  void beginAutoRunErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL);
-
-  /*
-    Stop the Firbase Error Queues Auto Run Process.
-
-    @param dataObj - Firebase Data Object to hold data and instances.
-
-  */
-  void endAutoRunErrorQueue(FirebaseData &dataObj);
-
-  /*
-    Clear all Firbase Error Queues in Error Queue collection.
-
-    @param dataObj - Firebase Data Object to hold data and instances.
-
-  */
-  void clearErrorQueue(FirebaseData &dataObj);
-
-  /*
-    Backup (download) database at defined database path to SD card/Flash memory.
+    Backup (download) database at the defined database path to SD card/Flash memory.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param StorageType - Type of storage, StorageType::SD and StorageType::SPIFFS.
-    @param nodePath - Database path to be backuped.
-    @param dirPath - Folder in SD card/Flash memory to save the downloaed file.
+    @param nodePath - Database path to be backup.
+    @param dirPath - Folder in SD card/Flash memory to save the downloaded file.
 
-    @return Boolean type status indicates the success of operation.
+    @return Boolean type status indicates the success of the operation.
 
-    The backup .json filename is constructed from the database path by replace slash (/) with dot (.).
+    The backup .json filename is constructed from the database path by replacing slash (/) with a dot (.).
 
    */
   bool backup(FirebaseData &dataObj, uint8_t storageType, const String &nodePath, const String &dirPath);
 
   /*
-    Restore database at defined path usin backup file saved on SD card/Flash memory.
+    Restore database at a defined path using backup file saved on SD card/Flash memory.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param StorageType - Type of storage, StorageType::SD and StorageType::SPIFFS.
-    @param nodePath - Database path to  be restored.
+    @param nodePath - Database path to be restored.
     @param dirPath - Path/Folder in SD card/Flash memory that the backup file was saved. 
 
 
-    @return Boolean type status indicates the success of operation.
+    @return Boolean type status indicates the success of the operation.
     
    */
   bool restore(FirebaseData &dataObj, uint8_t storageType, const String &nodePath, const String &dirPath);
-
-  /*
-  
-    Init SD card with GPIO pins.
-  
-    @param sck -  SPI Clock pin.
-    @param miso - SPI MISO pin.
-    @param mosi - SPI MOSI pin.
-    @param ss -   SPI Chip/Slave Select pin.
-
-    @return Boolean type status indicates the success of operation.
-
-   */
-  bool sdBegin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
-
-  /*
-  
-    Init SD card with default GPIO pins.
-
-    @return Boolean type status indicates the success of operation.
-  
-   */
-  bool sdBegin(void);
 
   /*
 
@@ -2279,7 +2213,7 @@ public:
 
   /*
    
-   Set the maximum Firebase Error Queues in collection (0 - 255).
+   Set the maximum Firebase Error Queues in the collection (0 - 255).
 
    Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase Error Queues collection.
 
@@ -2296,7 +2230,7 @@ public:
    Firebase read (get) operation will not be saved.
 
    @param dataObj - Firebase Data Object to hold data and instances.
-   @param filename - File name to be saved.
+   @param filename - Filename to be saved.
    @param storageType - Type of storage to save file, StorageType::SPIFS or StorageType::SD.
     
   */
@@ -2317,17 +2251,17 @@ public:
    Restore Firebase Error Queues from SPIFFS file.
 
    @param dataObj - Firebase Data Object to hold data and instances.
-   @param filename - File name to be read and restore queues.
+   @param filename - Filename to be read and restore queues.
    @param storageType - Type of storage to read file, StorageType::SPIFS or StorageType::SD.
     
   */
   bool restoreErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType);
 
   /*
-    Determine number of Firebase Error Queues stored in defined SPIFFS file.
+    Determine the number of Firebase Error Queues stored in a defined SPIFFS file.
 
     @param dataObj - Firebase Data Object to hold data and instances.
-    @param filename - File name to be read and count for queues.
+    @param filename - Filename to be read and count for queues.
     @param storageType - Type of storage to read file, StorageType::SPIFS or StorageType::SD.
 
     @return Number (0-255) of queues store in defined SPIFFS file.
@@ -2355,11 +2289,11 @@ public:
   bool isErrorQueueFull(FirebaseData &dataObj);
 
   /*
-    Pocess all failed Firebase operation queue items when network is available.
+    Process all failed Firebase operation queue items when the network is available.
 
     @param dataObj - Firebase Data Object to hold data and instances.
 
-    @param callback - Callback function that accepts QueueInfo parameter.
+    @param callback - a Callback function that accepts QueueInfo parameter.
   
   */
   void processErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL);
@@ -2367,7 +2301,7 @@ public:
   /*
     Return Firebase Error Queue ID of last Firebase Error.
 
-    Return 0 if there is no Firebase Error from last operation.
+    Return 0 if there is no Firebase Error from the last operation.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     
@@ -2377,7 +2311,7 @@ public:
   uint32_t getErrorQueueID(FirebaseData &dataObj);
 
   /*
-    Determine whether Firebase Error Queue is currently exsted is Error Queue collection or not.
+    Determine whether Firebase Error Queue currently exists is Error Queue collection or not.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     @param errorQueueID - The Firebase Error Queue ID get from getErrorQueueID.
@@ -2388,13 +2322,52 @@ public:
   bool isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQueueID);
 
   /*
-    Send Firebase Cloud Messaging to device with first registeration token which added by firebaseData.fcm.addDeviceToken.
+    Start the Firebase Error Queues Auto Run Process.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+    @param callback - a Callback function that accepts QueueInfo Object as a parameter, optional.
+
+    The following functions are available from QueueInfo Object accepted by callback.
+
+    queueInfo.totalQueues(), get the total Error Queues in Error Queue Collection.
+
+    queueInfo.currentQueueID(), get current Error Queue ID that being process.
+
+    queueInfo.isQueueFull(), determine whether Error Queue Collection is full or not.
+
+    queueInfo.dataType(), get a string of the Firebase call data type that being process of current Error Queue.
+
+    queueInfo.method(), get a string of the Firebase call method that being process of current Error Queue.
+
+    queueInfo.path(), get a string of the Firebase call path that being process of current Error Queue.
+
+   */
+  void beginAutoRunErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL);
+
+  /*
+    Stop the Firebase Error Queues Auto Run Process.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+
+  */
+  void endAutoRunErrorQueue(FirebaseData &dataObj);
+
+  /*
+    Clear all Firbase Error Queues in Error Queue collection.
+
+    @param dataObj - Firebase Data Object to hold data and instances.
+
+  */
+  void clearErrorQueue(FirebaseData &dataObj);
+
+  /*
+    Send Firebase Cloud Messaging to the device with the first registration token which added by firebaseData.fcm.addDeviceToken.
 
     @param dataObj - Firebase Data Object to hold data and instances.
 
     @param index - The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
     
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
    */
   bool sendMessage(FirebaseData &dataObj, uint16_t index);
@@ -2404,20 +2377,43 @@ public:
 
     @param dataObj - Firebase Data Object to hold data and instances.
     
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
    */
   bool broadcastMessage(FirebaseData &dataObj);
 
   /*
-    Send Firebase Cloud Messaging to devices that subscribed to topic.
+    Send Firebase Cloud Messaging to devices that subscribed to the topic.
 
     @param dataObj - Firebase Data Object to hold data and instances.
     
-    @return - Boolean type status indicates the success of operation.
+    @return - Boolean type status indicates the success of the operation.
 
    */
   bool sendTopic(FirebaseData &dataObj);
+
+  /*
+  
+    Init SD card with GPIO pins.
+  
+    @param sck -  SPI Clock pin.
+    @param miso - SPI MISO pin.
+    @param mosi - SPI MOSI pin.
+    @param ss -   SPI Chip/Slave Select pin.
+
+    @return Boolean type status indicates the success of the operation.
+
+   */
+  bool sdBegin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
+
+  /*
+  
+    Init SD card with default GPIO pins.
+
+    @return Boolean type status indicates the success of operation.
+  
+   */
+  bool sdBegin(void);
 
   void errorToString(int httpCode, std::string &buff);
 
@@ -2497,6 +2493,14 @@ protected:
   uint8_t openErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType, uint8_t mode);
   std::vector<std::string> splitString(int size, const char *str, const char delim);
 
+  char *getPGMString(PGM_P pgm);
+  char *getFloatString(float value);
+  char *getDoubleString(double value);
+  char *getIntString(int value);
+  char *getBoolString(bool value);
+  void p_memCopy(std::string &buf, PGM_P p, bool empty = false);
+  void trimDouble(char *buf);
+
   bool sdTest();
   void createDirs(std::string dirs, uint8_t storageType);
   bool replace(std::string &str, const std::string &from, const std::string &to);
@@ -2544,7 +2548,7 @@ public:
 
   /*
 
-    Get WiFi client instance.
+    Get a WiFi client instance.
 
     @return - WiFi client instance.
 
@@ -2552,9 +2556,9 @@ public:
   WiFiClient &getWiFiClient();
 
   /*
-    Determine the data type of payload returned from server.
+    Determine the data type of payload returned from the server.
 
-    @return The one of these data type e.g. integer, float, double, boolean, string, json and blob.
+    @return The one of these data type e.g. integer, float, double, boolean, string, JSON and blob.
 
    */
   String dataType();
@@ -2564,11 +2568,11 @@ public:
 
     @return The one of these event type e.g. put, patch, cancel, and auth_revoked.
 
-    The event type "put" indicated that data at event path relative to stream path was completely changed. Event path can be determined from dataPath().
+    The event type "put" indicated that data at an event path relative to the stream path was completely changed. The event path can be determined by dataPath().
 
-    The event type "patch" indicated that data at event path relative to stream path was updated. Event path can be determined from dataPath().
+    The event type "patch" indicated that data at the event path relative to stream path was updated. The event path can be determined by dataPath().
 
-    The event type "cancel" indeicated something wrong and cancel by server.
+    The event type "cancel" indicated something wrong and cancel by the server.
 
     The event type "auth_revoked" indicated the provided Firebase Authentication Data (Database secret) is no longer valid.
 
@@ -2594,16 +2598,16 @@ public:
   /*
     Determine the current data path.
 
-    @return The database path which belong to server's returned payload.
+    @return The database path which belongs to the server's returned payload.
 
-    The database path returned from this function in case of stream, also changed up on the child or parent's stream
+    The database path returned from this function in case of stream, also changed upon the child or parent's stream
     value changes.
 
    */
   String dataPath();
 
   /*
-    Determine the error reason String from process.
+    Determine the error reason String from the process.
 
     @return The error description string (String object).
 
@@ -2611,9 +2615,9 @@ public:
   String errorReason();
 
   /*
-    Return the ineger data of server returned payload.
+    Return the integer data of server returned payload.
 
-    @return Integer value.
+    @return integer value.
 
    */
   int intData();
@@ -2700,7 +2704,7 @@ public:
 
   /*
 
-    Return the Firebase JSON Data object that keep the get(parse) result.
+    Return the Firebase JSON Data object that keeps the get(parse) result.
 
     @return FirebaseJsonData object.
 
@@ -2709,7 +2713,7 @@ public:
 
   /*
 
-    Return the Firebase JSON Data object pointer that keep the get(parse) result.
+    Return the Firebase JSON Data object pointer that keeps the get(parse) result.
 
     @return FirebaseJsonData object pointer.
 
@@ -2735,7 +2739,7 @@ public:
   /*
     Determine the stream connection status.
 
-    @return Boolean type status indicates whether the Firebase Data object is working with stream or not.
+    @return Boolean type status indicates whether the Firebase Data object is working with a stream or not.
 
    */
   bool isStream();
@@ -2743,49 +2747,49 @@ public:
   /*
     Determine the server connection status.
 
-    @return Boolean type status indicates whether the Firebase Data object is connected to server or not.
+    @return Boolean type status indicates whether the Firebase Data object is connected to the server or not.
 
    */
   bool httpConnected();
 
   /*
-    Determine the timeout event of server's stream (30 sec is default).
+    Determine the timeout event of the server's stream (30 sec is the default).
 
-    Nothing to do when stream connection timeout, the stream connection will be automatic resumed.
+    Nothing to do when stream connection timeout, the stream connection will be automatically resumed.
 
-    @return Boolean type status indicates whether the stream was timeout or not.
+    @return Boolean type status indicates whether the stream was a timeout or not.
 
    */
   bool streamTimeout();
 
   /*
-    Determine the availability of data or paylaod returned from server.
+    Determine the availability of data or payload returned from the server.
 
-    @return Boolean type status indicates whether the server return back the new payload or not.
+    @return Boolean type status indicates whether the server return the new payload or not.
 
    */
   bool dataAvailable();
 
   /*
-    Determine the availability of stream event-data paylaod returned from server.
+    Determine the availability of stream event-data payload returned from the server.
 
-    @return Boolean type status indicates whether the server return back the stream event-data 
+    @return Boolean type status indicates whether the server returns the stream event-data 
     payload or not.
 
    */
   bool streamAvailable();
 
   /*
-    Determine the matching between data type that intend to get from/store to database and the server's return payload data type.
+    Determine the matching between data type that intends to get from/store to database and the server's return payload data type.
 
     @return Boolean type status indicates whether the type of data being get from/store to database 
-    and server's returned payload are matched or not.
+    and the server's returned payload is matched or not.
 
    */
   bool mismatchDataType();
 
   /*
-    Determine the http status code return from server.
+    Determine the HTTP status code return from the server.
 
     @return integer number of HTTP status.
 
@@ -2793,15 +2797,15 @@ public:
   int httpCode();
 
   /*
-    Determine the name (full path) of backup file in SD card/Flash memory.
+    Determine the name (full path) of the backup file in SD card/Flash memory.
     
-    @return String (String object) of file name that store on SD card/Flash memory after backup operation.
+    @return String (String object) of the file name that stores on SD card/Flash memory after backup operation.
 
    */
   String getBackupFilename();
 
   /*
-    Determine the size of backup file.
+    Determine the size of the backup file.
     
     @return Size of backup file in byte after backup operation.
 
@@ -2815,7 +2819,7 @@ public:
   void clear();
 
   /*
-    Determine the error description for file transfering (pushFile, setFile, backup and restore).
+    Determine the error description for file transferring (push file, set file, backup and restore).
     
     @return Error description string (String object).
 
@@ -2840,9 +2844,9 @@ public:
   friend QueueManager;
 
 protected:
-  StreamEventCallback _dataAvailableCallback = NULL;
-  StreamTimeoutCallback _timeoutCallback = NULL;
-  QueueInfoCallback _queueInfoCallback = NULL;
+  FirebaseESP32::StreamEventCallback _dataAvailableCallback = NULL;
+  FirebaseESP32::StreamTimeoutCallback _timeoutCallback = NULL;
+  FirebaseESP32::QueueInfoCallback _queueInfoCallback = NULL;
   TaskHandle_t _handle = NULL;
   TaskHandle_t _q_handle = NULL;
   int _index = -1;
@@ -2896,6 +2900,7 @@ protected:
   FirebaseJsonArray _jsonArr;
   FirebaseJsonData _jsonData;
   uint16_t _maxBlobSize = 1024;
+  unsigned long _streamTimeoutMillis = 0;
 
   std::vector<uint8_t> _blob = std::vector<uint8_t>();
 

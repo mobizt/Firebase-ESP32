@@ -58,14 +58,16 @@ void setup()
   //Size and its write timeout e.g. tiny (1s), small (10s), medium (30s) and large (60s).
   Firebase.setwriteSizeLimit(firebaseData, "tiny");
 
-  //The following test will print all your data in database
-  //The absolute path of nested child may exceed the path buffer and lead to null result. 
-
+  //The following test will print all parent nodes and their shallowed data
+  
   Serial.println("------------------------------------");
   Serial.println("Shallowed Data test...");
   Serial.println();
 
-  getNode(path);
+  if(Firebase.getShallowData(firebaseData, "/")){
+    Serial.println(firebaseData.payload());
+  }
+
 
   Serial.println();
   Serial.println("FINISHED");
@@ -74,61 +76,4 @@ void setup()
 
 void loop()
 {
-}
-
-void getNode(String &key)
-{
-
-  if (Firebase.getShallowData(firebaseData, key))
-  {
-    if (firebaseData.dataType() != "json")
-    {
-      Serial.print(key);
-      Serial.print("->");
-
-      if (firebaseData.dataType() == "int")
-        Serial.println(firebaseData.intData());
-      else if (firebaseData.dataType() == "float")
-        Serial.println(firebaseData.floatData(), 5);
-      else if (firebaseData.dataType() == "double")
-        printf("%.9lf\n", firebaseData.doubleData());
-      else if (firebaseData.dataType() == "boolean")
-        Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
-      else if (firebaseData.dataType() == "string")
-        Serial.println(firebaseData.stringData());
-      else if (firebaseData.dataType() == "null")
-        Serial.println("null");
-    }
-    else
-    {
-
-      FirebaseJson json;
-      size_t count = json.iteratorBegin(firebaseData.jsonString().c_str());
-      String _key;
-      String _val;
-      int _type = 0;
-
-      for (size_t i = 0; i< count; i++)
-      {
-        json.iteratorGet(i,_type, _key,_val);
-
-        if (_val == "true")
-        {
-          if (key == "/")
-          {
-            getNode(_key);
-          }
-          else
-          {
-            getNode(key + "/" + _key);
-          }
-        }
-      }
-      json.iteratorEnd();
-    }
-  }
-  else
-  {
-    Serial.println(firebaseData.errorReason());
-  }
 }
