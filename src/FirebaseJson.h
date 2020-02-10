@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.2.9
+ * FirebaseJson, version 2.3.1
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using a relative path.
  * 
- * February 2, 2019
+ * February 10, 2019
  * 
  * Features
  * - None recursive operations
@@ -90,6 +90,12 @@ typedef enum {
     PRINT_MODE_PLAIN = 0,
     PRINT_MODE_PRETTY = 1
 } PRINT_MODE;
+
+typedef struct
+{
+    bool matched = false;
+    std::string tk = "";
+} path_tk_t;
 
 typedef struct
 {
@@ -597,7 +603,7 @@ private:
     std::string _rawbuf = "";
     std::string _tbuf = "";
     tk_index_t _lastTk;
-    std::vector<std::string> _pathTk = std::vector<std::string>();
+    std::vector<path_tk_t> _pathTk = std::vector<path_tk_t>();
     std::vector<eltk_t> _eltk = std::vector<eltk_t>();
     std::vector<el_t> _el = std::vector<el_t>();
     FirebaseJsonData _jsonData;
@@ -660,7 +666,7 @@ private:
     void _rtrim(std::string &str, const std::string &chars = " ");
     void _trim(std::string &str, const std::string &chars = " ");
     void _toStdString(std::string &s, bool isJson = true);
-    void _strToTk(const std::string &str, std::vector<std::string> &cont, char delim);
+    void _strToTk(const std::string &str, std::vector<path_tk_t> &tk, char delim);
     int _strpos(const char *haystack, const char *needle, int offset);
     int _rstrpos(const char *haystack, const char *needle, int offset);
     char *_rstrstr(const char *haystack, const char *needle);
