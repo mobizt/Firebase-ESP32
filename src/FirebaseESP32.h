@@ -1,13 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.5
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.6
  * 
- * February 24, 2020
+ * March 1, 2020
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed: 
- * - Fix memory delete error in Stream Callback.
+ * - Fix timestamp in JSON object bug.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -228,6 +228,7 @@ static const char ESP32_FIREBASE_STR_162[] PROGMEM = "&format=export";
 static const char ESP32_FIREBASE_STR_163[] PROGMEM = "{";
 static const char ESP32_FIREBASE_STR_164[] PROGMEM = "Flash memory was not ready";
 static const char ESP32_FIREBASE_STR_165[] PROGMEM = "array";
+static const char ESP32_FIREBASE_STR_166[] PROGMEM = "\".sv\"";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -2477,7 +2478,7 @@ protected:
   bool reconnect(FirebaseData &dataObj);
   bool reconnect();
 
-  void buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t _method, uint8_t dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &request);
+  void buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t _method, uint8_t dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &request, bool sv);
   void resetFirebasedataFlag(FirebaseData &dataObj);
   bool handleNetNotConnected(FirebaseData &dataObj);
   void forceEndHTTP(FirebaseData &dataObj);

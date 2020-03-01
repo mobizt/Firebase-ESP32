@@ -1,13 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.5
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.6
  * 
- * February 24, 2020
+ * March 1, 2020
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed: 
- * - Fix memory delete error in Stream Callback.
+ * - Fix timestamp in JSON object bug.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -2105,7 +2105,16 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
     return HTTPC_ERROR_CONNECTION_LOST;
 
   if (method != FirebaseMethod::BACKUP && method != FirebaseMethod::RESTORE && dataType != FirebaseDataType::FILE)
-    buildFirebaseRequest(dataObj, _host, method, dataType, path, _auth, payloadStr.length(), header);
+  {
+    bool sv = false;
+    if (dataType == FirebaseDataType::JSON)
+    {
+      tmp = getPGMString(ESP32_FIREBASE_STR_166);
+      sv = payloadStr.find(tmp) != std::string::npos;
+      delete[] tmp;
+    }
+    buildFirebaseRequest(dataObj, _host, method, dataType, path, _auth, payloadStr.length(), header, sv);
+  }
   else
   {
 
@@ -2220,8 +2229,6 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
           }
         }
 
-         
-
         len = (4 * ceil(file.size() / 3.0)) + strlen_P(ESP32_FIREBASE_STR_93) + 1;
       }
       else if (method == FirebaseMethod::GET)
@@ -2258,12 +2265,10 @@ int FirebaseESP32::firebaseConnect(FirebaseData &dataObj, const std::string &pat
       }
     }
 
-   
-
     if (dataType == FirebaseDataType::FILE)
-      buildFirebaseRequest(dataObj, _host, method, dataType, dataObj._path.c_str(), _auth, len, header);
+      buildFirebaseRequest(dataObj, _host, method, dataType, dataObj._path.c_str(), _auth, len, header, false);
     else
-      buildFirebaseRequest(dataObj, _host, method, dataType, dataObj._backupNodePath.c_str(), _auth, len, header);
+      buildFirebaseRequest(dataObj, _host, method, dataType, dataObj._backupNodePath.c_str(), _auth, len, header, false);
   }
 
   if (method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::PATCH_SILENT || (method == FirebaseMethod::PUT_SILENT && dataType == FirebaseDataType::BLOB))
@@ -3166,11 +3171,11 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
           while (cnt < toRead)
           {
             res = dataObj._net.getStreamPtr()->read();
-            
+
             if (res < 0)
               continue;
             c = (char)res;
-           
+
             if (dataObj._fileName == "" || (dataObj._fileName != "" && c != '"'))
               buff[cnt] = c;
             cnt++;
@@ -3272,7 +3277,7 @@ bool FirebaseESP32::getDownloadResponse(FirebaseData &dataObj)
 
         if (dataObj._httpCode == HTTP_CODE_OK && linebuff.length() == 0 && contentLength > 0 && match1)
         {
-          count = contentLength;           
+          count = contentLength;
           beginPayload = true;
           if (dataObj._fileName != "")
           {
@@ -3845,7 +3850,7 @@ bool FirebaseESP32::isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQue
   return false;
 }
 
-void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t method, uint8_t dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &request)
+void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t method, uint8_t dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &request, bool sv)
 {
   uint8_t http_method = 0;
   char *tmp = nullptr;
@@ -4000,7 +4005,7 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   p_memCopy(request, ESP32_FIREBASE_STR_33);
 
   //Timestamp cannot use with ETag header, otherwise cases internal server error
-  if (dataObj.queryFilter._orderBy.length() == 0 && dataType != FirebaseDataType::TIMESTAMP && (method == FirebaseMethod::DELETE || method == FirebaseMethod::GET || method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST))
+  if (!sv && dataObj.queryFilter._orderBy.length() == 0 && dataType != FirebaseDataType::TIMESTAMP && (method == FirebaseMethod::DELETE || method == FirebaseMethod::GET || method == FirebaseMethod::GET_SILENT || method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::POST))
     p_memCopy(request, ESP32_FIREBASE_STR_148);
 
   if (dataObj._etag2.length() > 0 && (method == FirebaseMethod::PUT || method == FirebaseMethod::PUT_SILENT || method == FirebaseMethod::DELETE))
@@ -4052,7 +4057,6 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   }
   p_memCopy(request, ESP32_FIREBASE_STR_21);
   p_memCopy(request, ESP32_FIREBASE_STR_21);
-
 }
 
 bool FirebaseESP32::cancelCurrentResponse(FirebaseData &dataObj)
@@ -4467,7 +4471,7 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
   std::string taskName;
   p_memCopy(taskName, ESP32_FIREBASE_STR_72, true);
   char *idx = nullptr;
-  
+
   bool hasHandle = false;
 
   if (dataObj._handle)
@@ -4482,7 +4486,6 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
     hasHandle = true;
   }
 
- 
   if (index == -1)
   {
     index = dataObjectIndex;
@@ -4587,12 +4590,12 @@ void FirebaseESP32::removeStreamCallback(FirebaseData &dataObj)
 void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback)
 {
 
- int index = dataObj._index;
+  int index = dataObj._index;
 
   std::string taskName;
   p_memCopy(taskName, ESP32_FIREBASE_STR_72);
   char *idx = nullptr;
-  
+
   bool hasHandle = false;
 
   if (dataObj._handle || dataObj._q_handle)
@@ -4607,7 +4610,7 @@ void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &dataObj, QueueInfoCallb
   }
 
   idx = getIntString(index);
-  p_memCopy (taskName, ESP32_FIREBASE_STR_114);
+  p_memCopy(taskName, ESP32_FIREBASE_STR_114);
   taskName += idx;
   delete[] idx;
 
@@ -4624,7 +4627,6 @@ void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &dataObj, QueueInfoCallb
     firebaseDataObject[index] = dataObj;
   else
     firebaseDataObject.push_back(dataObj);
-
 
   TaskFunction_t taskCode = [](void *param) {
     int id = errorQueueIndex;
