@@ -33,6 +33,8 @@
 #ifndef FirebaseESP32HTTPClient_H_
 #define FirebaseESP32HTTPClient_H_
 
+#ifdef ESP32
+
 #include <Arduino.h>
 #include <HTTPClient.h>
 
@@ -108,5 +110,7 @@ protected:
   std::string _host = "";
   uint16_t _port = 0;
 };
+
+#endif /* ESP32 */
 
 #endif /* FirebaseESP32HTTPClient_H_ */

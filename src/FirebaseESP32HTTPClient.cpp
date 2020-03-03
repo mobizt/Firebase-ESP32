@@ -33,6 +33,8 @@
 #ifndef FirebaseESP32HTTPClient_CPP
 #define FirebaseESP32HTTPClient_CPP
 
+#ifdef ESP32
+
 #include "FirebaseESP32HTTPClient.h"
 
 class TransportTraits
@@ -221,4 +223,6 @@ void FirebaseESP32HTTPClient::setRootCAFile(std::string &rootCAFile, uint8_t sto
     }
 }
 
-#endif
+#endif /* ESP32 */
+
+#endif /* FirebaseESP32HTTPClient_CPP */

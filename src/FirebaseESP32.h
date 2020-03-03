@@ -1,13 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.6
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.7
  * 
- * March 1, 2020
+ * March 3, 2020
  * 
  * Feature Added:
- * 
+ * - Optimize the FirebaseJson
+ * - Specific to ESP32.
  * 
  * Feature Fixed: 
- * - Fix timestamp in JSON object bug.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -39,6 +39,8 @@
 
 #ifndef FirebaseESP32_H
 #define FirebaseESP32_H
+
+#ifdef ESP32
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -471,7 +473,7 @@ public:
   friend FirebaseESP32;
   friend FirebaseData;
 
-protected:
+private:
   std::string _orderBy = "";
   std::string _limitToFirst = "";
   std::string _limitToLast = "";
@@ -494,7 +496,7 @@ public:
 
   friend FirebaseESP32;
 
-protected:
+private:
   void clear();
   uint8_t _totalQueue = 0;
   uint32_t _currentQueueID = 0;
@@ -2453,7 +2455,7 @@ public:
 
   friend FirebaseData;
 
-protected:
+private:
   bool pushInt(FirebaseData &dataObj, const std::string &path, int intValue, bool queue, const std::string &priority);
   bool pushFloat(FirebaseData &dataObj, const std::string &path, float floatValue, bool queue, const std::string &priority);
   bool pushDouble(FirebaseData &dataObj, const std::string &path, double doubleValue, bool queue, const std::string &priority);
@@ -2477,6 +2479,10 @@ protected:
   void endFileTransfer(FirebaseData &dataObj);
   bool reconnect(FirebaseData &dataObj);
   bool reconnect();
+  void delPtr(char *p);
+  char *newPtr(size_t len);
+  char *newPtr(char *p, size_t len);
+  char *newPtr(char *p, size_t len, char *d);
 
   void buildFirebaseRequest(FirebaseData &dataObj, const std::string &host, uint8_t _method, uint8_t dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &request, bool sv);
   void resetFirebasedataFlag(FirebaseData &dataObj);
@@ -2841,7 +2847,7 @@ public:
   friend FirebaseESP32;
   friend QueueManager;
 
-protected:
+private:
   FirebaseESP32::StreamEventCallback _dataAvailableCallback = NULL;
   FirebaseESP32::StreamTimeoutCallback _timeoutCallback = NULL;
   FirebaseESP32::QueueInfoCallback _queueInfoCallback = NULL;
@@ -2949,4 +2955,6 @@ protected:
 
 extern FirebaseESP32 Firebase;
 
-#endif
+#endif /* ESP32 */
+
+#endif /* FirebaseESP32_H */
