@@ -1,13 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.7
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.8
  * 
- * March 3, 2020
+ * March 8, 2020
  * 
  * Feature Added:
- * - Optimize the FirebaseJson
- * - Specific to ESP32.
+ * - Multiple paths stream.
  * 
- * Feature Fixed: 
+ * Feature Fixed:
+ * - No stream event triggering bug when the child node value of parent node changes.
+ * - FirebaseJson and FirebaseJsonArray data are not assigned when reading from the stream.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -1927,7 +1928,14 @@ bool FirebaseESP32::deleteNode(FirebaseData &dataObj, const String &path, const 
 bool FirebaseESP32::beginStream(FirebaseData &dataObj, const String &path)
 {
   dataObj._pause = false;
+  dataObj.clearNodeList();
   return firebaseConnectStream(dataObj, path.c_str());
+}
+
+bool FirebaseESP32::beginMultiPathStream(FirebaseData &dataObj, const String &parentPath, const String *childPath)
+{
+    dataObj.addNodeList(childPath);
+    return firebaseConnectStream(dataObj, parentPath.c_str());
 }
 
 bool FirebaseESP32::readStream(FirebaseData &dataObj)
@@ -2863,6 +2871,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           if (match)
           {
             dataObj._eventType = eventType;
+            bool samePath = true;
 
             //Parses json response for path
             tmp = getPGMString(ESP32_FIREBASE_STR_17);
@@ -2875,8 +2884,11 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
               delPtr(tmp);
               if (p2 != std::string::npos)
               {
-                dataObj._path.clear();
-                dataObj._path = linebuff.substr(p1 + strlen_P(ESP32_FIREBASE_STR_17), p2 - p1 - strlen_P(ESP32_FIREBASE_STR_17));
+                std::string _path = "";
+                _path = linebuff.substr(p1 + strlen_P(ESP32_FIREBASE_STR_17), p2 - p1 - strlen_P(ESP32_FIREBASE_STR_17));
+                samePath = strcmp(_path.c_str(), dataObj._path.c_str()) == 0;
+                dataObj._path = _path;
+                std::string().swap(_path);
               }
             }
 
@@ -2890,12 +2902,13 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
               dataObj._data = linebuff.substr(p1 + strlen_P(ESP32_FIREBASE_STR_18), linebuff.length() - p1 - strlen_P(ESP32_FIREBASE_STR_18) - 1);
 
               setDataType(dataObj, dataObj._data);
-              bool samePath = dataObj._path == dataObj._path2;
-
-              tmp = getPGMString(ESP32_FIREBASE_STR_1);
-              bool rootPath = strcmp(dataObj._path.c_str(), tmp) == 0;
-              delPtr(tmp);
-              bool emptyPath = dataObj._path2.length() == 0;
+              dataObj._json.clear();
+              dataObj._jsonArr.clear();
+              if(dataObj._dataType == FirebaseDataType::JSON)
+                dataObj._json.setJsonData(dataObj._data.c_str());
+              else if(dataObj._dataType == FirebaseDataType::ARRAY)
+                dataObj._jsonArr._json.setJsonData(dataObj._data.c_str());
+              
               bool sameData = dataObj._data == dataObj._data2;
 
               if (dataObj._data.length() >= strlen_P(ESP32_FIREBASE_STR_92) && !hasBlob)
@@ -2917,14 +2930,11 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
               }
 
               //Any stream update?
-              if ((!samePath && (!rootPath || emptyPath)) || (samePath && !sameData && !dataObj._streamPathChanged))
+              if (!samePath || (samePath && !sameData && !dataObj._streamPathChanged))
               {
-
                 dataObj._streamDataChanged = true;
                 dataObj._data2.clear();
                 dataObj._data2 = dataObj._data;
-                dataObj._path2.clear();
-                dataObj._path2 = dataObj._path;
               }
               else
                 dataObj._streamDataChanged = false;
@@ -2988,6 +2998,13 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
         {
           dataObj._data = linebuff;
           setDataType(dataObj, linebuff);
+
+          dataObj._json.clear();
+          dataObj._jsonArr.clear();
+          if(dataObj._dataType == FirebaseDataType::JSON)
+            dataObj._json.setJsonData(linebuff.c_str());
+          else if(dataObj._dataType == FirebaseDataType::ARRAY)
+            dataObj._jsonArr._json.setJsonData(linebuff.c_str());
 
           if (dataObj._priority_val_flag)
           {
@@ -4089,7 +4106,6 @@ bool FirebaseESP32::cancelCurrentResponse(FirebaseData &dataObj)
   dataObj._streamDataChanged = false;
   dataObj._dataMillis = millis();
   dataObj._data2.clear();
-  dataObj._path2.clear();
   dataObj._dataAvailable = false;
   dataObj._isStreamTimeout = false;
   dataObj._httpCode = HTTPC_ERROR_CONNECTION_REFUSED;
@@ -4490,6 +4506,8 @@ bool FirebaseESP32::sendTopic(FirebaseData &dataObj)
 
 void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback)
 {
+  removeMultiPathStreamCallback(dataObj);
+
   int index = dataObj._index;
   std::string taskName;
   p_memCopy(taskName, ESP32_FIREBASE_STR_72, true);
@@ -4531,6 +4549,60 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
   else
     firebaseDataObject.push_back(dataObj);
 
+  runStreamTask(dataObj, taskName);
+  
+}
+
+void FirebaseESP32::setMultiPathStreamCallback(FirebaseData &dataObj, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback)
+{
+    removeStreamCallback(dataObj);
+
+    int index = dataObj._index;
+    std::string taskName;
+    p_memCopy(taskName, ESP32_FIREBASE_STR_72, true);
+    char *idx = nullptr;
+
+    bool hasHandle = false;
+
+    if (dataObj._handle)
+    {
+      hasHandle = true;
+      vTaskDelete(dataObj._handle);
+      dataObj._handle = NULL;
+    }
+
+    if (dataObj._q_handle)
+    {
+      hasHandle = true;
+    }
+
+    if (index == -1)
+    {
+      index = dataObjectIndex;
+      dataObjectIndex++;
+    }
+
+    idx = getIntString(index);
+    p_memCopy(taskName, ESP32_FIREBASE_STR_113);
+    taskName += idx;
+    delPtr(idx);
+
+    dataObj._index = index;
+    streamIndex = index;
+    dataObj._multiPathDataCallback = multiPathDataCallback;
+    dataObj._timeoutCallback = timeoutCallback;
+
+    //object created
+    if (hasHandle)
+      firebaseDataObject[index] = dataObj;
+    else
+      firebaseDataObject.push_back(dataObj);
+
+    runStreamTask(dataObj, taskName);
+}
+
+void FirebaseESP32::runStreamTask(FirebaseData &dataObj, const std::string &taskName){
+
   TaskFunction_t taskCode = [](void *param) {
     int id = streamIndex;
 
@@ -4544,29 +4616,52 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
         if (firebaseDataObject[id].get().streamTimeout() && firebaseDataObject[id].get()._timeoutCallback)
           firebaseDataObject[id].get()._timeoutCallback(true);
 
-        if (firebaseDataObject[id].get().streamAvailable() && firebaseDataObject[id].get()._dataAvailableCallback)
+        if (firebaseDataObject[id].get().streamAvailable() && (firebaseDataObject[id].get()._dataAvailableCallback || firebaseDataObject[id].get()._multiPathDataCallback))
         {
-          StreamData s;
-          s._json = &firebaseDataObject[id].get()._json;
-          s._jsonArr = &firebaseDataObject[id].get()._jsonArr;
-          s._jsonData = &firebaseDataObject[id].get()._jsonData;
-          s._streamPath = firebaseDataObject[id].get()._streamPath;
-          s._data = firebaseDataObject[id].get()._data;
-          s._path = firebaseDataObject[id].get()._path;
-
-          s._dataType = firebaseDataObject[id].get()._dataType;
-          s._dataTypeStr = firebaseDataObject[id].get().getDataType(s._dataType);
-          s._eventTypeStr = firebaseDataObject[id].get()._eventType;
-
-          if (s._dataType == FirebaseESP32::FirebaseDataType::BLOB)
+          if (firebaseDataObject[id].get()._dataAvailableCallback)
           {
-            s._blob = firebaseDataObject[id].get()._blob;
-            //Free ram in case of callback data was used
-            firebaseDataObject[id].get()._blob.clear();
-          }
+            StreamData s;
+            s._json = &firebaseDataObject[id].get()._json;
+            s._jsonArr = &firebaseDataObject[id].get()._jsonArr;
+            s._jsonData = &firebaseDataObject[id].get()._jsonData;
+            s._streamPath = firebaseDataObject[id].get()._streamPath;
+            s._data = firebaseDataObject[id].get()._data;
+            s._path = firebaseDataObject[id].get()._path;
 
-          firebaseDataObject[id].get()._dataAvailableCallback(s);
-          s.empty();
+            s._dataType = firebaseDataObject[id].get()._dataType;
+            s._dataTypeStr = firebaseDataObject[id].get().getDataType(s._dataType);
+            s._eventTypeStr = firebaseDataObject[id].get()._eventType;
+
+            if (firebaseDataObject[id].get()._dataType == FirebaseESP32::FirebaseDataType::BLOB)
+            {
+              s._blob = firebaseDataObject[id].get()._blob;
+              //Free ram in case of callback data was used
+              firebaseDataObject[id].get()._blob.clear();
+            }
+            firebaseDataObject[id].get()._dataAvailableCallback(s);
+            s.empty();
+          }
+          else if (firebaseDataObject[id].get()._multiPathDataCallback)
+          {
+
+            MultiPathStreamData mdata;
+            mdata._type = firebaseDataObject[id].get()._dataType;
+            mdata._path = firebaseDataObject[id].get()._path;
+            mdata._typeStr = firebaseDataObject[id].get().getDataType(mdata._type);
+
+            if (mdata._type == FirebaseESP32::FirebaseDataType::JSON)
+              mdata._json = &firebaseDataObject[id].get()._json;
+            else
+            {
+              if (mdata._type == FirebaseESP32::FirebaseDataType::STRING)
+                mdata._data = firebaseDataObject[id].get()._data.substr(1, firebaseDataObject[id].get()._data.length() - 2).c_str();
+              else
+                mdata._data = firebaseDataObject[id].get()._data;
+            }
+
+            firebaseDataObject[id].get()._multiPathDataCallback(mdata);
+            mdata.empty();
+          }
         }
       }
 
@@ -4580,6 +4675,7 @@ void FirebaseESP32::setStreamCallback(FirebaseData &dataObj, StreamEventCallback
 
   xTaskCreatePinnedToCore(taskCode, taskName.c_str(), 10000, NULL, 3, &dataObj._handle, 1);
 }
+
 
 void FirebaseESP32::removeStreamCallback(FirebaseData &dataObj)
 {
@@ -4603,6 +4699,35 @@ void FirebaseESP32::removeStreamCallback(FirebaseData &dataObj)
     dataObj._handle = NULL;
 
     dataObj._dataAvailableCallback = NULL;
+    dataObj._timeoutCallback = NULL;
+
+    if (!hasOherHandle)
+      firebaseDataObject.erase(firebaseDataObject.begin() + index);
+  }
+}
+
+void FirebaseESP32::removeMultiPathStreamCallback(FirebaseData &dataObj)
+{
+    int index = dataObj._index;
+
+  if (index != -1)
+  {
+    bool hasOherHandle = false;
+
+    if (dataObj._q_handle)
+    {
+      hasOherHandle = true;
+    }
+
+    if (!hasOherHandle)
+      dataObj._index = -1;
+
+    if (dataObj._handle)
+      vTaskDelete(dataObj._handle);
+
+    dataObj._handle = NULL;
+
+    dataObj._multiPathDataCallback = NULL;
     dataObj._timeoutCallback = NULL;
 
     if (!hasOherHandle)
@@ -5506,7 +5631,6 @@ FirebaseData::~FirebaseData()
 void FirebaseData::clear()
 {
   std::string().swap(_path);
-  std::string().swap(_path2);
   std::string().swap(_data);
   std::string().swap(_data2);
   std::string().swap(_streamPath);
@@ -5606,6 +5730,21 @@ void FirebaseData::setQuery(QueryFilter &query)
   queryFilter._startAt = query._startAt;
   queryFilter._endAt = query._endAt;
   queryFilter._equalTo = query._equalTo;
+}
+
+void FirebaseData::clearNodeList()
+{
+    for(size_t i = 0; i< _childNodeList.size();i++)
+        std::string().swap(_childNodeList[i]);
+    _childNodeList.clear();
+}
+
+void FirebaseData::addNodeList(const String childPath[])
+{
+    clearNodeList();
+    for(size_t i = 0; i< sizeof(childPath)/sizeof(childPath[0]);i++)
+        if(!childPath[i].isEmpty() && childPath[i] !="/")
+            _childNodeList.push_back(childPath[i].c_str());
 }
 
 WiFiClient &FirebaseData::getWiFiClient()
@@ -6024,6 +6163,87 @@ String StreamData::jsonString()
     return _data.c_str();
   else
     return std::string().c_str();
+}
+
+MultiPathStreamData::MultiPathStreamData()
+{
+}
+
+MultiPathStreamData::~MultiPathStreamData()
+{
+}
+
+bool MultiPathStreamData::get(const String &path)
+{
+  value = "";
+  type = "";
+  dataPath = "";
+  bool res = false;
+  if (_type == FirebaseESP32::FirebaseDataType::JSON)
+  {
+    if (_path == "/")
+    {
+      FirebaseJsonData data;
+      _json->get(data, path);
+      if (data.success)
+      {
+        type = data.type.c_str();
+        if (type == "object")
+          type = _typeStr.c_str();
+        value = data.stringValue;
+        dataPath = path;
+        res = true;
+      }
+    }
+    else
+    {
+      std::string p1 = _path;
+      if (path.length() < _path.length())
+        p1 = _path.substr(0, path.length());
+      std::string p2 = path.c_str();
+      if (p2[0] != '/')
+        p2 = "/" + p2;
+      if (strcmp(p1.c_str(), p2.c_str()) == 0)
+      {
+        _json->toString(value, true);
+        type = _typeStr.c_str();
+        dataPath = _path.c_str();
+        res = true;
+      }
+      std::string().swap(p1);
+      std::string().swap(p2);
+    }
+  }
+  else
+  {
+    std::string p1 = _path;
+    if (path.length() < _path.length())
+      p1 = _path.substr(0, path.length());
+    std::string p2 = path.c_str();
+    if (p2[0] != '/')
+      p2 = "/" + p2;
+    if (strcmp(p1.c_str(), p2.c_str()) == 0)
+    {
+      value = _data.c_str();
+      dataPath = _path.c_str();
+      type = _typeStr.c_str();
+      res = true;
+    }
+    std::string().swap(p1);
+    std::string().swap(p2);
+  }
+  return res;
+}
+
+void MultiPathStreamData::empty()
+{
+  std::string().swap(_data);
+  std::string().swap(_path);
+  std::string().swap(_typeStr);
+  dataPath = "";
+  value = "";
+  type = "";
+  _json = nullptr;
 }
 
 FirebaseJson *StreamData::jsonObjectPtr()

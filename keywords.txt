@@ -9,6 +9,7 @@
 Firebase	KEYWORD1
 FirebaseData	KEYWORD1
 StreamData  KEYWORD1
+MultiPathStreamData KEYWORD1
 QueryFilter	KEYWORD1
 QueueManager	KEYWORD1
 QueueInfo	KEYWORD1
@@ -65,10 +66,13 @@ getBlob	KEYWORD2
 getFile	KEYWORD2
 deleteNode	KEYWORD2
 beginStream	KEYWORD2
+beginMultiPathStream    KEYWORD2
 readStream	KEYWORD2
 endStream	KEYWORD2
 setStreamCallback	KEYWORD2
+setMultiPathStreamCallback  KEYWORD2
 removeStreamCallback	KEYWORD2
+removeMultiPathStreamCallback   KEYWORD2
 beginAutoRunErrorQueue	KEYWORD2
 endAutoRunErrorQueue	KEYWORD2
 clearErrorQueue	KEYWORD2

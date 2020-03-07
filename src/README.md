@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.6.7
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.6.8
 
 
 ## Global functions
@@ -2164,6 +2164,27 @@ bool beginStream(FirebaseData &dataObj, const String &path);
 
 
 
+#### Start subscribe to the value changes at the defined parent node path with multiple nodes paths parsing.
+
+param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+param **`parentPath`** - Database parent node path to subscribe.
+
+param **`childPath`** - The string array of child nodes paths for parsing.
+
+return **`Boolean`** type status indicates the success of the operation.*
+
+```C++
+bool beginMultiPathStream(FirebaseData &dataObj, const String &parentPath, const String *childPath);
+```
+
+
+
+
+
+
+
+
 #### Read the stream event data at the defined database path
 
 Once beginStream was called e.g. in setup(), the readStream function
@@ -2236,6 +2257,41 @@ void setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablec
 
 
 
+
+
+#### Set the multiple paths stream callback functions.
+
+setMultiPathStreamCallback should be called before Firebase.beginMultiPathStream.
+
+param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+param **`multiPathDataCallback`** - a Callback function that accepts MultiPathStreamData parameter.
+
+param **`timeoutCallback`** - a Callback function will be called when stream connection was timeout (optional).
+
+multiPathDataCallback will be called When data in the defined path changed or the stream path changed or stream connection
+was resumed from getXXX, setXXX, pushXXX, updateNode, deleteNode.
+
+The payload returned from the server will be one of these integer, float, string and JSON.
+
+Call [MultiPathStreamData object].get to get the child node value, type and data path. 
+    
+The properties [MultiPathStreamData object].value, [MultiPathStreamData object].dataPath, and [MultiPathStreamData object].type will return the value, path of data, and type of data respectively.
+
+These properties will store the result from calling the function [MultiPathStreamData object].get.
+
+```C++
+void setMultiPathStreamCallback(FirebaseData &dataObj, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback = NULL);
+```
+
+
+
+
+
+
+
+
+
 #### Remove stream callback functions
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
@@ -2243,6 +2299,22 @@ param **`dataObj`** - Firebase Data Object to hold data and instances.
 ```C++
 void removeStreamCallback(FirebaseData &dataObj);
 ```
+
+
+
+
+
+
+
+#### Remove multiple paths stream callback functions.
+
+param **`dataObj`** - Firebase Data Object to hold data and instances.
+
+```C++
+void removeMultiPathStreamCallback(FirebaseData &dataObj);
+```
+
+
 
 
 
