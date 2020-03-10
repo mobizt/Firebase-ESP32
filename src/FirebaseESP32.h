@@ -1,15 +1,12 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.8
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.6.9
  * 
- * March 8, 2020
+ * March 10, 2020
  * 
  * Feature Added:
- * - Multiple paths stream.
  * 
  * Feature Fixed:
- * - No stream event triggering bug when the child node value of parent node changes.
- * - FirebaseJson and FirebaseJsonArray data are not assigned when reading from the stream.
- * 
+ * - Fix the C++ string undefined isEmpty function.
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
