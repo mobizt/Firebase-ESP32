@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.3.2
+ * FirebaseJson, version 2.3.3
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using a relative path.
  * 
- * March 3, 2020
+ * March 28, 2020
  * 
  * Features
  * - None recursive operations
@@ -234,7 +234,6 @@ void FirebaseJson::_addString(const std::string &key, const std::string &value)
 void FirebaseJson::_addInt(const std::string &key, int value)
 {
     char *buf = getIntString(value);
-    _trimDouble(buf);
     _add(key.c_str(), buf, key.length(), 60, false, true);
     _delPtr(buf);
 }
@@ -274,7 +273,6 @@ void FirebaseJson::_addArray(const std::string &key, FirebaseJsonArray *arr)
     arr->toString(arrStr);
     _add(key.c_str(), arrStr.c_str(), key.length(), arrStr.length(), false, true);
 }
-
 
 char *FirebaseJson::getFloatString(float value)
 {
@@ -2105,7 +2103,6 @@ void FirebaseJson::_setString(const std::string &path, const std::string &value)
 void FirebaseJson::_setInt(const std::string &path, int value)
 {
     char *tmp = getIntString(value);
-    _trimDouble(tmp);
     _set(path.c_str(), tmp);
     _delPtr(tmp);
     std::string().swap(_jsonData._dbuf);
@@ -2716,7 +2713,6 @@ void FirebaseJsonArray::_addInt(int value)
     _arrLen++;
     char *buf = getIntString(value);
     sprintf(buf, _pd, value);
-    _trimDouble(buf);
     _json._addArrayStr(buf, 60, false);
     _delPtr(buf);
 }
@@ -2819,7 +2815,6 @@ size_t FirebaseJsonArray::size()
 {
     return _arrLen;
 }
-
 
 char *FirebaseJsonArray::getFloatString(float value)
 {
@@ -3094,7 +3089,6 @@ void FirebaseJsonArray::_setString(const String &path, const std::string &value)
 void FirebaseJsonArray::_setInt(int index, int value)
 {
     char *tmp = getIntString(value);
-    _trimDouble(tmp);
     _set2(index, tmp, false);
     _delPtr(tmp);
 }
@@ -3102,7 +3096,6 @@ void FirebaseJsonArray::_setInt(int index, int value)
 void FirebaseJsonArray::_setInt(const String &path, int value)
 {
     char *tmp = getIntString(value);
-    _trimDouble(tmp);
     _set(path.c_str(), tmp, false);
     _delPtr(tmp);
 }
@@ -3273,6 +3266,5 @@ bool FirebaseJsonData::getJSON(FirebaseJson &json)
     json._jsmn_parse();
     return json._jsonData.success;
 }
-
 
 #endif

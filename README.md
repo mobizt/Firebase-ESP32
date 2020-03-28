@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.6.9
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.7.0
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -276,7 +276,7 @@ The following example showed how to store file data to Flash memory at "/test/fi
 
 ```C++
 
-if (Firebase.setFile(firebaseData, StorateType::SPIFFS, "/test/file_data", "/test.txt"))
+if (Firebase.getFile(firebaseData, StorateType::SPIFFS, "/test/file_data", "/test.txt"))
 {
   //SPIFFS.begin(); //not need to begin again due to it has been called in function.
   File file = SPIFFS.open("/test.txt", "r");
