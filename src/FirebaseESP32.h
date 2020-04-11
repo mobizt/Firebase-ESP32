@@ -1,13 +1,12 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.0
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.1
  * 
- * March 28, 2020
+ * April 11, 2020
  * 
  * Feature Added:
+ * - Add chunked decoding for FCM response payload.
  * 
  * Feature Fixed:
- * - Fix the FirebaseJson bug in add and set integer functions.
- * - Add array size parameter to beginMultiPathStream function to prevent compiler warning.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -231,6 +230,8 @@ static const char ESP32_FIREBASE_STR_163[] PROGMEM = "{";
 static const char ESP32_FIREBASE_STR_164[] PROGMEM = "Flash memory was not ready";
 static const char ESP32_FIREBASE_STR_165[] PROGMEM = "array";
 static const char ESP32_FIREBASE_STR_166[] PROGMEM = "\".sv\"";
+static const char ESP32_FIREBASE_STR_167[] PROGMEM = "Transfer-Encoding";
+static const char ESP32_FIREBASE_STR_168[] PROGMEM = "chunked";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
