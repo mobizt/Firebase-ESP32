@@ -1,12 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.1
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.2
  * 
- * April 11, 2020
+ * April 17, 2020
  * 
  * Feature Added:
- * - Add chunked decoding for FCM response payload.
+ * 
  * 
  * Feature Fixed:
+ * - HTTP Redirection.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -100,51 +101,16 @@ FirebaseESP32::~FirebaseESP32()
 
 void FirebaseESP32::begin(const String &host, const String &auth)
 {
-  int p1 = std::string::npos;
-  int p2 = 0;
-  char *h = newPtr(host.length() + 1);
-  strcpy(h, host.c_str());
-  char *_h = newPtr(host.length() + 1);
-
+  std::string u, a;
   _host.clear();
   _auth.clear();
-  _rootCAFile.clear();
   _rootCA = nullptr;
-
-  _host = host.c_str();
-
-  char *tmp = Firebase.getPGMString(ESP32_FIREBASE_STR_111);
-  p1 = _host.find(tmp);
-  delPtr(tmp);
-  if (p1 != std::string::npos)
-  {
-    if (h[strlen(h) - 1] == '/')
-      p2 = 1;
-
-    strncpy(_h, h + p1 + strlen_P(ESP32_FIREBASE_STR_111), strlen(h) - p1 - p2 - strlen_P(ESP32_FIREBASE_STR_111));
-    _host = _h;
-  }
-
-  if (p1 == std::string::npos)
-  {
-    tmp = Firebase.getPGMString(ESP32_FIREBASE_STR_112);
-    p1 = _host.find(tmp);
-    delPtr(tmp);
-    if (p1 != std::string::npos)
-    {
-      if (h[strlen(h) - 1] == '/')
-        p2 = 1;
-
-      strncpy(_h, h + p1 + strlen_P(ESP32_FIREBASE_STR_112), strlen(h) - p1 - p2 - strlen_P(ESP32_FIREBASE_STR_112));
-      _host = _h;
-    }
-  }
-
+  _rootCAFile.clear();
+  getUrlInfo(host.c_str(), _host, u, a);
+  std::string().swap(u);
+  std::string().swap(a);
   _auth = auth.c_str();
   _port = FIEBASE_PORT;
-
-  delPtr(h);
-  delPtr(_h);
 }
 
 void FirebaseESP32::begin(const String &host, const String &auth, const char *rootCA)
@@ -214,6 +180,104 @@ bool FirebaseESP32::setRules(FirebaseData &dataObj, const String &rules)
   bool flag = sendRequest(dataObj, 0, path, FirebaseMethod::SET_RULES, FirebaseDataType::JSON, rules.c_str(), "", "");
   std::string().swap(path);
   return flag;
+}
+
+void FirebaseESP32::getUrlInfo(const std::string url, std::string &host, std::string &uri, std::string &auth)
+{
+  int p1 = -1;
+  int p2 = -1;
+  int scheme = 0;
+  char *tmp = nullptr;
+  std::string _h;
+  tmp = getPGMString(ESP32_FIREBASE_STR_111);
+  p1 = url.find(tmp, 0);
+  delPtr(tmp);
+  if (p1 == std::string::npos)
+  {
+    tmp = getPGMString(ESP32_FIREBASE_STR_112);
+    p1 = url.find(tmp, 0);
+    delPtr(tmp);
+    if (p1 != std::string::npos)
+      scheme = 2;
+  }
+  else
+    scheme = 1;
+
+  if (scheme == 1)
+    p1 += strlen_P(ESP32_FIREBASE_STR_111);
+  else if (scheme == 2)
+    p1 += strlen_P(ESP32_FIREBASE_STR_112);
+  else
+    p1 = 0;
+
+  if (p1 + 3 < (int)url.length())
+    if (url[p1] == 'w' && url[p1 + 1] == 'w' && url[p1 + 2] == 'w' && url[p1 + 3] == '.')
+      p1 += 4;
+
+  tmp = getPGMString(ESP32_FIREBASE_STR_1);
+  p2 = url.find(tmp, p1 + 1);
+  delPtr(tmp);
+  if (p2 == std::string::npos)
+  {
+    tmp = getPGMString(ESP32_FIREBASE_STR_173);
+    p2 = url.find(tmp, p1 + 1);
+    delPtr(tmp);
+    if (p2 == std::string::npos)
+      p2 = url.length();
+  }
+
+  _h = url.substr(p1, p2 - p1);
+
+  bool isDomain = false;
+  tmp = getPGMString(ESP32_FIREBASE_STR_174);
+  isDomain |= _h.find(tmp, _h.length() - strlen_P(ESP32_FIREBASE_STR_174)) != std::string::npos;
+  delPtr(tmp);
+  tmp = getPGMString(ESP32_FIREBASE_STR_175);
+  isDomain |= _h.find(tmp, _h.length() - strlen_P(ESP32_FIREBASE_STR_175)) != std::string::npos;
+  delPtr(tmp);
+  tmp = getPGMString(ESP32_FIREBASE_STR_176);
+  isDomain |= _h.find(tmp, _h.length() - strlen_P(ESP32_FIREBASE_STR_176)) != std::string::npos;
+  delPtr(tmp);
+  tmp = getPGMString(ESP32_FIREBASE_STR_177);
+  isDomain |= _h.find(tmp, _h.length() - strlen_P(ESP32_FIREBASE_STR_177)) != std::string::npos;
+  delPtr(tmp);
+  tmp = getPGMString(ESP32_FIREBASE_STR_178);
+  isDomain |= _h.find(tmp, _h.length() - strlen_P(ESP32_FIREBASE_STR_178)) != std::string::npos;
+  delPtr(tmp);
+  tmp = getPGMString(ESP32_FIREBASE_STR_179);
+  isDomain |= _h.find(tmp, _h.length() - strlen_P(ESP32_FIREBASE_STR_179)) != std::string::npos;
+  delPtr(tmp);
+
+  if (_h[0] == '/' || !isDomain)
+    uri = _h;
+  else
+    host = _h;
+
+  if (p2 != (int)_h.length())
+  {
+    uri = url.substr(p2, url.length()- p2);
+    tmp = getPGMString(ESP32_FIREBASE_STR_170);
+    p1 = _h.find(tmp, url.length());
+    delPtr(tmp);
+
+    if (p1 == std::string::npos)
+    {
+      tmp = getPGMString(ESP32_FIREBASE_STR_171);
+      p1 = _h.find(tmp, url.length());
+      delPtr(tmp);
+    }
+
+    if (p1 != std::string::npos)
+    {
+      p1 += 6;
+      tmp = getPGMString(ESP32_FIREBASE_STR_172);
+      p2 = _h.find(tmp, p1);
+      delPtr(tmp);
+      if (p2 == std::string::npos)
+        p2 = _h.length();
+      auth = _h.substr(p1, p2 - p1);
+    }
+  }
 }
 
 bool FirebaseESP32::buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, uint8_t firebaseDataType, const std::string &path, const char *buff, bool queue, const std::string &priority, const std::string &etag)
@@ -1927,13 +1991,34 @@ bool FirebaseESP32::beginStream(FirebaseData &dataObj, const String &path)
 {
   dataObj._pause = false;
   dataObj.clearNodeList();
-  return firebaseConnectStream(dataObj, path.c_str());
+
+  if (!apConnected(dataObj))
+    return false;
+
+  bool res = firebaseConnectStream(dataObj, path.c_str());
+  if (!res)
+    return false;
+
+  dataObj._httpConnected = true;
+  resetFirebasedataFlag(dataObj);
+  return getServerResponse(dataObj);
+  
 }
 
 bool FirebaseESP32::beginMultiPathStream(FirebaseData &dataObj, const String &parentPath, const String *childPath, size_t size)
 {
   dataObj.addNodeList(childPath, size);
-  return firebaseConnectStream(dataObj, parentPath.c_str());
+
+  if (!apConnected(dataObj))
+    return false;
+
+  bool res = firebaseConnectStream(dataObj, parentPath.c_str());
+  if (!res)
+    return false;
+
+  dataObj._httpConnected = true;
+  resetFirebasedataFlag(dataObj);
+  return getServerResponse(dataObj);
 }
 
 bool FirebaseESP32::readStream(FirebaseData &dataObj)
@@ -2624,6 +2709,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
   size_t lfCount = 0;
   size_t charPos = 0;
   int res = 0;
+  bool redirect = false;
   char *tmp = nullptr;
 
   unsigned long dataTime = millis();
@@ -2723,21 +2809,20 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
             dataObj._httpCode = atoi(lineBuf.substr(p1 + strlen_P(ESP32_FIREBASE_STR_5), p2 - p1 - strlen_P(ESP32_FIREBASE_STR_5)).c_str());
         }
 
-        if (dataObj._httpCode == HTTP_CODE_TEMPORARY_REDIRECT)
+        if (dataObj._httpCode == HTTP_CODE_TEMPORARY_REDIRECT || dataObj._httpCode == HTTP_CODE_PERMANENT_REDIRECT || dataObj._httpCode == HTTP_CODE_MOVED_PERMANENTLY || dataObj._httpCode == HTTP_CODE_FOUND)
         {
+
           tmp = getPGMString(ESP32_FIREBASE_STR_95);
           p1 = lineBuf.find(tmp);
           delPtr(tmp);
           if (p1 != std::string::npos)
           {
             dataObj._redirectURL = lineBuf.substr(p1 + strlen_P(ESP32_FIREBASE_STR_95));
-
-            int res = firebaseConnect(dataObj, dataObj._redirectURL, dataObj._r_method, dataObj._r_dataType, "", dataObj._priority);
-
-            if (res == 0)
-              goto EXIT_4;
-
-            goto EXIT_3;
+            redirect = true;
+            if (dataObj._httpCode == HTTP_CODE_TEMPORARY_REDIRECT || dataObj._httpCode == HTTP_CODE_FOUND)
+              dataObj._redirect = 1;
+            else
+              dataObj._redirect = 2;
           }
         }
 
@@ -2836,6 +2921,35 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
         dataObj._httpCode = HTTPC_ERROR_READ_TIMEOUT;
         break;
       }
+    }
+
+    if (!redirect)
+    {
+
+      if (dataObj._redirect == 1 && dataObj._redirectCount > 1)
+        dataObj._redirectURL.clear();
+    }
+    else
+    {
+
+      dataObj._redirectCount++;
+
+      if (dataObj._redirectCount > MAX_REDIRECT)
+      {
+        dataObj._redirect = 0;
+        dataObj._httpCode = HTTPC_MAX_REDIRECT_REACHED;
+        goto EXIT_3;
+      }
+
+      std::string host, uri, auth;
+      getUrlInfo(dataObj._redirectURL, host, uri, auth);
+      int res = firebaseConnect(dataObj, uri, dataObj._r_method, dataObj._r_dataType, "", dataObj._priority);
+      std::string().swap(host);
+      std::string().swap(uri);
+      std::string().swap(auth);
+
+      if (res == 0)
+        goto EXIT_4;
     }
 
     if (dataObj._httpCode == HTTP_CODE_OK || dataObj._httpCode == HTTP_CODE_PRECONDITION_FAILED)
@@ -3096,6 +3210,7 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
 
 EXIT_2:
 
+  dataObj._redirectCount = 0;
   std::string().swap(lineBuf);
   std::string().swap(eventType);
   std::string().swap(jsonRes);
@@ -3502,7 +3617,19 @@ bool FirebaseESP32::firebaseConnectStream(FirebaseData &dataObj, const std::stri
 
   bool flag = false;
   flag = dataObj._streamPath.length() == 0;
-  flag |= firebaseConnect(dataObj, path, FirebaseMethod::STREAM, FirebaseDataType::STRING, "", "") == 0;
+
+  if (dataObj._redirectURL.length() > 0)
+  {
+    std::string host, uri, auth;
+    getUrlInfo(dataObj._redirectURL, host, uri, auth);
+    flag |= firebaseConnect(dataObj, uri, FirebaseMethod::STREAM, FirebaseDataType::STRING, "", "") == 0;
+    std::string().swap(host);
+    std::string().swap(uri);
+    std::string().swap(auth);
+  }
+  else
+    flag |= firebaseConnect(dataObj, path, FirebaseMethod::STREAM, FirebaseDataType::STRING, "", "") == 0;
+    
   dataObj._dataMillis = millis();
   return flag;
 }
@@ -3547,7 +3674,18 @@ bool FirebaseESP32::getServerStreamResponse(FirebaseData &dataObj)
     {
       dataObj._dataMillis = millis();
       dataObj._isStreamTimeout = true;
-      path = dataObj._streamPath;
+
+      if (dataObj._redirectURL.length() > 0)
+      {
+        std::string host, uri, auth;
+        getUrlInfo(dataObj._redirectURL, host, uri, auth);
+        path = uri;
+        std::string().swap(host);
+        std::string().swap(uri);
+        std::string().swap(auth);
+      }
+      else
+        path = dataObj._streamPath;
 
       if (dataObj._firebaseCall || dataObj._fcmCall)
         return false;
@@ -3947,8 +4085,27 @@ void FirebaseESP32::buildFirebaseRequest(FirebaseData &dataObj, const std::strin
   if (method == FirebaseMethod::PATCH || method == FirebaseMethod::PATCH_SILENT)
     p_memCopy(request, ESP32_FIREBASE_STR_1);
 
-  p_memCopy(request, ESP32_FIREBASE_STR_2);
-  request += auth;
+  if (dataObj._redirectURL.length() > 0)
+  {
+
+    std::string h, u, a;
+    getUrlInfo(dataObj._redirectURL, h, u, a);
+    if (a.length() == 0)
+    {
+      p_memCopy(request, ESP32_FIREBASE_STR_2);
+      request += auth;
+    }
+    std::string().swap(h);
+    std::string().swap(u);
+    std::string().swap(a);
+  }
+  else
+  {
+    p_memCopy(request, ESP32_FIREBASE_STR_2);
+    request += auth;
+  }
+
+ 
 
   if (dataObj._readTimeout > 0)
   {
@@ -4403,6 +4560,9 @@ void FirebaseESP32::errorToString(int httpCode, std::string &buff)
     return;
   case HTTPC_ERROR_CONNECTION_INUSED:
     p_memCopy(buff, ESP32_FIREBASE_STR_94);
+    return;
+  case HTTPC_MAX_REDIRECT_REACHED:
+    p_memCopy(buff, ESP32_FIREBASE_STR_169);
     return;
   case HTTPC_NO_FCM_TOPIC_PROVIDED:
     p_memCopy(buff, ESP32_FIREBASE_STR_144);

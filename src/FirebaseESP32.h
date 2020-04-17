@@ -1,12 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.1
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.2
  * 
- * April 11, 2020
+ * April 17, 2020
  * 
  * Feature Added:
- * - Add chunked decoding for FCM response payload.
+ * 
  * 
  * Feature Fixed:
+ * - HTTP Redirection.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -52,8 +53,8 @@
 #include "FirebaseJson.h"
 
 #define FIEBASE_PORT 443
-
 #define KEEP_ALIVE_TIMEOUT 30000
+#define MAX_REDIRECT 5
 
 #define FIREBASE_ERROR_DATA_TYPE_MISMATCH -14
 #define FIREBASE_ERROR_PATH_NOT_EXIST -15
@@ -62,6 +63,7 @@
 #define HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED -18
 #define HTTPC_NO_FCM_SERVER_KEY_PROVIDED -19
 #define HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED -20
+#define HTTPC_MAX_REDIRECT_REACHED -21
 
 static const char ESP32_FIREBASE_STR_1[] PROGMEM = "/";
 static const char ESP32_FIREBASE_STR_2[] PROGMEM = ".json?auth=";
@@ -232,6 +234,17 @@ static const char ESP32_FIREBASE_STR_165[] PROGMEM = "array";
 static const char ESP32_FIREBASE_STR_166[] PROGMEM = "\".sv\"";
 static const char ESP32_FIREBASE_STR_167[] PROGMEM = "Transfer-Encoding";
 static const char ESP32_FIREBASE_STR_168[] PROGMEM = "chunked";
+static const char ESP32_FIREBASE_STR_169[] PROGMEM = "Maximum Redirection reached";
+static const char ESP32_FIREBASE_STR_170[] PROGMEM = "?auth=";
+static const char ESP32_FIREBASE_STR_171[] PROGMEM = "&auth=";
+static const char ESP32_FIREBASE_STR_172[] PROGMEM = "&";
+static const char ESP32_FIREBASE_STR_173[] PROGMEM = "?";
+static const char ESP32_FIREBASE_STR_174[] PROGMEM = ".com";
+static const char ESP32_FIREBASE_STR_175[] PROGMEM = ".net";
+static const char ESP32_FIREBASE_STR_176[] PROGMEM = ".int";
+static const char ESP32_FIREBASE_STR_177[] PROGMEM = ".edu";
+static const char ESP32_FIREBASE_STR_178[] PROGMEM = ".gov";
+static const char ESP32_FIREBASE_STR_179[] PROGMEM = ".mil";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -2517,6 +2530,7 @@ private:
   bool setBool(FirebaseData &dataObj, const std::string &path, bool boolValue, bool queue, const std::string &priority, const std::string &etag);
   bool setBlob(FirebaseData &dataObj, const std::string &path, uint8_t *blob, size_t size, bool queue, const std::string &priority, const std::string &etag);
 
+  void getUrlInfo(const std::string url, std::string &host, std::string &uri, std::string &auth);
   bool buildRequest(FirebaseData &dataObj, uint8_t firebaseMethod, uint8_t firebaseDataType, const std::string &path, const char *buff, bool queue, const std::string &priority, const std::string &etag = "");
   bool buildRequestFile(FirebaseData &dataObj, uint8_t storageType, uint8_t firebaseMethod, const std::string &path, const std::string &fileName, bool queue, const std::string &priority, const std::string &etag = "");
   bool sendRequest(FirebaseData &dataObj, uint8_t storageType, const std::string &path, const uint8_t _method, uint8_t dataType, const std::string &payload, const std::string &priority, const std::string &etag);
@@ -2950,6 +2964,8 @@ private:
   std::string _etag2 = "";
   std::string _priority = "";
   uint8_t _storageType = 0;
+  uint8_t _redirectCount = 0;
+  int _redirect = 0;
   FirebaseJson _json;
   FirebaseJsonArray _jsonArr;
   FirebaseJsonData _jsonData;
