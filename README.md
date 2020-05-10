@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.7.2
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.7.3
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -1270,8 +1270,8 @@ for (size_t i = 0; i < len; i++)
   Serial.print(i);
   Serial.print(", ");
   Serial.print("Type: ");
-  Serial.print(type == JSON_OBJECT ? "object" : "array");
-  if (type == JSON_OBJECT)
+  Serial.print(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
+  if (type == FirebaseJson::JSON_OBJECT)
   {
     Serial.print(", Key: ");
     Serial.print(key);

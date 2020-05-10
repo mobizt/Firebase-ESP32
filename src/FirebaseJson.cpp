@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.3.3
+ * FirebaseJson, version 2.3.4
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using a relative path.
  * 
- * March 28, 2020
+ * May 10, 2020
  * 
  * Features
  * - None recursive operations
@@ -11,11 +11,10 @@
  * - Prettify JSON string 
  * 
  * 
- * This library implemented the zserge's JSON object parser library, jasmine JSMN which available from
- * https://zserge.com/jsmn.html
+ * The zserge's JSON object parser library used as part of this library
  * 
  * The MIT License (MIT)
- * Copyright (c) 2019 K. Suwatchai (Mobizt)
+ * Copyright (c) 2020 K. Suwatchai (Mobizt)
  * Copyright (c) 2012–2018, Serge Zaitsev, zaitsev.serge@gmail.com
  * 
  * 
@@ -57,7 +56,6 @@ FirebaseJson::~FirebaseJson()
 {
     clear();
     _parser.reset();
-    _parser.release();
     _parser = nullptr;
     _finalize();
 }
@@ -398,7 +396,7 @@ bool FirebaseJson::get(FirebaseJsonData &jsonData, const String &path, bool pret
         _parse(path.c_str(), PRINT_MODE_PLAIN);
     if (_jsonData.success)
     {
-        if (_jsonData._type == JSMN_STRING && _jsonData._dbuf.c_str()[0] == '"' && _jsonData._dbuf.c_str()[_jsonData._dbuf.length() - 1] == '"')
+        if (_jsonData._type == FirebaseJson::JSMN_STRING && _jsonData._dbuf.c_str()[0] == '"' && _jsonData._dbuf.c_str()[_jsonData._dbuf.length() - 1] == '"')
             _jsonData.stringValue = _jsonData._dbuf.substr(1, _jsonData._dbuf.length() - 2).c_str();
         else
             _jsonData.stringValue = _jsonData._dbuf.c_str();
@@ -416,7 +414,7 @@ size_t FirebaseJson::iteratorBegin(const char *data)
 {
     if (data)
         setJsonData(data);
-    _jsmn_parse(true);
+    _fbjs_parse(true);
     std::string s;
     _toStdString(s);
     int bufLen = s.length() + 20;
@@ -459,11 +457,11 @@ void FirebaseJson::iteratorGet(size_t index, int &type, String &key, String &val
     std::string().swap(s);
     if (_eltk[index].type == 0)
     {
-        jsmntok_t *h = &_tokens.get()[_eltk[index].index];
+        FirebaseJson::fbjs_tok_t *h = &_tokens.get()[_eltk[index].index];
         size_t len = h->end - h->start + 3;
         char *k = _newPtr(len);
         strncpy(k, buf + h->start, h->end - h->start);
-        jsmntok_t *g = &_tokens.get()[_eltk[index].index + 1];
+        FirebaseJson::fbjs_tok_t *g = &_tokens.get()[_eltk[index].index + 1];
         size_t len2 = g->end - g->start + 3;
         char *v = _newPtr(len2);
         strncpy(v, buf + g->start, g->end - g->start);
@@ -475,7 +473,7 @@ void FirebaseJson::iteratorGet(size_t index, int &type, String &key, String &val
     }
     else if (_eltk[index].type == 1)
     {
-        jsmntok_t *g = &_tokens.get()[_eltk[index].index];
+        FirebaseJson::fbjs_tok_t *g = &_tokens.get()[_eltk[index].index];
         size_t len2 = g->end - g->start + 3;
         char *v = _newPtr(len2);
         strncpy(v, buf + g->start, g->end - g->start);
@@ -487,7 +485,7 @@ void FirebaseJson::iteratorGet(size_t index, int &type, String &key, String &val
     _delPtr(buf);
 }
 
-void FirebaseJson::_jsmn_parse(bool collectTk)
+void FirebaseJson::_fbjs_parse(bool collectTk)
 {
     std::string s;
     _toStdString(s);
@@ -498,7 +496,7 @@ void FirebaseJson::_jsmn_parse(bool collectTk)
     _tokens.reset();
     _collectTk = collectTk;
     _eltk.clear();
-    int cnt = jsmn_parse(_parser.get(), buf, bufLen, (jsmntok_t *)NULL, 0);
+    int cnt = fbjs_parse(_parser.get(), buf, bufLen, (FirebaseJson::fbjs_tok_t *)NULL, 0);
     int cnt2 = 0;
     int a = 0;
     int b = 0;
@@ -514,13 +512,13 @@ void FirebaseJson::_jsmn_parse(bool collectTk)
     if (cnt < cnt2)
         cnt = cnt2;
 
-    _tokens = std::unique_ptr<jsmntok_t>(new jsmntok_t[cnt + 10]);
-    jsmn_init(_parser.get());
-    _tokenCount = jsmn_parse(_parser.get(), buf, bufLen, _tokens.get(), cnt + 10);
+    _tokens = std::shared_ptr<FirebaseJson::fbjs_tok_t>(new FirebaseJson::fbjs_tok_t[cnt + 10]);
+    fbjs_init(_parser.get());
+    _tokenCount = fbjs_parse(_parser.get(), buf, bufLen, _tokens.get(), cnt + 10);
     _paresRes = true;
     if (_tokenCount < 0)
         _paresRes = false;
-    if (_tokenCount < 1 || _tokens.get()[0].type != JSMN_OBJECT)
+    if (_tokenCount < 1 || _tokens.get()[0].type != FirebaseJson::JSMN_OBJECT)
         _paresRes = false;
     _jsonData.success = _paresRes;
     _nextToken = 0;
@@ -578,7 +576,7 @@ void FirebaseJson::_getTkIndex(int depth, tk_index_t &tk)
     tk.oindex = 0;
     tk.olen = 0;
     tk.omark = false;
-    tk.type = JSMN_UNDEFINED;
+    tk.type = FirebaseJson::JSMN_UNDEFINED;
     tk.depth = -1;
     tk.skip = false;
     tk.ref = false;
@@ -609,7 +607,7 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
     {
         if (_el[i].depth == depth - 1)
         {
-            if (_el[i].type == JSMN_OBJECT || _el[i].type == JSMN_ARRAY)
+            if (_el[i].type == FirebaseJson::JSMN_OBJECT || _el[i].type == FirebaseJson::JSMN_ARRAY)
             {
                 _el[i].oindex++;
                 if (_el[i].oindex >= _el[i].olen)
@@ -617,9 +615,9 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                     depth = _el[i].depth;
                     len = _el[i].olen;
                     skip = _el[i].skip;
-                    if (!_TkRefOk && _el[i].type == JSMN_OBJECT)
+                    if (!_TkRefOk && _el[i].type == FirebaseJson::JSMN_OBJECT)
                         ref = _el[i].ref;
-                    else if (!_TkRefOk && _el[i].type == JSMN_ARRAY && searchIndex > -1)
+                    else if (!_TkRefOk && _el[i].type == FirebaseJson::JSMN_ARRAY && searchIndex > -1)
                         ref = _el[i].ref;
                     if (i > 0)
                         _el.erase(_el.begin() + i);
@@ -631,7 +629,7 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                         {
                             if (ref)
                                 _jsonData._dbuf += _cm;
-                            if (_el[i].type == JSMN_OBJECT)
+                            if (_el[i].type == FirebaseJson::JSMN_OBJECT)
                             {
                                 if (printMode == PRINT_MODE_PRETTY)
                                     _jsonData._dbuf += _nl;
@@ -649,7 +647,7 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
 
                             if (!_arrReplaced)
                             {
-                                if (_el[i].type == JSMN_OBJECT)
+                                if (_el[i].type == FirebaseJson::JSMN_OBJECT)
                                 {
                                     if (printMode == PRINT_MODE_PRETTY)
                                     {
@@ -706,7 +704,7 @@ bool FirebaseJson::_updateTkIndex(uint16_t index, int &depth, char *searchKey, i
                                 _parseCompleted = _pathTk.size();
                         }
 
-                        if (_el[i].type == JSMN_OBJECT)
+                        if (_el[i].type == FirebaseJson::JSMN_OBJECT)
                             _jsonData._dbuf += _brk2;
                         else
                         {
@@ -740,7 +738,7 @@ bool FirebaseJson::_updateTkIndex2(std::string &str, uint16_t index, int &depth,
     {
         if (_el[i].depth == depth - 1)
         {
-            if (_el[i].type == JSMN_OBJECT || _el[i].type == JSMN_ARRAY)
+            if (_el[i].type == FirebaseJson::JSMN_OBJECT || _el[i].type == FirebaseJson::JSMN_ARRAY)
             {
                 _el[i].oindex++;
                 if (_el[i].oindex >= _el[i].olen)
@@ -748,9 +746,9 @@ bool FirebaseJson::_updateTkIndex2(std::string &str, uint16_t index, int &depth,
                     depth = _el[i].depth;
                     len = _el[i].olen;
                     skip = _el[i].skip;
-                    if (!_TkRefOk && _el[i].type == JSMN_OBJECT)
+                    if (!_TkRefOk && _el[i].type == FirebaseJson::JSMN_OBJECT)
                         ref = _el[i].ref;
-                    else if (!_TkRefOk && _el[i].type == JSMN_ARRAY && searchIndex > -1)
+                    else if (!_TkRefOk && _el[i].type == FirebaseJson::JSMN_ARRAY && searchIndex > -1)
                         ref = _el[i].ref;
                     if (i > 0)
                         _el.erase(_el.begin() + i);
@@ -762,7 +760,7 @@ bool FirebaseJson::_updateTkIndex2(std::string &str, uint16_t index, int &depth,
                         {
                             if (printMode == PRINT_MODE_PRETTY)
                                 str += _nl;
-                            if (_el[i].type == JSMN_OBJECT)
+                            if (_el[i].type == FirebaseJson::JSMN_OBJECT)
                             {
                                 if (printMode == PRINT_MODE_PRETTY && !ref)
                                 {
@@ -781,7 +779,7 @@ bool FirebaseJson::_updateTkIndex2(std::string &str, uint16_t index, int &depth,
                         }
                         if (ref)
                             _setRef(depth, false);
-                        if (_el[i].type == JSMN_OBJECT)
+                        if (_el[i].type == FirebaseJson::JSMN_OBJECT)
                             str += _brk2;
                         else
                             str += _brk4;
@@ -804,7 +802,7 @@ bool FirebaseJson::_updateTkIndex3(uint16_t index, int &depth, char *searchKey, 
     {
         if (_el[i].depth == depth - 1)
         {
-            if (_el[i].type == JSMN_OBJECT || _el[i].type == JSMN_ARRAY)
+            if (_el[i].type == FirebaseJson::JSMN_OBJECT || _el[i].type == FirebaseJson::JSMN_ARRAY)
             {
                 _el[i].oindex++;
                 if (_el[i].oindex >= _el[i].olen)
@@ -812,9 +810,9 @@ bool FirebaseJson::_updateTkIndex3(uint16_t index, int &depth, char *searchKey, 
                     depth = _el[i].depth;
                     len = _el[i].olen;
                     skip = _el[i].skip;
-                    if (!_TkRefOk && _el[i].type == JSMN_OBJECT)
+                    if (!_TkRefOk && _el[i].type == FirebaseJson::JSMN_OBJECT)
                         ref = _el[i].ref;
-                    else if (!_TkRefOk && _el[i].type == JSMN_ARRAY && searchIndex > -1)
+                    else if (!_TkRefOk && _el[i].type == FirebaseJson::JSMN_ARRAY && searchIndex > -1)
                         ref = _el[i].ref;
                     if (i > 0)
                         _el.erase(_el.begin() + i);
@@ -828,7 +826,7 @@ bool FirebaseJson::_updateTkIndex3(uint16_t index, int &depth, char *searchKey, 
                         {
                             if (printMode == PRINT_MODE_PRETTY)
                                 _jsonData._dbuf += _nl;
-                            if (_el[i].type == JSMN_OBJECT)
+                            if (_el[i].type == FirebaseJson::JSMN_OBJECT)
                             {
                                 if (printMode == PRINT_MODE_PRETTY && !ref)
                                 {
@@ -848,7 +846,7 @@ bool FirebaseJson::_updateTkIndex3(uint16_t index, int &depth, char *searchKey, 
                         if (ref)
                             _setRef(depth, false);
 
-                        if (_el[i].type == JSMN_OBJECT)
+                        if (_el[i].type == FirebaseJson::JSMN_OBJECT)
                             _jsonData._dbuf += _brk2;
                         else
                             _jsonData._dbuf += _brk4;
@@ -960,7 +958,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *searchK
 {
     tk_index_t tk;
     _getTkIndex(depth, tk);
-    jsmntok_t *h = &_tokens.get()[i];
+    FirebaseJson::fbjs_tok_t *h = &_tokens.get()[i];
     bool oskip = false;
     bool ex = false;
     size_t resLen = _jsonData._dbuf.length();
@@ -972,7 +970,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *searchK
         tk_index_t tk2;
         int depth2 = depth - 1;
         _getTkIndex(depth2, tk2);
-        if (tk.type == JSMN_ARRAY && _parseDepth == depth && tk2.oindex == _parentIndex)
+        if (tk.type == FirebaseJson::JSMN_ARRAY && _parseDepth == depth && tk2.oindex == _parentIndex)
         {
             if (tk.oindex == searchIndex)
             {
@@ -1032,7 +1030,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *searchK
     {
         char *key = _newPtr(h->end - h->start + 10);
         strncpy(key, buf + h->start, h->end - h->start);
-        if (tk.type != JSMN_UNDEFINED && _parseDepth == depth)
+        if (tk.type != FirebaseJson::JSMN_UNDEFINED && _parseDepth == depth)
         {
             if (strcmp(searchKey, key) == 0)
             {
@@ -1093,13 +1091,13 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *searchK
         return;
     if (_refTkIndex == i + 1)
     {
-        if (tk.type == JSMN_OBJECT)
+        if (tk.type == FirebaseJson::JSMN_OBJECT)
             oskip = true;
         tk.skip = true;
         _skipDepth = depth;
     }
     h = &_tokens.get()[i];
-    if (h->type == JSMN_OBJECT || h->type == JSMN_ARRAY)
+    if (h->type == FirebaseJson::JSMN_OBJECT || h->type == FirebaseJson::JSMN_ARRAY)
     {
         if (printMode != PRINT_MODE_NONE && (tk.skip || _refTkIndex == i + 1))
         {
@@ -1116,7 +1114,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *searchK
                     _jsonData._dbuf += _tab;
                 }
             }
-            if (h->type == JSMN_OBJECT)
+            if (h->type == FirebaseJson::JSMN_OBJECT)
                 _jsonData._dbuf += _brk1;
             else
                 _jsonData._dbuf += _brk3;
@@ -1180,7 +1178,7 @@ void FirebaseJson::_parseToken(uint16_t &i, char *buf, int &depth, char *searchK
             tmp = _newPtr(tmp, h->end - h->start + 10);
             strncpy(tmp, buf + h->start, h->end - h->start);
             h = &_tokens.get()[i + 1];
-            if (h->type != JSMN_OBJECT && h->type != JSMN_ARRAY)
+            if (h->type != FirebaseJson::JSMN_OBJECT && h->type != FirebaseJson::JSMN_ARRAY)
             {
                 _delPtr(tmp);
                 tmp = _newPtr(h->end - h->start + 10);
@@ -1254,7 +1252,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *searc
         return;
     tk_index_t tk;
     _getTkIndex(depth, tk);
-    jsmntok_t *h = &_tokens.get()[i];
+    FirebaseJson::fbjs_tok_t *h = &_tokens.get()[i];
     bool insertFlag = false;
     bool ex = false;
     delay(0);
@@ -1263,7 +1261,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *searc
         tk_index_t tk2;
         int depth2 = depth - 1;
         _getTkIndex(depth2, tk2);
-        if (tk.type == JSMN_ARRAY && _parseDepth == depth && tk2.oindex == _parentIndex)
+        if (tk.type == FirebaseJson::JSMN_ARRAY && _parseDepth == depth && tk2.oindex == _parentIndex)
         {
             if (tk.oindex == searchIndex)
             {
@@ -1314,7 +1312,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *searc
     {
         char *key = _newPtr(h->end - h->start + 10);
         strncpy(key, buf + h->start, h->end - h->start);
-        if (tk.type != JSMN_UNDEFINED && _parseDepth == depth)
+        if (tk.type != FirebaseJson::JSMN_UNDEFINED && _parseDepth == depth)
         {
             if (strcmp(searchKey, key) == 0)
             {
@@ -1378,7 +1376,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *searc
         return;
 
     h = &_tokens.get()[i];
-    if (h->type == JSMN_OBJECT || h->type == JSMN_ARRAY)
+    if (h->type == FirebaseJson::JSMN_OBJECT || h->type == FirebaseJson::JSMN_ARRAY)
     {
         if (printMode != PRINT_MODE_NONE && !tk.skip)
         {
@@ -1397,7 +1395,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *searc
             }
             if (_refToken == -1)
             {
-                if (h->type == JSMN_OBJECT)
+                if (h->type == FirebaseJson::JSMN_OBJECT)
                     _jsonData._dbuf += _brk1;
                 else
                     _jsonData._dbuf += _brk3;
@@ -1463,7 +1461,7 @@ void FirebaseJson::_compileToken(uint16_t &i, char *buf, int &depth, char *searc
             tmp = _newPtr(tmp, h->end - h->start + 10);
             strncpy(tmp, buf + h->start, h->end - h->start);
             h = &_tokens.get()[i + 1];
-            if (h->type != JSMN_OBJECT && h->type != JSMN_ARRAY)
+            if (h->type != FirebaseJson::JSMN_OBJECT && h->type != FirebaseJson::JSMN_ARRAY)
             {
                 tmp = _newPtr(tmp, h->end - h->start + 10);
                 strncpy(tmp, buf + h->start, h->end - h->start);
@@ -1560,7 +1558,7 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *search
     bool ncm = false;
     tk_index_t tk;
     _getTkIndex(depth, tk);
-    jsmntok_t *h = &_tokens.get()[i];
+    FirebaseJson::fbjs_tok_t *h = &_tokens.get()[i];
     delay(0);
     if (refTokenIndex == i && refTokenIndex > -1)
         ncm = _remFirstTk;
@@ -1575,7 +1573,7 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *search
         tk.skip = true;
     }
     h = &_tokens.get()[i];
-    if (h->type == JSMN_OBJECT || h->type == JSMN_ARRAY)
+    if (h->type == FirebaseJson::JSMN_OBJECT || h->type == FirebaseJson::JSMN_ARRAY)
     {
         if (printMode != PRINT_MODE_NONE && !tk.skip)
         {
@@ -1594,7 +1592,7 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *search
             }
             if (_refToken == -1)
             {
-                if (h->type == JSMN_OBJECT)
+                if (h->type == FirebaseJson::JSMN_OBJECT)
                     _tbuf += _brk1;
                 else
                     _tbuf += _brk3;
@@ -1654,7 +1652,7 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *search
             tmp = _newPtr(tmp, h->end - h->start + 10);
             strncpy(tmp, buf + h->start, h->end - h->start);
             h = &_tokens.get()[i + 1];
-            if (h->type != JSMN_OBJECT && h->type != JSMN_ARRAY)
+            if (h->type != FirebaseJson::JSMN_OBJECT && h->type != FirebaseJson::JSMN_ARRAY)
             {
                 tmp = _newPtr(tmp, h->end - h->start + 10);
                 strncpy(tmp, buf + h->start, h->end - h->start);
@@ -1730,7 +1728,7 @@ void FirebaseJson::_removeToken(uint16_t &i, char *buf, int &depth, char *search
     _lastTk.skip = tk.skip;
 }
 
-single_child_parent_t FirebaseJson::_findSCParent(int depth)
+FirebaseJson::single_child_parent_t FirebaseJson::_findSCParent(int depth)
 {
     single_child_parent_t res;
     res.index = -1;
@@ -1843,7 +1841,7 @@ void FirebaseJson::_parse(const char *path, PRINT_MODE printMode)
 {
     clearPathTk();
     _strToTk(path, _pathTk, '/');
-    _jsmn_parse();
+    _fbjs_parse();
     if (!_jsonData.success)
         return;
     _jsonData.success = false;
@@ -2152,7 +2150,7 @@ void FirebaseJson::_set(const char *path, const char *data)
 {
     clearPathTk();
     _strToTk(path, _pathTk, '/');
-    _jsmn_parse();
+    _fbjs_parse();
     if (!_jsonData.success)
         return;
     _jsonData.success = false;
@@ -2229,7 +2227,7 @@ bool FirebaseJson::remove(const String &path)
 {
     clearPathTk();
     _strToTk(path.c_str(), _pathTk, '/');
-    _jsmn_parse();
+    _fbjs_parse();
     if (!_jsonData.success)
         return false;
     _jsonData.success = false;
@@ -2317,30 +2315,30 @@ void FirebaseJson::_setElementType()
     char *buf = _newPtr(20);
     char *tmp = _newPtr(20);
     char *tmp2 = nullptr;
-    if (_jsonData._type == JSMN_PRIMITIVE)
+    if (_jsonData._type == FirebaseJson::JSMN_PRIMITIVE)
     {
         tmp2 = _newPtr(tmp2, _jsonData.stringValue.length() + 1);
         strcpy(tmp2, _jsonData.stringValue.c_str());
     }
     switch (_jsonData._type)
     {
-    case JSMN_UNDEFINED:
+    case FirebaseJson::JSMN_UNDEFINED:
         strcpy(buf, _undef);
         _jsonData.typeNum = JSON_UNDEFINED;
         break;
-    case JSMN_OBJECT:
+    case FirebaseJson::JSMN_OBJECT:
         strcpy(buf, _obj);
         _jsonData.typeNum = JSON_OBJECT;
         break;
-    case JSMN_ARRAY:
+    case FirebaseJson::JSMN_ARRAY:
         strcpy(buf, _arry);
         _jsonData.typeNum = JSON_ARRAY;
         break;
-    case JSMN_STRING:
+    case FirebaseJson::JSMN_STRING:
         strcpy(buf, _string);
         _jsonData.typeNum = JSON_STRING;
         break;
-    case JSMN_PRIMITIVE:
+    case FirebaseJson::JSMN_PRIMITIVE:
         if (!typeSet && strcmp(tmp2, _tr) == 0)
         {
             typeSet = true;
@@ -2498,6 +2496,392 @@ char *FirebaseJson::_getPGMString(PGM_P pgm)
     strcpy_P(buf, pgm);
     buf[len - 1] = 0;
     return buf;
+}
+
+/**
+ * Allocates a fresh unused token from the token pool.
+ */
+FirebaseJson::fbjs_tok_t *FirebaseJson::fbjs_alloc_token(fbjs_parser *parser,
+                                                         FirebaseJson::fbjs_tok_t *tokens, size_t num_tokens)
+{
+    FirebaseJson::fbjs_tok_t *tok;
+    if (parser->toknext >= num_tokens)
+    {
+        return NULL;
+    }
+    tok = &tokens[parser->toknext++];
+    tok->start = tok->end = -1;
+    tok->size = 0;
+#ifdef JSMN_PARENT_LINKS
+    tok->parent = -1;
+#endif
+    return tok;
+}
+
+/**
+ * Fills token type and boundaries.
+ */
+void FirebaseJson::fbjs_fill_token(fbjs_tok_t *token, fbjs_type_t type,
+                                   int start, int end)
+{
+    token->type = type;
+    token->start = start;
+    token->end = end;
+    token->size = 0;
+}
+
+/**
+ * Fills next available token with JSON primitive.
+ */
+int FirebaseJson::fbjs_parse_primitive(fbjs_parser *parser, const char *js,
+                                       size_t len, fbjs_tok_t *tokens, size_t num_tokens)
+{
+    fbjs_tok_t *token;
+    int start;
+
+    start = parser->pos;
+
+    for (; parser->pos < len && js[parser->pos] != '\0'; parser->pos++)
+    {
+        switch (js[parser->pos])
+        {
+#ifndef JSMN_STRICT
+        /* In strict mode primitive must be followed by "," or "}" or "]" */
+        case ':':
+#endif
+        case '\t':
+        case '\r':
+        case '\n':
+        case ' ':
+        case ',':
+        case ']':
+        case '}':
+            goto found;
+        }
+        if (js[parser->pos] < 32 || js[parser->pos] >= 127)
+        {
+            parser->pos = start;
+            return JSMN_ERROR_INVAL;
+        }
+    }
+#ifdef JSMN_STRICT
+    /* In strict mode primitive must be followed by a comma/object/array */
+    parser->pos = start;
+    return JSMN_ERROR_PART;
+#endif
+
+found:
+    if (tokens == NULL)
+    {
+        parser->pos--;
+        return 0;
+    }
+    token = fbjs_alloc_token(parser, tokens, num_tokens);
+    if (token == NULL)
+    {
+        parser->pos = start;
+        return JSMN_ERROR_NOMEM;
+    }
+    fbjs_fill_token(token, JSMN_PRIMITIVE, start, parser->pos);
+#ifdef JSMN_PARENT_LINKS
+    token->parent = parser->toksuper;
+#endif
+    parser->pos--;
+    return 0;
+}
+
+/**
+ * Fills next token with JSON string.
+ */
+int FirebaseJson::fbjs_parse_string(fbjs_parser *parser, const char *js,
+                                    size_t len, fbjs_tok_t *tokens, size_t num_tokens)
+{
+    fbjs_tok_t *token;
+
+    int start = parser->pos;
+
+    parser->pos++;
+
+    /* Skip starting quote */
+    for (; parser->pos < len && js[parser->pos] != '\0'; parser->pos++)
+    {
+        char c = js[parser->pos];
+
+        /* Quote: end of string */
+        if (c == '\"')
+        {
+            if (tokens == NULL)
+            {
+                return 0;
+            }
+            token = fbjs_alloc_token(parser, tokens, num_tokens);
+            if (token == NULL)
+            {
+                parser->pos = start;
+                return JSMN_ERROR_NOMEM;
+            }
+            fbjs_fill_token(token, JSMN_STRING, start + 1, parser->pos);
+#ifdef JSMN_PARENT_LINKS
+            token->parent = parser->toksuper;
+#endif
+            return 0;
+        }
+
+        /* Backslash: Quoted symbol expected */
+        if (c == '\\' && parser->pos + 1 < len)
+        {
+            int i;
+            parser->pos++;
+            switch (js[parser->pos])
+            {
+            /* Allowed escaped symbols */
+            case '\"':
+            case '/':
+            case '\\':
+            case 'b':
+            case 'f':
+            case 'r':
+            case 'n':
+            case 't':
+                break;
+            /* Allows escaped symbol \uXXXX */
+            case 'u':
+                parser->pos++;
+                for (i = 0; i < 4 && parser->pos < len && js[parser->pos] != '\0'; i++)
+                {
+                    /* If it isn't a hex character we have an error */
+                    if (!((js[parser->pos] >= 48 && js[parser->pos] <= 57) || /* 0-9 */
+                          (js[parser->pos] >= 65 && js[parser->pos] <= 70) || /* A-F */
+                          (js[parser->pos] >= 97 && js[parser->pos] <= 102)))
+                    { /* a-f */
+                        parser->pos = start;
+                        return JSMN_ERROR_INVAL;
+                    }
+                    parser->pos++;
+                }
+                parser->pos--;
+                break;
+            /* Unexpected symbol */
+            default:
+                parser->pos = start;
+                return JSMN_ERROR_INVAL;
+            }
+        }
+    }
+    parser->pos = start;
+    return JSMN_ERROR_PART;
+}
+
+/**
+ * Parse JSON string and fill tokens.
+ */
+int FirebaseJson::fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
+                             fbjs_tok_t *tokens, unsigned int num_tokens)
+{
+    int r;
+    int i;
+    fbjs_tok_t *token;
+    int count = parser->toknext;
+
+    for (; parser->pos < len && js[parser->pos] != '\0'; parser->pos++)
+    {
+        char c;
+        fbjs_type_t type;
+
+        c = js[parser->pos];
+        switch (c)
+        {
+        case '{':
+        case '[':
+            count++;
+            if (tokens == NULL)
+            {
+                break;
+            }
+            token = fbjs_alloc_token(parser, tokens, num_tokens);
+            if (token == NULL)
+                return JSMN_ERROR_NOMEM;
+            if (parser->toksuper != -1)
+            {
+                tokens[parser->toksuper].size++;
+#ifdef JSMN_PARENT_LINKS
+                token->parent = parser->toksuper;
+#endif
+            }
+            token->type = (c == '{' ? JSMN_OBJECT : JSMN_ARRAY);
+            token->start = parser->pos;
+            parser->toksuper = parser->toknext - 1;
+            break;
+        case '}':
+        case ']':
+            if (tokens == NULL)
+                break;
+            type = (c == '}' ? JSMN_OBJECT : JSMN_ARRAY);
+#ifdef JSMN_PARENT_LINKS
+            if (parser->toknext < 1)
+            {
+                return JSMN_ERROR_INVAL;
+            }
+            token = &tokens[parser->toknext - 1];
+            for (;;)
+            {
+                if (token->start != -1 && token->end == -1)
+                {
+                    if (token->type != type)
+                    {
+                        return JSMN_ERROR_INVAL;
+                    }
+                    token->end = parser->pos + 1;
+                    parser->toksuper = token->parent;
+                    break;
+                }
+                if (token->parent == -1)
+                {
+                    if (token->type != type || parser->toksuper == -1)
+                    {
+                        return JSMN_ERROR_INVAL;
+                    }
+                    break;
+                }
+                token = &tokens[token->parent];
+            }
+#else
+            for (i = parser->toknext - 1; i >= 0; i--)
+            {
+                token = &tokens[i];
+                if (token->start != -1 && token->end == -1)
+                {
+                    if (token->type != type)
+                    {
+                        return JSMN_ERROR_INVAL;
+                    }
+                    parser->toksuper = -1;
+                    token->end = parser->pos + 1;
+                    break;
+                }
+            }
+            /* Error if unmatched closing bracket */
+            if (i == -1)
+                return JSMN_ERROR_INVAL;
+            for (; i >= 0; i--)
+            {
+                token = &tokens[i];
+                if (token->start != -1 && token->end == -1)
+                {
+                    parser->toksuper = i;
+                    break;
+                }
+            }
+#endif
+            break;
+        case '\"':
+            r = fbjs_parse_string(parser, js, len, tokens, num_tokens);
+            if (r < 0)
+                return r;
+            count++;
+            if (parser->toksuper != -1 && tokens != NULL)
+                tokens[parser->toksuper].size++;
+            break;
+        case '\t':
+        case '\r':
+        case '\n':
+        case ' ':
+            break;
+        case ':':
+            parser->toksuper = parser->toknext - 1;
+            break;
+        case ',':
+            if (tokens != NULL && parser->toksuper != -1 &&
+                tokens[parser->toksuper].type != JSMN_ARRAY &&
+                tokens[parser->toksuper].type != JSMN_OBJECT)
+            {
+#ifdef JSMN_PARENT_LINKS
+                parser->toksuper = tokens[parser->toksuper].parent;
+#else
+                for (i = parser->toknext - 1; i >= 0; i--)
+                {
+                    if (tokens[i].type == JSMN_ARRAY || tokens[i].type == JSMN_OBJECT)
+                    {
+                        if (tokens[i].start != -1 && tokens[i].end == -1)
+                        {
+                            parser->toksuper = i;
+                            break;
+                        }
+                    }
+                }
+#endif
+            }
+            break;
+#ifdef JSMN_STRICT
+        /* In strict mode primitives are: numbers and booleans */
+        case '-':
+        case '0':
+        case '1':
+        case '2':
+        case '3':
+        case '4':
+        case '5':
+        case '6':
+        case '7':
+        case '8':
+        case '9':
+        case 't':
+        case 'f':
+        case 'n':
+            /* And they must not be keys of the object */
+            if (tokens != NULL && parser->toksuper != -1)
+            {
+                fbjs_tok_t *t = &tokens[parser->toksuper];
+                if (t->type == JSMN_OBJECT ||
+                    (t->type == JSMN_STRING && t->size != 0))
+                {
+                    return JSMN_ERROR_INVAL;
+                }
+            }
+#else
+        /* In non-strict mode every unquoted value is a primitive */
+        default:
+#endif
+            r = fbjs_parse_primitive(parser, js, len, tokens, num_tokens);
+            if (r < 0)
+                return r;
+            count++;
+            if (parser->toksuper != -1 && tokens != NULL)
+                tokens[parser->toksuper].size++;
+            break;
+
+#ifdef JSMN_STRICT
+        /* Unexpected char in strict mode */
+        default:
+            return JSMN_ERROR_INVAL;
+#endif
+        }
+    }
+
+    if (tokens != NULL)
+    {
+        for (i = parser->toknext - 1; i >= 0; i--)
+        {
+            /* Unmatched opened object or array */
+            if (tokens[i].start != -1 && tokens[i].end == -1)
+            {
+                return JSMN_ERROR_PART;
+            }
+        }
+    }
+
+    return count;
+}
+
+/**
+ * Creates a new parser based over a given  buffer with an array of tokens
+ * available.
+ */
+void FirebaseJson::fbjs_init(fbjs_parser *parser)
+{
+    parser->pos = 0;
+    parser->toknext = 0;
+    parser->toksuper = -1;
 }
 
 FirebaseJsonArray::FirebaseJsonArray()
@@ -2796,11 +3180,11 @@ bool FirebaseJsonArray::_get(FirebaseJsonData &jsonData, const char *path)
         _json._jsonData.success = false;
         goto ex_;
     }
-    _json._parse(path2.c_str(), PRINT_MODE_NONE);
+    _json._parse(path2.c_str(), FirebaseJson::PRINT_MODE_NONE);
     if (_json._jsonData.success)
     {
         _json._rawbuf = _jbuf.substr(1, _jbuf.length() - 2).c_str();
-        if (_json._jsonData._type == JSMN_STRING && _json._jsonData.stringValue.c_str()[0] == '"' && _json._jsonData.stringValue.c_str()[_json._jsonData.stringValue.length() - 1] == '"')
+        if (_json._jsonData._type == FirebaseJson::JSMN_STRING && _json._jsonData.stringValue.c_str()[0] == '"' && _json._jsonData.stringValue.c_str()[_json._jsonData.stringValue.length() - 1] == '"')
             _json._jsonData.stringValue = _json._jsonData.stringValue.substring(1, _json._jsonData.stringValue.length() - 1).c_str();
         jsonData = _json._jsonData;
     }
@@ -2874,9 +3258,9 @@ void FirebaseJsonArray::toString(String &buf, bool prettify)
     _json._rawbuf = _root;
     _json._rawbuf += _jbuf;
     if (prettify)
-        _json._parse(_root2, PRINT_MODE_PRETTY);
+        _json._parse(_root2, FirebaseJson::PRINT_MODE_PRETTY);
     else
-        _json._parse(_root2, PRINT_MODE_PLAIN);
+        _json._parse(_root2, FirebaseJson::PRINT_MODE_PLAIN);
     std::string().swap(_json._tbuf);
     std::string().swap(_jbuf);
     _json.clearPathTk();
@@ -2934,7 +3318,7 @@ void FirebaseJsonArray::_set(const char *path, const char *value, bool isStr)
     {
         std::string().swap(_json._jsonData._dbuf);
         std::string().swap(_json._tbuf);
-        _json._parse(_root2, PRINT_MODE_PLAIN);
+        _json._parse(_root2, FirebaseJson::PRINT_MODE_PLAIN);
         if (_json._jsonData.success)
         {
             _arrLen = _json._jsonData._len;
@@ -3208,7 +3592,7 @@ bool FirebaseJsonArray::_remove(const char *path)
     {
         std::string().swap(_json._jsonData._dbuf);
         std::string().swap(_json._tbuf);
-        _json._parse(_root2, PRINT_MODE_PLAIN);
+        _json._parse(_root2, FirebaseJson::PRINT_MODE_PLAIN);
         if (_json._jsonData.success)
         {
             _arrLen = _json._jsonData._len;
@@ -3236,7 +3620,7 @@ FirebaseJsonData::~FirebaseJsonData()
 
 bool FirebaseJsonData::getArray(FirebaseJsonArray &jsonArray)
 {
-    if (typeNum != JSON_ARRAY || !success)
+    if (typeNum != FirebaseJson::JSON_ARRAY || !success)
         return false;
     char *tmp = new char[20];
     memset(tmp, 0, 20);
@@ -3250,7 +3634,7 @@ bool FirebaseJsonData::getArray(FirebaseJsonArray &jsonArray)
     strcpy_P(tmp, FirebaseJson_STR_26);
     std::string().swap(jsonArray._json._jsonData._dbuf);
     std::string().swap(jsonArray._json._tbuf);
-    jsonArray._json._parse(tmp, PRINT_MODE_PLAIN);
+    jsonArray._json._parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
     jsonArray._json._rawbuf = jsonArray._json._jsonData._dbuf.substr(1, jsonArray._json._jsonData._dbuf.length() - 2).c_str();
     jsonArray._arrLen = jsonArray._json._jsonData._len;
     delete[] tmp;
@@ -3260,10 +3644,10 @@ bool FirebaseJsonData::getArray(FirebaseJsonArray &jsonArray)
 
 bool FirebaseJsonData::getJSON(FirebaseJson &json)
 {
-    if (typeNum != JSON_OBJECT || !success)
+    if (typeNum != FirebaseJson::JSON_OBJECT || !success)
         return false;
     json.setJsonData(stringValue);
-    json._jsmn_parse();
+    json._fbjs_parse();
     return json._jsonData.success;
 }
 

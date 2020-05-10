@@ -5,7 +5,7 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2019 mobizt
+ * Copyright (c) 2020 mobizt
  *
 */
 
@@ -16,7 +16,7 @@
 
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com" //Do not include https:// in FIREBASE_HOST
+#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
 #define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
 
 #define FIREBASE_FCM_SERVER_KEY "YOUR_FIREBASE_PROJECT_CLOUD_MESSAGING_SERVER_KEY"

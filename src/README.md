@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.7.2
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.7.3
 
 
 ## Global functions
@@ -3555,14 +3555,14 @@ return **`boolean status of the operation.`**
 
     jsonData.typeNum used to determine the type of returned value is an integer as represented by the following value.
     
-    JSON_UNDEFINED = 0
-    JSON_OBJECT = 1
-    JSON_ARRAY = 2
-    JSON_STRING = 3
-    JSON_INT = 4
-    JSON_DOUBLE = 5
-    JSON_BOOL = 6 and
-    JSON_NULL = 7
+    FirebaseJson::JSON_UNDEFINED = 0
+    FirebaseJson::JSON_OBJECT = 1
+    FirebaseJson::JSON_ARRAY = 2
+    FirebaseJson::JSON_STRING = 3
+    FirebaseJson::JSON_INT = 4
+    FirebaseJson::JSON_DOUBLE = 5
+    FirebaseJson::JSON_BOOL = 6 and
+    FirebaseJson::JSON_NULL = 7
 
  
  ```C++
@@ -3593,7 +3593,7 @@ return **`number`** of child/array elements in FirebaseJson object.
     
 param **`index`** - The element index to get.
 
-param **`type`** - The integer which holds the type of data i.e. JSON_OBJECT and JSON_ARR
+param **`type`** - The integer which holds the type of data i.e. FirebaseJson::JSON_OBJECT and FirebaseJson::JSON_ARR
 
 param **`key`** - The string which holds the key/name of the object, can return empty String if the data type is an array.
 
@@ -4316,21 +4316,21 @@ bool getJSON(FirebaseJson &json);
 
 **`typeNum`** The type (number) of parses data in form of the following **`jsonDataType`** value.
 
-**JSON_UNDEFINED = 0**
+**FirebaseJson::JSON_UNDEFINED = 0**
 
-**JSON_OBJECT = 1**
+**FirebaseJson::JSON_OBJECT = 1**
 
-**JSON_ARRAY = 2**
+**FirebaseJson::JSON_ARRAY = 2**
 
-**JSON_STRING = 3**
+**FirebaseJson::JSON_STRING = 3**
 
-**JSON_INT = 4**
+**FirebaseJson::JSON_INT = 4**
 
-**JSON_DOUBLE = 5**
+**FirebaseJson::JSON_DOUBLE = 5**
 
-**JSON_BOOL = 6 and**
+**FirebaseJson::JSON_BOOL = 6 and**
 
-**JSON_NULL = 7**
+**FirebaseJson::JSON_NULL = 7**
 
 **`success`** The success flag of parsing data.
 

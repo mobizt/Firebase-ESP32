@@ -5,9 +5,9 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2019 mobizt
+ * Copyright (c) 2020 mobizt
  * 
- * This example is for FirebaseESP32 Arduino library v 3.5.0 and later
+ * This example is for FirebaseESP32 Arduino library v 3.7.3 or later
  *
 */
 
@@ -150,8 +150,8 @@ void printResult(FirebaseData &data)
             Serial.print(i);
             Serial.print(", ");
             Serial.print("Type: ");
-            Serial.print(type == JSON_OBJECT ? "object" : "array");
-            if (type == JSON_OBJECT)
+            Serial.print(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
+            if (type == FirebaseJson::JSON_OBJECT)
             {
                 Serial.print(", Key: ");
                 Serial.print(key);
@@ -182,16 +182,16 @@ void printResult(FirebaseData &data)
             FirebaseJsonData &jsonData = data.jsonData();
             //Get the result data from FirebaseJsonArray object
             arr.get(jsonData, i);
-            if (jsonData.typeNum == JSON_BOOL)
+            if (jsonData.typeNum == FirebaseJson::JSON_BOOL)
                 Serial.println(jsonData.boolValue ? "true" : "false");
-            else if (jsonData.typeNum == JSON_INT)
+            else if (jsonData.typeNum == FirebaseJson::JSON_INT)
                 Serial.println(jsonData.intValue);
-            else if (jsonData.typeNum == JSON_DOUBLE)
+            else if (jsonData.typeNum == FirebaseJson::JSON_DOUBLE)
                 printf("%.9lf\n", jsonData.doubleValue);
-            else if (jsonData.typeNum == JSON_STRING ||
-                     jsonData.typeNum == JSON_NULL ||
-                     jsonData.typeNum == JSON_OBJECT ||
-                     jsonData.typeNum == JSON_ARRAY)
+            else if (jsonData.typeNum == FirebaseJson::JSON_STRING ||
+                     jsonData.typeNum == FirebaseJson::JSON_NULL ||
+                     jsonData.typeNum == FirebaseJson::JSON_OBJECT ||
+                     jsonData.typeNum == FirebaseJson::JSON_ARRAY)
                 Serial.println(jsonData.stringValue);
         }
     }

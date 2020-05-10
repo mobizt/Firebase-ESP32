@@ -1,13 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.3
  * 
- * April 17, 2020
+ * May 11, 2020
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed:
- * - HTTP Redirection.
+ * - FirebaseJson, update JSMN as C++ class.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -6117,7 +6117,7 @@ FirebaseJsonArray *FirebaseData::jsonArrayPtr()
     tmp = Firebase.newPtr(tmp, 20);
     strcpy_P(tmp, FirebaseJson_STR_26);
 
-    _jsonArr._json._parse(tmp, PRINT_MODE_PLAIN);
+    _jsonArr._json._parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
 
     std::string().swap(_jsonArr._json._tbuf);
     std::string().swap(_jsonArr._jbuf);
@@ -6432,7 +6432,7 @@ FirebaseJsonArray *StreamData::jsonArrayPtr()
     tmp = Firebase.newPtr(tmp, 20);
     strcpy_P(tmp, FirebaseJson_STR_26);
 
-    _jsonArr->_json._parse(tmp, PRINT_MODE_PLAIN);
+    _jsonArr->_json._parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
 
     std::string().swap(_jsonArr->_json._tbuf);
     std::string().swap(_jsonArr->_jbuf);

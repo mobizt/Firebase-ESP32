@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.3.2
+ * FirebaseJson, version 2.3.4
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using a relative path.
  * 
- * March 3, 2020
+ * May 10, 2020
  * 
  * Features
  * - None recursive operations
@@ -11,8 +11,7 @@
  * - Prettify JSON string 
  * 
  * 
- * This library implemented the zserge's JSON object parser library, jasmine JSMN which available from
- * https://zserge.com/jsmn.html
+ * The zserge's JSON object parser library used as part of this library
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -41,7 +40,6 @@
 #define FirebaseJson_H
 
 #include <Arduino.h>
-#include "jsmn.h"
 #include <memory>
 
 static const char FirebaseJson_STR_1[] PROGMEM = ",";
@@ -73,67 +71,6 @@ static const char FirebaseJson_STR_27[] PROGMEM = "/";
 
 class FirebaseJson;
 class FirebaseJsonArray;
-
-typedef enum {
-    JSON_UNDEFINED = 0,
-    JSON_OBJECT = 1,
-    JSON_ARRAY = 2,
-    JSON_STRING = 3,
-    JSON_INT = 4,
-    JSON_DOUBLE = 5,
-    JSON_BOOL = 6,
-    JSON_NULL = 7
-} jsonDataType;
-
-typedef enum {
-    PRINT_MODE_NONE = -1,
-    PRINT_MODE_PLAIN = 0,
-    PRINT_MODE_PRETTY = 1
-} PRINT_MODE;
-
-typedef struct
-{
-    bool matched = false;
-    std::string tk = "";
-} path_tk_t;
-
-typedef struct
-{
-    int index;
-    bool firstTk;
-    bool lastTk;
-    bool success;
-} single_child_parent_t;
-
-typedef struct
-{
-    uint16_t index;
-    uint8_t type;
-} eltk_t;
-
-typedef struct
-{
-    uint16_t index;
-    uint8_t type;
-    uint16_t olen;
-    uint16_t oindex;
-    int depth;
-    bool omark;
-    bool ref;
-    bool skip;
-} el_t;
-
-typedef struct
-{
-    int index;
-    uint16_t oindex;
-    uint16_t olen;
-    uint8_t type;
-    int depth;
-    bool omark;
-    bool ref;
-    bool skip;
-} tk_index_t;
 
 class FirebaseJsonData
 {
@@ -227,6 +164,123 @@ class FirebaseJson
     friend class FCMObject;
 
 public:
+    typedef enum
+    {
+        JSON_UNDEFINED = 0,
+        JSON_OBJECT = 1,
+        JSON_ARRAY = 2,
+        JSON_STRING = 3,
+        JSON_INT = 4,
+        JSON_DOUBLE = 5,
+        JSON_BOOL = 6,
+        JSON_NULL = 7
+    } jsonDataType;
+
+    typedef enum
+    {
+        PRINT_MODE_NONE = -1,
+        PRINT_MODE_PLAIN = 0,
+        PRINT_MODE_PRETTY = 1
+    } PRINT_MODE;
+
+    typedef struct
+    {
+        bool matched = false;
+        std::string tk = "";
+    } path_tk_t;
+
+    typedef struct
+    {
+        int index;
+        bool firstTk;
+        bool lastTk;
+        bool success;
+    } single_child_parent_t;
+
+    typedef struct
+    {
+        uint16_t index;
+        uint8_t type;
+    } eltk_t;
+
+    typedef struct
+    {
+        uint16_t index;
+        uint8_t type;
+        uint16_t olen;
+        uint16_t oindex;
+        int depth;
+        bool omark;
+        bool ref;
+        bool skip;
+    } el_t;
+
+    typedef struct
+    {
+        int index;
+        uint16_t oindex;
+        uint16_t olen;
+        uint8_t type;
+        int depth;
+        bool omark;
+        bool ref;
+        bool skip;
+    } tk_index_t;
+
+    /**
+    * JSON type identifier. Basic types are:
+    * 	o Object
+    * 	o Array
+    * 	o String
+    * 	o Other primitive: number, boolean (true/false) or null
+    */
+    typedef enum
+    {
+        JSMN_UNDEFINED = 0,
+        JSMN_OBJECT = 1,
+        JSMN_ARRAY = 2,
+        JSMN_STRING = 3,
+        JSMN_PRIMITIVE = 4
+    } fbjs_type_t;
+
+    enum fbjs_err
+    {
+        /* Not enough tokens were provided */
+        JSMN_ERROR_NOMEM = -1,
+        /* Invalid character inside JSON string */
+        JSMN_ERROR_INVAL = -2,
+        /* The string is not a full JSON packet, more bytes expected */
+        JSMN_ERROR_PART = -3
+    };
+
+    /**
+    * JSON token description.
+    * type		type (object, array, string etc.)
+    * start	start position in JSON data string
+    * end		end position in JSON data string
+    */
+    typedef struct
+    {
+        fbjs_type_t type;
+        int start;
+        int end;
+        int size;
+#ifdef JSMN_PARENT_LINKS
+        int parent;
+#endif
+    } fbjs_tok_t;
+
+    /**
+    * JSON parser. Contains an array of token blocks available. Also stores
+    * the string being parsed now and current position in that string
+    */
+    typedef struct
+    {
+        unsigned int pos;     /* offset in the JSON string */
+        unsigned int toknext; /* next token to allocate */
+        int toksuper;         /* superior token node, e.g parent object or array */
+    } fbjs_parser;
+
     FirebaseJson();
     FirebaseJson(std::string &data);
     ~FirebaseJson();
@@ -395,14 +449,14 @@ public:
 
     jsonData.typeNum - used to determine the type of returned value is an integer as represented by the following value.
     
-    JSON_UNDEFINED = 0
-    JSON_OBJECT = 1
-    JSON_ARRAY = 2
-    JSON_STRING = 3
-    JSON_INT = 4
-    JSON_DOUBLE = 5
-    JSON_BOOL = 6 and
-    JSON_NULL = 7
+    FirebaseJson::JSON_UNDEFINED = 0
+    FirebaseJson::JSON_OBJECT = 1
+    FirebaseJson::JSON_ARRAY = 2
+    FirebaseJson::JSON_STRING = 3
+    FirebaseJson::JSON_INT = 4
+    FirebaseJson::JSON_DOUBLE = 5
+    FirebaseJson::JSON_BOOL = 6 and
+    FirebaseJson::JSON_NULL = 7
 
    */
     bool get(FirebaseJsonData &jsonData, const String &path, bool prettify = false);
@@ -422,7 +476,7 @@ public:
     
     @param index - The element index to get.
 
-    @param type - The integer which holds the type of data i.e. JSON_OBJECT and JSON_ARR
+    @param type - The integer which holds the type of data i.e. FirebaseJson::JSON_OBJECT and FirebaseJson::JSON_ARR
 
     @param key - The string which holds the key/name of an object, can return empty String if the data type is an array.
 
@@ -607,8 +661,9 @@ private:
     std::vector<eltk_t> _eltk = std::vector<eltk_t>();
     std::vector<el_t> _el = std::vector<el_t>();
     FirebaseJsonData _jsonData;
-    std::unique_ptr<jsmn_parser> _parser = std::unique_ptr<jsmn_parser>(new jsmn_parser());
-    std::shared_ptr<jsmntok_t> _tokens = nullptr;
+
+    std::shared_ptr<fbjs_parser> _parser = std::shared_ptr<fbjs_parser>(new fbjs_parser());
+    std::shared_ptr<fbjs_tok_t> _tokens = nullptr;
 
     void _init();
     void _finalize();
@@ -637,7 +692,7 @@ private:
     void _parse(const char *key, int depth, int index, PRINT_MODE printMode);
     void _compile(const char *key, int depth, int index, const char *replace, PRINT_MODE printMode, int refTokenIndex = -1, bool removeTk = false);
     void _remove(const char *key, int depth, int index, const char *replace, int refTokenIndex = -1, bool removeTk = false);
-    void _jsmn_parse(bool collectTk = false);
+    void _fbjs_parse(bool collectTk = false);
     bool _updateTkIndex(uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode, bool advanceCount);
     bool _updateTkIndex2(std::string &str, uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode);
     bool _updateTkIndex3(uint16_t index, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode);
@@ -675,6 +730,18 @@ private:
     char *_newPtr(char *p, size_t len);
     char *_newPtr(char *p, size_t len, char *d);
     char *_getPGMString(PGM_P pgm);
+
+    void fbjs_init(fbjs_parser *parser);
+    int fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
+                   fbjs_tok_t *tokens, unsigned int num_tokens);
+    int fbjs_parse_string(fbjs_parser *parser, const char *js,
+                          size_t len, fbjs_tok_t *tokens, size_t num_tokens);
+    int fbjs_parse_primitive(fbjs_parser *parser, const char *js,
+                             size_t len, fbjs_tok_t *tokens, size_t num_tokens);
+    void fbjs_fill_token(fbjs_tok_t *token, fbjs_type_t type,
+                         int start, int end);
+    fbjs_tok_t *fbjs_alloc_token(fbjs_parser *parser,
+                                 fbjs_tok_t *tokens, size_t num_tokens);
 };
 
 class FirebaseJsonArray
@@ -1093,6 +1160,5 @@ private:
     char *_newPtr(char *p, size_t len);
     char *_newPtr(char *p, size_t len, char *d);
 };
-
 
 #endif

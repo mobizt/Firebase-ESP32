@@ -5,9 +5,9 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2019 mobizt
+ * Copyright (c) 2020 mobizt
  * 
- * This example is for FirebaseESP32 Arduino library v 3.5.0 and later
+ * This example is for FirebaseESP32 Arduino library v 3.7.3 or later
  *
 */
 
@@ -20,7 +20,7 @@
 
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com" //Do not include https:// in FIREBASE_HOST
+#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
 #define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
 
 //Define Firebase Data object
@@ -75,8 +75,8 @@ void setup()
       Serial.print(i);
       Serial.print(", ");
       Serial.print("Type: ");
-      Serial.print(type == JSON_OBJECT ? "object" : "array");
-      if (type == JSON_OBJECT)
+      Serial.print(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
+      if (type == FirebaseJson::JSON_OBJECT)
       {
         Serial.print(", Key: ");
         Serial.print(key);

@@ -1,7 +1,19 @@
+/*
+ * Created by K. Suwatchai (Mobizt)
+ * 
+ * Email: k_suwatchai@hotmail.com
+ * 
+ * Github: https://github.com/mobizt
+ * 
+ * Copyright (c) 2020 mobizt
+ * 
+ *
+*/
+
 #include <Arduino.h>
 #include "FirebaseJson.h"
 
-void setup()
+    void setup()
 {
 
     Serial.begin(115200);
@@ -57,19 +69,19 @@ void setup()
         for (size_t i = 0; i < arr2.size(); i++)
         {
             arr2.get(jsonData, i);
-            if (jsonData.type == "string" /* jsonData.typeNum == JSON_STRING */)
+            if (jsonData.type == "string" /* jsonData.typeNum == FirebaseJson::JSON_STRING */)
                 Serial.println("Array index " + String(i) + ", String Val: " + jsonData.stringValue);
-            else if (jsonData.type == "int" /* jsonData.typeNum == JSON_INT */)
+            else if (jsonData.type == "int" /* jsonData.typeNum == FirebaseJson::JSON_INT */)
                 Serial.println("Array index " + String(i) + ", Int Val: " + jsonData.intValue);
-            else if (jsonData.type == "double" /* jsonData.typeNum == JSON_DOUBLE */)
+            else if (jsonData.type == "double" /* jsonData.typeNum == FirebaseJson::JSON_DOUBLE */)
                 Serial.println("Array index " + String(i) + ", Double Val: " + jsonData.doubleValue);
-            else if (jsonData.type == "bool" /* jsonData.typeNum == JSON_BOOL */)
+            else if (jsonData.type == "bool" /* jsonData.typeNum == FirebaseJson::JSON_BOOL */)
                 Serial.println("Array index " + String(i) + ", Bool Val: " + jsonData.boolValue);
-            else if (jsonData.type == "object" /* jsonData.typeNum == JSON_OBJECT */)
+            else if (jsonData.type == "object" /* jsonData.typeNum == FirebaseJson::JSON_OBJECT */)
                 Serial.println("Array index " + String(i) + ", Object Val: " + jsonData.stringValue);
-            else if (jsonData.type == "array" /* jsonData.typeNum == JSON_ARRAY */)
+            else if (jsonData.type == "array" /* jsonData.typeNum == FirebaseJson::JSON_ARRAY */)
                 Serial.println("Array index " + String(i) + ", Array Val: " + jsonData.stringValue);
-            else if (jsonData.type == "null" /* jsonData.typeNum == JSON_NULL */)
+            else if (jsonData.type == "null" /* jsonData.typeNum == FirebaseJson::JSON_NULL */)
                 Serial.println("Array index " + String(i) + ", Null Val: " + jsonData.stringValue);
         }
     }

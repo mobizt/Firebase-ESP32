@@ -5,9 +5,9 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2019 mobizt
+ * Copyright (c) 2020 mobizt
  * 
- * This example is for FirebaseESP32 Arduino library v 3.5.0 and later
+ * This example is for FirebaseESP32 Arduino library v 3.7.3 or later
  *
 */
 
