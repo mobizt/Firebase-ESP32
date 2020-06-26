@@ -8,15 +8,15 @@
  * 
  * Copyright (c) 2020 mobizt
  * 
- * This example is for FirebaseESP8266 Arduino library v 3.7.3 or later
+ * This example is for FirebaseESP32 Arduino library
  *
 */
 
 //This example shows how to set array data through FirebaseJsonArray object then read the data back and parse them.
 
-//FirebaseESP8266.h must be included before ESP8266WiFi.h
-#include "FirebaseESP8266.h"
-#include <ESP8266WiFi.h>
+
+#include <WiFi.h>
+#include <FirebaseESP32.h>
 
 #define WIFI_SSID "YOUR_WIFI_AP"
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
@@ -231,5 +231,9 @@ void printResult(FirebaseData &data)
                      jsonData.typeNum == FirebaseJson::JSON_ARRAY)
                 Serial.println(jsonData.stringValue);
         }
+    }
+    else
+    {
+        Serial.println(data.payload());
     }
 }

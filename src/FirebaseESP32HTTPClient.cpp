@@ -187,7 +187,7 @@ void FirebaseESP32HTTPClient::setRootCAFile(std::string &rootCAFile, uint8_t sto
         _certType = 2;
 
         if (storageType == 0)
-            t = SPIFFS.begin();
+            t = SPIFFS.begin(true);
         else
             t = SD.begin();
         if (!t)

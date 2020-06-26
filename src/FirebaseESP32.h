@@ -1,13 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.4
  * 
- * May 11, 2020
+ * June 26, 2020
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed:
- * - FirebaseJson, update JSMN as C++ class.
+ * - FCM chunk decoding.
+ * - NULL data handling
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -147,10 +148,10 @@ static const char ESP32_FIREBASE_STR_79[] PROGMEM = ";";
 static const char ESP32_FIREBASE_STR_80[] PROGMEM = "Content-Disposition: ";
 static const char ESP32_FIREBASE_STR_81[] PROGMEM = "application/octet-stream";
 static const char ESP32_FIREBASE_STR_82[] PROGMEM = "attachment";
-static const char ESP32_FIREBASE_STR_83[] PROGMEM = "Backup file was not exist";
-static const char ESP32_FIREBASE_STR_84[] PROGMEM = "SD card is in used";
-static const char ESP32_FIREBASE_STR_85[] PROGMEM = "SD card was not available";
-static const char ESP32_FIREBASE_STR_86[] PROGMEM = "Could not read/write backup file";
+static const char ESP32_FIREBASE_STR_83[] PROGMEM = "The backup file is not exist";
+static const char ESP32_FIREBASE_STR_84[] PROGMEM = "The SD card is in use";
+static const char ESP32_FIREBASE_STR_85[] PROGMEM = "The SD card is not available";
+static const char ESP32_FIREBASE_STR_86[] PROGMEM = "Could not read/write the backup file";
 static const char ESP32_FIREBASE_STR_87[] PROGMEM = "Transmission error, ";
 static const char ESP32_FIREBASE_STR_88[] PROGMEM = "Node path is not exist";
 static const char ESP32_FIREBASE_STR_89[] PROGMEM = ".json";
@@ -453,6 +454,7 @@ private:
   bool getFCMServerResponse(FirebaseESP32HTTPClient &net, int &httpcode);
 
   void clear();
+
 
   std::string _notify_title = "";
   std::string _notify_body = "";
@@ -2577,6 +2579,7 @@ private:
   bool base64_decode_string(const std::string src, std::vector<uint8_t> &out);
   bool base64_decode_file(File &file, const char *src, size_t len);
   bool base64_decode_SPIFFS(File &file, const char *src, size_t len);
+  uint32_t hex2int(const char *hex);
 
   bool sendFCMMessage(FirebaseData &dataObj, uint8_t messageType);
 

@@ -218,7 +218,7 @@ void printResult(StreamData &data)
     printf("%.9lf\n", data.doubleData());
   else if (data.dataType() == "boolean")
     Serial.println(data.boolData() == 1 ? "true" : "false");
-  else if (data.dataType() == "string")
+  else if (data.dataType() == "string" || data.dataType() == "null")
     Serial.println(data.stringData());
   else if (data.dataType() == "json")
   {
