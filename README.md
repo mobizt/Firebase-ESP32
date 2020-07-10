@@ -172,7 +172,7 @@ Firebase.enableClassicRequest(firebaseData, true);
 
 Data at a specific node in Firebase RTDB can be read through these get functions.
 
-The functions included `get`, `getInt`, `getFlot`, `getDouble`, `getBool`, `getString`, `getJSON`, `getArray`, `getBlob`, `getFile`.
+The functions included `get`, `getInt`, `getFloat`, `getDouble`, `getBool`, `getString`, `getJSON`, `getArray`, `getBlob`, `getFile`.
 
 
 These functions return boolean value indicates the success of the operation which will be `true` if all of the following conditions were met.
@@ -245,7 +245,7 @@ The following example showed how to read integer value from "/test/int".
 
 To store data at a specific node in Firebase RTDB, use these set functions.
 
-The function included `set`, `setInt`, `setFlot`, `setDouble`, `setBool`, `setString`, `setJSON`, `setArray`, `setBlob` and `setFile`. 
+The function included `set`, `setInt`, `setFloat`, `setDouble`, `setBool`, `setString`, `setJSON`, `setArray`, `setBlob` and `setFile`. 
 
 
 The above functions return boolean value indicates the success of the operation which will be `true` if all of the following conditions matched.
@@ -299,7 +299,7 @@ if (Firebase.getFile(firebaseData, StorateType::SPIFFS, "/test/file_data", "/tes
 
 To append new data to a specific node in Firebase RTDB, use these push functions.
 
-The function included `push`, `pushInt`, `pushFlot`, `pushDouble`, `pushBool`, `pushString`, `pushJSON`, `pushArray`, `pushBlob`, and `pushFile`.
+The function included `push`, `pushInt`, `pushFloat`, `pushDouble`, `pushBool`, `pushString`, `pushJSON`, `pushArray`, `pushBlob`, and `pushFile`.
 
 These functions return boolean value indicates the success of the operation.
 
