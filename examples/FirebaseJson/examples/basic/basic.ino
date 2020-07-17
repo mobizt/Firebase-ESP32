@@ -73,6 +73,8 @@
                 Serial.println("Array index " + String(i) + ", String Val: " + jsonData.stringValue);
             else if (jsonData.type == "int" /* jsonData.typeNum == FirebaseJson::JSON_INT */)
                 Serial.println("Array index " + String(i) + ", Int Val: " + jsonData.intValue);
+            else if (jsonData.type == "float" /* jsonData.typeNum == FirebaseJson::JSON_FLOAT */)
+                Serial.println("Array index " + String(i) + ", Float Val: " + jsonData.floatValue);
             else if (jsonData.type == "double" /* jsonData.typeNum == FirebaseJson::JSON_DOUBLE */)
                 Serial.println("Array index " + String(i) + ", Double Val: " + jsonData.doubleValue);
             else if (jsonData.type == "bool" /* jsonData.typeNum == FirebaseJson::JSON_BOOL */)

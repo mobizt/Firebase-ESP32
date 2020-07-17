@@ -196,6 +196,8 @@ void printResult(FirebaseData &data)
         Serial.println(jsonData.boolValue ? "true" : "false");
       else if (jsonData.typeNum == FirebaseJson::JSON_INT)
         Serial.println(jsonData.intValue);
+      else if (jsonData.typeNum == FirebaseJson::JSON_FLOAT)
+        Serial.println(jsonData.floatValue);
       else if (jsonData.typeNum == FirebaseJson::JSON_DOUBLE)
         printf("%.9lf\n", jsonData.doubleValue);
       else if (jsonData.typeNum == FirebaseJson::JSON_STRING ||
@@ -278,6 +280,8 @@ void printResult(StreamData &data)
         Serial.println(jsonData->boolValue ? "true" : "false");
       else if (jsonData->typeNum == FirebaseJson::JSON_INT)
         Serial.println(jsonData->intValue);
+      else if (jsonData->typeNum == FirebaseJson::JSON_FLOAT)
+        Serial.println(jsonData->floatValue);
       else if (jsonData->typeNum == FirebaseJson::JSON_DOUBLE)
         printf("%.9lf\n", jsonData->doubleValue);
       else if (jsonData->typeNum == FirebaseJson::JSON_STRING ||
