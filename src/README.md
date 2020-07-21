@@ -75,13 +75,13 @@ void setReadTimeout(FirebaseData &dataObj, int millisec);
 
 
 
-#### Set the timeouts of Firebase.get function.
+#### Set the size limit of payload data that will write to the database for each request.
 
 param **`dataObj`** - Firebase Data Object to hold data and instances.
 
 param **`size`** - The size identified string e.g. tiny, small, medium, large and unlimited.
 
-Size string and its write timeout e.g. tiny (1s), small (10s), medium (30s) and large (60s).
+Size string and its write timeout in seconds e.g. tiny (1s), small (10s), medium (30s) and large (60s).
 
 ```C++
 void setwriteSizeLimit(FirebaseData &dataObj, const String &size);
