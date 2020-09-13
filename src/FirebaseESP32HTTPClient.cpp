@@ -48,6 +48,7 @@ FirebaseESP32HTTPClient::~FirebaseESP32HTTPClient()
     if (_client){
         _client->stop();
         _client.reset();
+        _client.release();
     }
     std::string().swap(_host);
     std::string().swap(_rootCAFile);
@@ -185,7 +186,7 @@ void FirebaseESP32HTTPClient::setRootCAFile(std::string &rootCAFile, uint8_t sto
             size_t len = f.size();
             _cer.reset(new char);
             _cer = nullptr;
-            _cer = std::shared_ptr<char>(new char[len]);
+            _cer = std::unique_ptr<char>(new char[len]);
 
             if (f.available())
                 f.readBytes(_cer.get(), len);

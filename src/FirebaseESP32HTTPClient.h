@@ -224,7 +224,7 @@ public:
 protected:
   TransportTraitsPtr transportTraits;
   std::unique_ptr<WiFiClient> _client;
-  std::shared_ptr<char> _cer;
+  std::unique_ptr<char> _cer;
 
   std::string _host = "";
   uint16_t _port = 0;
