@@ -37,47 +37,6 @@
 
 #include "FirebaseESP32HTTPClient.h"
 
-class TransportTraits
-{
-public:
-    virtual ~TransportTraits() {}
-
-    virtual std::unique_ptr<WiFiClient> create()
-    {
-        return std::unique_ptr<WiFiClient>(new WiFiClient());
-    }
-
-    virtual bool
-    verify(WiFiClient &client, const char *host)
-    {
-        return true;
-    }
-};
-
-class TLSTraits : public TransportTraits
-{
-public:
-    TLSTraits(const char *CAcert, const char *clicert = nullptr, const char *clikey = nullptr) : _cacert(CAcert), _clicert(clicert), _clikey(clikey) {}
-
-    std::unique_ptr<WiFiClient> create() override
-    {
-        return std::unique_ptr<WiFiClient>(new WiFiClientSecure());
-    }
-
-    bool verify(WiFiClient &client, const char *host) override
-    {
-        WiFiClientSecure &wcs = static_cast<WiFiClientSecure &>(client);
-        wcs.setCACert(_cacert);
-        wcs.setCertificate(_clicert);
-        wcs.setPrivateKey(_clikey);
-        return true;
-    }
-
-protected:
-    const char *_cacert;
-    const char *_clicert;
-    const char *_clikey;
-};
 
 FirebaseESP32HTTPClient::FirebaseESP32HTTPClient()
 {
@@ -86,8 +45,10 @@ FirebaseESP32HTTPClient::FirebaseESP32HTTPClient()
 
 FirebaseESP32HTTPClient::~FirebaseESP32HTTPClient()
 {
-    if (_client)
+    if (_client){
         _client->stop();
+        _client.reset();
+    }
     std::string().swap(_host);
     std::string().swap(_rootCAFile);
     _cer.reset(new char);
@@ -105,7 +66,7 @@ bool FirebaseESP32HTTPClient::begin(const char *host, uint16_t port)
 bool FirebaseESP32HTTPClient::connected()
 {
     if (_client)
-        return ((_client->available() > 0) || _client->connected());
+        return ( _client->connected());
     return false;
 }
 
@@ -121,14 +82,22 @@ int FirebaseESP32HTTPClient::sendRequest(const char *header, const char *payload
     size_t size = strlen(payload);
     if (strlen(header) > 0)
     {
-        if (!connect())
-            return HTTPC_ERROR_CONNECTION_REFUSED;
-        if (!sendHeader(header))
-            return HTTPC_ERROR_SEND_HEADER_FAILED;
+        if (!connect()){
+            return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED;
+        }
+           
+        if (!sendHeader(header)){
+            return FIREBASE_ERROR_HTTPC_ERROR_SEND_HEADER_FAILED;
+        }
+            
     }
-    if (size > 0)
+    
+    if (size > 0){
         if (_client->write(&payload[0], size) != size)
-            return HTTPC_ERROR_SEND_PAYLOAD_FAILED;
+        {
+            return FIREBASE_ERROR_HTTPC_ERROR_SEND_PAYLOAD_FAILED;
+        }
+    }
 
     return 0;
 }
@@ -142,27 +111,33 @@ WiFiClient *FirebaseESP32HTTPClient::getStreamPtr(void)
 
 bool FirebaseESP32HTTPClient::connect(void)
 {
-    if (connected())
-    {
-        while (_client->available() > 0)
-            _client->read();
-        return true;
-    }
 
     if (!transportTraits)
         return false;
 
-    _client = transportTraits->create();
-
-    if (!transportTraits->verify(*_client, _host.c_str()))
+    if (!_client)
+        _client = transportTraits->create();
+    else
     {
-        _client->stop();
-        return false;
+        if (connected())
+        {
+            while (_client->available() > 0)
+                _client->read();
+            _client->stop();
+            
+        }
     }
 
-    if (!_client->connect(_host.c_str(), _port))
-        return false;
-
+    if (_client){
+        if (!transportTraits->verify(*_client, _host.c_str()))
+        {
+            _client->stop();
+            return false;
+        }
+        if (!_client->connect(_host.c_str(), _port))
+            return false;
+    }
+      
     return connected();
 }
 

@@ -1,13 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.5
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.6
  * 
- * July 17, 2020
+ * September 13, 2020
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed:
- * - FirebaseJson parsing for top level array.
+ * - Fixed the unhandled exception error when WiFi lost connection.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -44,13 +44,15 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
-#include "FS.h"
+#include <FS.h>
 #include <SPIFFS.h>
-#include "FirebaseESP32HTTPClient.h"
 #include <functional>
 #include <SD.h>
 #include <vector>
+
+#include "FirebaseESP32HTTPClient.h"
 #include "FirebaseJson.h"
+
 
 #define FIEBASE_PORT 443
 #define KEEP_ALIVE_TIMEOUT 30000
@@ -58,12 +60,12 @@
 
 #define FIREBASE_ERROR_DATA_TYPE_MISMATCH -14
 #define FIREBASE_ERROR_PATH_NOT_EXIST -15
-#define HTTPC_ERROR_CONNECTION_INUSED -16
-#define HTTPC_NO_FCM_TOPIC_PROVIDED -17
-#define HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED -18
-#define HTTPC_NO_FCM_SERVER_KEY_PROVIDED -19
-#define HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED -20
-#define HTTPC_MAX_REDIRECT_REACHED -21
+#define FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_INUSED -16
+#define FIREBASE_ERROR_HTTPC_NO_FCM_TOPIC_PROVIDED -17
+#define FIREBASE_ERROR_HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED -18
+#define FIREBASE_ERROR_HTTPC_NO_FCM_SERVER_KEY_PROVIDED -19
+#define FIREBASE_ERROR_HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED -20
+#define FIREBASE_ERROR_HTTPC_MAX_REDIRECT_REACHED -21
 
 static const char ESP32_FIREBASE_STR_1[] PROGMEM = "/";
 static const char ESP32_FIREBASE_STR_2[] PROGMEM = ".json?auth=";
