@@ -1,13 +1,15 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.6
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.7
  * 
- * September 13, 2020
+ * September 26, 2020
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed:
- * - Fixed the unhandled exception error when WiFi lost connection.
+ * Improper set of internal FirebaseJsonArray object when parsing the response payload as array. 
+ * FirebaseJsonArray length does not clear when last item removed.
+ * FirebaseData internal FirebaseJson and FirebaseJsonArray do not cleared when calling the FirebaseData object clear method.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -3032,7 +3034,12 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
               if (dataObj._dataType == FirebaseDataType::JSON)
                 dataObj._json.setJsonData(dataObj._data.c_str());
               else if (dataObj._dataType == FirebaseDataType::ARRAY)
-                dataObj._jsonArr._json.setJsonData(dataObj._data.c_str());
+              {
+                size_t start_pos = dataObj._data.find('[');
+                size_t end_pos = dataObj._data.find(']');
+                if (start_pos != std::string::npos && end_pos != std::string::npos && start_pos != end_pos)
+                  dataObj._jsonArr._json._rawbuf = dataObj._data.substr(start_pos + 1, end_pos - start_pos - 1);
+              }
 
               bool sameData = dataObj._data == dataObj._data2;
 
@@ -3129,7 +3136,12 @@ bool FirebaseESP32::getServerResponse(FirebaseData &dataObj)
           if (dataObj._dataType == FirebaseDataType::JSON)
             dataObj._json.setJsonData(lineBuf.c_str());
           else if (dataObj._dataType == FirebaseDataType::ARRAY)
-            dataObj._jsonArr._json.setJsonData(lineBuf.c_str());
+          {
+            size_t start_pos = dataObj._data.find('[');
+            size_t end_pos = dataObj._data.find(']');
+            if (start_pos != std::string::npos && end_pos != std::string::npos && start_pos != end_pos)
+              dataObj._jsonArr._json._rawbuf = dataObj._data.substr(start_pos + 1, end_pos - start_pos - 1);
+          }
 
           if (dataObj._priority_val_flag)
           {
@@ -5833,6 +5845,9 @@ void FirebaseData::clear()
   std::string().swap(_etag);
   std::string().swap(_etag2);
   std::string().swap(_priority);
+  _json.clear();
+  _jsonArr.clear();
+  _jsonData.stringValue = "";
 
   for (uint8_t i = 0; i < _qMan._queueCollection.size(); i++)
   {

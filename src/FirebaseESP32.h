@@ -1,13 +1,15 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.6
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.7
  * 
- * September 13, 2020
+ * September 26, 2020
  * 
  * Feature Added:
  * 
  * 
  * Feature Fixed:
- * - Fixed the unhandled exception error when WiFi lost connection.
+ * Improper set of internal FirebaseJsonArray object when parsing the response payload as array. 
+ * FirebaseJsonArray length does not clear when last item removed.
+ * FirebaseData internal FirebaseJson and FirebaseJsonArray do not cleared when calling the FirebaseData object clear method.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update

@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.3.6
+ * FirebaseJson, version 2.3.7
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using a relative path.
  * 
- * July 12, 2020
+ * September 26, 2020
  * 
  * Features
  * - None recursive operations
@@ -3423,6 +3423,14 @@ FirebaseJsonArray &FirebaseJsonArray::clear()
 {
     _json.clear();
     std::string().swap(_jbuf);
+    _json._jsonData.success = false;
+    _json._jsonData.stringValue = "";
+    _json._jsonData.boolValue = false;
+    _json._jsonData.doubleValue = 0;
+    _json._jsonData.intValue = 0;
+    _json._jsonData.floatValue = 0;
+    _json._jsonData._len = 0;
+    _arrLen = 0;
     return *this;
 }
 void FirebaseJsonArray::_set2(int index, const char *value, bool isStr)
@@ -3765,6 +3773,7 @@ bool FirebaseJsonArray::_remove(const char *path)
     _json._jsonData.success = _json.remove(path2.c_str());
     _delPtr(tmp2);
     std::string().swap(path2);
+    bool success = _json._jsonData.success;
     if (_json._jsonData.success)
     {
         std::string().swap(_json._jsonData._dbuf);
@@ -3778,6 +3787,13 @@ bool FirebaseJsonArray::_remove(const char *path)
     }
     else
         _json._rawbuf = _jbuf.substr(1, _jbuf.length() - 2);
+
+    if (_json._rawbuf.length() == 0)
+    {
+        _json._jsonData.success = success;
+        _arrLen = 0;
+    }
+
     return _json._jsonData.success;
 }
 
