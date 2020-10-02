@@ -14,7 +14,7 @@
  * Known ESP32 Arduino Core Bugs:
  * ==============================
  * 
- * There are the seldom occurence of unhandled exeption error due to the current compiled library for mbedTLS in ESP32 when
+ * There are the seldom occurences of unhandled exeption error due to the current compiled library for mbedTLS in ESP32 when
  * the mbedTLS resources are freed after the WiFi connection disconnected during the SSL data transfer (HTTP connection was in
  * the keep-alive mode) which the unknown error code (-76) returns from the data_to_read function in file ssl_client.cpp.
  * 
@@ -3811,7 +3811,7 @@ bool FirebaseESP32::isErrorQueueExisted(FirebaseData &fbdo, uint32_t errorQueueI
   return false;
 }
 
-void FirebaseESP32::preparePayload(uint8_t method, uint8_t dataType, const std::string &priority, const std::string &payload, std::string &buf)
+void FirebaseESP32::preparePayload(fb_esp_method method, fb_esp_data_type dataType, const std::string &priority, const std::string &payload, std::string &buf)
 {
   char *tmp = nullptr;
 
@@ -3864,9 +3864,9 @@ void FirebaseESP32::preparePayload(uint8_t method, uint8_t dataType, const std::
   }
 }
 
-void FirebaseESP32::prepareHeader(FirebaseData &fbdo, const std::string &host, uint8_t method, uint8_t dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &header, bool sv)
+void FirebaseESP32::prepareHeader(FirebaseData &fbdo, const std::string &host, fb_esp_method method, fb_esp_data_type dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &header, bool sv)
 {
-  uint8_t http_method = 0;
+  fb_esp_method http_method = fb_esp_method::m_put;
   char *tmp = nullptr;
   fbdo._shallow_flag = false;
   fbdo._priority_val_flag = false;
