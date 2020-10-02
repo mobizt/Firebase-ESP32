@@ -1,26 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.8
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.9
  * 
  * October 2, 2020
  * 
  * Feature Added:
- * Add file and BLOB data handling for stream.
- * Improve header and payload management
+ * 
  * 
  * Feature Fixed:
- * Base64 encoded buffer index out of range error.
- * Zero length of FirebaseJsonArray payload.
  * 
- * Known ESP32 Arduino Core Bugs:
- * ==============================
- * 
- * There are the seldom occurences of unhandled exeption error due to the current compiled library for mbedTLS in ESP32 when
- * the mbedTLS resources are freed after the WiFi connection disconnected during the SSL data transfer (HTTP connection was in
- * the keep-alive mode) which the unknown error code (-76) returns from the data_to_read function in file ssl_client.cpp.
- * 
- * The bug is seem to be happen in the simple use of the WiFiClientSecure class to make the keep alive https connection, 
- * then disconnect the WiFi, WiFi was resumed by routine call of WiFi.reconnect().
- * 
+ * Slow http connection issue.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -209,7 +197,7 @@ static const char fb_esp_pgm_str_41[] PROGMEM = "send payload failed";
 static const char fb_esp_pgm_str_42[] PROGMEM = "not connected";
 static const char fb_esp_pgm_str_43[] PROGMEM = "connection lost";
 static const char fb_esp_pgm_str_44[] PROGMEM = "no HTTP server";
-static const char fb_esp_pgm_str_45[] PROGMEM = "bad request";
+static const char fb_esp_pgm_str_45[] PROGMEM = "bad request, verify the Firebase credentials and the node path";
 static const char fb_esp_pgm_str_46[] PROGMEM = "non-authoriative information";
 static const char fb_esp_pgm_str_47[] PROGMEM = "no content";
 static const char fb_esp_pgm_str_48[] PROGMEM = "moved permanently";
@@ -544,15 +532,15 @@ public:
   String getSendResult();
 
 private:
-  bool fcm_begin(FirebaseESP32HTTPClient &httpClient);
+  void fcm_begin(FirebaseData &fbdo);
 
-  bool fcm_send(FirebaseESP32HTTPClient &httpClient, int &httpcode, uint8_t messageType);
+  bool fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
 
   void fcm_prepareHeader(std::string &header, size_t payloadSize);
 
-  void fcm_preparePayload(std::string &msg, uint8_t messageType);
+  void fcm_preparePayload(std::string &msg, fb_esp_fcm_msg_type messageType);
 
-  bool handleFCMResponse(FirebaseESP32HTTPClient &httpClient, int &httpcode);
+  bool handleFCMResponse(FirebaseData &fbdo);
 
   void clear();
 
@@ -2701,7 +2689,7 @@ private:
   bool base64_decode_SPIFFS(File &file, const char *src, size_t len);
   uint32_t hex2int(const char *hex);
 
-  bool sendFCMMessage(FirebaseData &fbdo, uint8_t messageType);
+  bool sendFCMMessage(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
 
   std::string _host = "";
   std::string _auth = "";
@@ -3173,6 +3161,7 @@ private:
   friend class FirebaseESP32;
   friend class QueueManager;
   friend class StreamData;
+  friend class FCMObject;
 };
 
 class MultiPathStreamData

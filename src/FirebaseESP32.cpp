@@ -1,26 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.8
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.9
  * 
  * October 2, 2020
  * 
  * Feature Added:
- * Add file and BLOB data handling for stream.
- * Improve header and payload management
+ * 
  * 
  * Feature Fixed:
- * Base64 encoded buffer index out of range error.
- * Zero length of FirebaseJsonArray payload.
  * 
- * Known ESP32 Arduino Core Bugs:
- * ==============================
- * 
- * There are the seldom occurences of unhandled exeption error due to the current compiled library for mbedTLS in ESP32 when
- * the mbedTLS resources are freed after the WiFi connection disconnected during the SSL data transfer (HTTP connection was in
- * the keep-alive mode) which the unknown error code (-76) returns from the data_to_read function in file ssl_client.cpp.
- * 
- * The bug is seem to be happen in the simple use of the WiFiClientSecure class to make the keep alive https connection, 
- * then disconnect the WiFi, WiFi was resumed by routine call of WiFi.reconnect().
- * 
+ * Slow http connection issue.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -2018,8 +2006,8 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
   }
   else
   {
-    //last requested method was stream?, close the connection
-    if (fbdo._isStream)
+    //last requested method was stream or fcm?, close the connection
+    if (fbdo._isStream || fbdo._isFCM)
       closeHTTP(fbdo);
 
     fbdo._isFCM = false;
@@ -2850,7 +2838,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
   if (chunkSize > 1)
   {
 
-    while (chunkSize > 1)
+    while (chunkSize > 0)
     {
 
       if (!reconnect(fbdo, dataTime))
@@ -2861,7 +2849,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
       if (chunkSize <= 0)
         break;
 
-      if (chunkSize > 1)
+      if (chunkSize > 0)
       {
         if (pChunkIdx == 0)
         {
@@ -4179,8 +4167,6 @@ bool FirebaseESP32::reconnect(FirebaseData &fbdo, unsigned long dataTime)
       else
         fbdo._fbError = tmp;
       delS(tmp);
-
-      //close the connection and release the memory
       closeHTTP(fbdo);
       return false;
     }
@@ -4344,7 +4330,7 @@ void FirebaseESP32::errorToString(int httpCode, std::string &buff)
   }
 }
 
-bool FirebaseESP32::sendFCMMessage(FirebaseData &fbdo, uint8_t messageType)
+bool FirebaseESP32::sendFCMMessage(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 {
 
   if (fbdo.fcm._server_key.length() == 0)
@@ -4374,19 +4360,18 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &fbdo, uint8_t messageType)
   if (!reconnect(fbdo))
     return false;
 
-  bool ret = false;
+  if (!fbdo._isFCM || fbdo._isStream)
+  {
+    closeHTTP(fbdo);
+    setSecure(fbdo);
+  }
 
-  closeHTTP(fbdo);
-
-  setSecure(fbdo);
-
-  fbdo.fcm.fcm_begin(fbdo.httpClient);
+  fbdo.fcm.fcm_begin(fbdo);
 
   fbdo._isFCM = true;
 
-  ret = fbdo.fcm.fcm_send(fbdo.httpClient, fbdo._httpCode, messageType);
-
-  return ret;
+  return fbdo.fcm.fcm_send(fbdo, messageType);
+  ;
 }
 
 bool FirebaseESP32::sendMessage(FirebaseData &fbdo, uint16_t index)
@@ -6592,17 +6577,11 @@ String FCMObject::getSendResult()
   return _sendResult.c_str();
 }
 
-bool FCMObject::fcm_begin(FirebaseESP32HTTPClient &httpClient)
+void FCMObject::fcm_begin(FirebaseData &fbdo)
 {
   char *host = Firebase.getPGMString(fb_esp_pgm_str_120);
-  int httpConnected = httpClient.begin(host, _port);
+  fbdo.httpClient.begin(host, _port);
   Firebase.delS(host);
-
-  if (!httpConnected)
-  {
-    return false;
-  }
-  return true;
 }
 void FCMObject::fcm_prepareHeader(std::string &header, size_t payloadSize)
 {
@@ -6633,11 +6612,11 @@ void FCMObject::fcm_prepareHeader(std::string &header, size_t payloadSize)
   header += len;
   Firebase.delS(len);
   Firebase.pgm_appendStr(header, fb_esp_pgm_str_21);
-  Firebase.pgm_appendStr(header, fb_esp_pgm_str_34);
+  Firebase.pgm_appendStr(header, fb_esp_pgm_str_36);
   Firebase.pgm_appendStr(header, fb_esp_pgm_str_21);
 }
 
-void FCMObject::fcm_preparePayload(std::string &msg, uint8_t messageType)
+void FCMObject::fcm_preparePayload(std::string &msg, fb_esp_fcm_msg_type messageType)
 {
 
   bool noti = _notify_title.length() > 0 || _notify_body.length() > 0 || _notify_icon.length() > 0 || _notify_click_action.length() > 0;
@@ -6770,19 +6749,11 @@ void FCMObject::fcm_preparePayload(std::string &msg, uint8_t messageType)
   Firebase.pgm_appendStr(msg, fb_esp_pgm_str_127);
 }
 
-bool FCMObject::handleFCMResponse(FirebaseESP32HTTPClient &httpClient, int &httpcode)
+bool FCMObject::handleFCMResponse(FirebaseData &fbdo)
 {
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    httpcode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
-    return false;
-  }
 
-  if (!httpClient.stream())
-  {
-    httpcode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
+  if (!Firebase.reconnect(fbdo))
     return false;
-  }
 
   bool ret = false;
   std::string res = "";
@@ -6790,7 +6761,7 @@ bool FCMObject::handleFCMResponse(FirebaseESP32HTTPClient &httpClient, int &http
   char c;
   int p1, p2;
   int r = -1;
-  httpcode = -1000;
+  fbdo._httpCode = -1000;
   char *tmp = nullptr;
 
   bool chunked = false;
@@ -6802,30 +6773,27 @@ bool FCMObject::handleFCMResponse(FirebaseESP32HTTPClient &httpClient, int &http
   unsigned long dataTime = millis();
   _sendResult.clear();
 
-  while (httpClient.stream()->connected() && !httpClient.stream()->available() && millis() - dataTime < 5000)
+  WiFiClient *stream = fbdo.httpClient.stream();
+
+  while (stream->connected() && !stream->available())
   {
-    if (WiFi.status() != WL_CONNECTED)
-    {
-      httpcode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
+    if (!Firebase.reconnect(fbdo))
       return false;
-    }
     delay(0);
   }
 
   dataTime = millis();
-  if (httpClient.stream()->connected() && httpClient.stream()->available())
+  if (stream->connected() && stream->available() > 0)
   {
 
-    while (httpClient.stream()->available())
+    while (stream->available() > 0)
     {
 
-      if (WiFi.status() != WL_CONNECTED)
-      {
-        httpcode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
+      if (!Firebase.reconnect(fbdo, dataTime))
         return false;
-      }
 
-      r = httpClient.stream()->read();
+      r = fbdo.httpClient.stream()->read();
+
       if (r < 0)
         continue;
       c = (char)r;
@@ -6837,8 +6805,7 @@ bool FCMObject::handleFCMResponse(FirebaseESP32HTTPClient &httpClient, int &http
       {
         if (!isPayload)
         {
-
-          if (httpcode == -1000)
+          if (fbdo._httpCode == -1000)
           {
             tmp = Firebase.getPGMString(fb_esp_pgm_str_5);
             p1 = res.find(tmp);
@@ -6849,12 +6816,11 @@ bool FCMObject::handleFCMResponse(FirebaseESP32HTTPClient &httpClient, int &http
               p2 = res.find(tmp, p1 + strlen_P(fb_esp_pgm_str_5));
               Firebase.delS(tmp);
               if (p2 != std::string::npos)
-                httpcode = atoi(res.substr(p1 + strlen_P(fb_esp_pgm_str_5), p2 - p1 - strlen_P(fb_esp_pgm_str_5)).c_str());
+                fbdo._httpCode = atoi(res.substr(p1 + strlen_P(fb_esp_pgm_str_5), p2 - p1 - strlen_P(fb_esp_pgm_str_5)).c_str());
             }
           }
           else if (!chunked)
           {
-
             tmp = Firebase.getPGMString(fb_esp_pgm_str_167);
             p1 = res.find(tmp);
             Firebase.delS(tmp);
@@ -6928,40 +6894,34 @@ bool FCMObject::handleFCMResponse(FirebaseESP32HTTPClient &httpClient, int &http
 
         res.clear();
       }
-
-      if (millis() - dataTime > 5000)
-      {
-        httpcode = FIREBASE_ERROR_HTTPC_ERROR_READ_TIMEOUT;
-        break;
-      }
     }
 
     if (_sendResult.length() == 0)
       _sendResult = res;
 
-    if (!httpcode)
-      httpcode = FIREBASE_ERROR_HTTPC_ERROR_NO_HTTP_SERVER;
+    if (!fbdo._httpCode)
+      fbdo._httpCode = FIREBASE_ERROR_HTTPC_ERROR_NO_HTTP_SERVER;
 
     std::string().swap(res);
 
-    if (httpcode == FIREBASE_ERROR_HTTPC_ERROR_READ_TIMEOUT)
+    if (fbdo._httpCode == FIREBASE_ERROR_HTTPC_ERROR_READ_TIMEOUT)
       return false;
 
-    return httpcode == FIREBASE_ERROR_HTTP_CODE_OK;
+    return fbdo._httpCode == FIREBASE_ERROR_HTTP_CODE_OK;
   }
 
   std::string().swap(res);
 
-  if (httpcode == -1000)
+  if (fbdo._httpCode == -1000)
   {
-    httpcode = 0;
+    fbdo._httpCode = 0;
     ret = true;
   }
 
   return ret;
 }
 
-bool FCMObject::fcm_send(FirebaseESP32HTTPClient &httpClient, int &httpcode, uint8_t messageType)
+bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 {
 
   std::string msg = "";
@@ -6970,23 +6930,18 @@ bool FCMObject::fcm_send(FirebaseESP32HTTPClient &httpClient, int &httpcode, uin
   fcm_preparePayload(msg, messageType);
   fcm_prepareHeader(header, msg.length());
 
-  if (WiFi.status() != WL_CONNECTED)
-  {
-    httpcode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
+  if (!Firebase.reconnect(fbdo))
     return false;
-  }
 
   header += msg;
   std::string().swap(msg);
-  httpcode = httpClient.send(header.c_str(), "");
+  int ret = fbdo.httpClient.send(header.c_str(), "");
   std::string().swap(header);
 
-  if (httpcode != 0)
+  if (ret != 0)
     return false;
 
-  bool res = handleFCMResponse(httpClient, httpcode);
-
-  return res;
+  return handleFCMResponse(fbdo);
 }
 
 void FCMObject::clear()

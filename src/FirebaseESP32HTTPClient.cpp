@@ -40,6 +40,7 @@
 FirebaseESP32HTTPClient::FirebaseESP32HTTPClient()
 {
     transportTraits = TransportTraitsPtr(new TLSTraits(nullptr));
+    _wcs = transportTraits->create();
 }
 
 FirebaseESP32HTTPClient::~FirebaseESP32HTTPClient()
@@ -47,7 +48,7 @@ FirebaseESP32HTTPClient::~FirebaseESP32HTTPClient()
     if (_wcs)
     {
         _wcs->stop();
-        _wcs.reset();
+        _wcs.reset(nullptr);
         _wcs.release();
     }
     std::string().swap(_host);
@@ -114,24 +115,19 @@ WiFiClient *FirebaseESP32HTTPClient::stream(void)
 
 bool FirebaseESP32HTTPClient::connect(void)
 {
+    if (connected())
+    {
+        while (_wcs->available() > 0)
+            _wcs->read();
+        return true;
+    }
 
     if (!transportTraits)
         return false;
 
-    if (!_wcs)
-        _wcs = transportTraits->create();
-    else
-    {
-        if (connected())
-            _wcs->stop();
-    }
-
-    if (_wcs)
-    {
-        transportTraits->verify(*_wcs, _host.c_str());
-        if (!_wcs->connect(_host.c_str(), _port))
-            return false;
-    }
+    transportTraits->verify(*_wcs, _host.c_str());
+    if (!_wcs->connect(_host.c_str(), _port))
+        return false;
 
     return connected();
 }
@@ -192,8 +188,6 @@ void FirebaseESP32HTTPClient::setCertFile(std::string &rootCAFile, uint8_t stora
         }
     }
 }
-
-
 
 #endif /* ESP32 */
 
