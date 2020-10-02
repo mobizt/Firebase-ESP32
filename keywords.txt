@@ -93,6 +93,7 @@ errorToString   KEYWORD2
 sendMessage KEYWORD2
 broadcastMessage    KEYWORD2
 sendTopic   KEYWORD2
+setStreamTaskStackSize  KEYWORD2
 
 #############################################
 # Methods for Firebase Data object (KEYWORD2)
@@ -135,6 +136,8 @@ fileTransferError   KEYWORD2
 payload KEYWORD2
 queryFilter KEYWORD2
 empty   KEYWORD2
+stopWiFiClient  KEYWORD2
+fileStream  KEYWORD2 
 
 ########################################################
 # Methods for Firebase Cloud Messaging Object (KEYWORD2)

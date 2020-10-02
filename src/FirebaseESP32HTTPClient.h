@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload with STARTTLS support
  * 
- * v 1.0.1
+ * v 1.0.2
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -40,7 +40,7 @@
 #include <FS.h>
 #include <SPIFFS.h>
 #include <SD.h>
-#include "WiFiClientSecureESP32.h"
+#include <WiFiClientSecure.h>
 #if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
 #error WiFi UART bridge was not supported.
 #endif
@@ -143,12 +143,12 @@ public:
 
   std::unique_ptr<WiFiClient> create() override
   {
-    return std::unique_ptr<WiFiClient>(new WiFiClientSecureESP32());
+    return std::unique_ptr<WiFiClient>(new WiFiClientSecure());
   }
 
   bool verify(WiFiClient &client, const char *host) override
   {
-    WiFiClientSecureESP32 &wcs = static_cast<WiFiClientSecureESP32 &>(client);
+    WiFiClientSecure &wcs = static_cast<WiFiClientSecure &>(client);
     wcs.setCACert(_cacert);
     wcs.setCertificate(_clicert);
     wcs.setPrivateKey(_clikey);
@@ -196,26 +196,27 @@ public:
     * \return http status code, Return zero if new http connection and header and/or payload sent 
     * with no error or no header and payload provided. If obly payload provided, no new http connection was established.
     */
-  int sendRequest(const char *header, const char *payload);
+  int send(const char *header, const char *payload);
 
   /**
-    * Send extra header without making new http connection (if sendRequest has been called)
+    * Send extra header without making new http connection (if send with header has been called)
     * \param header - The header string (constant chars array).
     * \return True if header sending success.
-    * Need to call sendRequest with header first. 
+    * Need to call send with header first. 
     */
-  bool sendHeader(const char *header);
+  bool send(const char *header);
 
   /**
     * Get the WiFi client pointer.
     * \return WiFi client pointer.
     */
-  WiFiClient *getStreamPtr(void);
+  WiFiClient *stream(void);
 
   uint16_t tcpTimeout = FIREBASE_DEFAULT_TCP_TIMEOUT;
   bool connect(void);
-  void setRootCA(const char *rootCA);
-  void setRootCAFile(std::string &rootCAFile, uint8_t storageType);
+  void setCACert(const char *rootCA);
+  void setCertFile(std::string &rootCAFile, uint8_t storageType);
+
 
   int _certType = -1;
   std::string _rootCAFile = "";
@@ -223,8 +224,8 @@ public:
 
 protected:
   TransportTraitsPtr transportTraits;
-  std::unique_ptr<WiFiClient> _client;
-  std::unique_ptr<char> _cer;
+  std::unique_ptr<WiFiClient> _wcs;
+  std::unique_ptr<char> _cacert;
 
   std::string _host = "";
   uint16_t _port = 0;

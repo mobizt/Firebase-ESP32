@@ -65,7 +65,10 @@ void setup()
   Serial.println();
 
   if(Firebase.getShallowData(firebaseData, "/")){
-    Serial.println(firebaseData.payload());
+    FirebaseJson &json = firebaseData.jsonObject();
+    String str;
+    json.toString(str, true);
+    Serial.println(str);
   }
 
 

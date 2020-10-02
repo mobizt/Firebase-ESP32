@@ -95,6 +95,10 @@ void setup()
     Serial.println();
   }
 
+  //Set the reserved size of stack memory in bytes for internal stream callback processing RTOS task.
+  //8192 is the minimum size.
+  Firebase.setStreamTaskStackSize(10000);
+
   Firebase.setMultiPathStreamCallback(firebaseData1, streamCallback, streamTimeoutCallback);
 }
 

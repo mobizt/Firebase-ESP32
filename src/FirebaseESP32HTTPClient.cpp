@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload with STARTTLS support
  * 
- * v 1.0.1
+ * v 1.0.2
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -37,7 +37,6 @@
 
 #include "FirebaseESP32HTTPClient.h"
 
-
 FirebaseESP32HTTPClient::FirebaseESP32HTTPClient()
 {
     transportTraits = TransportTraitsPtr(new TLSTraits(nullptr));
@@ -45,15 +44,16 @@ FirebaseESP32HTTPClient::FirebaseESP32HTTPClient()
 
 FirebaseESP32HTTPClient::~FirebaseESP32HTTPClient()
 {
-    if (_client){
-        _client->stop();
-        _client.reset();
-        _client.release();
+    if (_wcs)
+    {
+        _wcs->stop();
+        _wcs.reset();
+        _wcs.release();
     }
     std::string().swap(_host);
     std::string().swap(_rootCAFile);
-    _cer.reset(new char);
-    _cer = nullptr;
+    _cacert.reset(new char);
+    _cacert = nullptr;
     transportTraits.reset(nullptr);
 }
 
@@ -66,35 +66,37 @@ bool FirebaseESP32HTTPClient::begin(const char *host, uint16_t port)
 
 bool FirebaseESP32HTTPClient::connected()
 {
-    if (_client)
-        return ( _client->connected());
+    if (_wcs)
+        return (_wcs->connected());
     return false;
 }
 
-bool FirebaseESP32HTTPClient::sendHeader(const char *header)
+bool FirebaseESP32HTTPClient::send(const char *header)
 {
     if (!connected())
         return false;
-    return (_client->write(header, strlen(header)) == strlen(header));
+    return (_wcs->write(header, strlen(header)) == strlen(header));
 }
 
-int FirebaseESP32HTTPClient::sendRequest(const char *header, const char *payload)
+int FirebaseESP32HTTPClient::send(const char *header, const char *payload)
 {
     size_t size = strlen(payload);
     if (strlen(header) > 0)
     {
-        if (!connect()){
+        if (!connect())
+        {
             return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED;
         }
-           
-        if (!sendHeader(header)){
+
+        if (!send(header))
+        {
             return FIREBASE_ERROR_HTTPC_ERROR_SEND_HEADER_FAILED;
         }
-            
     }
-    
-    if (size > 0){
-        if (_client->write(&payload[0], size) != size)
+
+    if (size > 0)
+    {
+        if (_wcs->write(&payload[0], size) != size)
         {
             return FIREBASE_ERROR_HTTPC_ERROR_SEND_PAYLOAD_FAILED;
         }
@@ -103,10 +105,10 @@ int FirebaseESP32HTTPClient::sendRequest(const char *header, const char *payload
     return 0;
 }
 
-WiFiClient *FirebaseESP32HTTPClient::getStreamPtr(void)
+WiFiClient *FirebaseESP32HTTPClient::stream(void)
 {
     if (connected())
-        return _client.get();
+        return _wcs.get();
     return nullptr;
 }
 
@@ -116,33 +118,25 @@ bool FirebaseESP32HTTPClient::connect(void)
     if (!transportTraits)
         return false;
 
-    if (!_client)
-        _client = transportTraits->create();
+    if (!_wcs)
+        _wcs = transportTraits->create();
     else
     {
         if (connected())
-        {
-            while (_client->available() > 0)
-                _client->read();
-            _client->stop();
-            
-        }
+            _wcs->stop();
     }
 
-    if (_client){
-        if (!transportTraits->verify(*_client, _host.c_str()))
-        {
-            _client->stop();
-            return false;
-        }
-        if (!_client->connect(_host.c_str(), _port))
+    if (_wcs)
+    {
+        transportTraits->verify(*_wcs, _host.c_str());
+        if (!_wcs->connect(_host.c_str(), _port))
             return false;
     }
-      
+
     return connected();
 }
 
-void FirebaseESP32HTTPClient::setRootCA(const char *rootCA)
+void FirebaseESP32HTTPClient::setCACert(const char *rootCA)
 {
     if (rootCA)
     {
@@ -154,7 +148,7 @@ void FirebaseESP32HTTPClient::setRootCA(const char *rootCA)
         _certType = 0;
 }
 
-void FirebaseESP32HTTPClient::setRootCAFile(std::string &rootCAFile, uint8_t storageType)
+void FirebaseESP32HTTPClient::setCertFile(std::string &rootCAFile, uint8_t storageType)
 {
 
     if (rootCAFile.length() > 0)
@@ -184,20 +178,22 @@ void FirebaseESP32HTTPClient::setRootCAFile(std::string &rootCAFile, uint8_t sto
         if (f)
         {
             size_t len = f.size();
-            _cer.reset(new char);
-            _cer = nullptr;
-            _cer = std::unique_ptr<char>(new char[len]);
+            _cacert.reset(new char);
+            _cacert = nullptr;
+            _cacert = std::unique_ptr<char>(new char[len]);
 
             if (f.available())
-                f.readBytes(_cer.get(), len);
+                f.readBytes(_cacert.get(), len);
 
             f.close();
 
             transportTraits.reset(nullptr);
-            transportTraits = TransportTraitsPtr(new TLSTraits(_cer.get()));
+            transportTraits = TransportTraitsPtr(new TLSTraits(_cacert.get()));
         }
     }
 }
+
+
 
 #endif /* ESP32 */
 

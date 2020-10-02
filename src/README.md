@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.7.7
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.7.8
 
 
 ## Global functions
@@ -36,10 +36,25 @@ void begin(const String &host, const String &auth, const String &rootCAFile, uin
 
 #### Stop Firebase and release all resources
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 ```C++
-void end(FirebaseData &dataObj);
+void end(FirebaseData &fbdo);
+```
+
+
+
+
+
+
+#### Set the stream task (RTOS task) reserved stack memory in bytes.
+    
+param **`size`** - The number of stack size in bytes.
+
+The stream task will be created only when the user sets the stream callbacks.
+
+```C++
+  void setStreamTaskStackSize(size_t size);
 ```
 
 
@@ -62,12 +77,12 @@ void reconnectWiFi(bool reconnect);
 
 #### Set the timeouts of Firebase.get function.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`millisec`** - The milliseconds to limit the request (0 - 900,000 ms or 15 min).
 
 ```C++
-void setReadTimeout(FirebaseData &dataObj, int millisec);
+void setReadTimeout(FirebaseData &fbdo, int millisec);
 ```
 
 
@@ -77,14 +92,14 @@ void setReadTimeout(FirebaseData &dataObj, int millisec);
 
 #### Set the size limit of payload data that will write to the database for each request.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`size`** - The size identified string e.g. tiny, small, medium, large and unlimited.
 
 Size string and its write timeout in seconds e.g. tiny (1s), small (10s), medium (30s) and large (60s).
 
 ```C++
-void setwriteSizeLimit(FirebaseData &dataObj, const String &size);
+void setwriteSizeLimit(FirebaseData &fbdo, const String &size);
 ```
 
 
@@ -94,12 +109,12 @@ void setwriteSizeLimit(FirebaseData &dataObj, const String &size);
 
 #### Read the database rules
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 return - **`Boolean`** type status indicates the success of the operation.
 
 ```C++
-bool getRules(FirebaseData &dataObj);
+bool getRules(FirebaseData &fbdo);
 ```
 
 
@@ -110,14 +125,14 @@ bool getRules(FirebaseData &dataObj);
 
 #### Write the database rules
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`rules`** - Database rules in jSON String format.
 
 return - **`Boolean`** type status indicates the success of the operation.
 
 ```C++
-bool setRules(FirebaseData &dataObj, const String &rules);
+bool setRules(FirebaseData &fbdo, const String &rules);
 ```
 
 
@@ -128,14 +143,14 @@ bool setRules(FirebaseData &dataObj, const String &rules);
 
 #### Determine whether defined database path exists or not
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path to be checked.
 
 return - **`Boolean`** type result indicates whether the defined database path has existed or not.
 
 ```C++
-bool pathExist(FirebaseData &dataObj, const String &path);
+bool pathExist(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -147,7 +162,7 @@ bool pathExist(FirebaseData &dataObj, const String &path);
 return **`String`** of unique identifier.
 
 ```C++
-String getETag(FirebaseData &dataObj, const String &path);
+String getETag(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -157,7 +172,7 @@ String getETag(FirebaseData &dataObj, const String &path);
 
 #### Get the shallowed data at defined node path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path being read the data.
 
@@ -180,12 +195,10 @@ Call **[FirebaseData object].boolData** to get boolean data.
 
 Call **[FirebaseData object].stringData** to get string data.
 
-Call **[FirebaseData object].jsonString** to get JSON string data.
-
 Call **[FirebaseData object].jsonObject** to get FirebaseJson object.
 
 ```C++
-bool getShallowData(FirebaseData &dataObj, const String &path); 
+bool getShallowData(FirebaseData &fbdo, const String &path); 
 ```
 
 
@@ -196,7 +209,7 @@ bool getShallowData(FirebaseData &dataObj, const String &path);
 
 #### Enable the library to use only classic HTTP GET and POST methods
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`flag`** - Boolean value to enable.
 
@@ -205,7 +218,7 @@ This option used to escape the Firewall restriction (if device is connected thro
 HTTP PATCH request was sent as PATCH which not affected by this option.
 
 ```C++
-void enableClassicRequest(FirebaseData &dataObj, bool flag);
+void enableClassicRequest(FirebaseData &fbdo, bool flag);
 ```
 
 
@@ -214,7 +227,7 @@ void enableClassicRequest(FirebaseData &dataObj, bool flag);
 
 #### Set the virtual child node ".priority" to the defined database path. 
     
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which to set the priority value.
 
@@ -229,7 +242,7 @@ This allows us to set priority to any node other than a priority that set throug
 The returned priority value from server can read from function [FirebaseData object].priority().
 
 ```C++
-bool setPriority(FirebaseData &dataObj, const String &path, float priority);
+bool setPriority(FirebaseData &fbdo, const String &path, float priority);
 ```
 
 
@@ -240,7 +253,7 @@ bool setPriority(FirebaseData &dataObj, const String &path, float priority);
 
 #### Read the virtual child node ".priority" value at the defined database path. 
     
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which to set the priority value.
     
@@ -250,7 +263,7 @@ return - **`Boolean`** type status indicates the success of the operation.
 The priority value from server can read from function [FirebaseData object].priority().
 
  ```C++
-bool getPriority(FirebaseData &dataObj, const String &path);
+bool getPriority(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -260,7 +273,7 @@ bool getPriority(FirebaseData &dataObj, const String &path);
 
 #### Append new integer value to the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which integer value will be appended.
 
@@ -272,9 +285,9 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushInt(FirebaseData &dataObj, const String &path, int intValue);
+bool pushInt(FirebaseData &fbdo, const String &path, int intValue);
 
-bool push(FirebaseData &dataObj, const String &path, int intValue);
+bool push(FirebaseData &fbdo, const String &path, int intValue);
 ```
 
 
@@ -285,9 +298,9 @@ bool push(FirebaseData &dataObj, const String &path, int intValue);
 #### Append new integer value and the virtual child ".priority" to the defined database path.
 
 ```C++
-bool pushInt(FirebaseData &dataObj, const String &path, int intValue, float priority);
+bool pushInt(FirebaseData &fbdo, const String &path, int intValue, float priority);
 
-bool push(FirebaseData &dataObj, const String &path, int intValue, float priority);
+bool push(FirebaseData &fbdo, const String &path, int intValue, float priority);
 ```
 
 
@@ -297,7 +310,7 @@ bool push(FirebaseData &dataObj, const String &path, int intValue, float priorit
 
 #### Append new float value to the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which float value will be appended.
 
@@ -309,9 +322,9 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushFloat(FirebaseData &dataObj, const String &path, float floatValue);
+bool pushFloat(FirebaseData &fbdo, const String &path, float floatValue);
 
-bool push(FirebaseData &dataObj, const String &path, float floatValue);
+bool push(FirebaseData &fbdo, const String &path, float floatValue);
 ```
 
 
@@ -323,9 +336,9 @@ bool push(FirebaseData &dataObj, const String &path, float floatValue);
 #### Append new float value and the virtual child ".priority" to the defined database path.
 
 ```C++
-bool pushFloat(FirebaseData &dataObj, const String &path, float floatValue, float priority);
+bool pushFloat(FirebaseData &fbdo, const String &path, float floatValue, float priority);
 
-bool push(FirebaseData &dataObj, const String &path, float floatValue, float priority);
+bool push(FirebaseData &fbdo, const String &path, float floatValue, float priority);
 ```
 
 
@@ -337,7 +350,7 @@ bool push(FirebaseData &dataObj, const String &path, float floatValue, float pri
 
 #### Append new double value (8 bytes) to the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which float value will be appended.
 
@@ -349,9 +362,9 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushDouble(FirebaseData &dataObj, const String &path, double doubleValue);
+bool pushDouble(FirebaseData &fbdo, const String &path, double doubleValue);
 
-bool push(FirebaseData &dataObj, const String &path, double doubleValue);
+bool push(FirebaseData &fbdo, const String &path, double doubleValue);
 ```
 
 
@@ -361,9 +374,9 @@ bool push(FirebaseData &dataObj, const String &path, double doubleValue);
 #### Append new double value (8 bytes) and the virtual child ".priority" to the defined database path.
 
 ```C++
-bool pushDouble(FirebaseData &dataObj, const String &path, double doubleValue, float priority);
+bool pushDouble(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
 
-bool push(FirebaseData &dataObj, const String &path, double doubleValue, float priority);
+bool push(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
 ```
 
 
@@ -373,7 +386,7 @@ bool push(FirebaseData &dataObj, const String &path, double doubleValue, float p
 
 #### Append new Boolean value to the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which Boolean value will be appended.
 
@@ -385,9 +398,9 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushBool(FirebaseData &dataObj, const String &path, bool boolValue);
+bool pushBool(FirebaseData &fbdo, const String &path, bool boolValue);
 
-bool push(FirebaseData &dataObj, const String &path, bool boolValue);
+bool push(FirebaseData &fbdo, const String &path, bool boolValue);
 ```
 
 
@@ -399,9 +412,9 @@ bool push(FirebaseData &dataObj, const String &path, bool boolValue);
 #### Append new Boolean value and the virtual child ".priority" to the defined database path.
 
 ```C++
-bool pushBool(FirebaseData &dataObj, const String &path, bool boolValue, float priority);
+bool pushBool(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
 
-bool push(FirebaseData &dataObj, const String &path, bool boolValue, float priority);
+bool push(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
 ```
 
 
@@ -413,7 +426,7 @@ bool push(FirebaseData &dataObj, const String &path, bool boolValue, float prior
 
 #### Append new string (text) to the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which string will be appended.
 
@@ -425,11 +438,11 @@ The new appended node's key stored in Firebase Data object,
 which can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushString(FirebaseData &dataObj, const String &path, const String &stringValue);
+bool pushString(FirebaseData &fbdo, const String &path, const String &stringValue);
 
-bool push(FirebaseData &dataObj, const String &path, const char *stringValue);
+bool push(FirebaseData &fbdo, const String &path, const char *stringValue);
 
-bool push(FirebaseData &dataObj, const String &path, const String &stringValue);
+bool push(FirebaseData &fbdo, const String &path, const String &stringValue);
 ```
 
 
@@ -441,11 +454,11 @@ bool push(FirebaseData &dataObj, const String &path, const String &stringValue);
 #### Append new string (text) and the virtual child ".priority" to the defined database path.
 
 ```C++
-bool pushString(FirebaseData &dataObj, const String &path, const String &stringValue, float priority);
+bool pushString(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
 
-bool push(FirebaseData &dataObj, const String &path, const char *stringValue, float priority);
+bool push(FirebaseData &fbdo, const String &path, const char *stringValue, float priority);
 
-bool push(FirebaseData &dataObj, const String &path, const String &stringValue, float priority);
+bool push(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
 ```
 
 
@@ -456,7 +469,7 @@ bool push(FirebaseData &dataObj, const String &path, const String &stringValue, 
 
 #### Append new child node key and value (using FirebaseJson object) to the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which key and value in FirebaseJson object will be appended.
 
@@ -468,9 +481,9 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json);
+bool pushJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 
-bool push(FirebaseData &dataObj, const String &path, FirebaseJson &json);
+bool push(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 ```
 
 
@@ -484,9 +497,9 @@ bool push(FirebaseData &dataObj, const String &path, FirebaseJson &json);
 #### Append new child node key and value (using JSON data or FirebaseJson object) and the virtual child ".priority" to the defined database path.
 
 ```C++
-bool pushJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
+bool pushJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 
-bool push(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
+bool push(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 ```
 
 
@@ -496,7 +509,7 @@ bool push(FirebaseData &dataObj, const String &path, FirebaseJson &json, float p
 
 This will replace any child nodes inside the defined path with array defined in FirebaseJsonArray object.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which key and value in FirebaseJsonArray object will be appended.
 
@@ -508,9 +521,9 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushArray(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr);
+bool pushArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 
-bool push(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr);
+bool push(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 ```
 
 
@@ -521,9 +534,9 @@ bool push(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr);
 #### Append FirebaseJsonArray object and virtual child ".priority" at the defined database path.
 
 ```C++
-bool pushArray(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, float priority);
+bool pushArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
 
-bool push(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, float priority);
+bool push(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
 ```
 
 
@@ -536,7 +549,7 @@ bool push(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, flo
 
 #### Append new blob (binary data) to the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which binary data will be appended.
 
@@ -550,9 +563,9 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size);
+bool pushBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 
-bool push(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size);
+bool push(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 ```
 
 
@@ -563,9 +576,9 @@ bool push(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size)
 #### Append new blob (binary data) and the virtual child ".priority" to the defined database path.
 
 ```C++
-bool pushBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority);
+bool pushBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
 
-bool push(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority);
+bool push(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
 ```
 
 
@@ -575,7 +588,7 @@ bool push(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size,
 
 #### Append new binary data from file stored on SD card/Flash memory to the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
 
@@ -589,9 +602,9 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName);
+bool pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 
-bool push(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName);
+bool push(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 ```
 
 
@@ -602,9 +615,9 @@ bool push(FirebaseData &dataObj, uint8_t storageType, const String &path, const 
 #### Append new binary data from file stored on SD card/Flash memory and the virtual child ".priority" to the defined database path.
 
 ```C++
-bool pushFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
+bool pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 
-bool push(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
+bool push(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 ```
 
 
@@ -615,7 +628,7 @@ bool push(FirebaseData &dataObj, uint8_t storageType, const String &path, const 
 
  #### Append new Firebase server's timestamp to the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which timestamp will be appended.
 
@@ -625,7 +638,7 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushTimestamp(FirebaseData &dataObj, const String &path);
+bool pushTimestamp(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -636,7 +649,7 @@ bool pushTimestamp(FirebaseData &dataObj, const String &path);
 
 #### Set integer data at the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which integer data will be set.
 
@@ -651,9 +664,9 @@ Call [FirebaseData object].intData will return the integer value of
 the payload returned from the server.
 
 ```C++
-bool setInt(FirebaseData &dataObj, const String &path, int intValue);
+bool setInt(FirebaseData &fbdo, const String &path, int intValue);
 
-bool set(FirebaseData &dataObj, const String &path, int intValue);
+bool set(FirebaseData &fbdo, const String &path, int intValue);
 ```
 
 
@@ -662,16 +675,16 @@ bool set(FirebaseData &dataObj, const String &path, int intValue);
 #### Set integer data and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setInt(FirebaseData &dataObj, const String &path, int intValue, float priority);
+bool setInt(FirebaseData &fbdo, const String &path, int intValue, float priority);
 
-bool set(FirebaseData &dataObj, const String &path, int intValue, float priority);
+bool set(FirebaseData &fbdo, const String &path, int intValue, float priority);
 ```
 
 
 
 #### Set integer data at the defined database path if defined database path's ETag matched the ETag value.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which integer data will be set.
 
@@ -690,9 +703,9 @@ If the operation failed due to ETag is not match, call [FirebaseData object].ETa
 Also call [FirebaseData object].intData to get the current integer value.
     
 ```C++
-bool setInt(FirebaseData &dataObj, const String &path, int intValue, const String &ETag);
+bool setInt(FirebaseData &fbdo, const String &path, int intValue, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, int intValue, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, int intValue, const String &ETag);
 ```
 
 
@@ -703,9 +716,9 @@ bool set(FirebaseData &dataObj, const String &path, int intValue, const String &
 #### Set integer data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setInt(FirebaseData &dataObj, const String &path, int intValue, float priority, const String &ETag);
+bool setInt(FirebaseData &fbdo, const String &path, int intValue, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, int intValue, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, int intValue, float priority, const String &ETag);
 ```
 
 
@@ -715,7 +728,7 @@ bool set(FirebaseData &dataObj, const String &path, int intValue, float priority
 
 #### Set float data at the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which float data will be set.
 
@@ -729,9 +742,9 @@ Call [FirebaseData object].floatData will return the float value of
 the payload returned from the server.
 
 ```C++
-bool setFloat(FirebaseData &dataObj, const String &path, float floatValue);
+bool setFloat(FirebaseData &fbdo, const String &path, float floatValue);
 
-bool set(FirebaseData &dataObj, const String &path, float floatValue);
+bool set(FirebaseData &fbdo, const String &path, float floatValue);
 ```
 
 
@@ -740,9 +753,9 @@ bool set(FirebaseData &dataObj, const String &path, float floatValue);
 #### Set float data and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setFloat(FirebaseData &dataObj, const String &path, float floatValue, float priority);
+bool setFloat(FirebaseData &fbdo, const String &path, float floatValue, float priority);
 
-bool set(FirebaseData &dataObj, const String &path, float floatValue, float priority);
+bool set(FirebaseData &fbdo, const String &path, float floatValue, float priority);
 ```
 
 
@@ -751,7 +764,7 @@ bool set(FirebaseData &dataObj, const String &path, float floatValue, float prio
 
 #### Set float data at the defined database path if defined database path's ETag matched the ETag value.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which float data will be set.
 
@@ -770,9 +783,9 @@ If the operation failed due to ETag is not match, call [FirebaseData object].ETa
 Also call [FirebaseData object].floatData to get the current float value.
 
 ```C++
-bool setFloat(FirebaseData &dataObj, const String &path, float floatValue, const String &ETag);
+bool setFloat(FirebaseData &fbdo, const String &path, float floatValue, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, float floatValue, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, float floatValue, const String &ETag);
 ```
 
 
@@ -781,9 +794,9 @@ bool set(FirebaseData &dataObj, const String &path, float floatValue, const Stri
 #### Set float data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setFloat(FirebaseData &dataObj, const String &path, float floatValue, float priority, const String &ETag);
+bool setFloat(FirebaseData &fbdo, const String &path, float floatValue, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, float floatValue, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, float floatValue, float priority, const String &ETag);
 ```
 
 
@@ -792,7 +805,7 @@ bool set(FirebaseData &dataObj, const String &path, float floatValue, float prio
 
 #### Set double data at the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which float data will be set.
 
@@ -811,9 +824,9 @@ use printf("%.9lf\n", firebaseData.doubleData()); for print the returned double 
 
 
 ```C++
-bool setDouble(FirebaseData &dataObj, const String &path, double doubleValue);
+bool setDouble(FirebaseData &fbdo, const String &path, double doubleValue);
 
-bool set(FirebaseData &dataObj, const String &path, double doubleValue);
+bool set(FirebaseData &fbdo, const String &path, double doubleValue);
 ```
 
 
@@ -823,9 +836,9 @@ bool set(FirebaseData &dataObj, const String &path, double doubleValue);
 #### Set double data and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setDouble(FirebaseData &dataObj, const String &path, double doubleValue, float priority);
+bool setDouble(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
 
-bool set(FirebaseData &dataObj, const String &path, double doubleValue, float priority);
+bool set(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
 ```
 
 
@@ -834,7 +847,7 @@ bool set(FirebaseData &dataObj, const String &path, double doubleValue, float pr
 
 #### Set double data at the defined database path if defined database path's ETag matched the ETag value.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which float data will be set.
 
@@ -854,9 +867,9 @@ If the operation failed due to ETag is not match, call [FirebaseData object].ETa
 Also call [FirebaseData object].doubeData to get the current double value.
 
 ```C++
-bool setDouble(FirebaseData &dataObj, const String &path, double doubleValue, const String &ETag);
+bool setDouble(FirebaseData &fbdo, const String &path, double doubleValue, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, double doubleValue, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, double doubleValue, const String &ETag);
 ```
 
 
@@ -867,9 +880,9 @@ bool set(FirebaseData &dataObj, const String &path, double doubleValue, const St
 #### Set double data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setDouble(FirebaseData &dataObj, const String &path, double doubleValue, float priority, const String &ETag);
+bool setDouble(FirebaseData &fbdo, const String &path, double doubleValue, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, double doubleValue, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, double doubleValue, float priority, const String &ETag);
 ```
 
 
@@ -878,7 +891,7 @@ bool set(FirebaseData &dataObj, const String &path, double doubleValue, float pr
 
 #### Set Boolean data at the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which float data will be set.
 
@@ -892,9 +905,9 @@ Call [FirebaseData object].boolData will return the Boolean value of
 the payload returned from the server.
 
 ```C++
-bool setBool(FirebaseData &dataObj, const String &path, bool boolValue);
+bool setBool(FirebaseData &fbdo, const String &path, bool boolValue);
 
-bool set(FirebaseData &dataObj, const String &path, bool boolValue);
+bool set(FirebaseData &fbdo, const String &path, bool boolValue);
 ```
 
 
@@ -904,9 +917,9 @@ bool set(FirebaseData &dataObj, const String &path, bool boolValue);
 #### Set boolean data and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setBool(FirebaseData &dataObj, const String &path, bool boolValue, float priority);
+bool setBool(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
 
-bool set(FirebaseData &dataObj, const String &path, bool boolValue, float priority);
+bool set(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
 ```
 
 
@@ -915,7 +928,7 @@ bool set(FirebaseData &dataObj, const String &path, bool boolValue, float priori
 
 #### Set Boolean data at the defined database path if defined database path's ETag matched the ETag value
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which float data will be set.
 
@@ -938,9 +951,9 @@ If the operation failed due to ETag is not match, call [FirebaseData object].ETa
 Also call [FirebaseData object].doubeData to get the current boolean value.
 
 ```C++
-bool setBool(FirebaseData &dataObj, const String &path, bool boolValue, const String &ETag);
+bool setBool(FirebaseData &fbdo, const String &path, bool boolValue, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, bool boolValue, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, bool boolValue, const String &ETag);
 ```
 
 
@@ -950,9 +963,9 @@ bool set(FirebaseData &dataObj, const String &path, bool boolValue, const String
 #### Set boolean data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setBool(FirebaseData &dataObj, const String &path, bool boolValue, float priority, const String &ETag);
+bool setBool(FirebaseData &fbdo, const String &path, bool boolValue, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, bool boolValue, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, bool boolValue, float priority, const String &ETag);
 ```
 
 
@@ -962,7 +975,7 @@ bool set(FirebaseData &dataObj, const String &path, bool boolValue, float priori
 
 #### Set string (text) at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which string data will be set.
 
@@ -976,11 +989,11 @@ Call [FirebaseData object].stringData will return the string value of
 the payload returned from the server.
 
 ```C++
-bool setString(FirebaseData &dataObj, const String &path, const String &stringValue);
+bool setString(FirebaseData &fbdo, const String &path, const String &stringValue);
 
-bool set(FirebaseData &dataObj, const String &path, const char *stringValue);
+bool set(FirebaseData &fbdo, const String &path, const char *stringValue);
 
-bool set(FirebaseData &dataObj, const String &path, const String &stringValue);
+bool set(FirebaseData &fbdo, const String &path, const String &stringValue);
 ```
 
 
@@ -991,11 +1004,11 @@ bool set(FirebaseData &dataObj, const String &path, const String &stringValue);
 #### Set string data and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setString(FirebaseData &dataObj, const String &path, const String &stringValue, float priority);
+bool setString(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
 
-bool set(FirebaseData &dataObj, const String &path, const char *stringValue, float priority);
+bool set(FirebaseData &fbdo, const String &path, const char *stringValue, float priority);
 
-bool set(FirebaseData &dataObj, const String &path, const String &stringValue, float priority);
+bool set(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
 ```
 
 
@@ -1005,7 +1018,7 @@ bool set(FirebaseData &dataObj, const String &path, const String &stringValue, f
 
 #### Set string (text) at the defined database path if defined database path's ETag matched the ETag value
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which string data will be set.
 
@@ -1027,11 +1040,11 @@ If the operation failed due to ETag is not match, call [FirebaseData object].ETa
 Also, call [FirebaseData object].stringData to get the current string value.
 
 ```C++
-bool setString(FirebaseData &dataObj, const String &path, const String &stringValue, const String &ETag);
+bool setString(FirebaseData &fbdo, const String &path, const String &stringValue, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, const char *stringValue, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, const char *stringValue, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, const String &stringValue, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, const String &stringValue, const String &ETag);
 ```
 
 
@@ -1041,11 +1054,11 @@ bool set(FirebaseData &dataObj, const String &path, const String &stringValue, c
 #### Set string data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setString(FirebaseData &dataObj, const String &path, const String &stringValue, float priority, const String &ETag);
+bool setString(FirebaseData &fbdo, const String &path, const String &stringValue, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, const char *stringValue, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, const char *stringValue, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, const String &stringValue, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, const String &stringValue, float priority, const String &ETag);
 ```
 
 
@@ -1059,7 +1072,7 @@ bool set(FirebaseData &dataObj, const String &path, const String &stringValue, f
 This will replace any child nodes inside the defined path with node' s key
 and value defined in FirebaseJson object.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which key and value in FirebaseJson object will be replaced or set.
 
@@ -1076,9 +1089,9 @@ Call [FirebaseData object].jsonObject will return the FirebaseJson object of
 payload returned from server.
 
 ```C++
-bool setJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json);
+bool setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 
-bool set(FirebaseData &dataObj, const String &path, FirebaseJson &json);
+bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 ```
 
 
@@ -1090,9 +1103,9 @@ bool set(FirebaseData &dataObj, const String &path, FirebaseJson &json);
 #### Set JSON data or FirebaseJson object and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
+bool setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 
-bool set(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
+bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 ```
 
 
@@ -1106,7 +1119,7 @@ bool set(FirebaseData &dataObj, const String &path, FirebaseJson &json, float pr
 This will replace any child nodes inside the defined path with node' s key
 and value defined in JSON data or FirebaseJson object.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which key and value in JSON data or FirebaseJson object will be replaced or set.
 
@@ -1136,9 +1149,9 @@ to get the FirebaseJson object.
 
 
 ```C++
-bool setJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json, const String &ETag);
+bool setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, FirebaseJson &json, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json, const String &ETag);
 ```
 
 
@@ -1149,9 +1162,9 @@ bool set(FirebaseData &dataObj, const String &path, FirebaseJson &json, const St
 #### Set JSON data or FirebaseJson object and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setJSON(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority, const String &ETag);
+bool setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority, const String &ETag);
 ```
 
 
@@ -1163,7 +1176,7 @@ bool set(FirebaseData &dataObj, const String &path, FirebaseJson &json, float pr
 
 This will replace any child nodes inside the defined path with array defined in FirebaseJsonArray object.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which key and value in FirebaseJsonArray object will be replaced or set.
 
@@ -1178,9 +1191,9 @@ Call [FirebaseData object].jsonArray will return pointer to FirebaseJsonArray ob
 payload returned from server, get the array payload using FirebaseJsonArray *arr = firebaseData.jsonArray();
 
 ```C++
-bool setArray(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr);
+bool setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 
-bool set(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr);
+bool set(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 ```
 
 
@@ -1192,9 +1205,9 @@ bool set(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr);
 #### Set FirebaseJsonArray object and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setArray(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, float priority);
+bool setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
 
-bool set(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, float priority);
+bool set(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
 ```
 
 
@@ -1206,7 +1219,7 @@ bool set(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, floa
 
 This will replace any child nodes inside the defined path with array defined in FirebaseJsonArray object.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which key and value in JSON data will be replaced or set.
 
@@ -1230,17 +1243,17 @@ If the operation failed due to ETag is not match, call [FirebaseData object].ETa
 Also call [FirebaseData object].jsonArray to get the pointer to FirebaseJsonArray object of current array value.
 
 ```C++
-bool setArray(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, const String &ETag);
+bool setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, const String &ETag);
 ```
 
     Set FirebaseJsonArray object and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setArray(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, float priority, const String &ETag);
+bool setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority, const String &ETag);
 ```
 
 
@@ -1251,7 +1264,7 @@ bool set(FirebaseData &dataObj, const String &path, FirebaseJsonArray &arr, floa
 
 This will replace any child nodes inside the defined path with a blob of binary data.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which binary data will be set.
 
@@ -1264,9 +1277,9 @@ return **`Boolean`** type status indicates the success of the operation.
 No payload returned from the server.
 
 ```C++
-bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size);
+bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 
-bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size);
+bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 ```
 
 
@@ -1276,9 +1289,9 @@ bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size);
 #### Set blob data and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority);
+bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
 
-bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority);
+bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
 ```
 
 
@@ -1290,7 +1303,7 @@ bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, 
 
 This will replace any child nodes inside the defined path with a blob of binary data.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path in which binary data will be set.
 
@@ -1308,9 +1321,9 @@ If ETag at the defined database path does not match the provided ETag parameter,
 the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
 ```C++
-bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, const String &ETag);
+bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag);
 ```
 
 
@@ -1320,9 +1333,9 @@ bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, 
 #### Set blob data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setBlob(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
+bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
 ```
 
 
@@ -1331,7 +1344,7 @@ bool set(FirebaseData &dataObj, const String &path, uint8_t *blob, size_t size, 
 
 #### Set binary data from the file store on SD card/Flash memory to the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
 
@@ -1344,9 +1357,9 @@ return **`Boolean`** type status indicates the success of the operation.
 No payload returned from the server.
 
 ```C++
-bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName);
+bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 
-bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName);
+bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 ```
 
 
@@ -1356,9 +1369,9 @@ bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const S
 #### Set binary data from the file and virtual child ".priority" at the defined database path.
 
 ```C++
-bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
+bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 
-bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority);
+bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 ```
 
 
@@ -1368,7 +1381,7 @@ bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const S
 
 #### Set binary data from a file stored on SD card/Flash memory to the defined database path if defined database path's ETag matched the ETag value
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`storageType`** - Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
 
@@ -1386,9 +1399,9 @@ If ETag at the defined database path does not match the provided ETag parameter,
 the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
 ```C++
-bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
+bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
 
-bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
+bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
 ```
 
 
@@ -1399,9 +1412,9 @@ bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const S
 #### Set binary data from a file and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
-bool setFile(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
+bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
 
-bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
+bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
 
 ```
 
@@ -1411,7 +1424,7 @@ bool set(FirebaseData &dataObj, uint8_t storageType, const String &path, const S
 
  #### Set Firebase server's timestamp to the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which timestamp will be set.
 
@@ -1424,7 +1437,7 @@ Due to bugs in Serial.print in Arduino, to print large double value with zero de
 use printf("%.0lf\n", firebaseData.doubleData());.
 
 ```C++
-bool setTimestamp(FirebaseData &dataObj, const String &path);
+bool setTimestamp(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1435,7 +1448,7 @@ bool setTimestamp(FirebaseData &dataObj, const String &path);
 
 #### Update child node key or existing key's value (using FirebaseJson object) under the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which key and value in FirebaseJson object will be updated.
 
@@ -1454,7 +1467,7 @@ payload returned from server.
 To reduce network data usage, use updateNodeSilent instead.
 
 ```C++
-bool updateNode(FirebaseData &dataObj, const String &path, FirebaseJson &json);
+bool updateNode(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 
 ```
 
@@ -1468,7 +1481,7 @@ bool updateNode(FirebaseData &dataObj, const String &path, FirebaseJson &json);
 
 ```C++
 
-bool updateNode(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
+bool updateNode(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 
 ```
 
@@ -1480,7 +1493,7 @@ bool updateNode(FirebaseData &dataObj, const String &path, FirebaseJson &json, f
 
 #### Update child node key or existing key's value (using FirebaseJson object) under the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Target database path which key and value in FirebaseJson object will be updated.
 
@@ -1492,7 +1505,7 @@ Owing to the objective of this function to reduce network data usage,
 no payload will be returned from the server.
 
 ```C++
-bool updateNodeSilent(FirebaseData &dataObj, const String &path, FirebaseJson &json);
+bool updateNodeSilent(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 
 ```
 
@@ -1504,7 +1517,7 @@ bool updateNodeSilent(FirebaseData &dataObj, const String &path, FirebaseJson &j
 
 ```C++
 
-bool updateNodeSilent(FirebaseData &dataObj, const String &path, FirebaseJson &json, float priority);
+bool updateNodeSilent(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 ```
 
 
@@ -1515,7 +1528,7 @@ bool updateNodeSilent(FirebaseData &dataObj, const String &path, FirebaseJson &j
 
 #### Read any type of value at the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the float value is being read.
 
@@ -1529,7 +1542,7 @@ Call [FirebaseData object].intData, [FirebaseData object].floatData, [FirebaseDa
 its type from [FirebaseData object].dataType.
 
 ```C++
-bool get(FirebaseData &dataObj, const String &path);
+bool get(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1537,7 +1550,7 @@ bool get(FirebaseData &dataObj, const String &path);
 
 #### Read the integer value at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the integer value is being read.
 
@@ -1555,7 +1568,7 @@ If the payload returned from server is float type,
 the function [FirebaseData object].intData will return rounded integer value.
 
 ```C++
-bool getInt(FirebaseData &dataObj, const String &path);
+bool getInt(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1564,7 +1577,7 @@ bool getInt(FirebaseData &dataObj, const String &path);
 
 #### Read the integer value at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the integer value is being read.
 
@@ -1576,7 +1589,7 @@ If the type of payload returned from the server is not an integer, float and dou
 the target variable's value will be zero (0).
 
 ```C++
-bool getInt(FirebaseData &dataObj, const String &path, int &target);
+bool getInt(FirebaseData &fbdo, const String &path, int &target);
 ```
 
 
@@ -1586,7 +1599,7 @@ bool getInt(FirebaseData &dataObj, const String &path, int &target);
 
 #### Read the float value at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the float value is being read.
 
@@ -1601,7 +1614,7 @@ If the payload returned from server is not integer or float type,
 the function [FirebaseData object].intData will return zero (0).
 
 ```C++
-bool getFloat(FirebaseData &dataObj, const String &path);
+bool getFloat(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1611,7 +1624,7 @@ bool getFloat(FirebaseData &dataObj, const String &path);
 
 #### Read the float value at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the float value is being read.
 
@@ -1623,7 +1636,7 @@ If the type of payload returned from the server is not an integer, float and dou
 the target variable's value will be zero (0).
 
 ```C++
-bool getFloat(FirebaseData &dataObj, const String &path, float &target);
+bool getFloat(FirebaseData &fbdo, const String &path, float &target);
 ```
 
 
@@ -1633,7 +1646,7 @@ bool getFloat(FirebaseData &dataObj, const String &path, float &target);
 
 #### Read the double value at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the float value is being rea.
 
@@ -1651,7 +1664,7 @@ Due to bugs in Serial.print in Arduino, to print large double value with zero de
 use printf("%.9lf\n", firebaseData.doubleData()); for print the returned double value up to 9 decimal places.
 
 ```C++
-bool getDouble(FirebaseData &dataObj, const String &path);
+bool getDouble(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1662,7 +1675,7 @@ bool getDouble(FirebaseData &dataObj, const String &path);
 
 #### Read the float value at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the float value is being read.
 
@@ -1674,7 +1687,7 @@ If the type of payload returned from the server is not an integer, float and dou
 the target variable's value will be zero (0).
 
 ```C++
-bool getDouble(FirebaseData &dataObj, const String &path, double &target);
+bool getDouble(FirebaseData &fbdo, const String &path, double &target);
 ```
 
 
@@ -1684,7 +1697,7 @@ bool getDouble(FirebaseData &dataObj, const String &path, double &target);
 
 #### Read the Boolean value at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the Boolean value is being read.
 
@@ -1699,7 +1712,7 @@ If the payload returned from server is not boolean type,
 the function [FirebaseData object].boolData will return false.
 
 ```C++
-bool getBool(FirebaseData &dataObj, const String &path);
+bool getBool(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1710,7 +1723,7 @@ bool getBool(FirebaseData &dataObj, const String &path);
 
 #### Read the Boolean value at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the Boolean value is being read.
 
@@ -1722,7 +1735,7 @@ If the type of payload returned from the server is not Boolean,
 the target variable's value will be false.
 
 ```C++
-bool getBool(FirebaseData &dataObj, const String &path, bool &target);
+bool getBool(FirebaseData &fbdo, const String &path, bool &target);
 ```
 
 
@@ -1732,7 +1745,7 @@ bool getBool(FirebaseData &dataObj, const String &path, bool &target);
 
 #### Read the string of text at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the string value is being read.
 
@@ -1747,7 +1760,7 @@ If the payload returned from the server is not string type,
 the function [FirebaseData object].stringData will return empty string (String object).
 
 ```C++
-bool getString(FirebaseData &dataObj, const String &path);
+bool getString(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1757,7 +1770,7 @@ bool getString(FirebaseData &dataObj, const String &path);
 
 #### Read the string of text at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the string value is being read.
 
@@ -1769,7 +1782,7 @@ If the type of payload returned from the server is not a string,
 the target String object's value will be empty.
 
 ```C++
-bool getString(FirebaseData &dataObj, const String &path, String &target);
+bool getString(FirebaseData &fbdo, const String &path, String &target);
 ```
 
 
@@ -1780,7 +1793,7 @@ bool getString(FirebaseData &dataObj, const String &path, String &target);
 
 The returned payload JSON string represents the child nodes and their value.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the JSON string value is being read.
 
@@ -1799,7 +1812,7 @@ the function [FirebaseData object].jsonObject will contain empty object.
 
 
 ```C++
-bool getJSON(FirebaseData &dataObj, const String &path);
+bool getJSON(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1811,7 +1824,7 @@ bool getJSON(FirebaseData &dataObj, const String &path);
 
 The returned payload JSON string represents the child nodes and their value.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the JSON string value is being read.
 
@@ -1823,7 +1836,7 @@ If the type of payload returned from the server is not JSON,
 the target FirebaseJson object will contain an empty object.
 
 ```C++
-bool getJSON(FirebaseData &dataObj, const String &path, FirebaseJson *target);
+bool getJSON(FirebaseData &fbdo, const String &path, FirebaseJson *target);
 ```
 
 
@@ -1836,7 +1849,7 @@ bool getJSON(FirebaseData &dataObj, const String &path, FirebaseJson *target);
 
 The returned payload JSON string represents the child nodes and their value.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the JSON string value is being read.
 
@@ -1880,7 +1893,7 @@ If the type of payload returned from server is not json,
 the function [FirebaseData object].jsonObject will contain empty object.
 
 ```C++
-bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &quer);
+bool getJSON(FirebaseData &fbdo, const String &path, QueryFilter &quer);
 ```
 
 
@@ -1893,7 +1906,7 @@ bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &quer);
 
 The returned payload JSON string represents the child nodes and their value.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the JSON string value is being read.
 
@@ -1905,7 +1918,7 @@ If the type of payload returned from the server is not JSON,
 the target FirebaseJson object will contain an empty object.
 
 ```C++
-bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &query, FirebaseJson *target);
+bool getJSON(FirebaseData &fbdo, const String &path, QueryFilter &query, FirebaseJson *target);
 ```
 
 
@@ -1918,7 +1931,7 @@ bool getJSON(FirebaseData &dataObj, const String &path, QueryFilter &query, Fire
 
 #### Read the array data at the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the array is being read.
 
@@ -1934,7 +1947,7 @@ If the type of payload returned from the server is not an array,
 the array element in [FirebaseData object].jsonArray will be empty.
 
 ```C++
-bool getArray(FirebaseData &dataObj, const String &path);
+bool getArray(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1942,7 +1955,7 @@ bool getArray(FirebaseData &dataObj, const String &path);
 
 #### Read the array data at the defined database path and assign data to the target.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the array is being read.
 
@@ -1955,7 +1968,7 @@ If the type of payload returned from the server is not an array,
 the target FirebaseJsonArray object will contain an empty array.
 
 ```C++
-bool getArray(FirebaseData &dataObj, const String &path, FirebaseJsonArray *target);
+bool getArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray *target);
 ```
 
 
@@ -1963,7 +1976,7 @@ bool getArray(FirebaseData &dataObj, const String &path, FirebaseJsonArray *targ
 
 #### Read the array data at the defined database path.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the array is being read.
 
@@ -2002,7 +2015,7 @@ the function [FirebaseData object].jsonArray will contain empty array.
 
 
 ```C++
-bool getArray(FirebaseData &dataObj, const String &path, QueryFilter &query);
+bool getArray(FirebaseData &fbdo, const String &path, QueryFilter &query);
 ```
 
 
@@ -2012,7 +2025,7 @@ bool getArray(FirebaseData &dataObj, const String &path, QueryFilter &query);
 
 #### Read the array data at the defined database path as above
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the array is being read.
 
@@ -2024,7 +2037,7 @@ If the type of payload returned from the server is not an array,
 the target FirebaseJsonArray object will contain an empty array.
 
 ```C++
-bool getArray(FirebaseData &dataObj, const String &path, QueryFilter &query, FirebaseJsonArray *target);
+bool getArray(FirebaseData &fbdo, const String &path, QueryFilter &query, FirebaseJsonArray *target);
 ```
 
 
@@ -2035,7 +2048,7 @@ bool getArray(FirebaseData &dataObj, const String &path, QueryFilter &query, Fir
 
 #### Read the blob (binary data) at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the binary data is being read.
 
@@ -2050,7 +2063,7 @@ If the payload returned from the server is not blob type,
 the function [FirebaseData object].blobData will return empty array.
 
 ```C++
-bool getBlob(FirebaseData &dataObj, const String &path);
+bool getBlob(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -2060,7 +2073,7 @@ bool getBlob(FirebaseData &dataObj, const String &path);
 
 #### Read the blob (binary data) at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path in which the binary data is being read.
 
@@ -2072,7 +2085,7 @@ If the type of payload returned from the server is not a blob,
 the target variable value will be an empty array.
 
 ```C++
-bool getBlob(FirebaseData &dataObj, const String &path, std::vector<uint8_t> &target);
+bool getBlob(FirebaseData &fbdo, const String &path, std::vector<uint8_t> &target);
 ```
 
 
@@ -2087,7 +2100,7 @@ The downloaded data will be decoded to binary and save to SD card/Flash memory, 
 
 please make sure that data at the defined database path is the file type.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`storageType`** - Type of storage to write file data, StorageType::SPIFS or StorageType::SD.
 
@@ -2098,7 +2111,7 @@ param **`fileName`** - File name included its path in SD card/Flash memory.
 return **`Boolean`** type status indicates the success of the operation.
 
 ```C++
-bool getFile(FirebaseData &dataObj, uint8_t storageType, const String &nodePath, const String &fileName);
+bool getFile(FirebaseData &fbdo, uint8_t storageType, const String &nodePath, const String &fileName);
 ```
 
 
@@ -2110,14 +2123,14 @@ bool getFile(FirebaseData &dataObj, uint8_t storageType, const String &nodePath,
 
 #### Delete all child nodes at the defined database path
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path to be deleted.
 
 return **`Boolean`** type status indicates the success of the operation.*
 
 ```C++
-bool deleteNode(FirebaseData &dataObj, const String &path);
+bool deleteNode(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -2127,7 +2140,7 @@ bool deleteNode(FirebaseData &dataObj, const String &path);
 
 #### Delete all child nodes at the defined database path if defined database path's ETag matched the ETag value
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path to be deleted.
 
@@ -2139,7 +2152,7 @@ If ETag at the defined database path does not match the provided ETag parameter,
 the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
 ```C++
-bool deleteNode(FirebaseData &dataObj, const String &path, const String &ETag);
+bool deleteNode(FirebaseData &fbdo, const String &path, const String &ETag);
 ```
 
 
@@ -2148,14 +2161,14 @@ bool deleteNode(FirebaseData &dataObj, const String &path, const String &ETag);
 
 #### Start monitoring the value changes at the defined path and its children
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`path`** - Database path to monitor.
 
 return **`Boolean`** type status indicates the success of the operation.*
 
 ```C++
-bool beginStream(FirebaseData &dataObj, const String &path);
+bool beginStream(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -2166,7 +2179,7 @@ bool beginStream(FirebaseData &dataObj, const String &path);
 
 #### Start subscribe to the value changes at the defined parent node path with multiple nodes paths parsing.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`parentPath`** - Database parent node path to subscribe.
 
@@ -2177,7 +2190,7 @@ param **`size`** - The size of string array of child nodes paths for parsing.
 return **`Boolean`** type status indicates the success of the operation.*
 
 ```C++
-bool beginMultiPathStream(FirebaseData &dataObj, const String &parentPath, const String *childPath, size_t size);
+bool beginMultiPathStream(FirebaseData &fbdo, const String &parentPath, const String *childPath, size_t size);
 ```
 
 
@@ -2192,7 +2205,7 @@ bool beginMultiPathStream(FirebaseData &dataObj, const String &parentPath, const
 Once beginStream was called e.g. in setup(), the readStream function
 should call inside the loop function.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 return **`Boolean`** type status indicates the success of the operation.
 
@@ -2201,7 +2214,7 @@ Using the same Firebase Data object for stream read/monitoring associated with r
 The stream will be resumed or reconnected automatically when calling readStream.
 
 ```C++
-bool readStream(FirebaseData &dataObj);
+bool readStream(FirebaseData &fbdo);
 ```
 
 
@@ -2214,12 +2227,12 @@ bool readStream(FirebaseData &dataObj);
 
 It can be restart again by calling beginStream.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 return **`Boolean`** type status indicates the success of the operation.
  
 ```C++
-bool endStream(FirebaseData &dataObj);
+bool endStream(FirebaseData &fbdo);
 ```
 
 
@@ -2232,7 +2245,7 @@ bool endStream(FirebaseData &dataObj);
 
 setStreamCallback should be called before Firebase.beginStream.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`dataAvailablecallback`** - Callback function that accepts streamData parameter.
 
@@ -2250,7 +2263,7 @@ Call [streamData object].xxxData will return the appropriate data type of
 the payload returned from the server.
 
 ```C++
-void setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL);
+void setStreamCallback(FirebaseData &fbdo, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL);
 ```
 
 
@@ -2265,7 +2278,7 @@ void setStreamCallback(FirebaseData &dataObj, StreamEventCallback dataAvailablec
 
 setMultiPathStreamCallback should be called before Firebase.beginMultiPathStream.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`multiPathDataCallback`** - a Callback function that accepts MultiPathStreamData parameter.
 
@@ -2283,7 +2296,7 @@ The properties [MultiPathStreamData object].value, [MultiPathStreamData object].
 These properties will store the result from calling the function [MultiPathStreamData object].get.
 
 ```C++
-void setMultiPathStreamCallback(FirebaseData &dataObj, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback = NULL);
+void setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback = NULL);
 ```
 
 
@@ -2296,10 +2309,10 @@ void setMultiPathStreamCallback(FirebaseData &dataObj, MultiPathStreamEventCallb
 
 #### Remove stream callback functions
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 ```C++
-void removeStreamCallback(FirebaseData &dataObj);
+void removeStreamCallback(FirebaseData &fbdo);
 ```
 
 
@@ -2310,10 +2323,10 @@ void removeStreamCallback(FirebaseData &dataObj);
 
 #### Remove multiple paths stream callback functions.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 ```C++
-void removeMultiPathStreamCallback(FirebaseData &dataObj);
+void removeMultiPathStreamCallback(FirebaseData &fbdo);
 ```
 
 
@@ -2325,7 +2338,7 @@ void removeMultiPathStreamCallback(FirebaseData &dataObj);
 
 #### Start the Firbase Error Queues Auto Run Process
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`callback`** - Callback function that accepts QueueInfo Object as parameter, optional.
 
@@ -2345,7 +2358,7 @@ The following functions are available from QueueInfo Object accepted by callback
 
 
 ```C++
-void beginAutoRunErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL);
+void beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback = NULL);
 ```
 
 
@@ -2354,11 +2367,11 @@ void beginAutoRunErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = 
 
 #### Stop the Firebase Error Queues Auto Run Process
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 
 ```C++
-void endAutoRunErrorQueue(FirebaseData &dataObj);
+void endAutoRunErrorQueue(FirebaseData &fbdo);
 ```
 
 
@@ -2366,11 +2379,11 @@ void endAutoRunErrorQueue(FirebaseData &dataObj);
 
 #### Clear all Firbase Error Queues in Error Queue collection
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 
 ```C++
-void clearErrorQueue(FirebaseData &dataObj);
+void clearErrorQueue(FirebaseData &fbdo);
 ```
 
 
@@ -2379,7 +2392,7 @@ void clearErrorQueue(FirebaseData &dataObj);
 
 #### Backup (download) database at defined database path to SD card/Flash memory
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`storageType`** - Type of storage to save file, StorageType::SPIFS or StorageType::SD.
 
@@ -2393,7 +2406,7 @@ return **`Boolean`** type status indicates the success of the operation.
 
 
 ```C++
-bool backup(FirebaseData &dataObj, uint8_t storageType, const String &nodePath, const String &fileName);
+bool backup(FirebaseData &fbdo, uint8_t storageType, const String &nodePath, const String &fileName);
 ```
 
 
@@ -2404,7 +2417,7 @@ bool backup(FirebaseData &dataObj, uint8_t storageType, const String &nodePath, 
 
 #### Restore database at defined path usin backup file saved on SD card/Flash memory
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`storageType`** - Type of storage to read file, StorageType::SPIFS or StorageType::SD.
 
@@ -2415,7 +2428,7 @@ param **`fileName`** - File name to read.
 return **`Boolean`** type status indicates the success of the operation.
 
 ```C++
-bool restore(FirebaseData &dataObj, uint8_t storageType const String &nodePath, const String &fileName);
+bool restore(FirebaseData &fbdo, uint8_t storageType const String &nodePath, const String &fileName);
 ```
 
 
@@ -2460,12 +2473,12 @@ void sdBegin(void);
 
 #### Set maximum Firebase's read/store retry operation (0 - 255) in case of network problems and buffer overflow
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`num`** - The maximum retry.
 
 ```C++
-void setMaxRetry(FirebaseData &dataObj, uint8_t num);
+void setMaxRetry(FirebaseData &fbdo, uint8_t num);
 ```
 
 
@@ -2476,12 +2489,12 @@ void setMaxRetry(FirebaseData &dataObj, uint8_t num);
 
 Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase Error Queues collection.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`num`** - The maximum Firebase Error Queues.
 
 ```C++
-void setMaxErrorQueue(FirebaseData &dataObj, uint8_t num);
+void setMaxErrorQueue(FirebaseData &fbdo, uint8_t num);
 ```
 
 
@@ -2492,14 +2505,14 @@ void setMaxErrorQueue(FirebaseData &dataObj, uint8_t num);
 
 Firebase read (get) operation will not be saved.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`filename`** - File name to be saved.
 
 param **`storageType`** - Type of storage to save file, StorageType::SPIFS or StorageType::SD.
     
 ```C++
-bool saveErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType);
+bool saveErrorQueue(FirebaseData &fbdo, const String &filename, uint8_t storageType);
 ```
    
 
@@ -2523,14 +2536,14 @@ bool deleteStorageFile(const String &filename, uint8_t storageType);
    
 #### Restore Firebase Error Queues from SPIFFS file
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`filename`** - Filename to be read and restore queues.
 
 param **`storageType`** - Type of storage to read file, StorageType::SPIFS or StorageType::SD.
     
 ```C++
-bool restoreErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t storageType);
+bool restoreErrorQueue(FirebaseData &fbdo, const String &filename, uint8_t storageType);
 ```
 
 
@@ -2539,7 +2552,7 @@ bool restoreErrorQueue(FirebaseData &dataObj, const String &filename, uint8_t st
 
 #### Determine the number of Firebase Error Queues stored in defined SPIFFS file
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`filename`** - Filename to be read and count for queues.
 
@@ -2549,7 +2562,7 @@ param **`storageType`** - Type of storage to read file, StorageType::SPIFS or St
 return **`Number`** (0-255) of queues store in defined SPIFFS file.
 
 ```C++
-uint8_t errorQueueCount(FirebaseData &dataObj, const String &filename, uint8_t storageType);
+uint8_t errorQueueCount(FirebaseData &fbdo, const String &filename, uint8_t storageType);
 ```
 
 
@@ -2559,12 +2572,12 @@ uint8_t errorQueueCount(FirebaseData &dataObj, const String &filename, uint8_t s
 
 #### Determine number of queues in Firebase Data object Firebase Error Queues collection
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 return **`Number`** (0-255) of queues in Firebase Data object queue collection.
 
 ```C++
-uint8_t errorQueueCount(FirebaseData &dataObj);
+uint8_t errorQueueCount(FirebaseData &fbdo);
 ```
 
 
@@ -2574,12 +2587,12 @@ uint8_t errorQueueCount(FirebaseData &dataObj);
 
 #### Determine whether the Firebase Error Queues collection was full or not
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 return **`Boolean`** type status indicates whether the  Firebase Error Queues collection was full or not.
 
 ```C++
-bool isErrorQueueFull(FirebaseData &dataObj);
+bool isErrorQueueFull(FirebaseData &fbdo);
 ```
 
 
@@ -2589,12 +2602,12 @@ bool isErrorQueueFull(FirebaseData &dataObj);
 
 #### Process all failed Firebase operation queue items when network is available
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`callback`** - Callback function that accepts QueueInfo parameter.
   
 ```C++
-void processErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL);
+void processErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback = NULL);
 ```
 
 
@@ -2606,12 +2619,12 @@ void processErrorQueue(FirebaseData &dataObj, QueueInfoCallback callback = NULL)
 
 Return 0 if there is no Firebase Error from the last operation.
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
     
 return **`Number`** of Queue ID.
 
 ```C++
-uint32_t getErrorQueueID(FirebaseData &dataObj);
+uint32_t getErrorQueueID(FirebaseData &fbdo);
 ```
 
 
@@ -2619,14 +2632,14 @@ uint32_t getErrorQueueID(FirebaseData &dataObj);
 
 #### Determine whether Firebase Error Queue currently exists is Error Queue collection or not
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`errorQueueID`** - The Firebase Error Queue ID get from getErrorQueueID.
     
 return - **`Boolean type`** status indicates the queue existence.
 
 ```C++
-bool isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQueueID);
+bool isErrorQueueExisted(FirebaseData &fbdo, uint32_t errorQueueID);
 ```
 
 
@@ -2636,14 +2649,14 @@ bool isErrorQueueExisted(FirebaseData &dataObj, uint32_t errorQueueID);
 
 #### Send Firebase Cloud Messaging to device with first registeration token which added by firebaseData.fcm.addDeviceToken
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`index`** - The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
     
 return - **`Boolean type`** status indicates the success of the operation.
 
 ```C++
-bool sendMessage(FirebaseData &dataObj, uint16_t index);
+bool sendMessage(FirebaseData &fbdo, uint16_t index);
 ```
 
 
@@ -2652,12 +2665,12 @@ bool sendMessage(FirebaseData &dataObj, uint16_t index);
 
 #### Send Firebase Cloud Messaging to all devices (multicast) which added by firebaseData.fcm.addDeviceToken
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
     
 return - **`Boolean type`** status indicates the success of the operation.
 
 ```C++
-bool broadcastMessage(FirebaseData &dataObj);
+bool broadcastMessage(FirebaseData &fbdo);
 ```
 
 
@@ -2665,12 +2678,12 @@ bool broadcastMessage(FirebaseData &dataObj);
 
 #### Send Firebase Cloud Messaging to devices that subscribed to a topic
 
-param **`dataObj`** - Firebase Data Object to hold data and instances.
+param **`fbdo`** - Firebase Data Object to hold data and instances.
     
 return - **`Boolean type`** status indicates the success of the operation.
 
 ```C++
-bool sendTopic(FirebaseData &dataObj);
+bool sendTopic(FirebaseData &fbdo);
 ```
 
 
@@ -2702,6 +2715,20 @@ return **`WiFi client instance`**.
 
 ```C++
 WiFiClient &getWiFiClient();
+```
+
+
+
+
+
+
+
+## Close the keep-alive connection of the internal WiFi client.
+
+#### This will release the memory used by internal WiFi client.
+
+```C++
+void stopWiFiClient();
 ```
 
 
@@ -2945,7 +2972,7 @@ FirebaseJsonData &jsonData();
 return **`FirebaseJsonData object `**pointer.
 
 ```C++
-FirebaseJsonData *jsonData();
+FirebaseJsonData *jsonDataPtr();
 ```
 
 
@@ -2962,6 +2989,16 @@ std::vector<uint8_t> blobData();
 ```
 
 
+
+
+
+ #### Return the file stream of server returned payload.
+
+ return the **`file stream`**.
+
+ ```C++
+File fileStream();
+```
 
 
 
@@ -3140,6 +3177,16 @@ String fileTransferError();
 #### Return the server's payload data
 
 return **`Payload string* (String object).`**
+
+The returned String will be empty when the response data is File, BLOB, JSON and JSON Array objects.
+
+For File data type, call fileStream to get the file stream.
+
+For BLOB data type, call blobData to get the dynamic array of unsigned 8-bit data.
+
+For JSON object data type, call jsonObject and jsonObjectPtr to get the object and its pointer.
+
+For JSON Array data type, call jsonArray and jsonArrayPtr to get the object and its pointer.
 
 ```C++
 String payload();

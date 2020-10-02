@@ -170,6 +170,11 @@ void loop()
       Serial.println();
     }
 
+    //Stop WiFi client will gain the free memory
+    //This requires more time for the SSL handshake process in the next connection
+    // due to the previous connection was completely stopped.
+    firebaseData1.stopWiFiClient();
+
     Serial.print("Free Heap: ");
     Serial.println(ESP.getFreeHeap());
     Serial.println();

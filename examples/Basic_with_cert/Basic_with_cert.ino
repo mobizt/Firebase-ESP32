@@ -25,7 +25,7 @@
 #define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
 
 
-const char root_ca[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
+const char cert[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
                       "MIIDujCCAqKgAwIBAgILBAAAAAABD4Ym5g0wDQYJKoZIhvcNAQEFBQAwTDEgMB4G\n"
                       "A1UECxMXR2xvYmFsU2lnbiBSb290IENBIC0gUjIxEzARBgNVBAoTCkdsb2JhbFNp\n"
                       "Z24xEzARBgNVBAMTCkdsb2JhbFNpZ24wHhcNMDYxMjE1MDgwMDAwWhcNMjExMjE1\n"
@@ -76,11 +76,11 @@ void setup()
   Serial.println();
 
   
-  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH, root_ca);
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH, cert);
 
   /*
   
-  //To set root CA cert file, base64 encoded format (rootCA.cer in data folder) in this example, use this plugin to upload
+  //To set certificate file, base64 encoded format (rootCA.cer in data folder) in this example, use this plugin to upload
   //https://github.com/me-no-dev/arduino-esp32fs-plugin
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH, "/rootCA.cer",StorageType::SPIFFS);
   
@@ -321,6 +321,49 @@ void printResult(FirebaseData &data)
                jsonData.typeNum == FirebaseJson::JSON_ARRAY)
         Serial.println(jsonData.stringValue);
     }
+  }
+  else if (data.dataType() == "blob")
+  {
+
+    Serial.println();
+
+    for (int i = 0; i < data.blobData().size(); i++)
+    {
+      if (i > 0 && i % 16 == 0)
+        Serial.println();
+
+      if (i < 16)
+        Serial.print("0");
+
+      Serial.print(data.blobData()[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.println();
+  }
+  else if (data.dataType() == "file")
+  {
+
+    Serial.println();
+
+    File file = firebaseData.fileStream();
+    int i = 0;
+
+    while (file.available())
+    {
+      if (i > 0 && i % 16 == 0)
+        Serial.println();
+
+      int v = file.read();
+
+      if (v < 16)
+        Serial.print("0");
+
+      Serial.print(v, HEX);
+      Serial.print(" ");
+      i++;
+    }
+    Serial.println();
+    file.close();
   }
   else
   {
