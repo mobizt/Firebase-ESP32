@@ -1,14 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.9
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.0
  * 
- * October 2, 2020
+ * October 3, 2020
  * 
  * Feature Added:
- * 
+ * - Add the chunk decoding support for payload.
+ * - Add support for FirebaseJsonArray construction from string.
  * 
  * Feature Fixed:
- * 
- * Slow http connection issue.
+ * - HTTP 204 No Content issue.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -138,6 +138,7 @@ struct server_response_data_t
   std::vector<uint8_t> blobData;
   bool isEvent = false;
   bool noEvent = false;
+  bool isChunkedEnc = false;
   bool hasEventData = false;
   bool noContent = false;
   bool eventPathChanged = false;
@@ -151,6 +152,7 @@ struct server_response_data_t
   std::string etag = "";
   std::string pushName = "";
   std::string fbError = "";
+  std::string transferEnc = "";
 };
 
 static const char fb_esp_pgm_str_1[] PROGMEM = "/";
@@ -320,7 +322,7 @@ static const char fb_esp_pgm_str_163[] PROGMEM = "{";
 static const char fb_esp_pgm_str_164[] PROGMEM = "Flash memory was not ready";
 static const char fb_esp_pgm_str_165[] PROGMEM = "array";
 static const char fb_esp_pgm_str_166[] PROGMEM = "\".sv\"";
-static const char fb_esp_pgm_str_167[] PROGMEM = "Transfer-Encoding";
+static const char fb_esp_pgm_str_167[] PROGMEM = "Transfer-Encoding: ";
 static const char fb_esp_pgm_str_168[] PROGMEM = "chunked";
 static const char fb_esp_pgm_str_169[] PROGMEM = "Maximum Redirection reached";
 static const char fb_esp_pgm_str_170[] PROGMEM = "?auth=";
@@ -539,8 +541,6 @@ private:
   void fcm_prepareHeader(std::string &header, size_t payloadSize);
 
   void fcm_preparePayload(std::string &msg, fb_esp_fcm_msg_type messageType);
-
-  bool handleFCMResponse(FirebaseData &fbdo);
 
   void clear();
 
@@ -2647,6 +2647,7 @@ private:
   char *getHeader(const char *buf, PGM_P beginH, PGM_P endH, int &beginPos, int endPos);
   bool stringCompare(const char *buf, int ofs, PGM_P beginH);
   int readLine(WiFiClient *stream, char *buf, int bufLen);
+  int readChunkedData(WiFiClient *stream, char *out, int &chunkState, int &chunkedSize, int &dataLen, int bufLen);
   bool handleResponse(FirebaseData &fbdo);
   bool clientAvailable(FirebaseData &fbdo, bool available);
   void closeFileHandle(FirebaseData &fbdo);
@@ -3067,6 +3068,7 @@ private:
   bool _isDataTimeout = false;
   bool _isStream = false;
   bool _isFCM = false;
+  bool _isRTDB = false;
   bool _streamStop = false;
   bool _reqNoContent = false;
 
@@ -3074,6 +3076,7 @@ private:
   bool _streamPathChanged = false;
   bool _dataAvailable = false;
   bool _keepAlive = false;
+  bool _isChunkedEnc = false;
   bool _httpConnected = false;
   bool _mismatchDataType = false;
   bool _pathNotExist = false;

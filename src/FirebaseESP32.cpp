@@ -1,14 +1,14 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.7.9
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.0
  * 
- * October 2, 2020
+ * October 3, 2020
  * 
  * Feature Added:
- * 
+ * - Add the chunk decoding support for payload.
+ * - Add support for FirebaseJsonArray construction from string.
  * 
  * Feature Fixed:
- * 
- * Slow http connection issue.
+ * - HTTP 204 No Content issue.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -1993,8 +1993,11 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
     if (path != fbdo._streamPath)
       fbdo._streamPathChanged = true;
 
-    if (!fbdo._isStream || fbdo._streamPathChanged)
+    if (!fbdo._isStream || fbdo._streamPathChanged || fbdo._isFCM)
       closeHTTP(fbdo);
+
+    if (fbdo._isFCM || !fbdo._isStream)
+      setSecure(fbdo);
 
     fbdo._streamPath.clear();
 
@@ -2003,6 +2006,10 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
         pgm_appendStr(fbdo._streamPath, fb_esp_pgm_str_1, true);
 
     fbdo._streamPath += path;
+
+    fbdo._isStream = true;
+    fbdo._isRTDB = false;
+    fbdo._isFCM = false;
   }
   else
   {
@@ -2010,6 +2017,11 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
     if (fbdo._isStream || fbdo._isFCM)
       closeHTTP(fbdo);
 
+    if (fbdo._isFCM || !fbdo._isRTDB)
+      setSecure(fbdo);
+
+    fbdo._isRTDB = true;
+    fbdo._isStream = false;
     fbdo._isFCM = false;
 
     fbdo._path.clear();
@@ -2026,8 +2038,6 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
 
     fbdo._isDataTimeout = false;
   }
-
-  setSecure(fbdo);
 
   fbdo.httpClient.begin(_host.c_str(), _port);
 
@@ -2488,6 +2498,18 @@ void FirebaseESP32::parseRespHeader(const char *buf, server_response_data_t &res
     if (pmax < beginPos)
       pmax = beginPos;
     beginPos = payloadPos;
+    tmp = getHeader(buf, fb_esp_pgm_str_167, fb_esp_pgm_str_21, beginPos, 0);
+    if (tmp)
+    {
+      response.transferEnc = tmp;
+      if (stringCompare(tmp, 0, fb_esp_pgm_str_168))
+        response.isChunkedEnc = true;
+      delS(tmp);
+    }
+
+    if (pmax < beginPos)
+      pmax = beginPos;
+    beginPos = payloadPos;
     tmp = getHeader(buf, fb_esp_pgm_str_150, fb_esp_pgm_str_21, beginPos, 0);
     if (tmp)
     {
@@ -2782,6 +2804,86 @@ int FirebaseESP32::readLine(WiFiClient *stream, char *buf, int bufLen)
   return idx;
 }
 
+int FirebaseESP32::readChunkedData(WiFiClient *stream, char *out, int &chunkState, int &chunkedSize, int &dataLen, int bufLen)
+{
+
+  char *tmp = nullptr;
+  char *buf = nullptr;
+  int p1 = 0;
+  int olen = 0;
+
+  if (chunkState == 0)
+  {
+    chunkState = 1;
+    chunkedSize = -1;
+    dataLen = 0;
+    buf = newS(bufLen);
+    int readLen = readLine(stream, buf, bufLen);
+    if (readLen)
+    {
+
+      tmp = getPGMString(fb_esp_pgm_str_79);
+      p1 = strpos(buf, tmp, 0);
+      delS(tmp);
+      if (p1 == -1)
+      {
+        tmp = getPGMString(fb_esp_pgm_str_21);
+        p1 = strpos(buf, tmp, 0);
+        delS(tmp);
+      }
+
+      if (p1 != -1)
+      {
+        tmp = newS(p1 + 1);
+        memcpy(tmp, buf, p1);
+        chunkedSize = hex2int(tmp);
+        delS(tmp);
+      }
+
+      //last chunk
+      if (chunkedSize < 1)
+        olen = -1;
+    }
+
+    delS(buf);
+  }
+  else
+  {
+
+    if (chunkedSize > -1)
+    {
+      buf = newS(bufLen);
+      int readLen = readLine(stream, buf, bufLen);
+
+      if (readLen > 0)
+      {
+        //chunk may contain trailing
+        if (dataLen + readLen - 2 < chunkedSize)
+        {
+          dataLen += readLen;
+          memcpy(out, buf, readLen);
+          olen = readLen;
+        }
+        else
+        {
+          memcpy(out, buf, chunkedSize - dataLen);
+          dataLen = chunkedSize;
+          chunkState = 0;
+          olen = chunkedSize - dataLen;
+        }
+      }
+      else
+      {
+        olen = -1;
+      }
+
+      delS(buf);
+    }
+  }
+
+  return olen;
+}
+
 bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 {
 
@@ -2811,63 +2913,69 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
   int hBufPos = 0;
   char *tmp = nullptr;
   char *header = nullptr;
-  int chunkSize = stream->available();
+  int chunkBufSize = stream->available();
   int hstate = 0;
   int pstate = 0;
   bool redirect = false;
+  int chunkedDataState = 0;
+  int chunkedDataSize = 0;
+  int chunkedDataLen = 0;
+  int defaultChunkSize = 512;
 
   fbdo._httpCode = FIREBASE_ERROR_HTTP_CODE_OK;
   fbdo._contentLength = -1;
   fbdo._pushName.clear();
   fbdo._mismatchDataType = false;
+  fbdo._isChunkedEnc = false;
+
+  if (fbdo._isFCM)
+    defaultChunkSize = 768;
 
   if (!fbdo._isStream)
   {
-    while (fbdo.httpClient.connected() && chunkSize <= 0)
+    while (fbdo.httpClient.connected() && chunkBufSize <= 0)
     {
       if (!reconnect(fbdo, dataTime))
         return false;
-
-      chunkSize = stream->available();
+      chunkBufSize = stream->available();
       delay(0);
     }
   }
 
   dataTime = millis();
 
-  if (chunkSize > 1)
+  if (chunkBufSize > 1)
   {
 
-    while (chunkSize > 0)
+    while (chunkBufSize > 0)
     {
-
       if (!reconnect(fbdo, dataTime))
         return false;
 
-      chunkSize = stream->available();
+      chunkBufSize = stream->available();
 
-      if (chunkSize <= 0)
+      if (chunkBufSize <= 0)
         break;
 
-      if (chunkSize > 0)
+      if (chunkBufSize > 0)
       {
         if (pChunkIdx == 0)
         {
-          if (chunkSize > 525)
-            chunkSize = 525; //512 + 13 (file header length) for later base64 decoding
+          if (chunkBufSize > defaultChunkSize + strlen_P(fb_esp_pgm_str_93))
+            chunkBufSize = defaultChunkSize + +strlen_P(fb_esp_pgm_str_93); //plus file header length for later base64 decoding
         }
         else
         {
-          if (chunkSize > 512)
-            chunkSize = 512;
+          if (chunkBufSize > defaultChunkSize)
+            chunkBufSize = defaultChunkSize;
         }
 
         if (chunkIdx == 0)
         {
           //the first chunk can be stream event data (no header) or http response header
-          header = newS(chunkSize);
+          header = newS(chunkBufSize);
           hstate = 1;
-          int readLen = readLine(stream, header, chunkSize);
+          int readLen = readLine(stream, header, chunkBufSize);
           int pos = 0;
 
           response.noEvent = !fbdo._isStream;
@@ -2905,8 +3013,8 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
           if (isHeader)
           {
             //read one line of next header field until until the empty header found
-            tmp = newS(chunkSize);
-            int readLen = readLine(stream, tmp, chunkSize);
+            tmp = newS(chunkBufSize);
+            int readLen = readLine(stream, tmp, chunkBufSize);
             bool hearderEnded = false;
 
             //check is it the end of http header (\n or \r\n)?
@@ -2949,6 +3057,8 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
               else
                 fbdo._keepAlive = false;
 
+              fbdo._isChunkedEnc = response.isChunkedEnc;
+
               if (fbdo._req_method == fb_esp_method::m_download)
                 fbdo._backupzFileSize = response.contentLen;
             }
@@ -2968,7 +3078,8 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
             if (!response.noContent)
             {
               pChunkIdx++;
-              pChunk = newS(chunkSize + 1);
+
+              pChunk = newS(chunkBufSize + 1);
 
               if (!payload || pstate == 0)
               {
@@ -2976,29 +3087,38 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
                 payload = newS(payloadLen + 1);
               }
 
-              //read the avilable data (<256 bytes per chunk)
-              int readLen = stream->readBytes(pChunk, chunkSize);
+              //read the avilable data
+              int readLen = 0;
 
-              if (pBufPos + readLen <= payloadLen)
-                memcpy(payload + pBufPos, pChunk, readLen);
+              //chunk transfer encoding?
+              if (response.isChunkedEnc)
+                readLen = readChunkedData(stream, pChunk, chunkedDataState, chunkedDataSize, chunkedDataLen, chunkBufSize);
               else
+                readLen = stream->readBytes(pChunk, chunkBufSize);
+
+              if (readLen > 0)
               {
-                //in case the accumulated payload size is bigger than the char array
-                //reallocate the char array
+                if (pBufPos + readLen <= payloadLen)
+                  memcpy(payload + pBufPos, pChunk, readLen);
+                else
+                {
+                  //in case the accumulated payload size is bigger than the char array
+                  //reallocate the char array
 
-                char *buf = newS(pBufPos + readLen + 1);
-                memcpy(buf, payload, pBufPos);
+                  char *buf = newS(pBufPos + readLen + 1);
+                  memcpy(buf, payload, pBufPos);
 
-                memcpy(buf + pBufPos, pChunk, readLen);
+                  memcpy(buf + pBufPos, pChunk, readLen);
 
-                payloadLen = pBufPos + readLen;
-                delS(payload);
-                payload = newS(payloadLen + 1);
-                memcpy(payload, buf, payloadLen);
-                delS(buf);
+                  payloadLen = pBufPos + readLen;
+                  delS(payload);
+                  payload = newS(payloadLen + 1);
+                  memcpy(payload, buf, payloadLen);
+                  delS(buf);
+                }
               }
 
-              if (!fbdo._isDataTimeout)
+              if (!fbdo._isDataTimeout && !fbdo._isFCM)
               {
 
                 //try to parse the payload for stream event data
@@ -3097,8 +3217,16 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
                 }
               }
 
-              pBufPos += readLen;
               delS(pChunk);
+              if (readLen < 0)
+                break;
+              pBufPos += readLen;
+            }
+            else
+            {
+              //read all the rest data
+              while (stream->available() > 0)
+                stream->read();
             }
           }
         }
@@ -3110,7 +3238,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
     if (hstate == 1)
       delS(header);
 
-    if (!fbdo._isDataTimeout)
+    if (!fbdo._isDataTimeout && !fbdo._isFCM)
     {
 
       //parse the payload
@@ -3287,10 +3415,13 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
       fbdo._dataMillis = millis();
       fbdo._isDataTimeout = false;
     }
-    else
+    else if (!fbdo._isFCM)
     {
       closeFileHandle(fbdo);
     }
+
+    if (fbdo._isFCM && payload)
+      fbdo._data = payload;
 
     if (pstate == 1)
       delS(payload);
@@ -3370,52 +3501,15 @@ void FirebaseESP32::handlePayload(FirebaseData &fbdo, server_response_data_t &re
   }
   else if (fbdo.resp_dataType == fb_esp_data_type::d_array)
   {
-
-    size_t start_pos = 0;
     if (response.isEvent)
-      start_pos = response.eventData.find('[');
+      fbdo._jsonArr.setJsonArrayData(response.eventData.c_str());
     else
-    {
-      char *c = getPGMString(fb_esp_pgm_str_182);
-      start_pos = strpos(payload, c, 0);
-      if (start_pos == -1)
-        start_pos = std::string::npos;
-      delS(c);
-    }
-
-    size_t end_pos = 0;
-    if (response.isEvent)
-      end_pos = response.eventData.find(']');
-    else
-    {
-      char *c = getPGMString(fb_esp_pgm_str_133);
-      end_pos = strpos(payload, c, 0);
-      if (end_pos == -1)
-        end_pos = std::string::npos;
-      delS(c);
-    }
-
-    if (start_pos != std::string::npos && end_pos != std::string::npos && start_pos != end_pos)
-    {
-      char *r = getPGMString(FirebaseJson_STR_21);
-      fbdo._json._rawbuf = r;
-      if (response.isEvent)
-        fbdo._json._rawbuf += response.eventData;
-      else
-        fbdo._json._rawbuf += payload;
-      delS(r);
-      r = getPGMString(FirebaseJson_STR_26);
-      fbdo._json.get(fbdo._jsonData, r);
-      delS(r);
-      fbdo._jsonData.getArray(fbdo._jsonArr);
-      fbdo._jsonData.stringValue.clear();
-      fbdo._json.clear();
-      String test;
-      fbdo._jsonArr.toString(test);
-      if (test != rawArr)
-        response.dataChanged = true;
-      test.clear();
-    }
+      fbdo._jsonArr.setJsonArrayData(payload);
+    String test;
+    fbdo._jsonArr.toString(test);
+    if (test != rawArr)
+      response.dataChanged = true;
+    test.clear();
   }
   else if (fbdo.resp_dataType != fb_esp_data_type::d_blob && fbdo.resp_dataType != fb_esp_data_type::d_file)
   {
@@ -3863,11 +3957,9 @@ void FirebaseESP32::prepareHeader(FirebaseData &fbdo, const std::string &host, f
   if (method == fb_esp_method::m_stream)
   {
     pgm_appendStr(header, fb_esp_pgm_str_22, true);
-    fbdo._isStream = true;
   }
   else
   {
-    fbdo._isStream = false;
     if (method == fb_esp_method::m_put || method == fb_esp_method::m_put_nocontent || method == fb_esp_method::m_set_priority || method == fb_esp_method::m_set_rules)
     {
       http_method = fb_esp_method::m_put;
@@ -3901,7 +3993,6 @@ void FirebaseESP32::prepareHeader(FirebaseData &fbdo, const std::string &host, f
     }
 
     pgm_appendStr(header, fb_esp_pgm_str_6);
-    fbdo._isStream = false;
   }
 
   if (path.length() > 0)
@@ -4360,7 +4451,7 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
   if (!reconnect(fbdo))
     return false;
 
-  if (!fbdo._isFCM || fbdo._isStream)
+  if (!fbdo._isFCM || fbdo._isStream || fbdo._isRTDB)
   {
     closeHTTP(fbdo);
     setSecure(fbdo);
@@ -6749,178 +6840,6 @@ void FCMObject::fcm_preparePayload(std::string &msg, fb_esp_fcm_msg_type message
   Firebase.pgm_appendStr(msg, fb_esp_pgm_str_127);
 }
 
-bool FCMObject::handleFCMResponse(FirebaseData &fbdo)
-{
-
-  if (!Firebase.reconnect(fbdo))
-    return false;
-
-  bool ret = false;
-  std::string res = "";
-
-  char c;
-  int p1, p2;
-  int r = -1;
-  fbdo._httpCode = -1000;
-  char *tmp = nullptr;
-
-  bool chunked = false;
-  int chunkSize = 0;
-  int chunkState = 0;
-  bool isPayload = false;
-  int dataLen = 0;
-
-  unsigned long dataTime = millis();
-  _sendResult.clear();
-
-  WiFiClient *stream = fbdo.httpClient.stream();
-
-  while (stream->connected() && !stream->available())
-  {
-    if (!Firebase.reconnect(fbdo))
-      return false;
-    delay(0);
-  }
-
-  dataTime = millis();
-  if (stream->connected() && stream->available() > 0)
-  {
-
-    while (stream->available() > 0)
-    {
-
-      if (!Firebase.reconnect(fbdo, dataTime))
-        return false;
-
-      r = fbdo.httpClient.stream()->read();
-
-      if (r < 0)
-        continue;
-      c = (char)r;
-
-      if ((c != '\r' && c != '\n') || isPayload)
-        res += c;
-
-      if (c == '\n')
-      {
-        if (!isPayload)
-        {
-          if (fbdo._httpCode == -1000)
-          {
-            tmp = Firebase.getPGMString(fb_esp_pgm_str_5);
-            p1 = res.find(tmp);
-            Firebase.delS(tmp);
-            if (p1 != std::string::npos)
-            {
-              tmp = Firebase.getPGMString(fb_esp_pgm_str_6);
-              p2 = res.find(tmp, p1 + strlen_P(fb_esp_pgm_str_5));
-              Firebase.delS(tmp);
-              if (p2 != std::string::npos)
-                fbdo._httpCode = atoi(res.substr(p1 + strlen_P(fb_esp_pgm_str_5), p2 - p1 - strlen_P(fb_esp_pgm_str_5)).c_str());
-            }
-          }
-          else if (!chunked)
-          {
-            tmp = Firebase.getPGMString(fb_esp_pgm_str_167);
-            p1 = res.find(tmp);
-            Firebase.delS(tmp);
-            if (p1 != std::string::npos)
-            {
-              tmp = Firebase.getPGMString(fb_esp_pgm_str_7);
-              p1 = res.find(tmp);
-              Firebase.delS(tmp);
-              if (p1 != std::string::npos)
-              {
-                p1++;
-                while (res[p1] == ' ')
-                  p1++;
-                tmp = Firebase.getPGMString(fb_esp_pgm_str_168);
-                chunked = strcmp(res.substr(p1, res.length() - p1).c_str(), tmp) == 0;
-                Firebase.delS(tmp);
-                chunkState = 0;
-              }
-            }
-          }
-        }
-        else
-        {
-          if (chunked)
-          {
-
-            if (chunkState == 0)
-            {
-              chunkState = 1;
-              chunkSize = -1;
-              dataLen = 0;
-              tmp = Firebase.getPGMString(fb_esp_pgm_str_79);
-              p1 = res.find(tmp);
-              Firebase.delS(tmp);
-              if (p1 == std::string::npos)
-              {
-                tmp = Firebase.getPGMString(fb_esp_pgm_str_21);
-                p1 = res.find(tmp);
-                Firebase.delS(tmp);
-              }
-
-              if (p1 != std::string::npos)
-                chunkSize = Firebase.hex2int(res.substr(0, p1).c_str());
-              //last chunk
-              if (chunkSize < 1)
-                chunked = false;
-            }
-            else
-            {
-              if (chunkSize > -1)
-              {
-                //chunk may contain trailing
-                if (dataLen + res.length() - 2 < chunkSize)
-                {
-                  dataLen += res.length();
-                  _sendResult += res.c_str();
-                }
-                else
-                {
-                  _sendResult += res.substr(0, chunkSize - dataLen).c_str();
-                  dataLen = chunkSize;
-                  chunkState = 0;
-                }
-              }
-            }
-          }
-        }
-
-        if (res.length() == 0)
-          isPayload = true;
-
-        res.clear();
-      }
-    }
-
-    if (_sendResult.length() == 0)
-      _sendResult = res;
-
-    if (!fbdo._httpCode)
-      fbdo._httpCode = FIREBASE_ERROR_HTTPC_ERROR_NO_HTTP_SERVER;
-
-    std::string().swap(res);
-
-    if (fbdo._httpCode == FIREBASE_ERROR_HTTPC_ERROR_READ_TIMEOUT)
-      return false;
-
-    return fbdo._httpCode == FIREBASE_ERROR_HTTP_CODE_OK;
-  }
-
-  std::string().swap(res);
-
-  if (fbdo._httpCode == -1000)
-  {
-    fbdo._httpCode = 0;
-    ret = true;
-  }
-
-  return ret;
-}
-
 bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 {
 
@@ -6940,8 +6859,20 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
   if (ret != 0)
     return false;
+  else
+    fbdo._httpConnected = true;
 
-  return handleFCMResponse(fbdo);
+  ret = Firebase.handleResponse(fbdo);
+  _sendResult.clear();
+
+  if (ret)
+    _sendResult = fbdo._data;
+  else
+    Firebase.closeHTTP(fbdo);
+
+  fbdo._data.clear();
+  fbdo._data = fbdo._data2;
+  return ret;
 }
 
 void FCMObject::clear()

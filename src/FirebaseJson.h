@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.3.7
+ * FirebaseJson, version 2.3.8
  * 
  * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using a relative path.
  * 
- * September 26, 2020
+ * October 3, 2020
  * 
  * Features
  * - None recursive operations
@@ -873,6 +873,16 @@ public:
 
    */
     FirebaseJsonArray &add(FirebaseJsonArray &arr);
+
+    /*
+    Set JSON array data (JSON array string) to FirebaseJsonArray object.
+    
+    @param data - The JSON array string.
+
+    @return instance of an object.
+
+   */
+    FirebaseJsonArray &setJsonArrayData(const String &data);
 
     /*
     Get the array value at the specified index from the FirebaseJsonArray object.

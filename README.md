@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.7.9
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.0
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -16,7 +16,10 @@ This library supports ESP32 MCU from Espressif. The following are platforms in w
 
 ## Important update needed
 
-The library v 3.7.6 to 3.7.8 have the slow connection issue and was fixed since v 3.7.9.   
+The library v 3.7.6 to 3.7.8 have the slow connection issue and was fixed since v 3.7.9.
+
+
+
 
 
 
