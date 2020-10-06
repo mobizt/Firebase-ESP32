@@ -40,7 +40,7 @@
 #include <FS.h>
 #include <SPIFFS.h>
 #include <SD.h>
-#include <WiFiClientSecure.h>
+#include "wcs/WiFiClientSecureESP32.h"
 #if __has_include(<WiFiEspAT.h>) || __has_include(<espduino.h>)
 #error WiFi UART bridge was not supported.
 #endif
@@ -143,12 +143,12 @@ public:
 
   std::unique_ptr<WiFiClient> create() override
   {
-    return std::unique_ptr<WiFiClient>(new WiFiClientSecure());
+    return std::unique_ptr<WiFiClient>(new WiFiClientSecureESP32());
   }
 
   bool verify(WiFiClient &client, const char *host) override
   {
-    WiFiClientSecure &wcs = static_cast<WiFiClientSecure &>(client);
+    WiFiClientSecureESP32 &wcs = static_cast<WiFiClientSecureESP32 &>(client);
     wcs.setCACert(_cacert);
     wcs.setCertificate(_clicert);
     wcs.setPrivateKey(_clikey);

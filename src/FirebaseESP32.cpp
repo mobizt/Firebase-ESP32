@@ -1,14 +1,12 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.0
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.1
  * 
- * October 3, 2020
+ * October 6, 2020
  * 
  * Feature Added:
- * - Add the chunk decoding support for payload.
- * - Add support for FirebaseJsonArray construction from string.
  * 
  * Feature Fixed:
- * - HTTP 204 No Content issue.
+ * - WiFiClientSecure unhandled exception caused by the WiFi.reconnect() function immediately called after close the SSL connection.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -103,6 +101,11 @@ void FirebaseESP32::setStreamTaskStackSize(size_t size)
     _streamTaskStackSize = size;
   else
     _streamTaskStackSize = 8192;
+}
+
+void FirebaseESP32::allowMultipleRequests(bool enable)
+{
+  _multipleRequests = enable;
 }
 
 void FirebaseESP32::reconnectWiFi(bool reconnect)
@@ -1917,7 +1920,8 @@ bool FirebaseESP32::beginStream(FirebaseData &fbdo, const String &path)
     return false;
 
   clearDataStatus(fbdo);
-  return handleResponse(fbdo);
+
+  return waitResponse(fbdo);
 }
 
 bool FirebaseESP32::beginMultiPathStream(FirebaseData &fbdo, const String &parentPath, const String *childPath, size_t size)
@@ -1935,7 +1939,7 @@ bool FirebaseESP32::beginMultiPathStream(FirebaseData &fbdo, const String &paren
     return false;
 
   clearDataStatus(fbdo);
-  return handleResponse(fbdo);
+  return waitResponse(fbdo);
 }
 
 bool FirebaseESP32::readStream(FirebaseData &fbdo)
@@ -2335,6 +2339,25 @@ char *FirebaseESP32::newS(char *p, size_t len, char *d)
   return p;
 }
 
+bool FirebaseESP32::waitIdle(FirebaseData &fbdo)
+{
+  if (_multipleRequests)
+    return true;
+
+  unsigned long wTime = millis();
+  while (processing)
+  {
+    if (millis() - wTime > 3000)
+    {
+      fbdo._httpCode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_INUSED;
+      return false;
+    }
+    delay(0);
+  }
+
+  return true;
+}
+
 bool FirebaseESP32::handleRequest(FirebaseData &fbdo, uint8_t storageType, const std::string &path, fb_esp_method method, fb_esp_data_type dataType, const std::string &payload, const std::string &priority, const std::string &etag)
 {
 
@@ -2358,6 +2381,9 @@ bool FirebaseESP32::handleRequest(FirebaseData &fbdo, uint8_t storageType, const
     return false;
   }
 
+  if (!waitIdle(fbdo))
+    return false;
+
   fbdo._qID = 0;
   fbdo._req_etag = etag;
   fbdo._priority = priority;
@@ -2380,7 +2406,7 @@ bool FirebaseESP32::handleRequest(FirebaseData &fbdo, uint8_t storageType, const
 
     if (method == fb_esp_method::m_stream)
     {
-      if (!handleResponse(fbdo))
+      if (!waitResponse(fbdo))
       {
         closeHTTP(fbdo);
         return false;
@@ -2390,7 +2416,7 @@ bool FirebaseESP32::handleRequest(FirebaseData &fbdo, uint8_t storageType, const
     {
       fbdo._req_method = method;
       fbdo._req_dataType = dataType;
-      if (!handleResponse(fbdo))
+      if (!waitResponse(fbdo))
       {
         closeHTTP(fbdo);
         return false;
@@ -2400,7 +2426,7 @@ bool FirebaseESP32::handleRequest(FirebaseData &fbdo, uint8_t storageType, const
     {
       fbdo._req_method = method;
       fbdo._req_dataType = dataType;
-      if (!handleResponse(fbdo))
+      if (!waitResponse(fbdo))
       {
         closeHTTP(fbdo);
         return false;
@@ -2409,7 +2435,7 @@ bool FirebaseESP32::handleRequest(FirebaseData &fbdo, uint8_t storageType, const
     else
     {
       fbdo._path = path;
-      if (!handleResponse(fbdo))
+      if (!waitResponse(fbdo))
       {
         closeHTTP(fbdo);
         return false;
@@ -2643,7 +2669,6 @@ void FirebaseESP32::parseRespPayload(const char *buf, server_response_data_t &re
     }
     else if (stringCompare(buf, payloadOfs, fb_esp_pgm_str_93))
     {
-
       response.dataType = fb_esp_data_type::d_file;
       if ((response.isEvent && response.hasEventData) || getOfs)
       {
@@ -2884,6 +2909,19 @@ int FirebaseESP32::readChunkedData(WiFiClient *stream, char *out, int &chunkStat
   return olen;
 }
 
+bool FirebaseESP32::waitResponse(FirebaseData &fbdo)
+{
+
+  if (processing && fbdo._isStream)
+    return true;
+
+  processing = true;
+  bool ret = handleResponse(fbdo);
+  processing = false;
+
+  return ret;
+}
+
 bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 {
 
@@ -2962,7 +3000,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
         if (pChunkIdx == 0)
         {
           if (chunkBufSize > defaultChunkSize + strlen_P(fb_esp_pgm_str_93))
-            chunkBufSize = defaultChunkSize + +strlen_P(fb_esp_pgm_str_93); //plus file header length for later base64 decoding
+            chunkBufSize = defaultChunkSize + strlen_P(fb_esp_pgm_str_93); //plus file header length for later base64 decoding
         }
         else
         {
@@ -3264,12 +3302,9 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 
         if (fbdo.resp_dataType == fb_esp_data_type::d_blob)
         {
-
-          std::vector<uint8_t>()
-              .swap(fbdo._blob);
+          std::vector<uint8_t>().swap(fbdo._blob);
           fbdo._data.clear();
           fbdo._data2.clear();
-
           base64_decode_string((const char *)payload + response.payloadOfs, fbdo._blob);
         }
 
@@ -3447,7 +3482,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
         std::string host, uri, auth;
         getUrlInfo(fbdo._redirectURL, host, uri, auth);
         if (sendRequest(fbdo, uri, fbdo._req_method, fbdo._req_dataType, "", fbdo._priority) == 0)
-          return handleResponse(fbdo);
+          return waitResponse(fbdo);
       }
     }
 
@@ -3589,6 +3624,9 @@ bool FirebaseESP32::handleStreamRead(FirebaseData &fbdo)
   if (millis() - STREAM_RECONNECT_INTERVAL > fbdo._streamReconnectMillis)
   {
     reconnectStream = (fbdo._isDataTimeout && !fbdo._httpConnected) || fbdo._isFCM;
+
+    if (fbdo._isDataTimeout)
+      closeHTTP(fbdo);
     fbdo._streamReconnectMillis = millis();
   }
   else
@@ -3612,6 +3650,8 @@ bool FirebaseESP32::handleStreamRead(FirebaseData &fbdo)
 
   if (reconnectStream)
   {
+    if (!waitIdle(fbdo))
+      return false;
 
     closeHTTP(fbdo);
 
@@ -3635,7 +3675,7 @@ bool FirebaseESP32::handleStreamRead(FirebaseData &fbdo)
     fbdo._isFCM = false;
   }
 
-  if (!handleResponse(fbdo))
+  if (!waitResponse(fbdo))
   {
     fbdo._isDataTimeout = true;
     if (!fbdo._httpConnected) //not connected in fcm shared object usage
@@ -3650,10 +3690,15 @@ bool FirebaseESP32::handleStreamRead(FirebaseData &fbdo)
 void FirebaseESP32::closeHTTP(FirebaseData &fbdo)
 {
   //close the socket and free the resources used by the mbedTLS data
-  if (fbdo.httpClient.stream())
+  if (fbdo._httpConnected)
   {
-    if (fbdo.httpClient.stream()->connected())
-      fbdo.httpClient.stream()->stop();
+    if (fbdo.httpClient.stream())
+    {
+      if (fbdo.httpClient.stream()->connected())
+        fbdo.httpClient.stream()->stop();
+    }
+
+    _lastReconnectMillis = millis();
   }
   fbdo._httpConnected = false;
 }
@@ -4113,7 +4158,6 @@ void FirebaseESP32::prepareHeader(FirebaseData &fbdo, const std::string &host, f
   header += host;
   pgm_appendStr(header, fb_esp_pgm_str_21);
   pgm_appendStr(header, fb_esp_pgm_str_32);
-  //pgm_appendStr(header, fb_esp_pgm_str_33);
 
   //Timestamp cannot use with ETag header, otherwise cases internal server error
   if (!sv && fbdo.queryFilter._orderBy.length() == 0 && dataType != fb_esp_data_type::d_timestamp && (method == fb_esp_method::m_delete || method == fb_esp_method::m_get || method == fb_esp_method::m_get_nocontent || method == fb_esp_method::m_put || method == fb_esp_method::m_put_nocontent || method == fb_esp_method::m_post))
@@ -4174,7 +4218,6 @@ void FirebaseESP32::setSecure(FirebaseData &fbdo)
 {
   if (fbdo.httpClient._certType == -1)
   {
-
     if (_caCertFile.length() == 0)
     {
       if (_caCert)
@@ -4243,9 +4286,8 @@ bool FirebaseESP32::sdBegin(void)
 
 bool FirebaseESP32::reconnect(FirebaseData &fbdo, unsigned long dataTime)
 {
-  bool flag = reconnect();
-  if (!flag)
-    fbdo._httpCode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
+
+  bool status = WiFi.status() == WL_CONNECTED;
 
   if (dataTime > 0)
   {
@@ -4263,30 +4305,26 @@ bool FirebaseESP32::reconnect(FirebaseData &fbdo, unsigned long dataTime)
     }
   }
 
-  return flag;
-}
-
-bool FirebaseESP32::reconnect()
-{
-  if (_reconnectWiFi && WiFi.status() != WL_CONNECTED)
+  if (!status)
   {
-    if (_lastReconnectMillis == 0)
+    if (fbdo._httpConnected)
+      closeHTTP(fbdo);
+
+    fbdo._httpCode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
+
+    if (_reconnectWiFi)
     {
-      WiFi.reconnect();
-      _lastReconnectMillis = millis();
+      if (millis() - _lastReconnectMillis > _reconnectTimeout && !fbdo._httpConnected)
+      {
+        WiFi.reconnect();
+        _lastReconnectMillis = millis();
+      }
     }
-    if (WiFi.status() != WL_CONNECTED)
-    {
-      if (millis() - _lastReconnectMillis > _reconnectTimeout)
-        _lastReconnectMillis = 0;
-      return false;
-    }
-    else
-    {
-      _lastReconnectMillis = 0;
-    }
+
+    status = WiFi.status() == WL_CONNECTED;
   }
-  return WiFi.status() == WL_CONNECTED;
+
+  return status;
 }
 
 void FirebaseESP32::errorToString(int httpCode, std::string &buff)
@@ -4421,8 +4459,13 @@ void FirebaseESP32::errorToString(int httpCode, std::string &buff)
   }
 }
 
-bool FirebaseESP32::sendFCMMessage(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
+bool FirebaseESP32::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 {
+  if (!Firebase.reconnect(fbdo))
+    return false;
+
+  if (!Firebase.waitIdle(fbdo))
+    return false;
 
   if (fbdo.fcm._server_key.length() == 0)
   {
@@ -4448,9 +4491,6 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
     return false;
   }
 
-  if (!reconnect(fbdo))
-    return false;
-
   if (!fbdo._isFCM || fbdo._isStream || fbdo._isRTDB)
   {
     closeHTTP(fbdo);
@@ -4462,30 +4502,29 @@ bool FirebaseESP32::sendFCMMessage(FirebaseData &fbdo, fb_esp_fcm_msg_type messa
   fbdo._isFCM = true;
 
   return fbdo.fcm.fcm_send(fbdo, messageType);
-  ;
 }
 
 bool FirebaseESP32::sendMessage(FirebaseData &fbdo, uint16_t index)
 {
   fbdo.fcm._index = index;
-  return sendFCMMessage(fbdo, fb_esp_fcm_msg_type::msg_single);
+  return handleFCMRequest(fbdo, fb_esp_fcm_msg_type::msg_single);
 }
 
 bool FirebaseESP32::broadcastMessage(FirebaseData &fbdo)
 {
-  return sendFCMMessage(fbdo, fb_esp_fcm_msg_type::msg_multicast);
+  return handleFCMRequest(fbdo, fb_esp_fcm_msg_type::msg_multicast);
 }
 
 bool FirebaseESP32::sendTopic(FirebaseData &fbdo)
 {
-  return sendFCMMessage(fbdo, fb_esp_fcm_msg_type::msg_topic);
+  return handleFCMRequest(fbdo, fb_esp_fcm_msg_type::msg_topic);
 }
 
 void FirebaseESP32::setStreamCallback(FirebaseData &fbdo, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback)
 {
   removeMultiPathStreamCallback(fbdo);
 
-  int index = fbdo._index;
+  int index = fbdo._idx;
   std::string taskName;
   pgm_appendStr(taskName, fb_esp_pgm_str_72, true);
   char *idx = nullptr;
@@ -4515,7 +4554,7 @@ void FirebaseESP32::setStreamCallback(FirebaseData &fbdo, StreamEventCallback da
   taskName += idx;
   delS(idx);
 
-  fbdo._index = index;
+  fbdo._idx = index;
   objIdx = index;
   fbdo._dataAvailableCallback = dataAvailablecallback;
   fbdo._timeoutCallback = timeoutCallback;
@@ -4533,7 +4572,7 @@ void FirebaseESP32::setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStre
 {
   removeStreamCallback(fbdo);
 
-  int index = fbdo._index;
+  int index = fbdo._idx;
   std::string taskName;
   pgm_appendStr(taskName, fb_esp_pgm_str_72, true);
   char *idx = nullptr;
@@ -4563,7 +4602,7 @@ void FirebaseESP32::setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStre
   taskName += idx;
   delS(idx);
 
-  fbdo._index = index;
+  fbdo._idx = index;
   objIdx = index;
   fbdo._multiPathDataCallback = multiPathDataCallback;
   fbdo._timeoutCallback = timeoutCallback;
@@ -4594,52 +4633,56 @@ void FirebaseESP32::runStreamTask(FirebaseData &fbdo, const std::string &taskNam
         if (fbso[id].get().streamTimeout() && fbso[id].get()._timeoutCallback)
           fbso[id].get()._timeoutCallback(true);
 
-        if (res && fbso[id].get().streamAvailable() && (fbso[id].get()._dataAvailableCallback || fbso[id].get()._multiPathDataCallback))
+        if (Firebase.reconnect(fbso[id].get()))
         {
-          if (fbso[id].get()._dataAvailableCallback)
+
+          if (res && fbso[id].get().streamAvailable() && (fbso[id].get()._dataAvailableCallback || fbso[id].get()._multiPathDataCallback))
           {
-            StreamData s;
-            s._json = &fbso[id].get()._json;
-            s._jsonArr = &fbso[id].get()._jsonArr;
-            s._jsonData = &fbso[id].get()._jsonData;
-            s._streamPath = fbso[id].get()._streamPath;
-            s._data = fbso[id].get()._data;
-            s._path = fbso[id].get()._path;
-
-            s._dataType = fbso[id].get().resp_dataType;
-            s._dataTypeStr = fbso[id].get().getDataType(s._dataType);
-            s._eventTypeStr = fbso[id].get()._eventType;
-            s._idx = id;
-
-            if (fbso[id].get().resp_dataType == fb_esp_data_type::d_blob)
+            if (fbso[id].get()._dataAvailableCallback)
             {
-              s._blob = fbso[id].get()._blob;
-              //Free ram in case of callback data was used
-              fbso[id].get()._blob.clear();
+              StreamData s;
+              s._json = &fbso[id].get()._json;
+              s._jsonArr = &fbso[id].get()._jsonArr;
+              s._jsonData = &fbso[id].get()._jsonData;
+              s._streamPath = fbso[id].get()._streamPath;
+              s._data = fbso[id].get()._data;
+              s._path = fbso[id].get()._path;
+
+              s._dataType = fbso[id].get().resp_dataType;
+              s._dataTypeStr = fbso[id].get().getDataType(s._dataType);
+              s._eventTypeStr = fbso[id].get()._eventType;
+              s._idx = id;
+
+              if (fbso[id].get().resp_dataType == fb_esp_data_type::d_blob)
+              {
+                s._blob = fbso[id].get()._blob;
+                //Free ram in case of callback data was used
+                fbso[id].get()._blob.clear();
+              }
+              fbso[id].get()._dataAvailableCallback(s);
+              s.empty();
             }
-            fbso[id].get()._dataAvailableCallback(s);
-            s.empty();
-          }
-          else if (fbso[id].get()._multiPathDataCallback)
-          {
-
-            MultiPathStreamData mdata;
-            mdata._type = fbso[id].get().resp_dataType;
-            mdata._path = fbso[id].get()._path;
-            mdata._typeStr = fbso[id].get().getDataType(mdata._type);
-
-            if (mdata._type == fb_esp_data_type::d_json)
-              mdata._json = &fbso[id].get()._json;
-            else
+            else if (fbso[id].get()._multiPathDataCallback)
             {
-              if (mdata._type == fb_esp_data_type::d_string)
-                mdata._data = fbso[id].get()._data.substr(1, fbso[id].get()._data.length() - 2).c_str();
+
+              MultiPathStreamData mdata;
+              mdata._type = fbso[id].get().resp_dataType;
+              mdata._path = fbso[id].get()._path;
+              mdata._typeStr = fbso[id].get().getDataType(mdata._type);
+
+              if (mdata._type == fb_esp_data_type::d_json)
+                mdata._json = &fbso[id].get()._json;
               else
-                mdata._data = fbso[id].get()._data;
-            }
+              {
+                if (mdata._type == fb_esp_data_type::d_string)
+                  mdata._data = fbso[id].get()._data.substr(1, fbso[id].get()._data.length() - 2).c_str();
+                else
+                  mdata._data = fbso[id].get()._data;
+              }
 
-            fbso[id].get()._multiPathDataCallback(mdata);
-            mdata.empty();
+              fbso[id].get()._multiPathDataCallback(mdata);
+              mdata.empty();
+            }
           }
         }
       }
@@ -4657,7 +4700,7 @@ void FirebaseESP32::runStreamTask(FirebaseData &fbdo, const std::string &taskNam
 
 void FirebaseESP32::removeStreamCallback(FirebaseData &fbdo)
 {
-  int index = fbdo._index;
+  int index = fbdo._idx;
 
   if (index != -1)
   {
@@ -4669,7 +4712,7 @@ void FirebaseESP32::removeStreamCallback(FirebaseData &fbdo)
     }
 
     if (!hasOherHandles)
-      fbdo._index = -1;
+      fbdo._idx = -1;
 
     if (fbdo._handle)
       vTaskDelete(fbdo._handle);
@@ -4686,7 +4729,7 @@ void FirebaseESP32::removeStreamCallback(FirebaseData &fbdo)
 
 void FirebaseESP32::removeMultiPathStreamCallback(FirebaseData &fbdo)
 {
-  int index = fbdo._index;
+  int index = fbdo._idx;
 
   if (index != -1)
   {
@@ -4698,7 +4741,7 @@ void FirebaseESP32::removeMultiPathStreamCallback(FirebaseData &fbdo)
     }
 
     if (!hasOherHandles)
-      fbdo._index = -1;
+      fbdo._idx = -1;
 
     if (fbdo._handle)
       vTaskDelete(fbdo._handle);
@@ -4716,7 +4759,7 @@ void FirebaseESP32::removeMultiPathStreamCallback(FirebaseData &fbdo)
 void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback)
 {
 
-  int index = fbdo._index;
+  int index = fbdo._idx;
 
   std::string taskName;
   pgm_appendStr(taskName, fb_esp_pgm_str_72);
@@ -4745,7 +4788,7 @@ void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback
   else
     fbdo._queueInfoCallback = NULL;
 
-  fbdo._index = index;
+  fbdo._idx = index;
   errorQueueIndex = index;
 
   //object created
@@ -4778,7 +4821,7 @@ void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback
 
 void FirebaseESP32::endAutoRunErrorQueue(FirebaseData &fbdo)
 {
-  int index = fbdo._index;
+  int index = fbdo._idx;
 
   if (index != -1)
   {
@@ -4790,7 +4833,7 @@ void FirebaseESP32::endAutoRunErrorQueue(FirebaseData &fbdo)
     }
 
     if (!hasOherHandles)
-      fbdo._index = -1;
+      fbdo._idx = -1;
 
     if (fbdo._q_handle)
       vTaskDelete(fbdo._q_handle);
@@ -5675,7 +5718,7 @@ uint32_t FirebaseESP32::hex2int(const char *hex)
 
 FirebaseData::FirebaseData()
 {
-  _index = -1;
+  _idx = -1;
 }
 
 FirebaseData::~FirebaseData()
@@ -6116,6 +6159,8 @@ bool FirebaseData::streamTimeout()
   if (millis() - STREAM_ERROR_NOTIFIED_INTERVAL > _streamTimeoutMillis || _streamTimeoutMillis == 0)
   {
     _streamTimeoutMillis = millis();
+    if (_isDataTimeout)
+      Firebase.closeHTTP(*this);
     return _isDataTimeout;
   }
   return false;
@@ -6842,15 +6887,11 @@ void FCMObject::fcm_preparePayload(std::string &msg, fb_esp_fcm_msg_type message
 
 bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 {
-
   std::string msg = "";
   std::string header = "";
 
   fcm_preparePayload(msg, messageType);
   fcm_prepareHeader(header, msg.length());
-
-  if (!Firebase.reconnect(fbdo))
-    return false;
 
   header += msg;
   std::string().swap(msg);
@@ -6858,11 +6899,14 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
   std::string().swap(header);
 
   if (ret != 0)
+  {
+    Firebase.closeHTTP(fbdo);
     return false;
+  }
   else
     fbdo._httpConnected = true;
 
-  ret = Firebase.handleResponse(fbdo);
+  ret = Firebase.waitResponse(fbdo);
   _sendResult.clear();
 
   if (ret)

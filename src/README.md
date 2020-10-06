@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.0
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.1
 
 
 ## Global functions
@@ -56,6 +56,23 @@ The stream task will be created only when the user sets the stream callbacks.
 ```C++
   void setStreamTaskStackSize(size_t size);
 ```
+
+
+
+
+
+
+
+#### Enable multiple HTTP requests at a time.
+    
+param **`enable`** - The boolean value to enable/disable.
+
+The multiple HTTP requessts at a time is disable by default to prevent the large memory used in multiple requests.
+
+```C++
+  void allowMultipleRequests(bool enable);
+```
+
 
 
 
@@ -2723,9 +2740,11 @@ WiFiClient &getWiFiClient();
 
 
 
-## Close the keep-alive connection of the internal WiFi client.
+#### Close the keep-alive connection of the internal WiFi client.
 
-#### This will release the memory used by internal WiFi client.
+This will release the memory used by internal WiFi client.
+
+The next server connection will take time (a second) due to SSL/TLS handshaking
 
 ```C++
 void stopWiFiClient();

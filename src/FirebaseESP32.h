@@ -1,14 +1,12 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.0
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.1
  * 
- * October 3, 2020
+ * October 6, 2020
  * 
  * Feature Added:
- * - Add the chunk decoding support for payload.
- * - Add support for FirebaseJsonArray construction from string.
  * 
  * Feature Fixed:
- * - HTTP 204 No Content issue.
+ * - WiFiClientSecure unhandled exception caused by the WiFi.reconnect() function immediately called after close the SSL connection.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -78,7 +76,6 @@ struct StorageType
   static const uint8_t SPIFFS = 0;
   static const uint8_t SD = 1;
 };
-
 
 enum fb_esp_fcm_msg_type
 {
@@ -352,10 +349,13 @@ class QueueInfo;
 class FirebaseESP32;
 class FCMObject;
 
+static bool processing __attribute__((used)) = false;
 static std::vector<std::reference_wrapper<FirebaseData>> fbso;
 static uint8_t dataObjIdx __attribute__((used)) = 0;
 static uint8_t objIdx __attribute__((used)) = 0;
 static uint8_t errorQueueIndex __attribute__((used)) = 0;
+
+static std::vector<int> respQueueIdx;
 
 class StreamData
 {
@@ -707,6 +707,16 @@ public:
 
   */
   void setStreamTaskStackSize(size_t size);
+
+  /*
+    Enable multiple HTTP requests at a time.
+    
+    @param enable - The boolean value to enable/disable.
+
+    The multiple HTTP requessts at a time is disable by default to prevent the large memory used in multiple requests.
+
+  */
+  void allowMultipleRequests(bool enable);
 
   /*
     Reconnect WiFi if lost connection.
@@ -2639,6 +2649,7 @@ private:
   void getUrlInfo(const std::string url, std::string &host, std::string &uri, std::string &auth);
   bool processRequest(FirebaseData &fbdo, fb_esp_method method, fb_esp_data_type dataType, const std::string &path, const char *buff, bool queue, const std::string &priority, const std::string &etag = "");
   bool processRequestFile(FirebaseData &fbdo, uint8_t storageType, fb_esp_method method, const std::string &path, const std::string &fileName, bool queue, const std::string &priority, const std::string &etag = "");
+  bool waitIdle(FirebaseData &fbdo);
   bool handleRequest(FirebaseData &fbdo, uint8_t storageType, const std::string &path, fb_esp_method method, fb_esp_data_type dataType, const std::string &payload, const std::string &priority, const std::string &etag);
   bool handleStreamRequest(FirebaseData &fbdo, const std::string &path);
   bool handleStreamRead(FirebaseData &fbdo);
@@ -2648,12 +2659,12 @@ private:
   bool stringCompare(const char *buf, int ofs, PGM_P beginH);
   int readLine(WiFiClient *stream, char *buf, int bufLen);
   int readChunkedData(WiFiClient *stream, char *out, int &chunkState, int &chunkedSize, int &dataLen, int bufLen);
+  bool waitResponse(FirebaseData &fbdo);
   bool handleResponse(FirebaseData &fbdo);
   bool clientAvailable(FirebaseData &fbdo, bool available);
   void closeFileHandle(FirebaseData &fbdo);
   void handlePayload(FirebaseData &fbdo, server_response_data_t &response, char *payload);
   bool reconnect(FirebaseData &fbdo, unsigned long dataTime = 0);
-  bool reconnect();
   void delS(char *p);
   char *newS(size_t len);
   char *newS(char *p, size_t len);
@@ -2690,7 +2701,7 @@ private:
   bool base64_decode_SPIFFS(File &file, const char *src, size_t len);
   uint32_t hex2int(const char *hex);
 
-  bool sendFCMMessage(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
+  bool handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
 
   std::string _host = "";
   std::string _auth = "";
@@ -2704,6 +2715,7 @@ private:
   bool _sdOk = false;
   bool _sdInUse = false;
   bool _sdConfigSet = false;
+  bool _multipleRequests = false;
   unsigned long _lastReconnectMillis = 0;
   uint16_t _reconnectTimeout = WIFI_RECONNECT_TIMEOUT;
   uint8_t _sck, _miso, _mosi, _ss;
@@ -3062,7 +3074,7 @@ private:
   FirebaseESP32::QueueInfoCallback _queueInfoCallback = NULL;
   TaskHandle_t _handle = NULL;
   TaskHandle_t _q_handle = NULL;
-  int _index = -1;
+  int _idx = -1;
   uint8_t _dataTypeNum = 0;
 
   bool _isDataTimeout = false;
