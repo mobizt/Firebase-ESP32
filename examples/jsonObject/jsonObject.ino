@@ -22,7 +22,6 @@
 #define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
 #define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
 
-
 //Define Firebase Data object
 FirebaseData firebaseData;
 
@@ -107,7 +106,6 @@ void setup()
         Serial.print("VALUE: ");
         if (firebaseData.dataType() == "json")
         {
-            jsonStr = firebaseData.jsonString();
             printResult(firebaseData);
         }
 
@@ -125,9 +123,10 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println("Try to parse return data and get value..");
 
-    json1.setJsonData(jsonStr);
+    json1 = firebaseData.jsonObject();
 
     json1.get(jsonObj, "This/is/[3]/my");
+
     Serial.println("This/is/[3]/my: " + jsonObj.stringValue);
 
     json1.get(jsonObj, "Hi/myDouble");
@@ -218,6 +217,49 @@ void printResult(FirebaseData &data)
                      jsonData.typeNum == FirebaseJson::JSON_ARRAY)
                 Serial.println(jsonData.stringValue);
         }
+    }
+    else if (data.dataType() == "blob")
+    {
+
+        Serial.println();
+
+        for (int i = 0; i < data.blobData().size(); i++)
+        {
+            if (i > 0 && i % 16 == 0)
+                Serial.println();
+
+            if (i < 16)
+                Serial.print("0");
+
+            Serial.print(data.blobData()[i], HEX);
+            Serial.print(" ");
+        }
+        Serial.println();
+    }
+    else if (data.dataType() == "file")
+    {
+
+        Serial.println();
+
+        File file = data.fileStream();
+        int i = 0;
+
+        while (file.available())
+        {
+            if (i > 0 && i % 16 == 0)
+                Serial.println();
+
+            int v = file.read();
+
+            if (v < 16)
+                Serial.print("0");
+
+            Serial.print(v, HEX);
+            Serial.print(" ");
+            i++;
+        }
+        Serial.println();
+        file.close();
     }
     else
     {

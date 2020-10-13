@@ -25,6 +25,8 @@ FirebaseJsonData    KEYWORD1
 
 begin   KEYWORD2
 reconnectWiFi   KEYWORD2
+setFloatDigits  KEYWORD2
+setDoubleDigits KEYWORD2
 setReadTimeout  KEYWORD2
 setwriteSizeLimit   KEYWORD2
 getShallowData  KEYWORD2

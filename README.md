@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.1
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.2
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -11,15 +11,6 @@ This library supports ESP32 MCU from Espressif. The following are platforms in w
 * [Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000 and Arduino UNO WiFi Rev.2](https://github.com/mobizt/Firebase-Arduino-WiFiNINA)
 
 * [Arduino WiFi Shield 101 and Arduino MKR1000 WIFI](https://github.com/mobizt/Firebase-Arduino-WiFi101)
-
-
-
-## Important update needed
-
-The library v 3.7.6 to 3.7.8 have the slow connection issue and was fixed since v 3.7.9.
-
-
-
 
 
 

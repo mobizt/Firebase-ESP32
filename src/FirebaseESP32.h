@@ -1,12 +1,11 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.1
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.2
  * 
- * October 6, 2020
+ * October 13, 2020
  * 
- * Feature Added:
- * 
- * Feature Fixed:
- * - WiFiClientSecure unhandled exception caused by the WiFi.reconnect() function immediately called after close the SSL connection.
+ *   Updates:
+ * - Decimal places config for float and double stored data
+ * - Bugs fixed
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -56,20 +55,12 @@
 #define KEEP_ALIVE_TIMEOUT 45000
 #define STREAM_ERROR_NOTIFIED_INTERVAL 3000
 #define STREAM_RECONNECT_INTERVAL 1000
+#define SD_CS_PIN 15
 #define MAX_REDIRECT 5
 #define WIFI_RECONNECT_TIMEOUT 10000
 #define STEAM_STACK_SIZE 8192
 #define QUEUE_TASK_STACK_SIZE 8192
-
-#define FIREBASE_ERROR_DATA_TYPE_MISMATCH -14
-#define FIREBASE_ERROR_PATH_NOT_EXIST -15
-#define FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_INUSED -16
-#define FIREBASE_ERROR_HTTPC_NO_FCM_TOPIC_PROVIDED -17
-#define FIREBASE_ERROR_HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED -18
-#define FIREBASE_ERROR_HTTPC_NO_FCM_SERVER_KEY_PROVIDED -19
-#define FIREBASE_ERROR_HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED -20
-#define FIREBASE_ERROR_HTTPC_MAX_REDIRECT_REACHED -21
-#define FIREBASE_ERROR_EXPECTED_JSON_DATA -22
+#define MAX_BLOB_PAYLOAD_SIZE 1024
 
 struct StorageType
 {
@@ -183,7 +174,7 @@ static const char fb_esp_pgm_str_28[] PROGMEM = "&download=";
 static const char fb_esp_pgm_str_29[] PROGMEM = "&print=silent";
 static const char fb_esp_pgm_str_30[] PROGMEM = " HTTP/1.1\r\n";
 static const char fb_esp_pgm_str_31[] PROGMEM = "Host: ";
-static const char fb_esp_pgm_str_32[] PROGMEM = "User-Agent: ESP32\r\n";
+static const char fb_esp_pgm_str_32[] PROGMEM = "User-Agent: ESP\r\n";
 static const char fb_esp_pgm_str_33[] PROGMEM = "X-Firebase-Decoding: 1\r\n";
 static const char fb_esp_pgm_str_34[] PROGMEM = "Connection: close\r\n";
 static const char fb_esp_pgm_str_35[] PROGMEM = "Accept: text/event-stream\r\n";
@@ -224,7 +215,7 @@ static const char fb_esp_pgm_str_69[] PROGMEM = "read Timeout";
 static const char fb_esp_pgm_str_70[] PROGMEM = "data type mismatch";
 static const char fb_esp_pgm_str_71[] PROGMEM = "path not exist";
 static const char fb_esp_pgm_str_72[] PROGMEM = "task";
-static const char fb_esp_pgm_str_73[] PROGMEM = "/esp.32";
+static const char fb_esp_pgm_str_73[] PROGMEM = "/esp.x";
 static const char fb_esp_pgm_str_74[] PROGMEM = "json";
 static const char fb_esp_pgm_str_75[] PROGMEM = "string";
 static const char fb_esp_pgm_str_76[] PROGMEM = "float";
@@ -339,6 +330,11 @@ static const char fb_esp_pgm_str_183[] PROGMEM = "file";
 static const char fb_esp_pgm_str_184[] PROGMEM = "/fb_bin_0.tmp";
 static const char fb_esp_pgm_str_185[] PROGMEM = "The backup data should be the JSON object";
 static const char fb_esp_pgm_str_186[] PROGMEM = "object";
+static const char fb_esp_pgm_str_187[] PROGMEM = "pool.ntp.org";
+static const char fb_esp_pgm_str_188[] PROGMEM = "time.nist.gov";
+static const char fb_esp_pgm_str_189[] PROGMEM = "payload too large";
+static const char fb_esp_pgm_str_190[] PROGMEM = "cannot config time";
+static const char fb_esp_pgm_str_191[] PROGMEM = "SSL client rx buffer size is too small";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -725,6 +721,22 @@ public:
 
   */
   void reconnectWiFi(bool reconnect);
+
+  /*
+    Set the decimal places for float value to be stored in database.
+
+    @param digits - The decimal places. 
+
+  */
+  void setFloatDigits(uint8_t digits);
+
+  /*
+    Set the decimal places for double value to be stored in database.
+
+    @param digits - The decimal places. 
+
+  */
+  void setDoubleDigits(uint8_t digits);
 
   /*
     Set the timeouts of Firebase.get function.
@@ -2655,13 +2667,13 @@ private:
   bool handleStreamRead(FirebaseData &fbdo);
   void parseRespHeader(const char *buf, server_response_data_t &response);
   void parseRespPayload(const char *buf, server_response_data_t &response, bool getOfs);
+  void setNumDataType(const char *buf, int ofs, server_response_data_t &response, bool dec);
   char *getHeader(const char *buf, PGM_P beginH, PGM_P endH, int &beginPos, int endPos);
   bool stringCompare(const char *buf, int ofs, PGM_P beginH);
   int readLine(WiFiClient *stream, char *buf, int bufLen);
   int readChunkedData(WiFiClient *stream, char *out, int &chunkState, int &chunkedSize, int &dataLen, int bufLen);
   bool waitResponse(FirebaseData &fbdo);
   bool handleResponse(FirebaseData &fbdo);
-  bool clientAvailable(FirebaseData &fbdo, bool available);
   void closeFileHandle(FirebaseData &fbdo);
   void handlePayload(FirebaseData &fbdo, server_response_data_t &response, char *payload);
   bool reconnect(FirebaseData &fbdo, unsigned long dataTime = 0);
@@ -2686,7 +2698,7 @@ private:
   char *getIntString(int value);
   char *getBoolString(bool value);
   void pgm_appendStr(std::string &buf, PGM_P p, bool empty = false);
-  void trimDouble(char *buf);
+  void trimDigits(char *buf);
   void strcat_c(char *str, char c);
   int strpos(const char *haystack, const char *needle, int offset);
   char *rstrstr(const char *haystack, const char *needle);
@@ -2721,6 +2733,9 @@ private:
   uint8_t _sck, _miso, _mosi, _ss;
   File file;
   size_t _streamTaskStackSize = STEAM_STACK_SIZE;
+
+  uint8_t _floatDigits = 5;
+  uint8_t _doubleDigits = 9;
 
   friend class StreamData;
   friend class FirebaseData;

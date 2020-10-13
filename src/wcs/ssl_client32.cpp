@@ -302,6 +302,7 @@ void stop_ssl_socket(sslclient_context32 *ssl_client, const char *rootCABuff, co
 
     if (!ssl_client->ssl_freed)
     {
+        //log_e("Free resource....");
 
         mbedtls_ssl_free(&ssl_client->ssl_ctx);
         mbedtls_ssl_config_free(&ssl_client->ssl_conf);
@@ -311,6 +312,8 @@ void stop_ssl_socket(sslclient_context32 *ssl_client, const char *rootCABuff, co
 
         ssl_client->is_entropy_ctx = false;
         ssl_client->ssl_freed = true;
+
+        //log_e("Free resource....ok");
     }
 }
 

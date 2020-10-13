@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.1
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.2
 
 
 ## Global functions
@@ -85,6 +85,31 @@ param **`reconnect`** - The boolean to set/unset WiFi AP reconnection.
 
 ```C++
 void reconnectWiFi(bool reconnect);
+```
+
+
+
+
+
+
+#### Set the decimal places for float value to be stored in database.
+
+param **`digits`** - The decimal places. 
+
+```C++
+void setFloatDigits(uint8_t digits);
+```
+  
+
+
+
+
+#### Set the decimal places for double value to be stored in database.
+
+param **`digits`** - The decimal places. 
+
+```C++
+void setDoubleDigits(uint8_t digits);
 ```
 
 

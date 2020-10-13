@@ -57,6 +57,10 @@ void setup()
   //Size and its write timeout e.g. tiny (1s), small (10s), medium (30s) and large (60s).
   Firebase.setwriteSizeLimit(firebaseData, "tiny");
 
+  //optional, set the decimal places for float and double data to be stored in database
+  Firebase.setFloatDigits(2);
+  Firebase.setDoubleDigits(6);
+
   /*
   This option allows get and delete functions (PUT and DELETE HTTP requests) works for device connected behind the
   Firewall that allows only GET and POST requests.
@@ -305,7 +309,7 @@ void printResult(FirebaseData &data)
 
     Serial.println();
 
-    File file = firebaseData.fileStream();
+    File file = data.fileStream();
     int i = 0;
 
     while (file.available())

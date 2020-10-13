@@ -1,12 +1,11 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.1
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.2
  * 
- * October 6, 2020
+ * October 13, 2020
  * 
- * Feature Added:
- * 
- * Feature Fixed:
- * - WiFiClientSecure unhandled exception caused by the WiFi.reconnect() function immediately called after close the SSL connection.
+ *   Updates:
+ * - Decimal places config for float and double stored data
+ * - Bugs fixed
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -42,6 +41,12 @@
 #ifdef ESP32
 
 #include "FirebaseESP32.h"
+
+extern "C"
+{
+#include <esp_err.h>
+#include <esp_wifi.h>
+}
 
 FirebaseESP32::FirebaseESP32()
 {
@@ -114,6 +119,18 @@ void FirebaseESP32::reconnectWiFi(bool reconnect)
   WiFi.setAutoReconnect(reconnect);
 }
 
+void FirebaseESP32::setFloatDigits(uint8_t digits)
+{
+  if (digits < 7)
+    _floatDigits = digits;
+}
+
+void FirebaseESP32::setDoubleDigits(uint8_t digits)
+{
+  if (digits < 9)
+    _doubleDigits = digits;
+}
+
 void FirebaseESP32::setReadTimeout(FirebaseData &fbdo, int millisec)
 {
   if (millisec <= 900000)
@@ -130,9 +147,9 @@ bool FirebaseESP32::getRules(FirebaseData &fbdo)
   fbdo.queryFilter.clear();
   std::string path;
   pgm_appendStr(path, fb_esp_pgm_str_103, true);
-  bool flag = handleRequest(fbdo, 0, path, fb_esp_method::m_read_rules, fb_esp_data_type::d_json, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path, fb_esp_method::m_read_rules, fb_esp_data_type::d_json, "", "", "");
   std::string().swap(path);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setRules(FirebaseData &fbdo, const String &rules)
@@ -140,9 +157,9 @@ bool FirebaseESP32::setRules(FirebaseData &fbdo, const String &rules)
   fbdo.queryFilter.clear();
   std::string path;
   pgm_appendStr(path, fb_esp_pgm_str_103, true);
-  bool flag = handleRequest(fbdo, 0, path, fb_esp_method::m_set_rules, fb_esp_data_type::d_json, rules.c_str(), "", "");
+  bool ret = handleRequest(fbdo, 0, path, fb_esp_method::m_set_rules, fb_esp_data_type::d_json, rules.c_str(), "", "");
   std::string().swap(path);
-  return flag;
+  return ret;
 }
 
 void FirebaseESP32::getUrlInfo(const std::string url, std::string &host, std::string &uri, std::string &auth)
@@ -333,33 +350,33 @@ String FirebaseESP32::getETag(FirebaseData &fbdo, const String &path)
 
 bool FirebaseESP32::getShallowData(FirebaseData &fbdo, const String &path)
 {
-  bool flag = false;
-  flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get_shallow, fb_esp_data_type::d_string, "", "", "");
-  return flag;
+  bool ret = false;
+  ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get_shallow, fb_esp_data_type::d_string, "", "", "");
+  return ret;
 }
 
-void FirebaseESP32::enableClassicRequest(FirebaseData &fbdo, bool flag)
+void FirebaseESP32::enableClassicRequest(FirebaseData &fbdo, bool ret)
 {
-  fbdo._classicRequest = flag;
+  fbdo._classicRequest = ret;
 }
 
 bool FirebaseESP32::setPriority(FirebaseData &fbdo, const String &path, float priority)
 {
   char *num = getFloatString(priority);
-  trimDouble(num);
+  trimDigits(num);
   char *tmp = getPGMString(fb_esp_pgm_str_156);
-  bool flag = processRequest(fbdo, fb_esp_method::m_set_priority, fb_esp_data_type::d_float, tmp, num, false, "", "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_set_priority, fb_esp_data_type::d_float, tmp, num, false, "", "");
   delS(num);
   delS(tmp);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getPriority(FirebaseData &fbdo, const String &path)
 {
   char *tmp = getPGMString(fb_esp_pgm_str_156);
-  bool flag = processRequest(fbdo, fb_esp_method::m_get_priority, fb_esp_data_type::d_float, tmp, "", false, "", "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_get_priority, fb_esp_data_type::d_float, tmp, "", false, "", "");
   delS(tmp);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::push(FirebaseData &fbdo, const String &path, int intValue)
@@ -536,18 +553,18 @@ bool FirebaseESP32::pushInt(FirebaseData &fbdo, const String &path, int intValue
 bool FirebaseESP32::pushInt(FirebaseData &fbdo, const String &path, int intValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = pushInt(fbdo, path.c_str(), intValue, false, "");
+  trimDigits(buf);
+  bool ret = pushInt(fbdo, path.c_str(), intValue, false, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushInt(FirebaseData &fbdo, const std::string &path, int intValue, bool queue, const std::string &priority)
 {
   char *buf = getIntString(intValue);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_integer, path, buf, queue, priority, "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_integer, path, buf, queue, priority, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushFloat(FirebaseData &fbdo, const String &path, float floatValue)
@@ -558,19 +575,19 @@ bool FirebaseESP32::pushFloat(FirebaseData &fbdo, const String &path, float floa
 bool FirebaseESP32::pushFloat(FirebaseData &fbdo, const String &path, float floatValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = pushFloat(fbdo, path.c_str(), floatValue, false, buf);
+  trimDigits(buf);
+  bool ret = pushFloat(fbdo, path.c_str(), floatValue, false, buf);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushFloat(FirebaseData &fbdo, const std::string &path, float floatValue, bool queue, const std::string &priority)
 {
   char *buf = getFloatString(floatValue);
-  trimDouble(buf);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_float, path, buf, queue, priority, "");
+  trimDigits(buf);
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_float, path, buf, queue, priority, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushDouble(FirebaseData &fbdo, const String &path, double doubleValue)
@@ -581,19 +598,19 @@ bool FirebaseESP32::pushDouble(FirebaseData &fbdo, const String &path, double do
 bool FirebaseESP32::pushDouble(FirebaseData &fbdo, const String &path, double doubleValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = pushDouble(fbdo, path.c_str(), doubleValue, false, buf);
+  trimDigits(buf);
+  bool ret = pushDouble(fbdo, path.c_str(), doubleValue, false, buf);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushDouble(FirebaseData &fbdo, const std::string &path, double doubleValue, bool queue, const std::string &priority)
 {
   char *buf = getDoubleString(doubleValue);
-  trimDouble(buf);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_double, path, buf, queue, priority, "");
+  trimDigits(buf);
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_double, path, buf, queue, priority, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushBool(FirebaseData &fbdo, const String &path, bool boolValue)
@@ -604,75 +621,75 @@ bool FirebaseESP32::pushBool(FirebaseData &fbdo, const String &path, bool boolVa
 bool FirebaseESP32::pushBool(FirebaseData &fbdo, const String &path, bool boolValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = pushBool(fbdo, path.c_str(), boolValue, false, buf);
+  trimDigits(buf);
+  bool ret = pushBool(fbdo, path.c_str(), boolValue, false, buf);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushBool(FirebaseData &fbdo, const std::string &path, bool boolValue, bool queue, const std::string &priority)
 {
   char *tmp = getBoolString(boolValue);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_boolean, path, tmp, queue, priority, "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_boolean, path, tmp, queue, priority, "");
   delS(tmp);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushString(FirebaseData &fbdo, const String &path, const String &stringValue)
 {
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_string, path.c_str(), stringValue.c_str(), false, "", "");
-  return flag;
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_string, path.c_str(), stringValue.c_str(), false, "", "");
+  return ret;
 }
 
 bool FirebaseESP32::pushString(FirebaseData &fbdo, const String &path, const String &stringValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_string, path.c_str(), stringValue.c_str(), false, buf, "");
+  trimDigits(buf);
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_string, path.c_str(), stringValue.c_str(), false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json)
 {
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", "");
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
+  trimDigits(buf);
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, "");
   std::string().swap(s);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr)
 {
   std::string s;
   arr._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_array, path.c_str(), s.c_str(), false, "", "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_array, path.c_str(), s.c_str(), false, "", "");
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
+  trimDigits(buf);
   std::string s;
   arr._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_array, path.c_str(), s.c_str(), false, buf, "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_array, path.c_str(), s.c_str(), false, buf, "");
   std::string().swap(s);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size)
@@ -683,10 +700,10 @@ bool FirebaseESP32::pushBlob(FirebaseData &fbdo, const String &path, uint8_t *bl
 bool FirebaseESP32::pushBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = pushBlob(fbdo, path.c_str(), blob, size, false, buf);
+  trimDigits(buf);
+  bool ret = pushBlob(fbdo, path.c_str(), blob, size, false, buf);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushBlob(FirebaseData &fbdo, const std::string &path, uint8_t *blob, size_t size, bool queue, const std::string &priority)
@@ -701,9 +718,9 @@ bool FirebaseESP32::pushBlob(FirebaseData &fbdo, const std::string &path, uint8_
   pgm_appendStr(base64Str, fb_esp_pgm_str_92, true);
   base64Str += base64_encode_string((const unsigned char *)blob, size);
   pgm_appendStr(base64Str, fb_esp_pgm_str_3);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_blob, path, base64Str.c_str(), queue, priority, "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_blob, path, base64Str.c_str(), queue, priority, "");
   std::string().swap(base64Str);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName)
@@ -714,18 +731,18 @@ bool FirebaseESP32::pushFile(FirebaseData &fbdo, uint8_t storageType, const Stri
 bool FirebaseESP32::pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = processRequestFile(fbdo, storageType, fb_esp_method::m_post, path.c_str(), fileName.c_str(), false, buf, "");
+  trimDigits(buf);
+  bool ret = processRequestFile(fbdo, storageType, fb_esp_method::m_post, path.c_str(), fileName.c_str(), false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::pushTimestamp(FirebaseData &fbdo, const String &path)
 {
   char *tmp = getPGMString(fb_esp_pgm_str_154);
-  bool flag = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_timestamp, path.c_str(), tmp, false, "", "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_post, fb_esp_data_type::d_timestamp, path.c_str(), tmp, false, "", "");
   delS(tmp);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, int intValue)
@@ -1070,10 +1087,10 @@ bool FirebaseESP32::setInt(FirebaseData &fbdo, const String &path, int intValue)
 bool FirebaseESP32::setInt(FirebaseData &fbdo, const String &path, int intValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setInt(fbdo, path.c_str(), intValue, false, buf, "");
+  trimDigits(buf);
+  bool ret = setInt(fbdo, path.c_str(), intValue, false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setInt(FirebaseData &fbdo, const String &path, int intValue, const String &ETag)
@@ -1084,18 +1101,18 @@ bool FirebaseESP32::setInt(FirebaseData &fbdo, const String &path, int intValue,
 bool FirebaseESP32::setInt(FirebaseData &fbdo, const String &path, int intValue, float priority, const String &ETag)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setInt(fbdo, path.c_str(), intValue, false, buf, ETag.c_str());
+  trimDigits(buf);
+  bool ret = setInt(fbdo, path.c_str(), intValue, false, buf, ETag.c_str());
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setInt(FirebaseData &fbdo, const std::string &path, int intValue, bool queue, const std::string &priority, const std::string &etag)
 {
   char *buf = getIntString(intValue);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_integer, path, buf, queue, priority, etag);
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_integer, path, buf, queue, priority, etag);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setFloat(FirebaseData &fbdo, const String &path, float floatValue)
@@ -1106,10 +1123,10 @@ bool FirebaseESP32::setFloat(FirebaseData &fbdo, const String &path, float float
 bool FirebaseESP32::setFloat(FirebaseData &fbdo, const String &path, float floatValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setFloat(fbdo, path.c_str(), floatValue, false, buf, "");
+  trimDigits(buf);
+  bool ret = setFloat(fbdo, path.c_str(), floatValue, false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setFloat(FirebaseData &fbdo, const String &path, float floatValue, const String &ETag)
@@ -1120,19 +1137,19 @@ bool FirebaseESP32::setFloat(FirebaseData &fbdo, const String &path, float float
 bool FirebaseESP32::setFloat(FirebaseData &fbdo, const String &path, float floatValue, float priority, const String &ETag)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setFloat(fbdo, path.c_str(), floatValue, false, buf, ETag.c_str());
+  trimDigits(buf);
+  bool ret = setFloat(fbdo, path.c_str(), floatValue, false, buf, ETag.c_str());
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setFloat(FirebaseData &fbdo, const std::string &path, float floatValue, bool queue, const std::string &priority, const std::string &etag)
 {
   char *buf = getFloatString(floatValue);
-  trimDouble(buf);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_float, path, buf, queue, priority, etag);
+  trimDigits(buf);
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_float, path, buf, queue, priority, etag);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setDouble(FirebaseData &fbdo, const String &path, double doubleValue)
@@ -1143,10 +1160,10 @@ bool FirebaseESP32::setDouble(FirebaseData &fbdo, const String &path, double dou
 bool FirebaseESP32::setDouble(FirebaseData &fbdo, const String &path, double doubleValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setDouble(fbdo, path.c_str(), doubleValue, false, buf, "");
+  trimDigits(buf);
+  bool ret = setDouble(fbdo, path.c_str(), doubleValue, false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setDouble(FirebaseData &fbdo, const String &path, double doubleValue, const String &ETag)
@@ -1157,19 +1174,19 @@ bool FirebaseESP32::setDouble(FirebaseData &fbdo, const String &path, double dou
 bool FirebaseESP32::setDouble(FirebaseData &fbdo, const String &path, double doubleValue, float priority, const String &ETag)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setDouble(fbdo, path.c_str(), doubleValue, false, buf, ETag.c_str());
+  trimDigits(buf);
+  bool ret = setDouble(fbdo, path.c_str(), doubleValue, false, buf, ETag.c_str());
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setDouble(FirebaseData &fbdo, const std::string &path, double doubleValue, bool queue, const std::string &priority, const std::string &etag)
 {
   char *buf = getDoubleString(doubleValue);
-  trimDouble(buf);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_double, path, buf, false, priority, etag);
+  trimDigits(buf);
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_double, path, buf, false, priority, etag);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setBool(FirebaseData &fbdo, const String &path, bool boolValue)
@@ -1180,10 +1197,10 @@ bool FirebaseESP32::setBool(FirebaseData &fbdo, const String &path, bool boolVal
 bool FirebaseESP32::setBool(FirebaseData &fbdo, const String &path, bool boolValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setBool(fbdo, path.c_str(), boolValue, false, buf, "");
+  trimDigits(buf);
+  bool ret = setBool(fbdo, path.c_str(), boolValue, false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setBool(FirebaseData &fbdo, const String &path, bool boolValue, const String &ETag)
@@ -1194,18 +1211,18 @@ bool FirebaseESP32::setBool(FirebaseData &fbdo, const String &path, bool boolVal
 bool FirebaseESP32::setBool(FirebaseData &fbdo, const String &path, bool boolValue, float priority, const String &ETag)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setBool(fbdo, path.c_str(), boolValue, false, buf, ETag.c_str());
+  trimDigits(buf);
+  bool ret = setBool(fbdo, path.c_str(), boolValue, false, buf, ETag.c_str());
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setBool(FirebaseData &fbdo, const std::string &path, bool boolValue, bool queue, const std::string &priority, const std::string &etag)
 {
   char *buf = getBoolString(boolValue);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_boolean, path, buf, false, priority, etag);
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_boolean, path, buf, false, priority, etag);
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setString(FirebaseData &fbdo, const String &path, const String &stringValue)
@@ -1216,10 +1233,10 @@ bool FirebaseESP32::setString(FirebaseData &fbdo, const String &path, const Stri
 bool FirebaseESP32::setString(FirebaseData &fbdo, const String &path, const String &stringValue, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_string, path.c_str(), stringValue.c_str(), false, buf, "");
+  trimDigits(buf);
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_string, path.c_str(), stringValue.c_str(), false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setString(FirebaseData &fbdo, const String &path, const String &stringValue, const String &ETag)
@@ -1230,52 +1247,52 @@ bool FirebaseESP32::setString(FirebaseData &fbdo, const String &path, const Stri
 bool FirebaseESP32::setString(FirebaseData &fbdo, const String &path, const String &stringValue, float priority, const String &ETag)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_string, path.c_str(), stringValue.c_str(), false, buf, ETag.c_str());
+  trimDigits(buf);
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_string, path.c_str(), stringValue.c_str(), false, buf, ETag.c_str());
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json)
 {
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", "");
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
+  trimDigits(buf);
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, "");
   delS(buf);
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, const String &ETag)
 {
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", ETag.c_str());
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", ETag.c_str());
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority, const String &ETag)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
+  trimDigits(buf);
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, ETag.c_str());
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, ETag.c_str());
   delS(buf);
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr)
@@ -1288,12 +1305,12 @@ bool FirebaseESP32::setArray(FirebaseData &fbdo, const String &path, FirebaseJso
 bool FirebaseESP32::setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
+  trimDigits(buf);
   String arrStr;
   arr.toString(arrStr);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_array, path.c_str(), arrStr.c_str(), false, buf, "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_array, path.c_str(), arrStr.c_str(), false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, const String &ETag)
@@ -1306,12 +1323,12 @@ bool FirebaseESP32::setArray(FirebaseData &fbdo, const String &path, FirebaseJso
 bool FirebaseESP32::setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority, const String &ETag)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
+  trimDigits(buf);
   String arrStr;
   arr.toString(arrStr);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_array, path.c_str(), arrStr.c_str(), false, buf, ETag.c_str());
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_array, path.c_str(), arrStr.c_str(), false, buf, ETag.c_str());
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size)
@@ -1322,10 +1339,10 @@ bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blo
 bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setBlob(fbdo, path.c_str(), blob, size, false, buf, "");
+  trimDigits(buf);
+  bool ret = setBlob(fbdo, path.c_str(), blob, size, false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag)
@@ -1336,10 +1353,10 @@ bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blo
 bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = setBlob(fbdo, path.c_str(), blob, size, false, buf, ETag.c_str());
+  trimDigits(buf);
+  bool ret = setBlob(fbdo, path.c_str(), blob, size, false, buf, ETag.c_str());
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setBlob(FirebaseData &fbdo, const std::string &path, uint8_t *blob, size_t size, bool queue, const std::string &priority, const std::string &etag)
@@ -1354,9 +1371,9 @@ bool FirebaseESP32::setBlob(FirebaseData &fbdo, const std::string &path, uint8_t
   pgm_appendStr(base64Str, fb_esp_pgm_str_92, true);
   base64Str += base64_encode_string((const unsigned char *)blob, size);
   pgm_appendStr(base64Str, fb_esp_pgm_str_3);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put_nocontent, fb_esp_data_type::d_blob, path, base64Str.c_str(), false, priority, etag);
+  bool ret = processRequest(fbdo, fb_esp_method::m_put_nocontent, fb_esp_data_type::d_blob, path, base64Str.c_str(), false, priority, etag);
   std::string().swap(base64Str);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName)
@@ -1367,10 +1384,10 @@ bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const Strin
 bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = processRequestFile(fbdo, storageType, fb_esp_method::m_put_nocontent, path.c_str(), fileName.c_str(), false, buf, "");
+  trimDigits(buf);
+  bool ret = processRequestFile(fbdo, storageType, fb_esp_method::m_put_nocontent, path.c_str(), fileName.c_str(), false, buf, "");
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag)
@@ -1381,67 +1398,67 @@ bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const Strin
 bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
-  bool flag = processRequestFile(fbdo, storageType, fb_esp_method::m_put_nocontent, path.c_str(), fileName.c_str(), false, buf, ETag.c_str());
+  trimDigits(buf);
+  bool ret = processRequestFile(fbdo, storageType, fb_esp_method::m_put_nocontent, path.c_str(), fileName.c_str(), false, buf, ETag.c_str());
   delS(buf);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::setTimestamp(FirebaseData &fbdo, const String &path)
 {
   char *tmp = getPGMString(fb_esp_pgm_str_154);
-  bool flag = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_timestamp, path.c_str(), tmp, false, "", "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_put, fb_esp_data_type::d_timestamp, path.c_str(), tmp, false, "", "");
   delS(tmp);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::updateNode(FirebaseData &fbdo, const String path, FirebaseJson &json)
 {
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_patch, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_patch, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", "");
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::updateNode(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
+  trimDigits(buf);
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_patch, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_patch, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, "");
   delS(buf);
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::updateNodeSilent(FirebaseData &fbdo, const String &path, FirebaseJson &json)
 {
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_patch_nocontent, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_patch_nocontent, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, "", "");
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::updateNodeSilent(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority)
 {
   char *buf = getFloatString(priority);
-  trimDouble(buf);
+  trimDigits(buf);
   std::string s;
   json._toStdString(s);
-  bool flag = processRequest(fbdo, fb_esp_method::m_patch_nocontent, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, "");
+  bool ret = processRequest(fbdo, fb_esp_method::m_patch_nocontent, fb_esp_data_type::d_json, path.c_str(), s.c_str(), false, buf, "");
   delS(buf);
   std::string().swap(s);
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::get(FirebaseData &fbdo, const String &path)
 {
   fbdo.queryFilter.clear();
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_any, "", "", "");
-  return flag;
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_any, "", "", "");
+  return ret;
 }
 
 bool FirebaseESP32::getInt(FirebaseData &fbdo, const String &path)
@@ -1452,7 +1469,7 @@ bool FirebaseESP32::getInt(FirebaseData &fbdo, const String &path)
 bool FirebaseESP32::getInt(FirebaseData &fbdo, const String &path, int &target)
 {
 
-  bool flag = false;
+  bool ret = false;
   fbdo.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1462,38 +1479,38 @@ bool FirebaseESP32::getInt(FirebaseData &fbdo, const String &path, int &target)
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_integer, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_integer, "", "", "");
     target = fbdo.intData();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_integer, path.c_str(), "", "", false, &target, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_integer && fbdo.resp_dataType != fb_esp_data_type::d_float && fbdo.resp_dataType != fb_esp_data_type::d_double)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_integer && fbdo.resp_dataType != fb_esp_data_type::d_float && fbdo.resp_dataType != fb_esp_data_type::d_double)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getFloat(FirebaseData &fbdo, const String &path)
 {
   fbdo.queryFilter.clear();
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_float, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_float, "", "", "");
   if (fbdo.resp_dataType != fb_esp_data_type::d_integer && fbdo.resp_dataType != fb_esp_data_type::d_float && fbdo.resp_dataType != fb_esp_data_type::d_double)
-    flag = false;
-  return flag;
+    ret = false;
+  return ret;
 }
 
 bool FirebaseESP32::getFloat(FirebaseData &fbdo, const String &path, float &target)
 {
 
-  bool flag = false;
+  bool ret = false;
   fbdo.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1503,38 +1520,38 @@ bool FirebaseESP32::getFloat(FirebaseData &fbdo, const String &path, float &targ
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_float, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_float, "", "", "");
     target = fbdo.floatData();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_float, path.c_str(), "", "", false, nullptr, &target, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_integer && fbdo.resp_dataType != fb_esp_data_type::d_float && fbdo.resp_dataType != fb_esp_data_type::d_double)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_integer && fbdo.resp_dataType != fb_esp_data_type::d_float && fbdo.resp_dataType != fb_esp_data_type::d_double)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getDouble(FirebaseData &fbdo, const String &path)
 {
   fbdo.queryFilter.clear();
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_double, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_double, "", "", "");
   if (fbdo.resp_dataType != fb_esp_data_type::d_integer && fbdo.resp_dataType != fb_esp_data_type::d_float && fbdo.resp_dataType != fb_esp_data_type::d_double)
-    flag = false;
-  return flag;
+    ret = false;
+  return ret;
 }
 
 bool FirebaseESP32::getDouble(FirebaseData &fbdo, const String &path, double &target)
 {
 
-  bool flag = false;
+  bool ret = false;
   fbdo.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1544,38 +1561,38 @@ bool FirebaseESP32::getDouble(FirebaseData &fbdo, const String &path, double &ta
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_double, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_double, "", "", "");
     target = fbdo.floatData();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_double, path.c_str(), "", "", false, nullptr, nullptr, &target, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_integer && fbdo.resp_dataType != fb_esp_data_type::d_float && fbdo.resp_dataType != fb_esp_data_type::d_double)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_integer && fbdo.resp_dataType != fb_esp_data_type::d_float && fbdo.resp_dataType != fb_esp_data_type::d_double)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getBool(FirebaseData &fbdo, const String &path)
 {
   fbdo.queryFilter.clear();
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_boolean, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_boolean, "", "", "");
   if (fbdo.resp_dataType != fb_esp_data_type::d_boolean)
-    flag = false;
-  return flag;
+    ret = false;
+  return ret;
 }
 
 bool FirebaseESP32::getBool(FirebaseData &fbdo, const String &path, bool &target)
 {
 
-  bool flag = false;
+  bool ret = false;
   fbdo.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1585,38 +1602,38 @@ bool FirebaseESP32::getBool(FirebaseData &fbdo, const String &path, bool &target
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_boolean, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_boolean, "", "", "");
     target = fbdo.boolData();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_boolean, path.c_str(), "", "", false, nullptr, nullptr, nullptr, &target, nullptr, nullptr, nullptr, nullptr);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_boolean)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_boolean)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getString(FirebaseData &fbdo, const String &path)
 {
   fbdo.queryFilter.clear();
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_string, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_string, "", "", "");
   if (fbdo.resp_dataType != fb_esp_data_type::d_string)
-    flag = false;
-  return flag;
+    ret = false;
+  return ret;
 }
 
 bool FirebaseESP32::getString(FirebaseData &fbdo, const String &path, String &target)
 {
 
-  bool flag = false;
+  bool ret = false;
   fbdo.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1626,38 +1643,38 @@ bool FirebaseESP32::getString(FirebaseData &fbdo, const String &path, String &ta
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_string, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_string, "", "", "");
     target = fbdo.stringData();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_string, path.c_str(), "", "", false, nullptr, nullptr, nullptr, nullptr, &target, nullptr, nullptr, nullptr);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_string)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_string)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getJSON(FirebaseData &fbdo, const String &path)
 {
   fbdo.queryFilter.clear();
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
   if (fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
-    flag = false;
-  return flag;
+    ret = false;
+  return ret;
 }
 
 bool FirebaseESP32::getJSON(FirebaseData &fbdo, const String &path, FirebaseJson *target)
 {
 
-  bool flag;
+  bool ret;
   fbdo.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1667,23 +1684,23 @@ bool FirebaseESP32::getJSON(FirebaseData &fbdo, const String &path, FirebaseJson
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
     target = fbdo.jsonObjectPtr();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_json, path.c_str(), "", "", false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, target, nullptr);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getJSON(FirebaseData &fbdo, const String &path, QueryFilter &query)
@@ -1692,10 +1709,10 @@ bool FirebaseESP32::getJSON(FirebaseData &fbdo, const String &path, QueryFilter 
   if (query._orderBy != "")
     fbdo.setQuery(query);
 
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
   if (fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
-    flag = false;
-  return flag;
+    ret = false;
+  return ret;
 }
 
 bool FirebaseESP32::getJSON(FirebaseData &fbdo, const String &path, QueryFilter &query, FirebaseJson *target)
@@ -1704,7 +1721,7 @@ bool FirebaseESP32::getJSON(FirebaseData &fbdo, const String &path, QueryFilter 
   if (query._orderBy.length() > 0)
     fbdo.setQuery(query);
 
-  bool flag;
+  bool ret;
 
   uint8_t errCount = 0;
   uint8_t maxAttempt = fbdo._maxAttempt;
@@ -1713,38 +1730,38 @@ bool FirebaseESP32::getJSON(FirebaseData &fbdo, const String &path, QueryFilter 
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
     target = fbdo.jsonObjectPtr();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_json, path.c_str(), "", "", true, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, target, nullptr);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getArray(FirebaseData &fbdo, const String &path)
 {
   fbdo.queryFilter.clear();
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_array, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_array, "", "", "");
   if (fbdo.resp_dataType != fb_esp_data_type::d_array)
-    flag = false;
-  return flag;
+    ret = false;
+  return ret;
 }
 
 bool FirebaseESP32::getArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray *target)
 {
 
-  bool flag;
+  bool ret;
   fbdo.queryFilter.clear();
 
   uint8_t errCount = 0;
@@ -1754,23 +1771,23 @@ bool FirebaseESP32::getArray(FirebaseData &fbdo, const String &path, FirebaseJso
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
     target = fbdo.jsonArrayPtr();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_json, path.c_str(), "", "", false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, target);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getArray(FirebaseData &fbdo, const String &path, QueryFilter &query)
@@ -1779,10 +1796,10 @@ bool FirebaseESP32::getArray(FirebaseData &fbdo, const String &path, QueryFilter
   if (query._orderBy != "")
     fbdo.setQuery(query);
 
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
   if (fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
-    flag = false;
-  return flag;
+    ret = false;
+  return ret;
 }
 
 bool FirebaseESP32::getArray(FirebaseData &fbdo, const String &path, QueryFilter &query, FirebaseJsonArray *target)
@@ -1791,7 +1808,7 @@ bool FirebaseESP32::getArray(FirebaseData &fbdo, const String &path, QueryFilter
   if (query._orderBy.length() > 0)
     fbdo.setQuery(query);
 
-  bool flag;
+  bool ret;
 
   uint8_t errCount = 0;
   uint8_t maxAttempt = fbdo._maxAttempt;
@@ -1800,32 +1817,32 @@ bool FirebaseESP32::getArray(FirebaseData &fbdo, const String &path, QueryFilter
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_json, "", "", "");
     target = fbdo.jsonArrayPtr();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_json, path.c_str(), "", "", true, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, target);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_json && fbdo.resp_dataType != fb_esp_data_type::d_null)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getBlob(FirebaseData &fbdo, const String &path)
 {
   fbdo.queryFilter.clear();
-  bool flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_blob, "", "", "");
+  bool ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_blob, "", "", "");
   if (fbdo.resp_dataType != fb_esp_data_type::d_blob)
-    flag = false;
-  return flag;
+    ret = false;
+  return ret;
 }
 
 bool FirebaseESP32::getBlob(FirebaseData &fbdo, const String &path, std::vector<uint8_t> &target)
@@ -1833,7 +1850,7 @@ bool FirebaseESP32::getBlob(FirebaseData &fbdo, const String &path, std::vector<
 
   fbdo.queryFilter.clear();
 
-  bool flag = false;
+  bool ret = false;
 
   uint8_t errCount = 0;
   uint8_t maxAttempt = fbdo._maxAttempt;
@@ -1842,23 +1859,23 @@ bool FirebaseESP32::getBlob(FirebaseData &fbdo, const String &path, std::vector<
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_blob, "", "", "");
+    ret = handleRequest(fbdo, 0, path.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_blob, "", "", "");
     target = fbdo.blobData();
-    if (flag)
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && connectionError(fbdo))
+      if (!ret && connectionError(fbdo))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, 0, fb_esp_data_type::d_blob, path.c_str(), "", "", false, nullptr, nullptr, nullptr, nullptr, nullptr, &target, nullptr, nullptr);
 
-  if (flag && fbdo.resp_dataType != fb_esp_data_type::d_blob)
-    flag = false;
+  if (ret && fbdo.resp_dataType != fb_esp_data_type::d_blob)
+    ret = false;
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::getFile(FirebaseData &fbdo, uint8_t storageType, const String &nodePath, const String &fileName)
@@ -1866,7 +1883,7 @@ bool FirebaseESP32::getFile(FirebaseData &fbdo, uint8_t storageType, const Strin
   fbdo.queryFilter.clear();
   fbdo._fileName = fileName.c_str();
 
-  bool flag = false;
+  bool ret = false;
 
   uint8_t errCount = 0;
   uint8_t maxAttempt = fbdo._maxAttempt;
@@ -1875,19 +1892,19 @@ bool FirebaseESP32::getFile(FirebaseData &fbdo, uint8_t storageType, const Strin
 
   for (int i = 0; i < maxAttempt; i++)
   {
-    flag = handleRequest(fbdo, storageType, nodePath.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_file, "", "", "");
-    if (flag)
+    ret = handleRequest(fbdo, storageType, nodePath.c_str(), fb_esp_method::m_get, fb_esp_data_type::d_file, "", "", "");
+    if (ret)
       break;
 
     if (fbdo._maxAttempt > 0)
-      if (!flag && (connectionError(fbdo) || fbdo._file_transfer_error.length() > 0))
+      if (!ret && (connectionError(fbdo) || fbdo._file_transfer_error.length() > 0))
         errCount++;
   }
 
-  if (!flag && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
+  if (!ret && errCount == maxAttempt && fbdo._qMan._maxQueue > 0)
     fbdo.addQueue(fb_esp_method::m_get, storageType, fb_esp_data_type::d_file, nodePath.c_str(), fileName.c_str(), "", false, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
-  return flag;
+  return ret;
 }
 
 bool FirebaseESP32::deleteNode(FirebaseData &fbdo, const String &path)
@@ -1974,9 +1991,6 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
     return FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
   }
 
-  if (fbdo._isStream && fbdo._httpConnected)
-    return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_INUSED;
-
   uint8_t attempts = 0;
   uint8_t maxAttempt = 5;
 
@@ -1986,7 +2000,7 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
 
   int len = 0;
   size_t toRead = 0;
-  int httpCode = -1000;
+  int ret = -1;
 
   std::string payloadBuf = "";
   std::string header = "";
@@ -2238,13 +2252,13 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
     std::vector<uint8_t>().swap(fbdo._blob);
 
   //Send request
-  httpCode = fbdo.httpClient.send(header.c_str(), payloadBuf.c_str());
+  ret = fbdo.httpClient.send(header.c_str(), payloadBuf.c_str());
 
   //Retry
   if (method != fb_esp_method::m_stream)
   {
     attempts = 0;
-    while (httpCode != 0)
+    while (ret != 0)
     {
       attempts++;
       if (attempts > maxAttempt)
@@ -2253,32 +2267,35 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
       if (!reconnect(fbdo))
         return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
 
-      httpCode = fbdo.httpClient.send(header.c_str(), payloadBuf.c_str());
+      ret = fbdo.httpClient.send(header.c_str(), payloadBuf.c_str());
     }
   }
 
   //handle send file data
   if (method == fb_esp_method::m_restore || (dataType == fb_esp_data_type::d_file && (method == fb_esp_method::m_put_nocontent || method == fb_esp_method::m_post)))
   {
-
     if (dataType == fb_esp_data_type::d_file && (method == fb_esp_method::m_put_nocontent || method == fb_esp_method::m_post))
     {
 
       buf = getPGMString(fb_esp_pgm_str_93);
-      httpCode = fbdo.httpClient.send("", buf);
+      ret = fbdo.httpClient.send("", buf);
       delS(buf);
-
-      send_base64_encoded_stream(fbdo.httpClient.stream(), fbdo._fileName, fbdo._storageType);
+      if (ret == 0)
+        send_base64_encoded_stream(fbdo.httpClient.stream(), fbdo._fileName, fbdo._storageType);
+      else
+        return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED;
 
       buf = newS(2);
       buf[0] = '"';
       buf[1] = '\0';
-      httpCode = fbdo.httpClient.send("", buf);
+      ret = fbdo.httpClient.send("", buf);
       delS(buf);
+
+      if (ret != 0)
+        return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED;
     }
     else
     {
-
       while (len)
       {
         if (!reconnect(fbdo))
@@ -2293,8 +2310,11 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
         file.read((uint8_t *)buf, toRead);
         buf[toRead] = '\0';
 
-        httpCode = fbdo.httpClient.send("", buf);
+        ret = fbdo.httpClient.send("", buf);
         delS(buf);
+
+        if (ret != 0)
+          return FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED;
 
         len -= toRead;
 
@@ -2306,9 +2326,8 @@ int FirebaseESP32::sendRequest(FirebaseData &fbdo, const std::string &path, fb_e
     closeFileHandle(fbdo);
   }
 
-  fbdo._httpConnected = httpCode == 0;
-
-  return httpCode;
+  fbdo._httpConnected = ret == 0;
+  return ret;
 }
 
 void FirebaseESP32::delS(char *p)
@@ -2398,9 +2417,9 @@ bool FirebaseESP32::handleRequest(FirebaseData &fbdo, uint8_t storageType, const
   fbdo._req_dataType = dataType;
   fbdo._mismatchDataType = false;
 
-  int httpCode = sendRequest(fbdo, path, method, dataType, payload, priority);
+  int ret = sendRequest(fbdo, path, method, dataType, payload, priority);
 
-  if (httpCode == 0)
+  if (ret == 0)
   {
     fbdo._httpConnected = true;
 
@@ -2445,44 +2464,13 @@ bool FirebaseESP32::handleRequest(FirebaseData &fbdo, uint8_t storageType, const
   }
   else
   {
-    fbdo._httpCode = httpCode;
-    fbdo._httpConnected = false;
+    fbdo._httpCode = ret;
+    if (ret != FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_INUSED)
+      fbdo._httpConnected = false;
     return false;
   }
 
   return true;
-}
-
-bool FirebaseESP32::clientAvailable(FirebaseData &fbdo, bool available)
-{
-  if (!reconnect(fbdo))
-  {
-    fbdo._httpCode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
-    return false;
-  }
-
-  if (!fbdo.httpClient.stream())
-  {
-    fbdo._httpCode = FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_LOST;
-    return false;
-  }
-  else
-  {
-
-    int res = fbdo.httpClient.stream()->connected();
-
-    if (res <= 0)
-      return false;
-
-    res = fbdo.httpClient.stream()->available();
-
-    if (available)
-      return res > 0;
-    else
-      return res <= 0;
-  }
-
-  return false;
 }
 
 void FirebaseESP32::parseRespHeader(const char *buf, server_response_data_t &response)
@@ -2701,48 +2689,48 @@ void FirebaseESP32::parseRespPayload(const char *buf, server_response_data_t &re
     }
     else
     {
-
       tmp = getPGMString(fb_esp_pgm_str_4);
       int p1 = strpos(buf, tmp, payloadOfs);
       delS(tmp);
-      if (p1 != -1)
-      {
-        tmp = newS(response.payloadLen + 1);
-        memcpy(tmp, &buf[payloadOfs], response.payloadLen);
-        tmp[response.payloadLen] = 0;
-        double d = atof(tmp);
-        delS(tmp);
+      setNumDataType(buf, payloadOfs, response, p1 != -1);
+    }
+  }
+}
 
-        if (response.payloadLen <= 7)
-        {
-          response.floatData = d;
-          response.dataType = fb_esp_data_type::d_float;
-        }
-        else
-        {
-          response.doubleData = d;
-          response.dataType = fb_esp_data_type::d_double;
-        }
+void FirebaseESP32::setNumDataType(const char *buf, int ofs, server_response_data_t &response, bool dec)
+{
+  if (response.payloadLen > 0 && response.payloadLen <= (int)strlen(buf) && ofs < (int)strlen(buf) && ofs + response.payloadLen <= (int)strlen(buf))
+  {
+    char *tmp = newS(response.payloadLen + 1);
+    memcpy(tmp, &buf[ofs], response.payloadLen);
+    tmp[response.payloadLen] = 0;
+    double d = atof(tmp);
+    delS(tmp);
+
+    if (dec)
+    {
+      if (response.payloadLen <= 7)
+      {
+        response.floatData = d;
+        response.dataType = fb_esp_data_type::d_float;
       }
       else
       {
-
-        tmp = newS(response.payloadLen + 1);
-        memcpy(tmp, &buf[payloadOfs], response.payloadLen);
-        tmp[response.payloadLen] = 0;
-        double d = atof(tmp);
-        delS(tmp);
-
-        if (d > 0x7fffffff)
-        {
-          response.doubleData = d;
-          response.dataType = fb_esp_data_type::d_double;
-        }
-        else
-        {
-          response.intData = (int)d;
-          response.dataType = fb_esp_data_type::d_integer;
-        }
+        response.doubleData = d;
+        response.dataType = fb_esp_data_type::d_double;
+      }
+    }
+    else
+    {
+      if (d > 0x7fffffff)
+      {
+        response.doubleData = d;
+        response.dataType = fb_esp_data_type::d_double;
+      }
+      else
+      {
+        response.intData = (int)d;
+        response.dataType = fb_esp_data_type::d_integer;
       }
     }
   }
@@ -2806,24 +2794,18 @@ int FirebaseESP32::readLine(WiFiClient *stream, char *buf, int bufLen)
   int res = -1;
   char c = 0;
   int idx = 0;
-  while (stream->available() && idx < bufLen - 1)
+  while (stream->available() && idx < bufLen)
   {
     res = stream->read();
     if (res > -1)
     {
-
       if (idx >= bufLen - 1)
-      {
         return idx;
-      }
-
       c = (char)res;
       strcat_c(buf, c);
       idx++;
       if (c == '\n')
-      {
         return idx;
-      }
     }
   }
   return idx;
@@ -2846,7 +2828,6 @@ int FirebaseESP32::readChunkedData(WiFiClient *stream, char *out, int &chunkStat
     int readLen = readLine(stream, buf, bufLen);
     if (readLen)
     {
-
       tmp = getPGMString(fb_esp_pgm_str_79);
       p1 = strpos(buf, tmp, 0);
       delS(tmp);
@@ -2869,6 +2850,8 @@ int FirebaseESP32::readChunkedData(WiFiClient *stream, char *out, int &chunkStat
       if (chunkedSize < 1)
         olen = -1;
     }
+    else
+      chunkState = 0;
 
     delS(buf);
   }
@@ -2938,19 +2921,22 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
   }
 
   unsigned long dataTime = millis();
+
   WiFiClient *stream = fbdo.httpClient.stream();
 
   char *pChunk = nullptr;
-  bool isHeader = false;
+  char *tmp = nullptr;
+  char *header = nullptr;
   char *payload = nullptr;
+  bool isHeader = false;
+
   server_response_data_t response;
+
   int chunkIdx = 0;
   int pChunkIdx = 0;
   int payloadLen = 512;
   int pBufPos = 0;
   int hBufPos = 0;
-  char *tmp = nullptr;
-  char *header = nullptr;
   int chunkBufSize = stream->available();
   int hstate = 0;
   int pstate = 0;
@@ -2984,7 +2970,6 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 
   if (chunkBufSize > 1)
   {
-
     while (chunkBufSize > 0)
     {
       if (!reconnect(fbdo, dataTime))
@@ -3023,7 +3008,6 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
           dataTime = millis();
           if (tmp)
           {
-
             //http response header with http response code
             isHeader = true;
             hBufPos = readLen;
@@ -3033,7 +3017,6 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
           }
           else
           {
-
             //stream payload data
             payload = newS(payloadLen);
             pstate = 1;
@@ -3050,23 +3033,22 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
           //the next chunk data can be the remaining http header
           if (isHeader)
           {
-            //read one line of next header field until until the empty header found
+            //read one line of next header field until the empty header has found
             tmp = newS(chunkBufSize);
             int readLen = readLine(stream, tmp, chunkBufSize);
-            bool hearderEnded = false;
+            bool headerEnded = false;
 
             //check is it the end of http header (\n or \r\n)?
             if (readLen == 1)
               if (tmp[0] == '\r')
-                hearderEnded = true;
+                headerEnded = true;
 
             if (readLen == 2)
               if (tmp[0] == '\r' && tmp[1] == '\n')
-                hearderEnded = true;
+                headerEnded = true;
 
-            if (hearderEnded)
+            if (headerEnded)
             {
-
               //parse header string to get the header field
               isHeader = false;
               parseRespHeader(header, response);
@@ -3078,7 +3060,6 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 
               if (fbdo._httpCode == FIREBASE_ERROR_HTTP_CODE_TEMPORARY_REDIRECT || fbdo._httpCode == FIREBASE_ERROR_HTTP_CODE_PERMANENT_REDIRECT || fbdo._httpCode == FIREBASE_ERROR_HTTP_CODE_MOVED_PERMANENTLY || fbdo._httpCode == FIREBASE_ERROR_HTTP_CODE_FOUND)
               {
-
                 if (response.location.length() > 0)
                 {
                   fbdo._redirectURL = response.location;
@@ -3140,7 +3121,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
                   memcpy(payload + pBufPos, pChunk, readLen);
                 else
                 {
-                  //in case the accumulated payload size is bigger than the char array
+                  //in case of the accumulated payload size is bigger than the char array
                   //reallocate the char array
 
                   char *buf = newS(pBufPos + readLen + 1);
@@ -3427,21 +3408,27 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
         }
       }
 
-      if (stringCompare(fbdo._resp_etag.c_str(), 0, fb_esp_pgm_str_151))
+      if (stringCompare(fbdo._resp_etag.c_str(), 0, fb_esp_pgm_str_151) && response.noContent)
+      {
+        fbdo._httpCode = FIREBASE_ERROR_PATH_NOT_EXIST;
         fbdo._pathNotExist = true;
+      }
       else
         fbdo._pathNotExist = false;
 
-      if (fbdo.resp_dataType != fb_esp_data_type::d_null)
+      if (fbdo.resp_dataType != fb_esp_data_type::d_null && !response.noContent && !fbdo._req_method == fb_esp_method::m_post)
       {
 
-        bool _n1 = fbdo.resp_dataType == fb_esp_data_type::d_integer || fb_esp_data_type::d_float || fbdo.resp_dataType == fb_esp_data_type::d_double;
-        bool _n2 = fbdo._req_dataType == fb_esp_data_type::d_integer || fb_esp_data_type::d_float || fbdo._req_dataType == fb_esp_data_type::d_double;
+        bool _reqType = fbdo._req_dataType == fb_esp_data_type::d_integer || fbdo._req_dataType == fb_esp_data_type::d_float || fbdo._req_dataType == fb_esp_data_type::d_double;
+        bool _respType = fbdo.resp_dataType == fb_esp_data_type::d_integer || fbdo.resp_dataType == fb_esp_data_type::d_float || fbdo.resp_dataType == fb_esp_data_type::d_double;
 
-        if (fbdo._req_dataType == fbdo.resp_dataType || (_n1 && _n2))
+        if (fbdo._req_dataType == fbdo.resp_dataType || (_reqType && _respType))
           fbdo._mismatchDataType = false;
         else if (fbdo._req_dataType != fb_esp_data_type::d_any)
+        {
           fbdo._mismatchDataType = true;
+          fbdo._httpCode = FIREBASE_ERROR_DATA_TYPE_MISMATCH;
+        }
       }
     }
 
@@ -3487,6 +3474,21 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
     }
 
     return fbdo._httpCode == FIREBASE_ERROR_HTTP_CODE_OK;
+  }
+  else
+  {
+
+    while (stream->available() > 0)
+      stream->read();
+
+    if (!fbdo._isStream)
+    {
+      fbdo._httpCode = FIREBASE_ERROR_SSL_RX_BUFFER_SIZE_TOO_SMALL;
+      if (fbdo._req_method == fb_esp_method::m_get && fbdo._req_dataType == fb_esp_data_type::d_file)
+        Firebase.errorToString(fbdo._httpCode, fbdo._file_transfer_error);
+
+      return false;
+    }
   }
 
   if (fbdo._isStream && fbdo._httpConnected)
@@ -3697,7 +3699,6 @@ void FirebaseESP32::closeHTTP(FirebaseData &fbdo)
       if (fbdo.httpClient.stream()->connected())
         fbdo.httpClient.stream()->stop();
     }
-
     _lastReconnectMillis = millis();
   }
   fbdo._httpConnected = false;
@@ -4316,7 +4317,7 @@ bool FirebaseESP32::reconnect(FirebaseData &fbdo, unsigned long dataTime)
     {
       if (millis() - _lastReconnectMillis > _reconnectTimeout && !fbdo._httpConnected)
       {
-        WiFi.reconnect();
+        esp_wifi_connect();
         _lastReconnectMillis = millis();
       }
     }
@@ -4438,6 +4439,9 @@ void FirebaseESP32::errorToString(int httpCode, std::string &buff)
   case FIREBASE_ERROR_HTTPC_MAX_REDIRECT_REACHED:
     pgm_appendStr(buff, fb_esp_pgm_str_169);
     return;
+  case FIREBASE_ERROR_BUFFER_OVERFLOW:
+    pgm_appendStr(buff, fb_esp_pgm_str_68);
+    return;
   case FIREBASE_ERROR_HTTPC_NO_FCM_TOPIC_PROVIDED:
     pgm_appendStr(buff, fb_esp_pgm_str_144);
     return;
@@ -4452,6 +4456,15 @@ void FirebaseESP32::errorToString(int httpCode, std::string &buff)
     return;
   case FIREBASE_ERROR_EXPECTED_JSON_DATA:
     pgm_appendStr(buff, fb_esp_pgm_str_185);
+    return;
+  case FIREBASE_ERROR_HTTP_CODE_PAYLOAD_TOO_LARGE:
+    pgm_appendStr(buff, fb_esp_pgm_str_189);
+    return;
+  case FIREBASE_ERROR_CANNOT_CONFIG_TIME:
+    pgm_appendStr(buff, fb_esp_pgm_str_190);
+    return;
+  case FIREBASE_ERROR_SSL_RX_BUFFER_SIZE_TOO_SMALL:
+    pgm_appendStr(buff, fb_esp_pgm_str_191);
     return;
 
   default:
@@ -4656,7 +4669,7 @@ void FirebaseESP32::runStreamTask(FirebaseData &fbdo, const std::string &taskNam
               if (fbso[id].get().resp_dataType == fb_esp_data_type::d_blob)
               {
                 s._blob = fbso[id].get()._blob;
-                //Free ram in case of callback data was used
+                //Free ram in case of the callback data was used
                 fbso[id].get()._blob.clear();
               }
               fbso[id].get()._dataAvailableCallback(s);
@@ -4845,6 +4858,7 @@ void FirebaseESP32::endAutoRunErrorQueue(FirebaseData &fbdo)
       fbso.erase(fbso.begin() + index);
   }
 }
+
 void FirebaseESP32::clearErrorQueue(FirebaseData &fbdo)
 {
   for (uint8_t i = 0; i < fbdo._qMan._queueCollection.size(); i++)
@@ -4860,8 +4874,8 @@ bool FirebaseESP32::backup(FirebaseData &fbdo, uint8_t storageType, const String
   fbdo._backupNodePath = nodePath.c_str();
   fbdo._backupFilename.clear();
   fbdo._fileName.clear();
-  bool flag = handleRequest(fbdo, storageType, nodePath.c_str(), fb_esp_method::m_download, fb_esp_data_type::d_json, "", "", "");
-  return flag;
+  bool ret = handleRequest(fbdo, storageType, nodePath.c_str(), fb_esp_method::m_download, fb_esp_data_type::d_json, "", "", "");
+  return ret;
 }
 
 bool FirebaseESP32::restore(FirebaseData &fbdo, uint8_t storageType, const String &nodePath, const String &dirPath)
@@ -4870,8 +4884,8 @@ bool FirebaseESP32::restore(FirebaseData &fbdo, uint8_t storageType, const Strin
   fbdo._backupNodePath = nodePath.c_str();
   fbdo._backupFilename.clear();
   fbdo._fileName.clear();
-  bool flag = handleRequest(fbdo, storageType, nodePath.c_str(), fb_esp_method::m_restore, fb_esp_data_type::d_json, "", "", "");
-  return flag;
+  bool ret = handleRequest(fbdo, storageType, nodePath.c_str(), fb_esp_method::m_restore, fb_esp_data_type::d_json, "", "", "");
+  return ret;
 }
 
 char *FirebaseESP32::getPGMString(PGM_P pgm)
@@ -4887,7 +4901,7 @@ char *FirebaseESP32::getFloatString(float value)
 {
   char *buf = newS(36);
   memset(buf, 0, 36);
-  dtostrf(value, 7, 6, buf);
+  dtostrf(value, 7, _floatDigits, buf);
   return buf;
 }
 
@@ -4913,7 +4927,7 @@ char *FirebaseESP32::getDoubleString(double value)
 {
   char *buf = newS(36);
   memset(buf, 0, 36);
-  dtostrf(value, 12, 9, buf);
+  dtostrf(value, 12, _doubleDigits, buf);
   return buf;
 }
 
@@ -4926,7 +4940,7 @@ void FirebaseESP32::pgm_appendStr(std::string &buf, PGM_P p, bool empty)
   delS(b);
 }
 
-void FirebaseESP32::trimDouble(char *buf)
+void FirebaseESP32::trimDigits(char *buf)
 {
   size_t i = strlen(buf) - 1;
   while (buf[i] == '0' && i > 0)
@@ -6040,16 +6054,18 @@ String FirebaseData::stringData()
 
 String FirebaseData::jsonString()
 {
-  if (_data.length() > 0 && resp_dataType == fb_esp_data_type::d_json)
-    return String(_data.c_str());
+  if (resp_dataType == fb_esp_data_type::d_json)
+  {
+    String s;
+    _json.toString(s);
+    return s;
+  }
   else
     return String();
 }
 
 FirebaseJson *FirebaseData::jsonObjectPtr()
 {
-  if (_data.length() > 0 && resp_dataType == fb_esp_data_type::d_json)
-    _json._setJsonData(_data);
   return &_json;
 }
 
@@ -6121,16 +6137,8 @@ File FirebaseData::fileStream()
   if (resp_dataType == fb_esp_data_type::d_file)
   {
     char *tmp = Firebase.getPGMString(fb_esp_pgm_str_184);
-    if (_storageType == StorageType::SPIFFS)
-    {
-      if (SPIFFS.begin(true))
-        file = SPIFFS.open(tmp, FILE_READ);
-    }
-    else if (_storageType == StorageType::SD)
-    {
-      if (Firebase.sdBegin())
-        file = SD.open(tmp, FILE_READ);
-    }
+    if (SPIFFS.begin(true))
+      file = SPIFFS.open(tmp, FILE_READ);
     Firebase.delS(tmp);
   }
   return file;
@@ -6173,10 +6181,10 @@ bool FirebaseData::dataAvailable()
 
 bool FirebaseData::streamAvailable()
 {
-  bool flag = _httpConnected && _dataAvailable && _streamDataChanged;
+  bool ret = _httpConnected && _dataAvailable && _streamDataChanged;
   _dataAvailable = false;
   _streamDataChanged = false;
-  return flag;
+  return ret;
 }
 
 bool FirebaseData::mismatchDataType()
@@ -6207,14 +6215,6 @@ String FirebaseData::payload()
 String FirebaseData::errorReason()
 {
   std::string buf = "";
-  if (_httpCode == FIREBASE_ERROR_HTTP_CODE_OK)
-  {
-    if (_mismatchDataType)
-      _httpCode = FIREBASE_ERROR_DATA_TYPE_MISMATCH;
-    else if (_pathNotExist)
-      _httpCode = FIREBASE_ERROR_PATH_NOT_EXIST;
-  }
-
   Firebase.errorToString(_httpCode, buf);
 
   if (_fbError.length() > 0 && strcmp(_fbError.c_str(), buf.c_str()) != 0)
@@ -6327,18 +6327,20 @@ FirebaseJsonArray *StreamData::jsonArrayPtr()
     _jsonArr->_json._toStdString(_jsonArr->_jbuf, false);
     _jsonArr->_json._rawbuf = tmp;
     _jsonArr->_json._rawbuf += _data;
+    Firebase.delS(tmp);
 
     tmp = Firebase.newS(tmp, 20);
     strcpy_P(tmp, FirebaseJson_STR_26);
 
     _jsonArr->_json._parse(tmp, FirebaseJson::PRINT_MODE_PLAIN);
+    Firebase.delS(tmp);
 
     std::string().swap(_jsonArr->_json._tbuf);
     std::string().swap(_jsonArr->_jbuf);
     _jsonArr->_json.clearPathTk();
     _jsonArr->_json._tokens.reset();
     _jsonArr->_json._tokens = nullptr;
-    Firebase.delS(tmp);
+
     if (_jsonArr->_json._jsonData._dbuf.length() > 2)
       _jsonArr->_json._rawbuf = _jsonArr->_json._jsonData._dbuf.substr(1, _jsonArr->_json._jsonData._dbuf.length() - 2);
     _jsonArr->_arrLen = _jsonArr->_json._jsonData._len;
@@ -6379,16 +6381,8 @@ File StreamData::fileStream()
 
     char *tmp = Firebase.getPGMString(fb_esp_pgm_str_184);
 
-    if (fbso[_idx].get()._storageType == StorageType::SPIFFS)
-    {
-      if (SPIFFS.begin(true))
-        file = SPIFFS.open(tmp, FILE_READ);
-    }
-    else if (fbso[_idx].get()._storageType == StorageType::SD)
-    {
-      if (Firebase.sdBegin())
-        file = SD.open(tmp, FILE_READ);
-    }
+    if (SPIFFS.begin(true))
+      file = SPIFFS.open(tmp, FILE_READ);
 
     Firebase.delS(tmp);
   }

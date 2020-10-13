@@ -197,6 +197,49 @@ void printResult(FirebaseData &data)
                 Serial.println(jsonData.stringValue);
         }
     }
+    else if (data.dataType() == "blob")
+    {
+
+        Serial.println();
+
+        for (int i = 0; i < data.blobData().size(); i++)
+        {
+            if (i > 0 && i % 16 == 0)
+                Serial.println();
+
+            if (i < 16)
+                Serial.print("0");
+
+            Serial.print(data.blobData()[i], HEX);
+            Serial.print(" ");
+        }
+        Serial.println();
+    }
+    else if (data.dataType() == "file")
+    {
+
+        Serial.println();
+
+        File file = data.fileStream();
+        int i = 0;
+
+        while (file.available())
+        {
+            if (i > 0 && i % 16 == 0)
+                Serial.println();
+
+            int v = file.read();
+
+            if (v < 16)
+                Serial.print("0");
+
+            Serial.print(v, HEX);
+            Serial.print(" ");
+            i++;
+        }
+        Serial.println();
+        file.close();
+    }
     else
     {
         Serial.println(data.payload());
