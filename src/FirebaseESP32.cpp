@@ -103,7 +103,7 @@ void FirebaseESP32::end(FirebaseData &fbdo)
 
 void FirebaseESP32::setStreamTaskStackSize(size_t size)
 {
-  Serial.println("[INFO]: Function setStreamTaskStackSize is obsoleted, the stack size can set via setStreamCallback");
+  Serial.println(F("[INFO]: Function setStreamTaskStackSize is obsoleted, the stack size can set via setStreamCallback"));
 }
 
 void FirebaseESP32::allowMultipleRequests(bool enable)
