@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.2
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.3
 
 
 ## Global functions
@@ -48,6 +48,8 @@ void end(FirebaseData &fbdo);
 
 
 #### Set the stream task (RTOS task) reserved stack memory in bytes.
+
+#### [Obsoleted]
     
 param **`size`** - The number of stack size in bytes.
 
@@ -2289,9 +2291,11 @@ setStreamCallback should be called before Firebase.beginStream.
 
 param **`fbdo`** - Firebase Data Object to hold data and instances.
 
-param **`dataAvailablecallback`** - Callback function that accepts streamData parameter.
+param **`dataAvailablecallback`** - The Callback function that accepts streamData parameter.
 
-param **`timeoutCallback`** - Callback function will be called when stream connection was timeout (optional).
+param **`timeoutCallback`** - The Callback function will be called when stream connection was timeout (optional).
+
+param **`streamTaskStackSize`** - The stream task (RTOS task) reserved stack memory in byte (optional) (8192 is default).
 
 dataAvailablecallback will be called When data in the defined path changed or the stream path changed or stream connection
 was resumed from read, store, update, and deleteNode.
@@ -2305,7 +2309,7 @@ Call [streamData object].xxxData will return the appropriate data type of
 the payload returned from the server.
 
 ```C++
-void setStreamCallback(FirebaseData &fbdo, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL);
+void setStreamCallback(FirebaseData &fbdo, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
 ```
 
 
@@ -2322,9 +2326,11 @@ setMultiPathStreamCallback should be called before Firebase.beginMultiPathStream
 
 param **`fbdo`** - Firebase Data Object to hold data and instances.
 
-param **`multiPathDataCallback`** - a Callback function that accepts MultiPathStreamData parameter.
+param **`multiPathDataCallback`** - The Callback function that accepts MultiPathStreamData parameter.
 
-param **`timeoutCallback`** - a Callback function will be called when stream connection was timeout (optional).
+param **`timeoutCallback`** - The Callback function will be called when stream connection was timeout (optional).
+
+param **`streamTaskStackSize`** - The stream task (RTOS task) reserved stack memory in byte (optional) (8192 is default).
 
 multiPathDataCallback will be called When data in the defined path changed or the stream path changed or stream connection
 was resumed from getXXX, setXXX, pushXXX, updateNode, deleteNode.
@@ -2338,7 +2344,7 @@ The properties [MultiPathStreamData object].value, [MultiPathStreamData object].
 These properties will store the result from calling the function [MultiPathStreamData object].get.
 
 ```C++
-void setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback = NULL);
+void setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
 ```
 
 
@@ -2384,6 +2390,8 @@ param **`fbdo`** - Firebase Data Object to hold data and instances.
 
 param **`callback`** - Callback function that accepts QueueInfo Object as parameter, optional.
 
+param **`queueTaskStackSize`** - The queue error recovery task (RTOS task) reserved stack memory in byte (optional) (8192 is default).
+
 The following functions are available from QueueInfo Object accepted by callback.
 
 **queueInfo.totalQueues()**, get the total Error Queues in Error Queue Collection.
@@ -2400,7 +2408,7 @@ The following functions are available from QueueInfo Object accepted by callback
 
 
 ```C++
-void beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback = NULL);
+void beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback = NULL, size_t queueTaskStackSize = 8192);
 ```
 
 

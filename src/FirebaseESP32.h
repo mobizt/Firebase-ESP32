@@ -1,11 +1,12 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.3
  * 
- * October 13, 2020
+ * October 14, 2020
  * 
  *   Updates:
- * - Decimal places config for float and double stored data
- * - Bugs fixed
+ * - Fix the setStreamCallback and removeStreamCallback bugs when the callback function added after removed. 
+ * - Add the dynamic allocation of Firebase Data object example.
+ * - Make the setStreamTaskStackSize function obsoleted and add the stack size option to the stream callback setting functions.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -58,7 +59,7 @@
 #define SD_CS_PIN 15
 #define MAX_REDIRECT 5
 #define WIFI_RECONNECT_TIMEOUT 10000
-#define STEAM_STACK_SIZE 8192
+#define STREAM_TASK_STACK_SIZE 8192
 #define QUEUE_TASK_STACK_SIZE 8192
 #define MAX_BLOB_PAYLOAD_SIZE 1024
 
@@ -347,8 +348,8 @@ class FCMObject;
 
 static bool processing __attribute__((used)) = false;
 static std::vector<std::reference_wrapper<FirebaseData>> fbso;
-static uint8_t dataObjIdx __attribute__((used)) = 0;
-static uint8_t objIdx __attribute__((used)) = 0;
+static uint8_t fbsoCount __attribute__((used)) = 0;
+static uint8_t fbsoIdx __attribute__((used)) = 0;
 static uint8_t errorQueueIndex __attribute__((used)) = 0;
 
 static std::vector<int> respQueueIdx;
@@ -695,6 +696,7 @@ public:
   void end(FirebaseData &fbdo);
 
   /*
+    [Obsoleted]
     Set the stream task (RTOS task) reserved stack memory in bytes.
     
     @param size - The number of stack size in bytes.
@@ -2315,6 +2317,7 @@ public:
     @param fbdo - Firebase Data Object to hold data and instances.
     @param dataAvailablecallback - a Callback function that accepts streamData parameter.
     @param timeoutCallback - Callback function will be called when the stream connection was timeout (optional).
+    @param streamTaskStackSize - The stream task (RTOS task) reserved stack memory in byte (optional) (8192 is default).
 
     dataAvailablecallback will be called When data in the defined path changed or the stream path changed or stream connection
     was resumed from getXXX, setXXX, pushXXX, updateNode, deleteNode.
@@ -2326,7 +2329,7 @@ public:
     Call [streamData object].xxxData will return the appropriate data type of the payload returned from the server.
 
    */
-  void setStreamCallback(FirebaseData &fbdo, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL);
+  void setStreamCallback(FirebaseData &fbdo, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
 
   /*
     Set the multiple paths stream callback functions.
@@ -2336,6 +2339,7 @@ public:
     @param fbdo - Firebase Data Object to hold data and instances.
     @param multiPathDataCallback - a Callback function that accepts MultiPathStreamData parameter.
     @param timeoutCallback - a Callback function will be called when the stream connection was timed out (optional).
+    @param streamTaskStackSize - The stream task (RTOS task) reserved stack memory in byte (optional) (8192 is default).
 
     multiPathDataCallback will be called When data in the defined path changed or the stream path changed or stream connection
     was resumed from getXXX, setXXX, pushXXX, updateNode, deleteNode.
@@ -2349,7 +2353,7 @@ public:
     These properties will store the result from calling the function [MultiPathStreamData object].get.
 
    */
-  void setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback = NULL);
+  void setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
 
   /*
     Remove stream callback functions.
@@ -2517,7 +2521,8 @@ public:
     Start the Firebase Error Queues Auto Run Process.
 
     @param fbdo - Firebase Data Object to hold data and instances.
-    @param callback - a Callback function that accepts QueueInfo Object as a parameter, optional.
+    @param callback - The Callback function that accepts QueueInfo Object as a parameter, optional.
+    param queueTaskStackSize - The queue error recovery task (RTOS task) reserved stack memory in byte (optional) (8192 is default).
 
     The following functions are available from QueueInfo Object accepted by callback.
 
@@ -2534,7 +2539,7 @@ public:
     queueInfo.path(), get a string of the Firebase call path that being process of current Error Queue.
 
    */
-  void beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback = NULL);
+  void beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback = NULL, size_t queueTaskStackSize = 8192);
 
   /*
     Stop the Firebase Error Queues Auto Run Process.
@@ -2732,7 +2737,6 @@ private:
   uint16_t _reconnectTimeout = WIFI_RECONNECT_TIMEOUT;
   uint8_t _sck, _miso, _mosi, _ss;
   File file;
-  size_t _streamTaskStackSize = STEAM_STACK_SIZE;
 
   uint8_t _floatDigits = 5;
   uint8_t _doubleDigits = 9;
@@ -3089,6 +3093,9 @@ private:
   FirebaseESP32::QueueInfoCallback _queueInfoCallback = NULL;
   TaskHandle_t _handle = NULL;
   TaskHandle_t _q_handle = NULL;
+  size_t _streamTaskStackSize = STREAM_TASK_STACK_SIZE;
+  size_t _queueTaskStackSize = QUEUE_TASK_STACK_SIZE;
+  bool _streamTaskEnable = false;
   int _idx = -1;
   uint8_t _dataTypeNum = 0;
 

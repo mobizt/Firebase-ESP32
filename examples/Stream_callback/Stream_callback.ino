@@ -81,9 +81,6 @@ void setup()
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
   
-  //Set the reserved size of stack memory in bytes for internal stream callback processing RTOS task.
-  //8192 is the minimum size.
-  Firebase.setStreamTaskStackSize(10000);
 
   if (!Firebase.beginStream(firebaseData1, path))
   {
@@ -94,7 +91,10 @@ void setup()
     Serial.println();
   }
 
-  Firebase.setStreamCallback(firebaseData1, streamCallback, streamTimeoutCallback);
+  //Set the reserved size of stack memory in bytes for internal stream callback processing RTOS task.
+  //8192 is the minimum size.
+
+  Firebase.setStreamCallback(firebaseData1, streamCallback, streamTimeoutCallback, 8192);
 }
 
 void loop()

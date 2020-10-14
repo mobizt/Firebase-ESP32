@@ -1,11 +1,12 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.2
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.3
  * 
- * October 13, 2020
+ * October 14, 2020
  * 
  *   Updates:
- * - Decimal places config for float and double stored data
- * - Bugs fixed
+ * - Fix the setStreamCallback and removeStreamCallback bugs when the callback function added after removed. 
+ * - Add the dynamic allocation of Firebase Data object example.
+ * - Make the setStreamTaskStackSize function obsoleted and add the stack size option to the stream callback setting functions.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -102,10 +103,7 @@ void FirebaseESP32::end(FirebaseData &fbdo)
 
 void FirebaseESP32::setStreamTaskStackSize(size_t size)
 {
-  if (size >= 8192)
-    _streamTaskStackSize = size;
-  else
-    _streamTaskStackSize = 8192;
+  Serial.println("[INFO]: Function setStreamTaskStackSize is obsoleted, the stack size can set via setStreamCallback");
 }
 
 void FirebaseESP32::allowMultipleRequests(bool enable)
@@ -3416,7 +3414,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
       else
         fbdo._pathNotExist = false;
 
-      if (fbdo.resp_dataType != fb_esp_data_type::d_null && !response.noContent && !fbdo._req_method == fb_esp_method::m_post)
+      if (fbdo.resp_dataType != fb_esp_data_type::d_null && !response.noContent && fbdo._req_method != fb_esp_method::m_post)
       {
 
         bool _reqType = fbdo._req_dataType == fb_esp_data_type::d_integer || fbdo._req_dataType == fb_esp_data_type::d_float || fbdo._req_dataType == fb_esp_data_type::d_double;
@@ -4533,14 +4531,15 @@ bool FirebaseESP32::sendTopic(FirebaseData &fbdo)
   return handleFCMRequest(fbdo, fb_esp_fcm_msg_type::msg_topic);
 }
 
-void FirebaseESP32::setStreamCallback(FirebaseData &fbdo, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback)
+void FirebaseESP32::setStreamCallback(FirebaseData &fbdo, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize)
 {
+
+  fbdo._streamTaskEnable = false;
   removeMultiPathStreamCallback(fbdo);
 
   int index = fbdo._idx;
   std::string taskName;
   pgm_appendStr(taskName, fb_esp_pgm_str_72, true);
-  char *idx = nullptr;
 
   bool hasHandle = false;
 
@@ -4552,25 +4551,29 @@ void FirebaseESP32::setStreamCallback(FirebaseData &fbdo, StreamEventCallback da
   }
 
   if (fbdo._q_handle)
-  {
     hasHandle = true;
-  }
 
   if (index == -1)
   {
-    index = dataObjIdx;
-    dataObjIdx++;
+    index = fbsoCount;
+    fbsoCount++;
   }
 
-  idx = getIntString(index);
+  char *tmp = getIntString(index);
   pgm_appendStr(taskName, fb_esp_pgm_str_113);
-  taskName += idx;
-  delS(idx);
+  taskName += tmp;
+  delS(tmp);
+
+  if (streamTaskStackSize > STREAM_TASK_STACK_SIZE)
+    fbdo._streamTaskStackSize = streamTaskStackSize;
+  else
+    fbdo._streamTaskStackSize = STREAM_TASK_STACK_SIZE;
 
   fbdo._idx = index;
-  objIdx = index;
+  fbsoIdx = index;
   fbdo._dataAvailableCallback = dataAvailablecallback;
   fbdo._timeoutCallback = timeoutCallback;
+  fbdo._streamTaskEnable = true;
 
   //object created
   if (hasHandle)
@@ -4581,44 +4584,42 @@ void FirebaseESP32::setStreamCallback(FirebaseData &fbdo, StreamEventCallback da
   runStreamTask(fbdo, taskName);
 }
 
-void FirebaseESP32::setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback)
+void FirebaseESP32::setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize)
 {
+
+  fbdo._streamTaskEnable = false;
   removeStreamCallback(fbdo);
 
   int index = fbdo._idx;
   std::string taskName;
   pgm_appendStr(taskName, fb_esp_pgm_str_72, true);
-  char *idx = nullptr;
 
   bool hasHandle = false;
 
-  if (fbdo._handle)
-  {
-    hasHandle = true;
-    vTaskDelete(fbdo._handle);
-    fbdo._handle = NULL;
-  }
-
   if (fbdo._q_handle)
-  {
     hasHandle = true;
-  }
 
   if (index == -1)
   {
-    index = dataObjIdx;
-    dataObjIdx++;
+    index = fbsoCount;
+    fbsoCount++;
   }
 
-  idx = getIntString(index);
+  char *tmp = getIntString(index);
   pgm_appendStr(taskName, fb_esp_pgm_str_113);
-  taskName += idx;
-  delS(idx);
+  taskName += tmp;
+  delS(tmp);
+
+  if (streamTaskStackSize > STREAM_TASK_STACK_SIZE)
+    fbdo._streamTaskStackSize = streamTaskStackSize;
+  else
+    fbdo._streamTaskStackSize = STREAM_TASK_STACK_SIZE;
 
   fbdo._idx = index;
-  objIdx = index;
+  fbsoIdx = index;
   fbdo._multiPathDataCallback = multiPathDataCallback;
   fbdo._timeoutCallback = timeoutCallback;
+  fbdo._streamTaskEnable = true;
 
   //object created
   if (hasHandle)
@@ -4633,67 +4634,67 @@ void FirebaseESP32::runStreamTask(FirebaseData &fbdo, const std::string &taskNam
 {
 
   TaskFunction_t taskCode = [](void *param) {
-    int id = objIdx;
     bool res = false;
 
-    for (;;)
+    while (fbso[fbsoIdx].get()._streamTaskEnable)
     {
-      if ((fbso[id].get()._dataAvailableCallback || fbso[id].get()._timeoutCallback))
+
+      if ((fbso[fbsoIdx].get()._dataAvailableCallback || fbso[fbsoIdx].get()._timeoutCallback))
       {
 
-        res = Firebase.readStream(fbso[id].get());
+        res = Firebase.readStream(fbso[fbsoIdx].get());
 
-        if (fbso[id].get().streamTimeout() && fbso[id].get()._timeoutCallback)
-          fbso[id].get()._timeoutCallback(true);
+        if (fbso[fbsoIdx].get().streamTimeout() && fbso[fbsoIdx].get()._timeoutCallback)
+          fbso[fbsoIdx].get()._timeoutCallback(true);
 
-        if (Firebase.reconnect(fbso[id].get()))
+        if (Firebase.reconnect(fbso[fbsoIdx].get()))
         {
 
-          if (res && fbso[id].get().streamAvailable() && (fbso[id].get()._dataAvailableCallback || fbso[id].get()._multiPathDataCallback))
+          if (res && fbso[fbsoIdx].get().streamAvailable() && (fbso[fbsoIdx].get()._dataAvailableCallback || fbso[fbsoIdx].get()._multiPathDataCallback))
           {
-            if (fbso[id].get()._dataAvailableCallback)
+            if (fbso[fbsoIdx].get()._dataAvailableCallback)
             {
               StreamData s;
-              s._json = &fbso[id].get()._json;
-              s._jsonArr = &fbso[id].get()._jsonArr;
-              s._jsonData = &fbso[id].get()._jsonData;
-              s._streamPath = fbso[id].get()._streamPath;
-              s._data = fbso[id].get()._data;
-              s._path = fbso[id].get()._path;
+              s._json = &fbso[fbsoIdx].get()._json;
+              s._jsonArr = &fbso[fbsoIdx].get()._jsonArr;
+              s._jsonData = &fbso[fbsoIdx].get()._jsonData;
+              s._streamPath = fbso[fbsoIdx].get()._streamPath;
+              s._data = fbso[fbsoIdx].get()._data;
+              s._path = fbso[fbsoIdx].get()._path;
 
-              s._dataType = fbso[id].get().resp_dataType;
-              s._dataTypeStr = fbso[id].get().getDataType(s._dataType);
-              s._eventTypeStr = fbso[id].get()._eventType;
-              s._idx = id;
+              s._dataType = fbso[fbsoIdx].get().resp_dataType;
+              s._dataTypeStr = fbso[fbsoIdx].get().getDataType(s._dataType);
+              s._eventTypeStr = fbso[fbsoIdx].get()._eventType;
+              s._idx = fbsoIdx;
 
-              if (fbso[id].get().resp_dataType == fb_esp_data_type::d_blob)
+              if (fbso[fbsoIdx].get().resp_dataType == fb_esp_data_type::d_blob)
               {
-                s._blob = fbso[id].get()._blob;
+                s._blob = fbso[fbsoIdx].get()._blob;
                 //Free ram in case of the callback data was used
-                fbso[id].get()._blob.clear();
+                fbso[fbsoIdx].get()._blob.clear();
               }
-              fbso[id].get()._dataAvailableCallback(s);
+              fbso[fbsoIdx].get()._dataAvailableCallback(s);
               s.empty();
             }
-            else if (fbso[id].get()._multiPathDataCallback)
+            else if (fbso[fbsoIdx].get()._multiPathDataCallback)
             {
 
               MultiPathStreamData mdata;
-              mdata._type = fbso[id].get().resp_dataType;
-              mdata._path = fbso[id].get()._path;
-              mdata._typeStr = fbso[id].get().getDataType(mdata._type);
+              mdata._type = fbso[fbsoIdx].get().resp_dataType;
+              mdata._path = fbso[fbsoIdx].get()._path;
+              mdata._typeStr = fbso[fbsoIdx].get().getDataType(mdata._type);
 
               if (mdata._type == fb_esp_data_type::d_json)
-                mdata._json = &fbso[id].get()._json;
+                mdata._json = &fbso[fbsoIdx].get()._json;
               else
               {
                 if (mdata._type == fb_esp_data_type::d_string)
-                  mdata._data = fbso[id].get()._data.substr(1, fbso[id].get()._data.length() - 2).c_str();
+                  mdata._data = fbso[fbsoIdx].get()._data.substr(1, fbso[fbsoIdx].get()._data.length() - 2).c_str();
                 else
-                  mdata._data = fbso[id].get()._data;
+                  mdata._data = fbso[fbsoIdx].get()._data;
               }
 
-              fbso[id].get()._multiPathDataCallback(mdata);
+              fbso[fbsoIdx].get()._multiPathDataCallback(mdata);
               mdata.empty();
             }
           }
@@ -4705,10 +4706,11 @@ void FirebaseESP32::runStreamTask(FirebaseData &fbdo, const std::string &taskNam
     }
 
     vTaskDelete(NULL);
-    fbso[id].get()._handle = NULL;
+
+    fbso[fbsoIdx].get()._handle = NULL;
   };
 
-  xTaskCreatePinnedToCore(taskCode, taskName.c_str(), _streamTaskStackSize, NULL, 3, &fbdo._handle, 1);
+  xTaskCreatePinnedToCore(taskCode, taskName.c_str(), fbdo._streamTaskStackSize, NULL, 3, &fbdo._handle, 1);
 }
 
 void FirebaseESP32::removeStreamCallback(FirebaseData &fbdo)
@@ -4717,6 +4719,8 @@ void FirebaseESP32::removeStreamCallback(FirebaseData &fbdo)
 
   if (index != -1)
   {
+    fbsoCount--;
+
     bool hasOherHandles = false;
 
     if (fbdo._q_handle)
@@ -4746,6 +4750,8 @@ void FirebaseESP32::removeMultiPathStreamCallback(FirebaseData &fbdo)
 
   if (index != -1)
   {
+    fbsoCount--;
+
     bool hasOherHandles = false;
 
     if (fbdo._q_handle)
@@ -4769,7 +4775,7 @@ void FirebaseESP32::removeMultiPathStreamCallback(FirebaseData &fbdo)
   }
 }
 
-void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback)
+void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback, size_t queueTaskStackSize)
 {
 
   int index = fbdo._idx;
@@ -4787,14 +4793,19 @@ void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback
 
   if (index == -1)
   {
-    index = dataObjIdx;
-    dataObjIdx++;
+    index = fbsoCount;
+    fbsoCount++;
   }
 
   idx = getIntString(index);
   pgm_appendStr(taskName, fb_esp_pgm_str_114);
   taskName += idx;
   delS(idx);
+
+  if (queueTaskStackSize > QUEUE_TASK_STACK_SIZE)
+    fbdo._queueTaskStackSize = queueTaskStackSize;
+  else
+    fbdo._queueTaskStackSize = QUEUE_TASK_STACK_SIZE;
 
   if (callback)
     fbdo._queueInfoCallback = callback;
@@ -4829,7 +4840,7 @@ void FirebaseESP32::beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback
     fbso[id].get()._q_handle = NULL;
   };
 
-  xTaskCreatePinnedToCore(taskCode, taskName.c_str(), QUEUE_TASK_STACK_SIZE, NULL, 1, &fbdo._q_handle, 1);
+  xTaskCreatePinnedToCore(taskCode, taskName.c_str(), fbdo._queueTaskStackSize, NULL, 1, &fbdo._q_handle, 1);
 }
 
 void FirebaseESP32::endAutoRunErrorQueue(FirebaseData &fbdo)
