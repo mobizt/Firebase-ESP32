@@ -1,6 +1,6 @@
 
 /*
- *Copied version WiFiClientSecure.h version 1.0.0
+ *Copied version WiFiClientSecure.h version 1.0.1
 */
 
 /*
@@ -23,17 +23,17 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef WiFiClientSecureESP32_H
-#define WiFiClientSecureESP32_H
+#ifndef FB_WCS32_H
+#define FB_WCS32_H
 
 #ifdef ESP32
 
-#include "Arduino.h"
-#include "IPAddress.h"
+#include <Arduino.h>
+#include <IPAddress.h>
 #include <WiFi.h>
-#include "ssl_client32.h"
+#include "fb_ssl_client32.h"
 
-class WiFiClientSecureESP32 : public WiFiClient
+class FB_WCS32 : public WiFiClient
 {
 protected:
     sslclient_context32 *sslclient;
@@ -49,11 +49,11 @@ protected:
 
 
 public:
-    WiFiClientSecureESP32 *next;
-    WiFiClientSecureESP32();
-    WiFiClientSecureESP32(int socket);
-    WiFiClientSecureESP32(bool starttls);
-    ~WiFiClientSecureESP32();
+    FB_WCS32 *next;
+    FB_WCS32();
+    FB_WCS32(int socket);
+    FB_WCS32(bool starttls);
+    ~FB_WCS32();
     int connect(IPAddress ip, uint16_t port);
     int connect(IPAddress ip, uint16_t port, int32_t timeout);
     int connect(const char *host, uint16_t port);
@@ -86,7 +86,7 @@ public:
     {
         return connected();
     }
-    WiFiClientSecureESP32 &operator=(const WiFiClientSecureESP32 &other);
+    FB_WCS32 &operator=(const FB_WCS32 &other);
     bool operator==(const bool value)
     {
         return bool() == value;
@@ -95,8 +95,8 @@ public:
     {
         return bool() != value;
     }
-    bool operator==(const WiFiClientSecureESP32 &);
-    bool operator!=(const WiFiClientSecureESP32 &rhs)
+    bool operator==(const FB_WCS32 &);
+    bool operator!=(const FB_WCS32 &rhs)
     {
         return !this->operator==(rhs);
     };

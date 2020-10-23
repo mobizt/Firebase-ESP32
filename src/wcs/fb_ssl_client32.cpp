@@ -1,5 +1,5 @@
 /*
- *Modified version ssl_client.cpp version 1.0.0
+ *Modified version ssl_client.cpp version 1.0.1
 */
 
 /* Provide SSL/TLS functions to ESP32 with Arduino IDE
@@ -9,7 +9,8 @@
 * Original Copyright (C) 2006-2015, ARM Limited, All Rights Reserved, Apache 2.0 License.
 * Additions Copyright (C) 2017 Evandro Luis Copercini, Apache 2.0 License.
 */
-
+#ifndef FB_SSL_CLIENT32_CPP
+#define FB_SSL_CLIENT32_CPP
 #include "Arduino.h"
 #include <esp32-hal-log.h>
 #include <lwip/err.h>
@@ -20,10 +21,10 @@
 #include <mbedtls/oid.h>
 #include <algorithm>
 #include <string>
-#include "ssl_client32.h"
+#include "fb_ssl_client32.h"
 #include "WiFi.h"
 
-const char *pers = "esp32-tls";
+const char *fb_ssl_pers32 = "esp32-tls";
 
 static int _handle_error(int err, const char *file, int line)
 {
@@ -107,7 +108,7 @@ int start_ssl_client(sslclient_context32 *ssl_client, const char *host, uint32_t
     mbedtls_entropy_init(&ssl_client->entropy_ctx);
 
     ret = mbedtls_ctr_drbg_seed(&ssl_client->drbg_ctx, mbedtls_entropy_func,
-                                &ssl_client->entropy_ctx, (const unsigned char *)pers, strlen(pers));
+                                &ssl_client->entropy_ctx, (const unsigned char *)fb_ssl_pers32, strlen(fb_ssl_pers32));
     if (ret < 0)
     {
         return handle_error(ret);
@@ -520,3 +521,5 @@ bool verify_ssl_dn(sslclient_context32 *ssl_client, const char *domain_name)
 
     return false;
 }
+
+#endif

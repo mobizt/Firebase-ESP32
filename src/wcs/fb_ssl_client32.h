@@ -1,13 +1,13 @@
 /*
- *Modified version ssl_client.h version 1.0.0
+ *Modified version ssl_client.h version 1.0.1
 */
 
 /* Provide SSL/TLS functions to ESP32 with Arduino IDE
  * by Evandro Copercini - 2017 - Apache 2.0 License
  */
 
-#ifndef ARD_SSL_H
-#define ARD_SSL_H
+#ifndef FB_SSL_CLIENT32_H
+#define FB_SSL_CLIENT32_H
 #include <mbedtls/platform.h>
 #include <mbedtls/net.h>
 #include <mbedtls/debug.h>

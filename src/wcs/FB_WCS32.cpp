@@ -1,5 +1,5 @@
 /*
- *Copied version WiFiClientSecure.cpp version 1.0.0
+ *Copied version WiFiClientSecure.cpp version 1.0.1
 */
 
 /*
@@ -22,12 +22,12 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
-#ifndef WiFiClientSecureESP32_CPP
-#define WiFiClientSecureESP32_CPP
+#ifndef FB_WCS32_CPP
+#define FB_WCS32_CPP
 
 #ifdef ESP32
 
-#include "WiFiClientSecureESP32.h"
+#include "FB_WCS32.h"
 #include <lwip/sockets.h>
 #include <lwip/netdb.h>
 #include <errno.h>
@@ -38,7 +38,7 @@
 #undef read
 
 
-WiFiClientSecureESP32::WiFiClientSecureESP32()
+FB_WCS32::FB_WCS32()
 {
     _connected = false;
 
@@ -56,7 +56,7 @@ WiFiClientSecureESP32::WiFiClientSecureESP32()
 }
 
 
-WiFiClientSecureESP32::WiFiClientSecureESP32(int sock)
+FB_WCS32::FB_WCS32(int sock)
 {
     _connected = false;
     _timeout = 0;
@@ -78,7 +78,7 @@ WiFiClientSecureESP32::WiFiClientSecureESP32(int sock)
     next = NULL;
 }
 
-WiFiClientSecureESP32::WiFiClientSecureESP32(bool starttls)
+FB_WCS32::FB_WCS32(bool starttls)
 {
     _connected = false;
 
@@ -94,13 +94,13 @@ WiFiClientSecureESP32::WiFiClientSecureESP32(bool starttls)
     next = NULL;
 }
 
-WiFiClientSecureESP32::~WiFiClientSecureESP32()
+FB_WCS32::~FB_WCS32()
 {
     stop();
     delete sslclient;
 }
 
-WiFiClientSecureESP32 &WiFiClientSecureESP32::operator=(const WiFiClientSecureESP32 &other)
+FB_WCS32 &FB_WCS32::operator=(const FB_WCS32 &other)
 {
     stop();
     sslclient->socket = other.sslclient->socket;
@@ -108,7 +108,7 @@ WiFiClientSecureESP32 &WiFiClientSecureESP32::operator=(const WiFiClientSecureES
     return *this;
 }
 
-void WiFiClientSecureESP32::stop()
+void FB_WCS32::stop()
 {
     if (sslclient->socket >= 0) {
         close(sslclient->socket);
@@ -120,36 +120,36 @@ void WiFiClientSecureESP32::stop()
     
 }
 
-int WiFiClientSecureESP32::connect(IPAddress ip, uint16_t port)
+int FB_WCS32::connect(IPAddress ip, uint16_t port)
 {
     if (_pskIdent && _psKey)
         return connect(ip, port, _pskIdent, _psKey);
     return connect(ip, port, _CA_cert, _cert, _private_key);
 }
 
-int WiFiClientSecureESP32::connect(IPAddress ip, uint16_t port, int32_t timeout){
+int FB_WCS32::connect(IPAddress ip, uint16_t port, int32_t timeout){
     _timeout = timeout;
     return connect(ip, port);
 }
 
-int WiFiClientSecureESP32::connect(const char *host, uint16_t port)
+int FB_WCS32::connect(const char *host, uint16_t port)
 {
     if (_pskIdent && _psKey)
         return connect(host, port, _pskIdent, _psKey);
     return connect(host, port, _CA_cert, _cert, _private_key);
 }
 
-int WiFiClientSecureESP32::connect(const char *host, uint16_t port, int32_t timeout){
+int FB_WCS32::connect(const char *host, uint16_t port, int32_t timeout){
     _timeout = timeout;
     return connect(host, port);
 }
 
-int WiFiClientSecureESP32::connect(IPAddress ip, uint16_t port, const char *_CA_cert, const char *_cert, const char *_private_key)
+int FB_WCS32::connect(IPAddress ip, uint16_t port, const char *_CA_cert, const char *_cert, const char *_private_key)
 {
     return connect(ip.toString().c_str(), port, _CA_cert, _cert, _private_key);
 }
 
-int WiFiClientSecureESP32::connect(const char *host, uint16_t port, const char *_CA_cert, const char *_cert, const char *_private_key)
+int FB_WCS32::connect(const char *host, uint16_t port, const char *_CA_cert, const char *_cert, const char *_private_key)
 {
     if(_timeout > 0){
         sslclient->handshake_timeout = _timeout;
@@ -165,11 +165,11 @@ int WiFiClientSecureESP32::connect(const char *host, uint16_t port, const char *
     return 1;
 }
 
-int WiFiClientSecureESP32::connect(IPAddress ip, uint16_t port, const char *pskIdent, const char *psKey) {
+int FB_WCS32::connect(IPAddress ip, uint16_t port, const char *pskIdent, const char *psKey) {
     return connect(ip.toString().c_str(), port,_pskIdent, _psKey);
 }
 
-int WiFiClientSecureESP32::connect(const char *host, uint16_t port, const char *pskIdent, const char *psKey) {
+int FB_WCS32::connect(const char *host, uint16_t port, const char *pskIdent, const char *psKey) {
     log_v("start_ssl_client with PSK");
     if(_timeout > 0){
         sslclient->handshake_timeout = _timeout;
@@ -185,7 +185,7 @@ int WiFiClientSecureESP32::connect(const char *host, uint16_t port, const char *
     return 1;
 }
 
-int WiFiClientSecureESP32::peek(){
+int FB_WCS32::peek(){
     if(_peek >= 0){
         return _peek;
     }
@@ -193,12 +193,12 @@ int WiFiClientSecureESP32::peek(){
     return _peek;
 }
 
-size_t WiFiClientSecureESP32::write(uint8_t data)
+size_t FB_WCS32::write(uint8_t data)
 {
     return write(&data, 1);
 }
 
-int WiFiClientSecureESP32::read()
+int FB_WCS32::read()
 {
     uint8_t data = -1;
     int res = read(&data, 1);
@@ -208,7 +208,7 @@ int WiFiClientSecureESP32::read()
     return data;
 }
 
-size_t WiFiClientSecureESP32::write(const uint8_t *buf, size_t size)
+size_t FB_WCS32::write(const uint8_t *buf, size_t size)
 {
     if (!_connected) {
         return 0;
@@ -221,7 +221,7 @@ size_t WiFiClientSecureESP32::write(const uint8_t *buf, size_t size)
     return res;
 }
 
-int WiFiClientSecureESP32::read(uint8_t *buf, size_t size)
+int FB_WCS32::read(uint8_t *buf, size_t size)
 {
     int peeked = 0;
     int avail = available();
@@ -251,7 +251,7 @@ int WiFiClientSecureESP32::read(uint8_t *buf, size_t size)
     return res + peeked;
 }
 
-int WiFiClientSecureESP32::available()
+int FB_WCS32::available()
 {
     int peeked = (_peek >= 0);
     if (!_connected) {
@@ -265,7 +265,7 @@ int WiFiClientSecureESP32::available()
     return res+peeked;
 }
 
-uint8_t WiFiClientSecureESP32::connected()
+uint8_t FB_WCS32::connected()
 {
     uint8_t dummy = 0;
     read(&dummy, 0);
@@ -273,27 +273,27 @@ uint8_t WiFiClientSecureESP32::connected()
     return _connected;
 }
 
-void WiFiClientSecureESP32::setCACert (const char *rootCA)
+void FB_WCS32::setCACert (const char *rootCA)
 {
     _CA_cert = rootCA;
 }
 
-void WiFiClientSecureESP32::setCertificate (const char *client_ca)
+void FB_WCS32::setCertificate (const char *client_ca)
 {
     _cert = client_ca;
 }
 
-void WiFiClientSecureESP32::setPrivateKey (const char *private_key)
+void FB_WCS32::setPrivateKey (const char *private_key)
 {
     _private_key = private_key;
 }
 
-void WiFiClientSecureESP32::setPreSharedKey(const char *pskIdent, const char *psKey) {
+void FB_WCS32::setPreSharedKey(const char *pskIdent, const char *psKey) {
     _pskIdent = pskIdent;
     _psKey = psKey;
 }
 
-bool WiFiClientSecureESP32::verify(const char* fp, const char* domain_name)
+bool FB_WCS32::verify(const char* fp, const char* domain_name)
 {
     if (!sslclient)
         return false;
@@ -301,7 +301,7 @@ bool WiFiClientSecureESP32::verify(const char* fp, const char* domain_name)
     return verify_ssl_fingerprint(sslclient, fp, domain_name);
 }
 
-char *WiFiClientSecureESP32::_streamLoad(Stream& stream, size_t size) {
+char *FB_WCS32::_streamLoad(Stream& stream, size_t size) {
   static char *dest = nullptr;
   if(dest) {
       free(dest);
@@ -317,7 +317,7 @@ char *WiFiClientSecureESP32::_streamLoad(Stream& stream, size_t size) {
   return dest;
 }
 
-bool WiFiClientSecureESP32::loadCACert(Stream& stream, size_t size) {
+bool FB_WCS32::loadCACert(Stream& stream, size_t size) {
   char *dest = _streamLoad(stream, size);
   bool ret = false;
   if (dest) {
@@ -327,7 +327,7 @@ bool WiFiClientSecureESP32::loadCACert(Stream& stream, size_t size) {
   return ret;
 }
 
-bool WiFiClientSecureESP32::loadCertificate(Stream& stream, size_t size) {
+bool FB_WCS32::loadCertificate(Stream& stream, size_t size) {
   char *dest = _streamLoad(stream, size);
   bool ret = false;
   if (dest) {
@@ -337,7 +337,7 @@ bool WiFiClientSecureESP32::loadCertificate(Stream& stream, size_t size) {
   return ret;
 }
 
-bool WiFiClientSecureESP32::loadPrivateKey(Stream& stream, size_t size) {
+bool FB_WCS32::loadPrivateKey(Stream& stream, size_t size) {
   char *dest = _streamLoad(stream, size);
   bool ret = false;
   if (dest) {
@@ -347,7 +347,7 @@ bool WiFiClientSecureESP32::loadPrivateKey(Stream& stream, size_t size) {
   return ret;
 }
 
-int WiFiClientSecureESP32::lastError(char *buf, const size_t size)
+int FB_WCS32::lastError(char *buf, const size_t size)
 {
     if (!_lastError) {
         return 0;
@@ -358,7 +358,7 @@ int WiFiClientSecureESP32::lastError(char *buf, const size_t size)
     return _lastError;
 }
 
-void WiFiClientSecureESP32::setHandshakeTimeout(unsigned long handshake_timeout)
+void FB_WCS32::setHandshakeTimeout(unsigned long handshake_timeout)
 {
     sslclient->handshake_timeout = handshake_timeout * 1000;
 }
