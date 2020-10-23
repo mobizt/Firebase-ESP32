@@ -1,12 +1,11 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.4
  * 
- * October 14, 2020
+ * October 23, 2020
  * 
  *   Updates:
- * - Fix the setStreamCallback and removeStreamCallback bugs when the callback function added after removed. 
- * - Add the dynamic allocation of Firebase Data object example.
- * - Make the setStreamTaskStackSize function obsoleted and add the stack size option to the stream callback setting functions.
+ * - Fix the invalid returned error, data type mismatch from getShallowData. 
+ * - Set the File I/O error response instead of the connection refused error.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -336,6 +335,7 @@ static const char fb_esp_pgm_str_188[] PROGMEM = "time.nist.gov";
 static const char fb_esp_pgm_str_189[] PROGMEM = "payload too large";
 static const char fb_esp_pgm_str_190[] PROGMEM = "cannot config time";
 static const char fb_esp_pgm_str_191[] PROGMEM = "SSL client rx buffer size is too small";
+static const char fb_esp_pgm_str_192[] PROGMEM = "File I/O error";
 
 static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
