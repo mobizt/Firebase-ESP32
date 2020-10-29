@@ -149,6 +149,7 @@ addDeviceToken  KEYWORD2
 removeDeviceToken   KEYWORD2
 clearDeviceToken    KEYWORD2
 setNotifyMessage    KEYWORD2
+addCustomNotifyMessage  KEYWORD2
 clearNotifyMessage  KEYWORD2
 setDataMessage  KEYWORD2
 clearDataMessage    KEYWORD2

@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.5
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.6
 
 
 ## Global functions
@@ -3339,6 +3339,22 @@ param **`click_action`** - The URL or intent to accept click event on the notifi
 ```C++
 void setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action);
 ```
+
+
+
+
+
+
+#### add the custom key/value in the notify message type information.
+    
+param **`key`** - The key field in notification message.
+
+param **`value`** - The value field in the notification message.
+
+```C++
+void addCustomNotifyMessage(const String &key, const String &value);
+```
+
 
 
 

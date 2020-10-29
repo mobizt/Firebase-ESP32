@@ -1,12 +1,11 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.5
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.6
  * 
- * October 23, 2020
+ * October 29, 2020
  * 
  *   Updates:
- * - Fix the invalid returned error, data type mismatch from getShallowData. 
- * - Set the File I/O error response instead of the connection refused error.
- * - Fix the naming conflicts when WiFiClientSecure lib included.
+ * - Fix the FCM chunk data decoding. 
+ * - Add custom FCM notify message key/value. 
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -2872,10 +2871,11 @@ int FirebaseESP32::readChunkedData(WiFiClient *stream, char *out, int &chunkStat
         }
         else
         {
-          memcpy(out, buf, chunkedSize - dataLen);
+          if (chunkedSize - dataLen > 0)
+            memcpy(out, buf, chunkedSize - dataLen);
           dataLen = chunkedSize;
           chunkState = 0;
-          olen = chunkedSize - dataLen;
+          olen = 0;
         }
       }
       else
@@ -6647,59 +6647,78 @@ void FCMObject::clearDeviceToken()
 
 void FCMObject::setNotifyMessage(const String &title, const String &body)
 {
-  _notify_title = title.c_str();
-  _notify_body = body.c_str();
-  _notify_icon.clear();
-  _notify_click_action.clear();
+  char *key = Firebase.getPGMString(fb_esp_pgm_str_123);
+  _fcmPayload.set(key, title);
+  Firebase.delS(key);
+  key = Firebase.getPGMString(fb_esp_pgm_str_124);
+  _fcmPayload.set(key, body);
+  Firebase.delS(key);
 }
 
 void FCMObject::setNotifyMessage(const String &title, const String &body, const String &icon)
 {
-  _notify_title = title.c_str();
-  _notify_body = body.c_str();
-  _notify_icon = icon.c_str();
-  _notify_click_action.clear();
+  setNotifyMessage(title, body);
+  char *key = Firebase.getPGMString(fb_esp_pgm_str_125);
+  _fcmPayload.set(key, icon);
+  Firebase.delS(key);
 }
 
 void FCMObject::setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action)
 {
-  _notify_title = title.c_str();
-  _notify_body = body.c_str();
-  _notify_icon = icon.c_str();
-  _notify_click_action = click_action.c_str();
+  setNotifyMessage(title, body, icon);
+  char *key = Firebase.getPGMString(fb_esp_pgm_str_126);
+  _fcmPayload.set(key, click_action);
+  Firebase.delS(key);
+}
+
+void FCMObject::addCustomNotifyMessage(const String &key, const String &value)
+{
+  _fcmPayload.set(key, value);
 }
 
 void FCMObject::clearNotifyMessage()
 {
-  _notify_title.clear();
-  _notify_body.clear();
-  _notify_icon.clear();
-  _notify_click_action.clear();
+  char *key = Firebase.getPGMString(fb_esp_pgm_str_122);
+  _fcmPayload.remove(key);
+  Firebase.delS(key);
 }
 
 void FCMObject::setDataMessage(const String &jsonString)
 {
-  _data_msg = jsonString.c_str();
+  char *key = Firebase.getPGMString(fb_esp_pgm_str_135);
+  FirebaseJson js;
+  js.setJsonData(jsonString);
+  _fcmPayload.set(key, js);
+  Firebase.delS(key);
+  js.clear();
 }
 
 void FCMObject::setDataMessage(FirebaseJson &json)
 {
-  json._toStdString(_data_msg);
+  char *key = Firebase.getPGMString(fb_esp_pgm_str_135);
+  _fcmPayload.set(key, json);
+  Firebase.delS(key);
 }
 
 void FCMObject::clearDataMessage()
 {
-  _data_msg.clear();
+  char *key = Firebase.getPGMString(fb_esp_pgm_str_135);
+  _fcmPayload.remove(key);
+  Firebase.delS(key);
 }
 
 void FCMObject::setPriority(const String &priority)
 {
-  _priority = priority.c_str();
+  char *key = Firebase.getPGMString(fb_esp_pgm_str_136);
+  _fcmPayload.set(key, priority);
+  Firebase.delS(key);
 }
 
 void FCMObject::setCollapseKey(const String &key)
 {
-  _collapse_key = key.c_str();
+  char *_key = Firebase.getPGMString(fb_esp_pgm_str_138);
+  _fcmPayload.set(_key, key);
+  Firebase.delS(_key);
 }
 
 void FCMObject::setTimeToLive(uint32_t seconds)
@@ -6708,6 +6727,9 @@ void FCMObject::setTimeToLive(uint32_t seconds)
     _ttl = seconds;
   else
     _ttl = -1;
+  char *key = Firebase.getPGMString(fb_esp_pgm_str_137);
+  _fcmPayload.set(key, _ttl);
+  Firebase.delS(key);
 }
 
 void FCMObject::setTopic(const String &topic)
@@ -6762,135 +6784,34 @@ void FCMObject::fcm_prepareHeader(std::string &header, size_t payloadSize)
 
 void FCMObject::fcm_preparePayload(std::string &msg, fb_esp_fcm_msg_type messageType)
 {
-
-  bool noti = _notify_title.length() > 0 || _notify_body.length() > 0 || _notify_icon.length() > 0 || _notify_click_action.length() > 0;
-  size_t c = 0;
-
-  Firebase.pgm_appendStr(msg, fb_esp_pgm_str_163);
-
-  if (noti)
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_122);
-
-  if (noti && _notify_title.length() > 0)
-  {
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_123);
-    msg += _notify_title;
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-    c++;
-  }
-
-  if (noti && _notify_body.length() > 0)
-  {
-    if (c > 0)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_124);
-    msg += _notify_body;
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-    c++;
-  }
-
-  if (noti && _notify_icon.length() > 0)
-  {
-    if (c > 0)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_125);
-    msg += _notify_icon;
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-    c++;
-  }
-
-  if (noti && _notify_click_action.length() > 0)
-  {
-    if (c > 0)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_126);
-    msg += _notify_click_action;
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-    c++;
-  }
-
-  if (noti)
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_127);
-
-  c = 0;
-
+  char *tmp = nullptr;
   if (messageType == fb_esp_fcm_msg_type::msg_single)
   {
-    if (noti)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_128);
-    msg += _deviceToken[_index];
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-    c++;
+    tmp = Firebase.getPGMString(fb_esp_pgm_str_128);
+    _fcmPayload.add(tmp, _deviceToken[_index].c_str());
+    Firebase.delS(tmp);
   }
   else if (messageType == fb_esp_fcm_msg_type::msg_multicast)
   {
-    if (noti)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_130);
+    FirebaseJsonArray arr;
     for (uint16_t i = 0; i < _deviceToken.size(); i++)
-    {
-      if (i > 0)
-        Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-      msg += _deviceToken[i];
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-    }
-
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_133);
-    c++;
+      arr.add(_deviceToken[i].c_str());
+    tmp = Firebase.getPGMString(fb_esp_pgm_str_130);
+    _fcmPayload.add(tmp, arr);
+    Firebase.delS(tmp);
+    arr.clear();
   }
   else if (messageType == fb_esp_fcm_msg_type::msg_topic)
   {
-    if (noti)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_128);
-    msg += _topic.c_str();
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-    c++;
+    tmp = Firebase.getPGMString(fb_esp_pgm_str_128);
+    _fcmPayload.add(tmp, _topic.c_str());
+    Firebase.delS(tmp);
   }
 
-  if (_data_msg.length() > 0)
-  {
-    if (c > 0)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_135);
-    msg += _data_msg;
-    c++;
-  }
-
-  if (_priority.length() > 0)
-  {
-    if (c > 0)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_136);
-    msg += _priority;
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-    c++;
-  }
-
-  if (_ttl > -1)
-  {
-    if (c > 0)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    char *ttl = Firebase.getIntString(_ttl);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_137);
-    msg += ttl;
-    Firebase.delS(ttl);
-    c++;
-  }
-
-  if (_collapse_key.length() > 0)
-  {
-    if (c > 0)
-      Firebase.pgm_appendStr(msg, fb_esp_pgm_str_132);
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_138);
-    msg += _collapse_key;
-    Firebase.pgm_appendStr(msg, fb_esp_pgm_str_3);
-    c++;
-  }
-
-  Firebase.pgm_appendStr(msg, fb_esp_pgm_str_127);
+  String s;
+  _fcmPayload.toString(s);
+  msg = s.c_str();
+  s.clear();
 }
 
 bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
@@ -6900,12 +6821,10 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
   fcm_preparePayload(msg, messageType);
   fcm_prepareHeader(header, msg.length());
-
-  header += msg;
+  int ret = fbdo.httpClient.send(header.c_str(), msg.c_str());
   std::string().swap(msg);
-  int ret = fbdo.httpClient.send(header.c_str(), "");
   std::string().swap(header);
-
+  _fcmPayload.clear();
   if (ret != 0)
   {
     Firebase.closeHTTP(fbdo);
@@ -6929,13 +6848,7 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
 void FCMObject::clear()
 {
-  std::string().swap(_notify_title);
-  std::string().swap(_notify_body);
-  std::string().swap(_notify_icon);
-  std::string().swap(_notify_click_action);
-  std::string().swap(_data_msg);
-  std::string().swap(_priority);
-  std::string().swap(_collapse_key);
+  _fcmPayload.clear();
   std::string().swap(_topic);
   std::string().swap(_server_key);
   std::string().swap(_sendResult);

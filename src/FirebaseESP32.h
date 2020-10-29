@@ -1,12 +1,11 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.5
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.6
  * 
- * October 23, 2020
+ * October 29, 2020
  * 
  *   Updates:
- * - Fix the invalid returned error, data type mismatch from getShallowData. 
- * - Set the File I/O error response instead of the connection refused error.
- * - Fix the naming conflicts when WiFiClientSecure lib included.
+ * - Fix the FCM chunk data decoding. 
+ * - Add custom FCM notify message key/value. 
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -266,23 +265,23 @@ static const char fb_esp_pgm_str_119[] PROGMEM = "delete";
 
 static const char fb_esp_pgm_str_120[] PROGMEM = "fcm.googleapis.com";
 static const char fb_esp_pgm_str_121[] PROGMEM = "/fcm/send";
-static const char fb_esp_pgm_str_122[] PROGMEM = "\"notification\":{";
-static const char fb_esp_pgm_str_123[] PROGMEM = "\"title\":\"";
-static const char fb_esp_pgm_str_124[] PROGMEM = "\"body\":\"";
-static const char fb_esp_pgm_str_125[] PROGMEM = "\"icon\":\"";
-static const char fb_esp_pgm_str_126[] PROGMEM = "\"click_action\":\"";
+static const char fb_esp_pgm_str_122[] PROGMEM = "notification";
+static const char fb_esp_pgm_str_123[] PROGMEM = "notification/title";
+static const char fb_esp_pgm_str_124[] PROGMEM = "notification/body";
+static const char fb_esp_pgm_str_125[] PROGMEM = "notification/icon";
+static const char fb_esp_pgm_str_126[] PROGMEM = "notification/click_action";
 static const char fb_esp_pgm_str_127[] PROGMEM = "}";
-static const char fb_esp_pgm_str_128[] PROGMEM = "\"to\":\"";
+static const char fb_esp_pgm_str_128[] PROGMEM = "to";
 static const char fb_esp_pgm_str_129[] PROGMEM = "application/json";
-static const char fb_esp_pgm_str_130[] PROGMEM = "\"registration_ids\":[";
+static const char fb_esp_pgm_str_130[] PROGMEM = "registration_ids";
 static const char fb_esp_pgm_str_131[] PROGMEM = "Authorization: key=";
 static const char fb_esp_pgm_str_132[] PROGMEM = ",";
 static const char fb_esp_pgm_str_133[] PROGMEM = "]";
 static const char fb_esp_pgm_str_134[] PROGMEM = "/topics/";
-static const char fb_esp_pgm_str_135[] PROGMEM = "\"data\":";
-static const char fb_esp_pgm_str_136[] PROGMEM = "\"priority\":\"";
-static const char fb_esp_pgm_str_137[] PROGMEM = "\"time_to_live\":";
-static const char fb_esp_pgm_str_138[] PROGMEM = "\"collapse_key\":\"";
+static const char fb_esp_pgm_str_135[] PROGMEM = "data";
+static const char fb_esp_pgm_str_136[] PROGMEM = "priority";
+static const char fb_esp_pgm_str_137[] PROGMEM = "time_to_live";
+static const char fb_esp_pgm_str_138[] PROGMEM = "collapse_key";
 static const char fb_esp_pgm_str_139[] PROGMEM = "\"multicast_id\":";
 static const char fb_esp_pgm_str_140[] PROGMEM = "\"success\":";
 static const char fb_esp_pgm_str_141[] PROGMEM = "\"failure\":";
@@ -464,6 +463,15 @@ public:
   void setNotifyMessage(const String &title, const String &body, const String &icon, const String &click_action);
 
   /*
+    add the custom key/value in the notify message type information.
+    
+    @param key - The key field in notification message.
+    @param value - The value field in the notification message.
+
+   */
+  void addCustomNotifyMessage(const String &key, const String &value);
+
+  /*
     Clear all notify message information.
     
   */
@@ -542,16 +550,10 @@ private:
 
   void clear();
 
-  std::string _notify_title = "";
-  std::string _notify_body = "";
-  std::string _notify_icon = "";
-  std::string _notify_click_action = "";
-  std::string _data_msg = "";
-  std::string _priority = "";
-  std::string _collapse_key = "";
   std::string _topic = "";
   std::string _server_key = "";
   std::string _sendResult = "";
+  FirebaseJson _fcmPayload;
   int _ttl = -1;
   uint16_t _index = 0;
   uint16_t _port = 443;
