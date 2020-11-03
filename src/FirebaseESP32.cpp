@@ -1,11 +1,10 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.7
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.8
  * 
- * October 29, 2020
+ * November 4, 2020
  * 
  *   Updates:
- * - Fix the FCM chunk data decoding. 
- * - Add custom FCM notify message key/value. 
+ * - Fix the mismatch data type error from setTimestamp function. 
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -2955,7 +2954,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 
   if (!fbdo._isStream)
   {
-    while (fbdo.httpClient.connected() && chunkBufSize <= 0)
+    while (fbdo._httpConnected && chunkBufSize <= 0)
     {
       if (!reconnect(fbdo, dataTime))
         return false;
@@ -3414,7 +3413,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
       else
         fbdo._pathNotExist = false;
 
-      if (fbdo.resp_dataType != fb_esp_data_type::d_null && !response.noContent && fbdo._req_method != fb_esp_method::m_post && fbdo._req_method != fb_esp_method::m_get_shallow)
+      if (fbdo.resp_dataType != fb_esp_data_type::d_null && fbdo._req_dataType != fb_esp_data_type::d_timestamp && !response.noContent && fbdo._req_method != fb_esp_method::m_post && fbdo._req_method != fb_esp_method::m_get_shallow)
       {
 
         bool _reqType = fbdo._req_dataType == fb_esp_data_type::d_integer || fbdo._req_dataType == fb_esp_data_type::d_float || fbdo._req_dataType == fb_esp_data_type::d_double;

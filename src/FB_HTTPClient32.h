@@ -45,7 +45,7 @@
 #error WiFi UART bridge was not supported.
 #endif
 
-#define FIREBASE_DEFAULT_TCP_TIMEOUT 5000 //5 seconds
+#define FIREBASE_DEFAULT_TCP_TIMEOUT_SEC 5
 
 /// HTTP client errors
 #define FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED (-1)
@@ -203,7 +203,7 @@ public:
     */
   WiFiClient *stream(void);
 
-  uint16_t tcpTimeout = FIREBASE_DEFAULT_TCP_TIMEOUT;
+  uint16_t tcpTimeout = FIREBASE_DEFAULT_TCP_TIMEOUT_SEC * 1000;
   bool connect(void);
   void setCACert(const char *rootCA);
   void setCertFile(std::string &rootCAFile, uint8_t storageType);
