@@ -1,10 +1,11 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.8
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.9
  * 
- * November 4, 2020
+ * November 12, 2020
  * 
  *   Updates:
- * - Fix the mismatch data type error from setTimestamp function. 
+ * - Fix the internal find string function error caused wdt reset. 
+ * - Add the response buffer size limit.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -2902,6 +2903,18 @@ bool FirebaseESP32::waitResponse(FirebaseData &fbdo)
   return ret;
 }
 
+void FirebaseESP32::checkOvf(FirebaseData &fbdo, size_t len, server_response_data_t &resp)
+{
+  if (fbdo._responseBufSize < len && !fbdo._bufOvf)
+  {
+    if (fbdo._req_method == fb_esp_method::m_get && !fbdo._isDataTimeout && !fbdo._isFCM && resp.dataType != fb_esp_data_type::d_file && fbdo._req_method != fb_esp_method::m_download && fbdo._req_dataType != fb_esp_data_type::d_file)
+    {
+      fbdo._bufOvf = true;
+      fbdo._httpCode = FIREBASE_ERROR_BUFFER_OVERFLOW;
+    }
+  }
+}
+
 bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 {
 
@@ -2931,7 +2944,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 
   int chunkIdx = 0;
   int pChunkIdx = 0;
-  int payloadLen = 512;
+  int payloadLen = fbdo._responseBufSize;
   int pBufPos = 0;
   int hBufPos = 0;
   int chunkBufSize = stream->available();
@@ -2941,13 +2954,15 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
   int chunkedDataState = 0;
   int chunkedDataSize = 0;
   int chunkedDataLen = 0;
-  int defaultChunkSize = 512;
+  int defaultChunkSize = fbdo._responseBufSize;
+  ;
 
   fbdo._httpCode = FIREBASE_ERROR_HTTP_CODE_OK;
   fbdo._contentLength = -1;
   fbdo._pushName.clear();
   fbdo._mismatchDataType = false;
   fbdo._isChunkedEnc = false;
+  fbdo._bufOvf = false;
 
   if (fbdo._isFCM)
     defaultChunkSize = 768;
@@ -3091,7 +3106,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
           {
 
             //the next chuunk data is the payload
-            if (!response.noContent)
+            if (!response.noContent && !fbdo._bufOvf)
             {
               pChunkIdx++;
 
@@ -3114,27 +3129,31 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 
               if (readLen > 0)
               {
-                if (pBufPos + readLen <= payloadLen)
-                  memcpy(payload + pBufPos, pChunk, readLen);
-                else
+                checkOvf(fbdo, pBufPos + readLen, response);
+                if (!fbdo._bufOvf)
                 {
-                  //in case of the accumulated payload size is bigger than the char array
-                  //reallocate the char array
+                  if (pBufPos + readLen <= payloadLen)
+                    memcpy(payload + pBufPos, pChunk, readLen);
+                  else
+                  {
+                    //in case of the accumulated payload size is bigger than the char array
+                    //reallocate the char array
 
-                  char *buf = newS(pBufPos + readLen + 1);
-                  memcpy(buf, payload, pBufPos);
+                    char *buf = newS(pBufPos + readLen + 1);
+                    memcpy(buf, payload, pBufPos);
 
-                  memcpy(buf + pBufPos, pChunk, readLen);
+                    memcpy(buf + pBufPos, pChunk, readLen);
 
-                  payloadLen = pBufPos + readLen;
-                  delS(payload);
-                  payload = newS(payloadLen + 1);
-                  memcpy(payload, buf, payloadLen);
-                  delS(buf);
+                    payloadLen = pBufPos + readLen;
+                    delS(payload);
+                    payload = newS(payloadLen + 1);
+                    memcpy(payload, buf, payloadLen);
+                    delS(buf);
+                  }
                 }
               }
 
-              if (!fbdo._isDataTimeout && !fbdo._isFCM)
+              if (!fbdo._isDataTimeout && !fbdo._isFCM && !fbdo._bufOvf)
               {
 
                 //try to parse the payload for stream event data
@@ -3254,7 +3273,7 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
     if (hstate == 1)
       delS(header);
 
-    if (!fbdo._isDataTimeout && !fbdo._isFCM)
+    if (!fbdo._isDataTimeout && !fbdo._isFCM && !fbdo._bufOvf)
     {
 
       //parse the payload
@@ -4983,7 +5002,7 @@ int FirebaseESP32::strpos(const char *haystack, const char *needle, int offset)
 {
   size_t len = strlen(haystack);
   size_t len2 = strlen(needle);
-  if (len == 0 || len < len2 || len2 == 0)
+  if (len == 0 || len < len2 || len2 == 0 || offset >= (int)len)
     return -1;
   char *_haystack = newS(len - offset + 1);
   _haystack[len - offset] = 0;
@@ -5019,7 +5038,7 @@ int FirebaseESP32::rstrpos(const char *haystack, const char *needle, int offset)
 {
   size_t len = strlen(haystack);
   size_t len2 = strlen(needle);
-  if (len == 0 || len < len2 || len2 == 0)
+  if (len == 0 || len < len2 || len2 == 0 || offset >= (int)len)
     return -1;
   char *_haystack = newS(len - offset + 1);
   _haystack[len - offset] = 0;
@@ -5881,6 +5900,12 @@ void FirebaseData::addNodeList(const String childPath[], size_t size)
       _childNodeList.push_back(childPath[i].c_str());
 }
 
+void FirebaseData::setResponseSize(size_t len)
+{
+  if (len >= 4096)
+    _responseBufSize = 4 * (1 + (len / 4));
+}
+
 WiFiClient &FirebaseData::getWiFiClient()
 {
   return *httpClient._wcs.get();
@@ -6203,6 +6228,11 @@ bool FirebaseData::streamAvailable()
 bool FirebaseData::mismatchDataType()
 {
   return _mismatchDataType;
+}
+
+bool FirebaseData::bufferOverflow()
+{
+  return _bufOvf;
 }
 
 size_t FirebaseData::getBackupFileSize()

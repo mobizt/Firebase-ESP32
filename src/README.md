@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.8
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.9
 
 
 ## Global functions
@@ -2739,7 +2739,22 @@ bool sendTopic(FirebaseData &fbdo);
 
 
 
+
 ## Firebase Data Object Functions
+
+
+ ## Set the HTTP response size limit.
+
+param **`len`** - The server response buffer size limit (4096 is minimum). 
+
+```C++
+void setResponseSize(size_t len);
+```
+
+
+
+
+
 
 #### Pause/Unpause WiFiClient from all Firebase operations
 
@@ -3164,6 +3179,24 @@ return **`Integer`** number of HTTP status.
 
 ```C++
 int httpCode();
+```
+
+
+
+
+
+
+
+#### Check overflow of the returned payload data buffer
+
+return **`Boolean`** of the overflow status.
+
+
+Total default HTTP response buffer size is 400 bytes which can be set through Firebase.setResponseSize.
+
+
+```C++
+bool bufferOverflow();
 ```
 
 
