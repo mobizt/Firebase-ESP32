@@ -135,7 +135,7 @@ bool signUp(FirebaseConfig *config, FirebaseAuth *auth, const char *email, const
 
 
 #### Send a user a verification Email.
-   * 
+
 param **`config`** The pointer to FirebaseConfig data.
 
 param **`idToken`** The id token of user that was already signed in with Email and password (optional).
