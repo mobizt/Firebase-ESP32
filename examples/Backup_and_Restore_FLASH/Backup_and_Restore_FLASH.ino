@@ -24,8 +24,6 @@
 */
 #define FIREBASE_AUTH "DATABASE_SECRET"
 
-
-
 //Define Firebase Data object
 FirebaseData fbdo;
 
@@ -49,23 +47,14 @@ void setup()
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
 
-  //Print to see stack size and free memory
-  UBaseType_t uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
-  Serial.print("Stack: ");
-  Serial.println(uxHighWaterMark);
-  Serial.print("Heap: ");
-  Serial.println(esp_get_free_heap_size());
-
   Serial.println("------------------------------------");
   Serial.println("Backup test...");
-  
-  //Provide specific SD card interface
-  //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
 
-  //Download and save data at defined database path to SD card.
+  //Download and save data to Flash memory.
   //{TARGET_NODE_PATH} is the full path of database to backup and restore.
+  //{FILE_NAME} is file name included path to save to Flash meory
 
-  if (!Firebase.backup(fbdo, StorageType::SD, "/{TARGET_NODE_PATH}", "/{PATH_IN_SD_CARD}"))
+  if (!Firebase.backup(fbdo, StorageType::FLASH, "/{TARGET_NODE_PATH}", "/{FILE_NAME}"))
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + fbdo.fileTransferError());
@@ -84,10 +73,11 @@ void setup()
   Serial.println("------------------------------------");
   Serial.println("Restore test...");
 
-  //Restore data to defined database path using backup file on SD card.
+  //Restore data to defined database path using backup file on Flash memory.
   //{TARGET_NODE_PATH} is the full path of database to restore
+  //{FILE_NAME} is file name included path of backed up file.
 
-  if (!Firebase.restore(fbdo, StorageType::SD, "/{TARGET_NODE_PATH}", "/{PATH_IN_SD_CARD}"))
+  if (!Firebase.restore(fbdo, StorageType::FLASH, "/{TARGET_NODE_PATH}", "/{FILE_NAME}"))
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + fbdo.fileTransferError());
@@ -101,10 +91,6 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println();
   }
-
-  //Quit Firebase and release all resources
-  Firebase.end(fbdo);
-  
 }
 
 void loop()

@@ -9,11 +9,10 @@
  *
 */
 
-//This example shows how to store and read binary data from file on SD card to database.
+//This example shows how to store and read binary data from file on Flash memory to database.
 
 #include <WiFi.h>
 #include <FirebaseESP32.h>
-#include <SD.h>
 
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
@@ -54,37 +53,21 @@ void setup()
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
 
-  //Mount SD card
-
-  if (!Firebase.sdBegin())
+  if (!SPIFFS.begin(true))
   {
-    Serial.println("SD Card mounted failed");
+    Serial.println("SPIFFS initialization failed.");
     return;
   }
-
-  /*
-  if (!Firebase.sdBegin(14, 2, 15, 13)) //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
-  {
-    Serial.println("SD Card mounted failed");
-    return;
-  }
-  */
 
   //Delete demo files
-  if (SD.exists("/source.txt"))
-    SD.remove("/source.txt");
+  if (SPIFFS.exists("/file1.txt"))
+    SPIFFS.remove("/file1.txt");
 
-  if (SD.exists("/target_1.txt"))
-    SD.remove("/target_1.txt");
+  Serial.println("------------------------------------");
+  Serial.println("Set file data test...");
 
-  if (SD.exists("/push_in.txt"))
-    SD.remove("/push_in.txt");
-
-  if (SD.exists("/push_out.txt"))
-    SD.remove("/push_out.txt");
-
-  //Write demo data to file (8192 bytes)
-  file = SD.open("/source.txt", FILE_WRITE);
+  //Write demo data to file
+  file = SPIFFS.open("/file1.txt", "w");
   uint8_t v = 0;
   for (int i = 0; i < 400000; i++)
   {
@@ -94,11 +77,8 @@ void setup()
 
   file.close();
 
-  Serial.println("-----------------------------------");
-  Serial.println("Set file data 1 test...");
-
-  //Set file (read file from SD card and set to database)
-  if (Firebase.setFile(fbdo, StorageType::SD, path + "/Binary/File/data1", "/source.txt"))
+  //Set file (read file from Flash memory and set to database)
+  if (Firebase.setFile(fbdo, StorageType::FLASH, path + "/Binary/File/data", "/file1.txt"))
   {
     Serial.println("PASSED");
     Serial.println("------------------------------------");
@@ -108,26 +88,22 @@ void setup()
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("-------------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
 
-  Serial.println("-----------------------------------");
-  Serial.println("Get file data 1 test...");
+  Serial.println("------------------------------------");
+  Serial.println("Get file data test...");
 
-  //Get file (download file to SD card)
-  if (Firebase.getFile(fbdo, StorageType::SD, path + "/Binary/File/data1", "/target_1.txt"))
+  //Get file (download file to Flash memory)
+  if (Firebase.getFile(fbdo, StorageType::FLASH, path + "/Binary/File/data", "/file2.txt"))
   {
-
-    //Need to begin SD card again due to File system closed by library
-    SD.begin(); //or use Firebase.sdBegin();
-    //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
 
     Serial.println("PASSED");
     Serial.println("DATA");
 
     //Readout the downloaded file
-    file = SD.open("/target_1.txt", FILE_READ);
+    file = SPIFFS.open("/file2.txt", "r");
     int i = 0;
 
     while (file.available())
@@ -145,7 +121,7 @@ void setup()
       i++;
     }
     Serial.println();
-    Serial.println("--------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
     file.close();
   }
@@ -154,51 +130,47 @@ void setup()
 
     Serial.println("FAILED");
     Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("--------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
 
-  Serial.println("-----------------------------------");
+  Serial.println("------------------------------------");
   Serial.println("Append file data test...");
 
-  //Need to begin SD card again due to File system closed by library
-  SD.begin(); //or use Firebase.sdBegin();
-  //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
+  if (SPIFFS.exists("/file1.txt"))
+    SPIFFS.remove("/file1.txt");
 
   //Write demo data to file
-  file = SD.open("/push_in.txt", FILE_WRITE);
+  file = SPIFFS.open("/file1.txt", "w");
   for (int i = 255; i >= 0; i--)
-    file.write(i);
+    file.write((uint8_t)i);
 
   file.close();
 
   //Append file data to database
-  if (Firebase.pushFile(fbdo, StorageType::SD, path + "/Binary/File/Logs", "/push_in.txt"))
+  if (Firebase.pushFile(fbdo, StorageType::FLASH, path + "/Binary/File/Logs", "/file1.txt"))
   {
     Serial.println("PASSED");
     Serial.println("PATH: " + fbdo.dataPath());
     Serial.println("PUSH NAME: " + fbdo.pushName());
-    Serial.println("-------------------------------------");
+    Serial.println("------------------------------------");
 
     Serial.println();
 
-    Serial.println("-----------------------------------");
+    Serial.println("------------------------------------");
     Serial.println("Get appended file data test...");
 
-    //Get the recently appended file (download file to SD card)
-    if (Firebase.getFile(fbdo, StorageType::SD, path + "/Binary/File/Logs/" + fbdo.pushName(), "/push_out.txt"))
+    //Get the recently appended file (download file to Flash memory)
+    if (Firebase.getFile(fbdo, StorageType::FLASH, path + "/Binary/File/Logs/" + fbdo.pushName(), "/file3.txt"))
     {
 
       Serial.println("PASSED");
       Serial.println("DATA");
 
-      //Need to begin SD card again due to File system closed by library
-      SD.begin(); //or use Firebase.sdBegin();
-      //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
-
       //Readout the downloaded file
-      file = SD.open("/push_out.txt", FILE_READ);
+      file = SPIFFS.open("/file3.txt", "r");
       int i = 0;
+      int idx = 0;
 
       while (file.available())
       {
@@ -208,11 +180,13 @@ void setup()
 
         Serial.print(i, HEX);
         Serial.print(" ");
-        if (i > 0 && i % 16 == 0)
+
+        if (idx > 0 && (idx + 1) % 16 == 0)
           Serial.println();
+        idx++;
       }
       Serial.println();
-      Serial.println("-------------------------------------");
+      Serial.println("------------------------------------");
       Serial.println();
       file.close();
     }
@@ -221,7 +195,7 @@ void setup()
 
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.fileTransferError());
-      Serial.println("--------------------------------");
+      Serial.println("------------------------------------");
       Serial.println();
     }
   }
@@ -229,7 +203,7 @@ void setup()
   {
     Serial.println("FAILED");
     Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("--------------------------------");
+    Serial.println("------------------------------------");
     Serial.println();
   }
 }

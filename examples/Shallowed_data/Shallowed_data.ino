@@ -1,4 +1,4 @@
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -6,8 +6,6 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
- * This example is for FirebaseESP32 Arduino library v 3.7.3 or later
  *
 */
 
@@ -16,13 +14,18 @@
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //Define Firebase Data object
-FirebaseData firebaseData;
+FirebaseData fbdo;
 
 String path = "/";
 
@@ -51,10 +54,10 @@ void setup()
   Firebase.reconnectWiFi(true);
 
   //Set database read timeout to 1 minute (max 15 minutes)
-  Firebase.setReadTimeout(firebaseData, 1000 * 60);
+  Firebase.setReadTimeout(fbdo, 1000 * 60);
   //tiny, small, medium, large and unlimited.
   //Size and its write timeout e.g. tiny (1s), small (10s), medium (30s) and large (60s).
-  Firebase.setwriteSizeLimit(firebaseData, "tiny");
+  Firebase.setwriteSizeLimit(fbdo, "tiny");
 
   //The following test will print all parent nodes and their shallowed data
 
@@ -62,20 +65,20 @@ void setup()
   Serial.println("Shallowed Data test...");
   Serial.println();
 
-  if (Firebase.getShallowData(firebaseData, path))
+  if (Firebase.getShallowData(fbdo, path))
   {
     Serial.println("PASSED");
-    Serial.println("PATH: " + firebaseData.dataPath());
-    Serial.println("TYPE: " + firebaseData.dataType());
+    Serial.println("PATH: " + fbdo.dataPath());
+    Serial.println("TYPE: " + fbdo.dataType());
     Serial.print("VALUE: ");
-    printResult(firebaseData);
+    printResult(fbdo);
     Serial.println("------------------------------------");
     Serial.println();
   }
   else
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.println("REASON: " + fbdo.errorReason());
     Serial.println("------------------------------------");
     Serial.println();
   }
@@ -168,7 +171,7 @@ void printResult(FirebaseData &data)
 
     Serial.println();
 
-    for (int i = 0; i < data.blobData().size(); i++)
+    for (size_t i = 0; i < data.blobData().size(); i++)
     {
       if (i > 0 && i % 16 == 0)
         Serial.println();

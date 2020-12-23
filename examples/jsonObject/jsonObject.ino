@@ -1,5 +1,5 @@
 
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -7,8 +7,6 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
- * This example is for FirebaseESP32 Arduino library v 3.7.3 or later
  *
 */
 
@@ -17,13 +15,18 @@
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //Define Firebase Data object
-FirebaseData firebaseData;
+FirebaseData fbdo;
 
 void printResult(FirebaseData &data);
 
@@ -77,20 +80,20 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println("Set JSON test...");
 
-    if (Firebase.set(firebaseData, path, json1))
+    if (Firebase.set(fbdo, path, json1))
     {
         Serial.println("PASSED");
-        Serial.println("PATH: " + firebaseData.dataPath());
-        Serial.println("TYPE: " + firebaseData.dataType());
+        Serial.println("PATH: " + fbdo.dataPath());
+        Serial.println("TYPE: " + fbdo.dataType());
         Serial.print("VALUE: ");
-        printResult(firebaseData);
+        printResult(fbdo);
         Serial.println("------------------------------------");
         Serial.println();
     }
     else
     {
         Serial.println("FAILED");
-        Serial.println("REASON: " + firebaseData.errorReason());
+        Serial.println("REASON: " + fbdo.errorReason());
         Serial.println("------------------------------------");
         Serial.println();
     }
@@ -98,15 +101,15 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println("Get JSON test...");
 
-    if (Firebase.get(firebaseData, path))
+    if (Firebase.get(fbdo, path))
     {
         Serial.println("PASSED");
-        Serial.println("PATH: " + firebaseData.dataPath());
-        Serial.println("TYPE: " + firebaseData.dataType());
+        Serial.println("PATH: " + fbdo.dataPath());
+        Serial.println("TYPE: " + fbdo.dataType());
         Serial.print("VALUE: ");
-        if (firebaseData.dataType() == "json")
+        if (fbdo.dataType() == "json")
         {
-            printResult(firebaseData);
+            printResult(fbdo);
         }
 
         Serial.println("------------------------------------");
@@ -115,7 +118,7 @@ void setup()
     else
     {
         Serial.println("FAILED");
-        Serial.println("REASON: " + firebaseData.errorReason());
+        Serial.println("REASON: " + fbdo.errorReason());
         Serial.println("------------------------------------");
         Serial.println();
     }
@@ -123,7 +126,7 @@ void setup()
     Serial.println("------------------------------------");
     Serial.println("Try to parse return data and get value..");
 
-    json1 = firebaseData.jsonObject();
+    json1 = fbdo.jsonObject();
 
     json1.get(jsonObj, "This/is/[3]/my");
 

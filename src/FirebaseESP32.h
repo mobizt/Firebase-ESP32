@@ -1,11 +1,13 @@
 /*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.9
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.10
  * 
- * November 12, 2020
+ * December 23, 2020
  * 
  *   Updates:
- * - Fix the internal find string function error caused wdt reset. 
- * - Add the response buffer size limit.
+ * - Add support for more authentication methods.
+ * - Remove the domain name checking for the host name parsing.
+ * - Update examples and documents for new authentication support
+ * - Change the StorageType data type from SPIFFS to FLASH
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -61,12 +63,7 @@
 #define STREAM_TASK_STACK_SIZE 8192
 #define QUEUE_TASK_STACK_SIZE 8192
 #define MAX_BLOB_PAYLOAD_SIZE 1024
-
-struct StorageType
-{
-  static const uint8_t SPIFFS = 0;
-  static const uint8_t SD = 1;
-};
+#define MAX_EXCHANGE_TOKEN_ATTEMPTS 5
 
 enum fb_esp_fcm_msg_type
 {
@@ -112,6 +109,45 @@ enum fb_esp_method
   m_set_priority,
 };
 
+enum fb_esp_settings_provider_type
+{
+  auth_provider_type_login,
+  auth_provider_type_service_account
+};
+
+enum fb_esp_auth_token_status
+{
+  token_status_uninitialized,
+  token_status_on_signing,
+  token_status_on_request,
+  token_status_on_refresh,
+  token_status_ready,
+  token_status_error
+};
+
+enum fb_esp_auth_token_type
+{
+  token_type_undefined,
+  token_type_legacy_token,
+  token_type_id_token,
+  token_type_custom_token,
+  token_type_oauth2_access_token
+};
+
+enum fb_esp_jwt_generation_step
+{
+  fb_esp_jwt_generation_step_begin,
+  fb_esp_jwt_generation_step_encode_header_payload,
+  fb_esp_jwt_generation_step_sign,
+  fb_esp_jwt_generation_step_exchange
+};
+
+enum fb_esp_user_email_sending_type
+{
+  fb_esp_user_email_sending_type_verify,
+  fb_esp_user_email_sending_type_reset_psw
+};
+
 struct server_response_data_t
 {
   int httpCode = -1;
@@ -142,6 +178,135 @@ struct server_response_data_t
   std::string fbError = "";
   std::string transferEnc = "";
 };
+
+struct StorageType
+{
+  static const uint8_t FLASH = 0;
+  static const uint8_t SD = 1;
+};
+
+struct fb_esp_auth_token_error_t
+{
+  std::string message;
+  int code = 0;
+};
+
+struct fb_esp_auth_token_info_t
+{
+  std::string id_token;
+  std::string refresh_token;
+  std::string access_token;
+  std::string legacy_token;
+  std::string auth_type;
+  std::string jwt;
+  unsigned long expires = 0;
+  fb_esp_auth_token_type token_type = token_type_undefined;
+  fb_esp_auth_token_status status = token_status_uninitialized;
+  struct fb_esp_auth_token_error_t error;
+};
+
+struct fb_esp_auth_signin_token_t
+{
+  std::string uid;
+  FirebaseJson claims;
+};
+
+struct fb_esp_service_account_data_info_t
+{
+  std::string client_email;
+  std::string client_id;
+  std::string project_id;
+  std::string private_key_id;
+  const char *private_key = "";
+};
+
+struct fb_esp_auth_signin_user_t
+{
+  std::string email;
+  std::string password;
+};
+
+struct fb_esp_auth_cert_t
+{
+  const char *data = "";
+  std::string file;
+  uint8_t file_storage = StorageType::FLASH;
+};
+
+struct fb_esp_service_account_file_info_t
+{
+  std::string path;
+  uint8_t storage_type = StorageType::FLASH;
+};
+
+struct fb_esp_service_account_t
+{
+  struct fb_esp_service_account_data_info_t data;
+  struct fb_esp_service_account_file_info_t json;
+};
+
+struct fb_esp_auth_signin_provider_t
+{
+  struct fb_esp_auth_signin_user_t user;
+  struct fb_esp_auth_signin_token_t token;
+};
+
+struct fb_esp_token_signer_resources_t
+{
+  int step = 0;
+  int attempts = 0;
+  bool signup = false;
+  unsigned long lastReqMillis = 0;
+  unsigned long reqTO = 2000;
+  std::string pk;
+  size_t hashSize = 32; //SHA256 size (256 bits or 32 bytes)
+  size_t signatureSize = 256;
+  uint8_t *hash = nullptr;
+  unsigned char *signature = nullptr;
+  std::string header;
+  std::string payload;
+  std::string encHeader;
+  std::string encPayload;
+  std::string encHeadPayload;
+  std::string encSignature;
+  FB_HTTPClient32 *wcs = nullptr;
+  FirebaseJson *json = nullptr;
+  FirebaseJsonData *data = nullptr;
+  struct fb_esp_auth_token_info_t tokens;
+  mbedtls_pk_context *pk_ctx = nullptr;
+  mbedtls_entropy_context *entropy_ctx = nullptr;
+  mbedtls_ctr_drbg_context *ctr_drbg_ctx = nullptr;
+  struct fb_esp_auth_token_error_t verificationError;
+  struct fb_esp_auth_token_error_t resetPswError;
+  struct fb_esp_auth_token_error_t signupError;
+};
+
+struct fb_esp_cfg_t
+{
+  struct fb_esp_service_account_t service_account;
+  std::string host;
+  std::string api_key;
+  float time_zone = 0;
+  struct fb_esp_auth_cert_t cert;
+  struct fb_esp_token_signer_resources_t signer;
+};
+
+struct fb_esp_url_info_t
+{
+  std::string host;
+  std::string uri;
+  std::string auth;
+};
+
+struct token_info_t
+{
+  fb_esp_auth_token_type type = token_type_undefined;
+  fb_esp_auth_token_status status = token_status_uninitialized;
+  struct fb_esp_auth_token_error_t error;
+};
+
+typedef struct fb_esp_auth_signin_provider_t FirebaseAuth;
+typedef struct fb_esp_cfg_t FirebaseConfig;
 
 static const char fb_esp_pgm_str_1[] PROGMEM = "/";
 static const char fb_esp_pgm_str_2[] PROGMEM = ".json?auth=";
@@ -187,7 +352,7 @@ static const char fb_esp_pgm_str_41[] PROGMEM = "send payload failed";
 static const char fb_esp_pgm_str_42[] PROGMEM = "not connected";
 static const char fb_esp_pgm_str_43[] PROGMEM = "connection lost";
 static const char fb_esp_pgm_str_44[] PROGMEM = "no HTTP server";
-static const char fb_esp_pgm_str_45[] PROGMEM = "bad request, verify the Firebase credentials and the node path";
+static const char fb_esp_pgm_str_45[] PROGMEM = "bad request";
 static const char fb_esp_pgm_str_46[] PROGMEM = "non-authoriative information";
 static const char fb_esp_pgm_str_47[] PROGMEM = "no content";
 static const char fb_esp_pgm_str_48[] PROGMEM = "moved permanently";
@@ -262,8 +427,7 @@ static const char fb_esp_pgm_str_116[] PROGMEM = "set";
 static const char fb_esp_pgm_str_117[] PROGMEM = "push";
 static const char fb_esp_pgm_str_118[] PROGMEM = "update";
 static const char fb_esp_pgm_str_119[] PROGMEM = "delete";
-
-static const char fb_esp_pgm_str_120[] PROGMEM = "fcm.googleapis.com";
+static const char fb_esp_pgm_str_120[] PROGMEM = "googleapis.com";
 static const char fb_esp_pgm_str_121[] PROGMEM = "/fcm/send";
 static const char fb_esp_pgm_str_122[] PROGMEM = "notification";
 static const char fb_esp_pgm_str_123[] PROGMEM = "notification/title";
@@ -317,12 +481,12 @@ static const char fb_esp_pgm_str_170[] PROGMEM = "?auth=";
 static const char fb_esp_pgm_str_171[] PROGMEM = "&auth=";
 static const char fb_esp_pgm_str_172[] PROGMEM = "&";
 static const char fb_esp_pgm_str_173[] PROGMEM = "?";
-static const char fb_esp_pgm_str_174[] PROGMEM = ".com";
-static const char fb_esp_pgm_str_175[] PROGMEM = ".net";
-static const char fb_esp_pgm_str_176[] PROGMEM = ".int";
-static const char fb_esp_pgm_str_177[] PROGMEM = ".edu";
-static const char fb_esp_pgm_str_178[] PROGMEM = ".gov";
-static const char fb_esp_pgm_str_179[] PROGMEM = ".mil";
+static const char fb_esp_pgm_str_174[] PROGMEM = "#";
+static const char fb_esp_pgm_str_175[] PROGMEM = "localId";
+static const char fb_esp_pgm_str_176[] PROGMEM = "error";
+static const char fb_esp_pgm_str_177[] PROGMEM = "token exchange failed";
+static const char fb_esp_pgm_str_178[] PROGMEM = "JWT token signing failed";
+static const char fb_esp_pgm_str_179[] PROGMEM = "RSA private key parsing failed";
 static const char fb_esp_pgm_str_180[] PROGMEM = "\n";
 static const char fb_esp_pgm_str_181[] PROGMEM = "\r\n\r\n";
 static const char fb_esp_pgm_str_182[] PROGMEM = "[";
@@ -336,8 +500,79 @@ static const char fb_esp_pgm_str_189[] PROGMEM = "payload too large";
 static const char fb_esp_pgm_str_190[] PROGMEM = "cannot config time";
 static const char fb_esp_pgm_str_191[] PROGMEM = "SSL client rx buffer size is too small";
 static const char fb_esp_pgm_str_192[] PROGMEM = "File I/O error";
+static const char fb_esp_pgm_str_193[] PROGMEM = "www";
+static const char fb_esp_pgm_str_194[] PROGMEM = "/identitytoolkit/v3/relyingparty/";
+static const char fb_esp_pgm_str_195[] PROGMEM = "verifyPassword?key=";
+static const char fb_esp_pgm_str_196[] PROGMEM = "email";
+static const char fb_esp_pgm_str_197[] PROGMEM = "password";
+static const char fb_esp_pgm_str_198[] PROGMEM = "returnSecureToken";
+static const char fb_esp_pgm_str_199[] PROGMEM = "registered";
+static const char fb_esp_pgm_str_200[] PROGMEM = "idToken";
+static const char fb_esp_pgm_str_201[] PROGMEM = "refreshToken";
+static const char fb_esp_pgm_str_202[] PROGMEM = "expiresIn";
+static const char fb_esp_pgm_str_203[] PROGMEM = "securetoken";
+static const char fb_esp_pgm_str_204[] PROGMEM = "/v1/token?key=";
+static const char fb_esp_pgm_str_205[] PROGMEM = "grantType";
+static const char fb_esp_pgm_str_206[] PROGMEM = "refresh_token";
+static const char fb_esp_pgm_str_207[] PROGMEM = "refreshToken";
+static const char fb_esp_pgm_str_208[] PROGMEM = "id_token";
+static const char fb_esp_pgm_str_209[] PROGMEM = "refresh_token";
+static const char fb_esp_pgm_str_210[] PROGMEM = "expires_in";
+static const char fb_esp_pgm_str_211[] PROGMEM = "waiting for token to be ready";
+static const char fb_esp_pgm_str_212[] PROGMEM = "iss";
+static const char fb_esp_pgm_str_213[] PROGMEM = "sub";
+static const char fb_esp_pgm_str_214[] PROGMEM = "aud";
+static const char fb_esp_pgm_str_215[] PROGMEM = "exp";
+static const char fb_esp_pgm_str_216[] PROGMEM = "/token";
+static const char fb_esp_pgm_str_217[] PROGMEM = "/oauth2/v4/token";
+static const char fb_esp_pgm_str_218[] PROGMEM = "iat";
+static const char fb_esp_pgm_str_219[] PROGMEM = "auth";
+static const char fb_esp_pgm_str_220[] PROGMEM = "scope";
+static const char fb_esp_pgm_str_221[] PROGMEM = "devstorage.full_control";
+static const char fb_esp_pgm_str_222[] PROGMEM = "datastore";
+static const char fb_esp_pgm_str_223[] PROGMEM = "userinfo.email";
+static const char fb_esp_pgm_str_224[] PROGMEM = "firebase.database";
+static const char fb_esp_pgm_str_225[] PROGMEM = "cloud-platform";
+static const char fb_esp_pgm_str_226[] PROGMEM = "firestore";
+static const char fb_esp_pgm_str_227[] PROGMEM = "grant_type";
+static const char fb_esp_pgm_str_228[] PROGMEM = "urn:ietf:params:oauth:grant-type:jwt-bearer";
+static const char fb_esp_pgm_str_229[] PROGMEM = "assertion";
+static const char fb_esp_pgm_str_230[] PROGMEM = "could not get time from NTP server";
+static const char fb_esp_pgm_str_231[] PROGMEM = "/google.identity.identitytoolkit.v1.IdentityToolkit";
+static const char fb_esp_pgm_str_232[] PROGMEM = "verifyCustomToken?key=";
+static const char fb_esp_pgm_str_233[] PROGMEM = "token";
+static const char fb_esp_pgm_str_234[] PROGMEM = "JWT";
+static const char fb_esp_pgm_str_235[] PROGMEM = "access_token";
+static const char fb_esp_pgm_str_236[] PROGMEM = "token_type";
+static const char fb_esp_pgm_str_237[] PROGMEM = "Authorization: ";
+static const char fb_esp_pgm_str_238[] PROGMEM = ".json";
+static const char fb_esp_pgm_str_239[] PROGMEM = "alg";
+static const char fb_esp_pgm_str_240[] PROGMEM = "typ";
+static const char fb_esp_pgm_str_241[] PROGMEM = "kid";
+static const char fb_esp_pgm_str_242[] PROGMEM = "RS256";
+static const char fb_esp_pgm_str_243[] PROGMEM = "type";
+static const char fb_esp_pgm_str_244[] PROGMEM = "service_account";
+static const char fb_esp_pgm_str_245[] PROGMEM = "project_id";
+static const char fb_esp_pgm_str_246[] PROGMEM = "private_key_id";
+static const char fb_esp_pgm_str_247[] PROGMEM = "private_key";
+static const char fb_esp_pgm_str_248[] PROGMEM = "client_email";
+static const char fb_esp_pgm_str_249[] PROGMEM = "fcm";
+static const char fb_esp_pgm_str_250[] PROGMEM = "identitytoolkit";
+static const char fb_esp_pgm_str_251[] PROGMEM = "oauth2";
+static const char fb_esp_pgm_str_252[] PROGMEM = "token is not ready";
+static const char fb_esp_pgm_str_253[] PROGMEM = "client_id";
+static const char fb_esp_pgm_str_254[] PROGMEM = "uid";
+static const char fb_esp_pgm_str_255[] PROGMEM = "claims";
+static const char fb_esp_pgm_str_256[] PROGMEM = "Firebase authentication was not initialized";
+static const char fb_esp_pgm_str_257[] PROGMEM = "error/code";
+static const char fb_esp_pgm_str_258[] PROGMEM = "error/message";
+static const char fb_esp_pgm_str_259[] PROGMEM = "/v1/accounts:signUp?key=";
+static const char fb_esp_pgm_str_260[] PROGMEM = "requestType";
+static const char fb_esp_pgm_str_261[] PROGMEM = "VERIFY_EMAIL";
+static const char fb_esp_pgm_str_262[] PROGMEM = "getOobConfirmationCode?key=";
+static const char fb_esp_pgm_str_263[] PROGMEM = "PASSWORD_RESET";
 
-static const unsigned char ESP32_FIREBASE_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 class FirebaseData;
 class StreamData;
@@ -522,7 +757,7 @@ private:
   FirebaseJson _fcmPayload;
   int _ttl = -1;
   uint16_t _index = 0;
-  uint16_t _port = 443;
+  uint16_t _port = FIREBASE_PORT;
   std::vector<std::string> _deviceToken;
 
   friend class FirebaseESP32;
@@ -640,16 +875,47 @@ public:
   FirebaseESP32();
   ~FirebaseESP32();
 
-  /** Store Firebase's authentication credentials.
+  /** Initialize Firebase with the config and Firebase's authentication credentials.
+   * 
+   * @param config The pointer to FirebaseConfig data.
+   * @param auth The pointer to FirebaseAuth data.
+   * 
+   * @note For FirebaseConfig and FirebaseAuth data usage, see the examples.
+  */
+  void begin(FirebaseConfig *config, FirebaseAuth *auth);
+
+  /** Provide the details of token generation.
+   * 
+   * @return token_info_t The token_info_t structured data that indicates the status.
+   * 
+   * @note Use type property to get the type enum value.
+   * token_type_undefined or 0,
+   * token_type_legacy_token or 1,
+   * token_type_id_token or 2,
+   * token_type_custom_token or 3,
+   * token_type_oauth2_access_token or 4
+   * 
+   * Use status property to get the status enum value.
+   * token_status_uninitialized or 0,
+   * token_status_on_signing or 1,
+   * token_status_on_request or 2,
+   * token_status_on_refresh or 3,
+   * token_status_ready or 4
+   * 
+   * In case of token generation and refreshment errors,
+   * use error.code property to get the error code number.
+   * Use error.message property to get the error message string.
+   * 
+  */
+  struct token_info_t authTokenInfo();
+
+  /** Store Firebase's authentication credentials using database secret (obsoleted).
    * 
    * @param host Your Firebase database project host e.g. Your_ProjectID.firebaseio.com.
    * @param auth Your database secret.
    * @param caCert Root CA certificate base64 string (PEM file).
    * @param caCertFile Root CA certificate DER file (binary).
    * @param StorageType Type of storage, StorageType::SD and StorageType::FLASH.
-   * 
-   * @note This parameter is only required for ESP8266 Core SDK v2.5.x or later. 
-   * The Root CA certificate DER file is only supported in Core SDK v2.5.x
   */
   void begin(const String &host, const String &auth);
 
@@ -662,6 +928,56 @@ public:
    * @param fbdo Firebase Data Object to hold data and instance.
   */
   void end(FirebaseData &fbdo);
+
+  /** Sign up for a new user.
+   * 
+   * @param config The pointer to FirebaseConfig data.
+   * @param auth The pointer to FirebaseAuth data.
+   * @param email The user Email.
+   * @param password The user password.
+   * @return Boolean type status indicates the success of the operation. 
+   * 
+   * @note By calling Firebase.begin with config and auth after sign up will be signed in.
+   * 
+   * This required Email/Password provider to be enabled,
+   * From Firebase console, select Authentication, select Sign-in method tab, 
+   * under the Sign-in providers list, enable Email/Password provider.
+   * 
+   * If the assigned email and passowrd are empty,
+   * the anonymous user will be created if Anonymous provider is enabled.
+   * 
+   * To enable Anonymous provider,
+   * from Firebase console, select Authentication, select Sign-in method tab, 
+   * under the Sign-in providers list, enable Anonymous provider.
+  */
+  bool signUp(FirebaseConfig *config, FirebaseAuth *auth, const char *email, const char *password);
+
+  /** Send a user a verification Email.
+   * 
+   * @param config The pointer to FirebaseConfig data.
+   * @param idToken The id token of user that was already signed in with Email and password (optional).
+   * @return Boolean type status indicates the success of the operation. 
+   * 
+   * @note The id token can be obtained from config.signer.tokens.id_token 
+   * after begin with config and auth data
+   * 
+   * If the idToken is not assigned, the internal config.signer.tokens.id_token
+   * will be used. 
+   * 
+   * See the Templates of Email address verification in the Firebase console
+   * , Authentication.
+   * 
+  */
+  bool sendEmailVerification(FirebaseConfig *config, const char *idToken = "");
+
+  /** Send a user a password reset link to Email.
+   * 
+   * @param config The pointer to FirebaseConfig data.
+   * @param email The user Email to send the password resset link.
+   * @return Boolean type status indicates the success of the operation. 
+   * 
+  */
+  bool sendResetPassword(FirebaseConfig *config, const char *email);
 
   /** [Obsoleted] 
    * Set the stream task (RTOS task) reserved stack memory in bytes.
@@ -966,7 +1282,7 @@ public:
   /** Append new binary data from the file stores on SD card/Flash memory to the defined database path.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
-   * @param storageType Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to read file data, StorageType::FLASH or StorageType::SD.
    * @param path Target database path in which binary data from the file will be appended.
    * @param fileName File name included its path in SD card/Flash memory.
    * @return Boolean type status indicates the success of the operation.
@@ -1414,7 +1730,7 @@ public:
   /** Set binary data from the file store on SD card/Flash memory to the defined database path. 
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
-   * @param storageType Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to read file data, StorageType::FLASH or StorageType::SD.
    * @param path Target database path in which binary data from the file will be set.
    * @param fileName File name included its path in SD card/Flash memory
    * @return Boolean type status indicates the success of the operation. 
@@ -1434,7 +1750,7 @@ public:
   /** Set binary data from file stored on SD card/Flash memory to the defined database path if defined database path's ETag matched the ETag value.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
-   * @param storageType Type of storage to read file data, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to read file data, StorageType::FLASH or StorageType::SD.
    * @param path Target database path in which binary data from the file will be set.
    * @param fileName File name included its path in SD card/Flash memory.
    * @param ETag Known unique identifier string (ETag) of defined database path.
@@ -1844,7 +2160,7 @@ public:
    * The downloaded data will be decoded to binary and save to SD card/Flash memory, then please make sure that data at the defined database path is the file type.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
-   * @param storageType Type of storage to write file data, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to write file data, StorageType::FLASH or StorageType::SD.
    * @param nodePath Database path that file data will be downloaded.
    * @param fileName File name included its path in SD card/Flash memory to save in SD card/Flash memory.
    * @return Boolean type status indicates the success of the operation.
@@ -1968,7 +2284,7 @@ public:
   /** Backup (download) database at the defined database path to SD card/Flash memory.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
-   * @param storageType Type of storage to save file, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to save file, StorageType::FLASH or StorageType::SD.
    * @param nodePath Database path to be backuped.
    * @param fileName File name to save.
    * @return Boolean type status indicates the success of the operation.
@@ -1980,7 +2296,7 @@ public:
   /** Restore database at a defined path using backup file saved on SD card/Flash memory.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
-   * @param storageType Type of storage to read file, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to read file, StorageType::FLASH or StorageType::SD.
    * @param nodePath Database path to  be restored.
    * @param fileName File name to read
    * @return Boolean type status indicates the success of the operation.
@@ -2005,14 +2321,14 @@ public:
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
    * @param filename Filename to be saved.
-   * @param storageType Type of storage to save file, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to save file, StorageType::FLASH or StorageType::SD.
   */
   bool saveErrorQueue(FirebaseData &fbdo, const String &filename, uint8_t storageType);
 
   /** Delete file in Flash (SPIFFS) or SD card.
    * 
    * @param filename File name to delete.
-   * @param storageType Type of storage to save file, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to save file, StorageType::FLASH or StorageType::SD.
   */
   bool deleteStorageFile(const String &filename, uint8_t storageType);
 
@@ -2020,7 +2336,7 @@ public:
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
    * @param filename Filename to be read and restore queues.
-   * @param storageType Type of storage to read file, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to read file, StorageType::FLASH or StorageType::SD.
   */
   bool restoreErrorQueue(FirebaseData &fbdo, const String &filename, uint8_t storageType);
 
@@ -2028,7 +2344,7 @@ public:
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
    * @param filename Filename to be read and count for queues.
-   * @param storageType Type of storage to read file, StorageType::SPIFS or StorageType::SD.
+   * @param storageType Type of storage to read file, StorageType::FLASH or StorageType::SD.
    * @return Number (0-255) of queues store in defined SPIFFS file.
   */
   uint8_t errorQueueCount(FirebaseData &fbdo, const String &filename, uint8_t storageType);
@@ -2142,6 +2458,11 @@ public:
    */
   bool sdBegin(void);
 
+  /** Provide the http code error string
+   * 
+   * @param httpCode The http code.
+   * @param buff The C++ string buffer out.
+  */
   void errorToString(int httpCode, std::string &buff);
 
   template <typename T>
@@ -2193,11 +2514,13 @@ private:
   bool setBool(FirebaseData &fbdo, const std::string &path, bool boolValue, bool queue, const std::string &priority, const std::string &etag);
   bool setBlob(FirebaseData &fbdo, const std::string &path, uint8_t *blob, size_t size, bool queue, const std::string &priority, const std::string &etag);
 
-  void getUrlInfo(const std::string url, std::string &host, std::string &uri, std::string &auth);
+  void getUrlInfo(const std::string url, struct fb_esp_url_info_t &info);
   bool processRequest(FirebaseData &fbdo, fb_esp_method method, fb_esp_data_type dataType, const std::string &path, const char *buff, bool queue, const std::string &priority, const std::string &etag = "");
   bool processRequestFile(FirebaseData &fbdo, uint8_t storageType, fb_esp_method method, const std::string &path, const std::string &fileName, bool queue, const std::string &priority, const std::string &etag = "");
   bool waitIdle(FirebaseData &fbdo);
   bool handleRequest(FirebaseData &fbdo, uint8_t storageType, const std::string &path, fb_esp_method method, fb_esp_data_type dataType, const std::string &payload, const std::string &priority, const std::string &etag);
+  bool validRequest(FirebaseData &fbdo, const std::string &path);
+  bool tokenReady(FirebaseData &fbdo);
   bool handleStreamRequest(FirebaseData &fbdo, const std::string &path);
   bool handleStreamRead(FirebaseData &fbdo);
   void parseRespHeader(const char *buf, server_response_data_t &response);
@@ -2213,13 +2536,15 @@ private:
   void closeFileHandle(FirebaseData &fbdo);
   void handlePayload(FirebaseData &fbdo, server_response_data_t &response, char *payload);
   bool reconnect(FirebaseData &fbdo, unsigned long dataTime = 0);
+  bool hanldeToken();
+  void checkToken(FirebaseData &fbdo);
   void delS(char *p);
   char *newS(size_t len);
   char *newS(char *p, size_t len);
   char *newS(char *p, size_t len, char *d);
 
   void preparePayload(fb_esp_method method, fb_esp_data_type dataType, const std::string &priority, const std::string &payload, std::string &buf);
-  void prepareHeader(FirebaseData &fbdo, const std::string &host, fb_esp_method method, fb_esp_data_type dataType, const std::string &path, const std::string &auth, int payloadLength, std::string &header, bool sv);
+  void prepareHeader(FirebaseData &fbdo, fb_esp_method method, fb_esp_data_type dataType, const std::string &path, int payloadLength, std::string &header, bool sv);
   void clearDataStatus(FirebaseData &fbdo);
   void closeHTTP(FirebaseData &fbdo);
   int sendRequest(FirebaseData &fbdo, const std::string &path, fb_esp_method method, fb_esp_data_type dataType, const std::string &payload, const std::string &priority);
@@ -2228,12 +2553,13 @@ private:
   uint8_t openErrorQueue(FirebaseData &fbdo, const String &filename, uint8_t storageType, uint8_t mode);
   std::vector<std::string> splitString(int size, const char *str, const char delim);
 
-  char *getPGMString(PGM_P pgm);
-  char *getFloatString(float value);
-  char *getDoubleString(double value);
-  char *getIntString(int value);
-  char *getBoolString(bool value);
-  void pgm_appendStr(std::string &buf, PGM_P p, bool empty = false);
+  char *strP(PGM_P pgm);
+  int strposP(const char *buf, PGM_P beginH, int ofs);
+  char *floatStr(float value);
+  char *doubleStr(double value);
+  char *intStr(int value);
+  char *boolStr(bool value);
+  void appendP(std::string &buf, PGM_P p, bool empty = false);
   void trimDigits(char *buf);
   void strcat_c(char *str, char c);
   int strpos(const char *haystack, const char *needle, int offset);
@@ -2242,25 +2568,47 @@ private:
   bool sdTest();
   void createDirs(std::string dirs, uint8_t storageType);
   bool replace(std::string &str, const std::string &from, const std::string &to);
-  std::string base64_encode_string(const unsigned char *src, size_t len);
-  void send_base64_encoded_stream(WiFiClient *client, const std::string &filePath, uint8_t storageType);
-  bool base64_decode_string(const std::string src, std::vector<uint8_t> &out);
-  bool base64_decode_file(File &file, const char *src, size_t len);
-  bool base64_decode_SPIFFS(File &file, const char *src, size_t len);
+  std::string encodeBase64Str(uint8_t *src, size_t len);
+  std::string encodeBase64Str(const unsigned char *src, size_t len);
+  void sendBase64Stream(WiFiClient *client, const std::string &filePath, uint8_t storageType);
+  bool decodeBase64Str(const std::string src, std::vector<uint8_t> &out);
+  bool decodeBase64Stream(File &file, const char *src, size_t len);
+  bool decodeBase64Flash(File &file, const char *src, size_t len);
   uint32_t hex2int(const char *hex);
 
   bool handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
+  bool setClock(float gmtOffset);
 
-  std::string _host = "";
-  std::string _auth = "";
+  bool parseSAFile();
+  void setTokenType(fb_esp_auth_token_type type);
+  bool tokenSigninDataReady();
+  bool userSigninDataReady();
+  void clearSA();
+  bool handleSignerError(int code);
+  bool getIdToken(bool createUser = false, const char *email = "", const char *password = "");
+  bool handleEmailSending(const char *payload, fb_esp_user_email_sending_type type);
+  bool refreshToken();
+  bool requestTokens();
+  void encodeBase64Url(char *encoded, unsigned char *string, size_t len);
+  size_t base64EncLen(size_t len);
+  bool createJWT(int step);
+  void setTokenError(int code);
+  bool handleTokenResponse(FB_HTTPClient32 *wcs, FirebaseJson *json);
+
+  FirebaseAuth *_auth = nullptr;
+  FirebaseConfig *_cfg = nullptr;
+
+  //internal or used by legacy data
+  FirebaseAuth _auth_;
+  FirebaseConfig _cfg_;
   std::shared_ptr<const char> _caCert = nullptr;
-  int _certType = -1;
-  std::string _caCertFile = "";
-  uint8_t _caCertFileStoreageType = StorageType::SPIFFS;
 
-  uint16_t _port = FIREBASE_PORT;
+  int _certType = -1;
+  unsigned long preRefreshMillis = 5 * 60 * 1000;
+
   bool _reconnectWiFi = false;
   bool _sdOk = false;
+  bool _flashOk = false;
   bool _sdInUse = false;
   bool _sdConfigSet = false;
   bool _multipleRequests = false;
@@ -2271,6 +2619,10 @@ private:
 
   uint8_t _floatDigits = 5;
   uint8_t _doubleDigits = 9;
+  const long default_ts = 1510644967;
+  const uint16_t ntpTimeout = 2000;
+  float _gmtOffset = 0;
+  bool _clockReady = false;
 
   friend class StreamData;
   friend class FirebaseData;

@@ -1,5 +1,5 @@
 
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -7,31 +7,29 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
+ *
 */
 
-/*
-
-  This example shows the basic example for automatic plant watering system.
-  The sketch will set GPIO16 for Pump1, and GPIO17 for Pump2
-  The status of pumps showed at /PlantWatering/status
-  
-  Two pumps will be set to turn on in the moring and evening for 120 second everyday
-  To manually turn on and off both pumps, change the value under /PlantWatering/control
-
-  To control the device, send command at /PlantWatering/control/cmd and the result from process
-  showed at /PlantWatering/status/terminal
-
-  The command and its description.
-
-  idle: nothing to do
-  get-time: get time from NTP server
-  boot: restart the device
-  load-pump: load pump configuration
-  load-schedule: load schedule configuration
-  pump-count: show the number of pumps at /PlantWatering/status/terminal
-  schedule-count: show the number of schedules at /PlantWatering/status/terminal
-
+/** 
+ * This example shows the basic example for automatic plant watering system.
+ * The sketch will set GPIO16 for Pump1, and GPIO12 for Pump2
+ * The status of pumps showed at /PlantWatering/status
+ * 
+ * Two pumps will be set to turn on in the moring and evening for 120 second everyday
+ * To manually turn on and off both pumps, change the value under /PlantWatering/control
+ * 
+ * To control the device, send command at /PlantWatering/control/cmd and the result from process
+ * showed at /PlantWatering/status/terminal
+ * 
+ * The command and its description.
+ * 
+ * idle: nothing to do
+ * get-time: get time from NTP server
+ * boot: restart the device
+ * load-pump: load pump configuration
+ * load-schedule: load schedule configuration
+ * pump-count: show the number of pumps at /PlantWatering/status/terminal
+ * schedule-count: show the number of schedules at /PlantWatering/status/terminal
 */
 
 //FirebaseESP8266.h must be included before ESP8266WiFi.h
@@ -40,10 +38,15 @@
 #include <time.h>
 
 
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com" //Do not include https:// in FIREBASE_HOST
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com" 
+
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 struct preset_time_t
 {

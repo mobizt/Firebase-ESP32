@@ -1,4 +1,4 @@
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -9,33 +9,51 @@
  *
 */
 
-
 //This example shows how to backup database and send the Email
-
 
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
 /*
-   Required ESP32 MailClient library for Arduino
-   https://github.com/mobizt/ESP32-Mail-Client
+   Required ESP Mail Client library for Arduino
+   https://github.com/mobizt/ESP-Mail-Client
 */
 
-#include "ESP32_MailClient.h"
+#include <ESP_Mail_Client.h>
 
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //Define Firebase Data object
-FirebaseData firebaseData;
+FirebaseData fbdo;
 
-//The Email Sending data object contains config and data to send
-SMTPData smtpData;
 
-//Callback function to get the Email sending status
-void sendCallback(SendStatus info);
+/* The smtp host name e.g. smtp.gmail.com for GMail or smtp.office365.com for Outlook */
+#define SMTP_HOST "################"
+
+/** The smtp port e.g. 
+ * 25  or esp_mail_smtp_port_25
+ * 465 or esp_mail_smtp_port_465
+ * 587 or esp_mail_smtp_port_587
+*/
+#define SMTP_PORT 25
+
+/* The sign in credentials */
+#define AUTHOR_EMAIL "################"
+#define AUTHOR_PASSWORD "################"
+
+/* The SMTP Session object used for Email sending */
+SMTPSession smtp;
+
+/* Callback function to get the Email sending status */
+void smtpCallback(SMTP_Status status);
 
 void setup()
 {
@@ -69,84 +87,129 @@ void setup()
   Serial.println("------------------------------------");
   Serial.println("Backup test...");
 
-  //Provide specific SD card interface
-  //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
 
-  //Download and save data at defined database path to SD card.
-  //{TARGET_NODE_PATH} is the full path of database to backup.
-
-  if (!Firebase.backup(firebaseData, StorageType::SD, "/TARGET_NODE_PATH", "/PATH_IN_SD_CARD"))
+  if (!Firebase.backup(fbdo, StorageType::FLASH, "/PATH_TO_THE_NODE", "/PATH_TO_SAVE_FILE"))
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.fileTransferError());
-	  Serial.println("------------------------------------");
+    Serial.println("REASON: " + fbdo.fileTransferError());
+    Serial.println("------------------------------------");
     Serial.println();
   }
   else
   {
     Serial.println("PASSED");
-    Serial.println("SAVE PATH: " + firebaseData.getBackupFilename());
-    Serial.println("FILE SIZE: " + String(firebaseData.getBackupFileSize()));
-	  Serial.println("------------------------------------");
+    Serial.println("SAVE PATH: " + fbdo.getBackupFilename());
+    Serial.println("FILE SIZE: " + String(fbdo.getBackupFileSize()));
+    Serial.println("------------------------------------");
     Serial.println();
 
-    //
-    if (firebaseData.pauseFirebase(true)) {
+  
+    if (fbdo.pauseFirebase(true))
+    {
 
       //Send backup file via Email
 
-      Serial.println("------------------------------------");
-      Serial.println("Send Email...");
+      smtp.debug(1);
 
-      //Set the Email host, port, account and password
-      smtpData.setLogin("smtp.gmail.com", 465, "YOUR_EMAIL_ACCOUNT@gmail.com", "YOUR_EMAIL_PASSWORD");
+      /* Set the callback function to get the sending results */
+      smtp.callback(smtpCallback);
 
-      //Set the sender name and Email
-      smtpData.setSender("ESP32", "SOME_EMAIL_ACCOUNT@SOME_EMAIL.com");
+      /* Declare the session config data */
+      ESP_Mail_Session session;
 
-      //Set Email priority or importance High, Normal, Low or 1 to 5 (1 is highest)
-      smtpData.setPriority("High");
+      /* Set the session config */
+      session.server.host_name = SMTP_HOST;
+      session.server.port = SMTP_PORT;
+      session.login.email = AUTHOR_EMAIL;
+      session.login.password = AUTHOR_PASSWORD;
+      session.login.user_domain = "mydomain.net";
 
-      //Set the subject
-      smtpData.setSubject("Firebase Database Backup File");
+      /* Declare the message class */
+      SMTP_Message message;
 
-      //Set the message - normal text or html format
-      smtpData.setMessage("<div style=\"color:#cc3399;font-size:14px;\">Firebase Database Backup File<br/><br/>Sent from ESP32</div>", true);
+      /* Set the message headers */
+      message.sender.name = "ESP Mail";
+      message.sender.email = AUTHOR_EMAIL;
+      message.subject = "Firebase Database Backup File";
+      message.addRecipient("Someone", "####@#####_dot_com");
 
-      //Add recipients, can add more than one recipient
-      smtpData.addRecipient("someone@somemail.com");
+      message.text.content = "Firebase Database Backup File\r\nSent from ESP32";
 
-      //Add attachment file (backup file) from SD card
-      smtpData.addAttachFile(firebaseData.getBackupFilename());
+      /** The Plain text message character set */
+      message.text.charSet = "us-ascii";
 
-      smtpData.setSendCallback(sendCallback);
+      /** The content transfer encoding */
+      message.text.transfer_encoding = Content_Transfer_Encoding::enc_7bit;
 
-      //Start sending Email, can be set callback function to track the status
-      if (!MailClient.sendMail(smtpData))
-        Serial.println("Error sending Email, " + MailClient.smtpErrorReason());
+      /** The message priority */
+      message.priority = esp_mail_smtp_priority::esp_mail_smtp_priority_low;
 
-      //Clear all data from Email object to free memory
-      smtpData.empty();
+      /* The attachment data item */
+      SMTP_Attachment att;
+
+      /** Set the attachment info */
+      att.descr.filename = fbdo.getBackupFilename().c_str();
+      att.descr.mime = "application/octet-stream";
+      String path = "/" + fbdo.getBackupFilename();
+      att.file.path = path.c_str();
+      att.file.storage_type = esp_mail_file_storage_type_sd;
+      att.descr.transfer_encoding = Content_Transfer_Encoding::enc_base64;
+
+      /* Add attachment to the message */
+      message.addAttachment(att);
+
+
+      /* Connect to server with the session config */
+      if (!smtp.connect(&session))
+        return;
+
+      /* Start sending Email and close the session */
+      if (!MailClient.sendMail(&smtp, &message))
+        Serial.println("Error sending Email, " + smtp.errorReason());
 
       Serial.println();
-    } else {
+    }
+    else
+    {
       Serial.println("Could not pause Firebase");
     }
-
   }
 
   //Quit Firebase and release all resources
-  Firebase.end(firebaseData);
+  Firebase.end(fbdo);
 }
 
 void loop()
 {
 }
 
-//Callback function to get the Email sending status
-void sendCallback(SendStatus msg)
+/* Callback function to get the Email sending status */
+void smtpCallback(SMTP_Status status)
 {
-  //Print the current status
-  Serial.println(msg.info());
+  /* Print the current status */
+  Serial.println(status.info());
 
+  /* Print the sending result */
+  if (status.success())
+  {
+    Serial.println("----------------");
+    Serial.printf("Message sent success: %d\n", status.completedCount());
+    Serial.printf("Message sent failled: %d\n", status.failedCount());
+    Serial.println("----------------\n");
+    struct tm dt;
+
+    for (size_t i = 0; i < smtp.sendingResult.size(); i++)
+    {
+      /* Get the result item */
+      SMTP_Result result = smtp.sendingResult.getItem(i);
+      localtime_r(&result.timesstamp, &dt);
+
+      Serial.printf("Message No: %d\n", i + 1);
+      Serial.printf("Status: %s\n", result.completed ? "success" : "failed");
+      Serial.printf("Date/Time: %d/%d/%d %d:%d:%d\n", dt.tm_year + 1900, dt.tm_mon + 1, dt.tm_mday, dt.tm_hour, dt.tm_min, dt.tm_sec);
+      Serial.printf("Recipient: %s\n", result.recipients);
+      Serial.printf("Subject: %s\n", result.subject);
+    }
+    Serial.println("----------------\n");
+  }
 }

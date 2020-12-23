@@ -1,4 +1,4 @@
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -6,8 +6,6 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
- * This example is for FirebaseESP32 Arduino library v 3.7.3 or later
  *
 */
 
@@ -17,13 +15,18 @@
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //Define Firebase Data object
-FirebaseData firebaseData;
+FirebaseData fbdo;
 
 String path = "/Test";
 
@@ -83,23 +86,23 @@ void setup()
   Firebase.reconnectWiFi(true);
 
   //Open and retore Firebase Error Queues from file.
-  if (Firebase.errorQueueCount(firebaseData, "/test.txt", StorageType::SPIFFS) > 0)
+  if (Firebase.errorQueueCount(fbdo, "/test.txt", StorageType::FLASH) > 0)
   {
-    Firebase.restoreErrorQueue(firebaseData, "/test.txt", StorageType::SPIFFS);
-    Firebase.deleteStorageFile("/test.txt", StorageType::SPIFFS);
+    Firebase.restoreErrorQueue(fbdo, "/test.txt", StorageType::FLASH);
+    Firebase.deleteStorageFile("/test.txt", StorageType::FLASH);
   }
 
   //Set maximum Firebase read/store retry operation (0 - 255) in case of network problems and buffer overflow
-  Firebase.setMaxRetry(firebaseData, 3);
+  Firebase.setMaxRetry(fbdo, 3);
 
   //Set the maximum Firebase Error Queues in collection (0 - 255).
   //Firebase read/store operation causes by network problems and buffer overflow will be added to Firebase Error Queues collection.
-  Firebase.setMaxErrorQueue(firebaseData, 10);
+  Firebase.setMaxErrorQueue(fbdo, 10);
 
   
-  Firebase.beginAutoRunErrorQueue(firebaseData, callback);
+  Firebase.beginAutoRunErrorQueue(fbdo, callback);
 
-  //Firebase.beginAutoRunErrorQueue(firebaseData);
+  //Firebase.beginAutoRunErrorQueue(fbdo);
 
 
   Serial.println("------------------------------------");
@@ -111,7 +114,7 @@ void setup()
     data[i] = i;
 
   //Set binary data to database
-  if (Firebase.setBlob(firebaseData, path + "/Binary/Blob/data", data, sizeof(data)))
+  if (Firebase.setBlob(fbdo, path + "/Binary/Blob/data", data, sizeof(data)))
   {
     Serial.println("PASSED");
     Serial.println("------------------------------------");
@@ -120,11 +123,11 @@ void setup()
   else
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
-    if (Firebase.getErrorQueueID(firebaseData) > 0)
+    Serial.println("REASON: " + fbdo.errorReason());
+    if (Firebase.getErrorQueueID(fbdo) > 0)
     {
-      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(firebaseData)));
-      queueID[qIdx] = Firebase.getErrorQueueID(firebaseData);
+      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(fbdo)));
+      queueID[qIdx] = Firebase.getErrorQueueID(fbdo);
       qIdx++;
     }
     Serial.println("------------------------------------");
@@ -146,13 +149,13 @@ void setup()
 
   //Get binary data from database
   //Assign myblob as the target variable
-  if (Firebase.getBlob(firebaseData, path + "/Binary/Blob/data", myblob))
+  if (Firebase.getBlob(fbdo, path + "/Binary/Blob/data", myblob))
   {
     Serial.println("PASSED");
-    Serial.println("PATH: " + firebaseData.dataPath());
-    Serial.println("TYPE: " + firebaseData.dataType());
+    Serial.println("PATH: " + fbdo.dataPath());
+    Serial.println("TYPE: " + fbdo.dataType());
     Serial.print("VALUE: ");
-    if (firebaseData.dataType() == "blob")
+    if (fbdo.dataType() == "blob")
     {
 
       Serial.println();
@@ -177,11 +180,11 @@ void setup()
   else
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
-    if (Firebase.getErrorQueueID(firebaseData) > 0)
+    Serial.println("REASON: " + fbdo.errorReason());
+    if (Firebase.getErrorQueueID(fbdo) > 0)
     {
-      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(firebaseData)));
-      queueID[qIdx] = Firebase.getErrorQueueID(firebaseData);
+      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(fbdo)));
+      queueID[qIdx] = Firebase.getErrorQueueID(fbdo);
       qIdx++;
     }
     Serial.println("------------------------------------");
@@ -191,24 +194,24 @@ void setup()
   Serial.println("------------------------------------");
   Serial.println("Set double test...");
 
-  if (Firebase.setDouble(firebaseData, path + "/Double/Data", 340.123456789))
+  if (Firebase.setDouble(fbdo, path + "/Double/Data", 340.123456789))
   {
     Serial.println("PASSED");
-    Serial.println("PATH: " + firebaseData.dataPath());
-    Serial.println("TYPE: " + firebaseData.dataType());
+    Serial.println("PATH: " + fbdo.dataPath());
+    Serial.println("TYPE: " + fbdo.dataType());
     Serial.print("VALUE: ");
-    printResult(firebaseData);
+    printResult(fbdo);
     Serial.println("------------------------------------");
     Serial.println();
   }
   else
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
-    if (Firebase.getErrorQueueID(firebaseData) > 0)
+    Serial.println("REASON: " + fbdo.errorReason());
+    if (Firebase.getErrorQueueID(fbdo) > 0)
     {
-      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(firebaseData)));
-      queueID[qIdx] = Firebase.getErrorQueueID(firebaseData);
+      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(fbdo)));
+      queueID[qIdx] = Firebase.getErrorQueueID(fbdo);
       qIdx++;
     }
     Serial.println("------------------------------------");
@@ -218,13 +221,13 @@ void setup()
   Serial.println("------------------------------------");
   Serial.println("Get double test...");
 
-  if (Firebase.getDouble(firebaseData, path + "/Double/Data", mydouble))
+  if (Firebase.getDouble(fbdo, path + "/Double/Data", mydouble))
   {
     Serial.println("PASSED");
-    Serial.println("PATH: " + firebaseData.dataPath());
-    Serial.println("TYPE: " + firebaseData.dataType());
+    Serial.println("PATH: " + fbdo.dataPath());
+    Serial.println("TYPE: " + fbdo.dataType());
     Serial.print("VALUE: ");
-    printResult(firebaseData);
+    printResult(fbdo);
     Serial.println("------------------------------------");
     Serial.println();
     mydouble = 0;
@@ -232,18 +235,18 @@ void setup()
   else
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
-    if (Firebase.getErrorQueueID(firebaseData) > 0)
+    Serial.println("REASON: " + fbdo.errorReason());
+    if (Firebase.getErrorQueueID(fbdo) > 0)
     {
-      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(firebaseData)));
-      queueID[qIdx] = Firebase.getErrorQueueID(firebaseData);
+      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(fbdo)));
+      queueID[qIdx] = Firebase.getErrorQueueID(fbdo);
       qIdx++;
     }
     Serial.println("------------------------------------");
     Serial.println();
   }
 
-  if (Firebase.errorQueueCount(firebaseData) > 0)
+  if (Firebase.errorQueueCount(fbdo) > 0)
   {
     Serial.println("-----------------------------------------------------------------------------");
     Serial.println("Now turn on WiFi hotspot or router to process these queues");
@@ -251,19 +254,17 @@ void setup()
     Serial.println();
 
     //Save Error Queues to file
-    Firebase.saveErrorQueue(firebaseData, "/test.txt", StorageType::SPIFFS);
+    Firebase.saveErrorQueue(fbdo, "/test.txt", StorageType::FLASH);
   }
 
   //Stop error queue auto run process
-  //Firebase.endAutoRunErrorQueue(firebaseData);
+  //Firebase.endAutoRunErrorQueue(fbdo);
 }
 
 void loop()
 {
-  if (Firebase.errorQueueCount(firebaseData) > 0)
+  if (Firebase.errorQueueCount(fbdo) > 0)
   {
-
-   
 
     /*
 
@@ -271,23 +272,23 @@ void loop()
     to manaul run the Firebase Error Queues, just call Firebase.processErrorQueue in loop
     
     
-    Firebase.processErrorQueue(firebaseData);
+    Firebase.processErrorQueue(fbdo);
 
     delay(1000);
 
-    if (Firebase.isErrorQueueFull(firebaseData))
+    if (Firebase.isErrorQueueFull(fbdo))
     {
       Serial.println("Queue is full");
     }
 
     Serial.print("Remaining queues: ");
-    Serial.println(Firebase.errorQueueCount(firebaseData));
+    Serial.println(Firebase.errorQueueCount(fbdo));
 
     for (uint8_t i = 0; i < qIdx; i++)
     {
       Serial.print("Error Queue ");
       Serial.print(queueID[i]);
-      if (Firebase.isErrorQueueExisted(firebaseData, queueID[i]))
+      if (Firebase.isErrorQueueExisted(fbdo, queueID[i]))
         Serial.println(" is queuing");
       else
         Serial.println(" is done");

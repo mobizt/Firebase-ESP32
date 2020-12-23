@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.9
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.10
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -38,11 +38,13 @@ This library supports ESP32 MCU from Espressif. The following are platforms in w
 
 * **Supports Multiple paths Stream (under the same parent node)**
 
+* **Supports Email/Password, custom and access token authentications using Service Account**
+
 * **Supports Data Backup and Restore.**
 
 * **Supports Firebase Cloud Messaging.**
 
-* **Supports SD and SPIFFS's CA certificate file.**
+* **Supports SD and Flash's CA certificate file.**
 
 * **Built-in easiest and non-recursive JSON parser and builder.**
 
@@ -127,9 +129,9 @@ For PlatformIO, in folder **"lib"**, create new folder named **"Firebase-ESP32"*
 ## Usages
 
 
-See [Full Examples](/examples) for complete usages.
+See [All examples](/examples) for complete usages.
 
-See [Function Description](/src/README.md) for all available functions.
+See [Function description](/src/README.md) for all available functions.
 
 
 
@@ -138,33 +140,53 @@ See [Function Description](/src/README.md) for all available functions.
 
 ```C++
 
-//1. Include WiFi.h
+//Include WiFi.h
 #include <WiFi.h>
 
-//2. Include Firebase ESP32 library (this library)
+//Include Firebase ESP32 library (this library)
 #include "FirebaseESP32.h"
 
-//3. Declare the Firebase Data object in the global scope
-FirebaseData firebaseData;
+//Define the Firebase Data object
+FirebaseData fbdo;
 
-//4. Setup Firebase credential in setup()
-Firebase.begin("yout_project_id.firebaseio.com", "your_Firebase_database_secret");
+// Define the FirebaseAuth data for authentication data
+FirebaseAuth auth;
 
-//5. Optional, set AP reconnection in setup()
+// Define the FirebaseConfig data for config data
+FirebaseConfig config;
+
+// Assign the project host and api key (required)
+config.host = FIREBASE_HOST;
+
+config.api_key = API_KEY;
+
+// Assign the user sign in credentials
+auth.user.email = USER_EMAIL;
+
+auth.user.password = USER_PASSWORD;
+
+//Initialize the library with the Firebase authen and config.
+Firebase.begin(&config, &auth);
+
+//Optional, set AP reconnection in setup()
 Firebase.reconnectWiFi(true);
 
-//6. Optional, set number of error retry
- Firebase.setMaxRetry(firebaseData, 3);
+//Optional, set number of error retry
+Firebase.setMaxRetry(fbdo, 3);
 
-//7. Optional, set number of error resumable queues
-Firebase.setMaxErrorQueue(firebaseData, 30);
+//Optional, set number of error resumable queues
+Firebase.setMaxErrorQueue(fbdo, 30);
 
-//8. Optional, use classic HTTP GET and POST requests. 
+//Optional, use classic HTTP GET and POST requests. 
 //This option allows get and delete functions (PUT and DELETE HTTP requests) works for 
 //device connected behind the Firewall that allows only GET and POST requests.   
-Firebase.enableClassicRequest(firebaseData, true);
-```
+Firebase.enableClassicRequest(fbdo, true);
 
+//Optional, set the size of HTTP response buffer
+//Prevent out of memory for large payload but data may be truncated and can't determine its type.
+fbdo.setResponseSize(1024); //minimum size is 400 bytes
+```
+See [Other authentication examples](/examples/Authentications) for more sign in methods.
 
 ### Read Data
 
@@ -184,37 +206,37 @@ These functions return boolean value indicates the success of the operation whic
 
 The database data's payload (response) can be read or access through the following Firebase Data object's functions.
 
-* `firebaseData.intData`
+* `fbdo.intData`
 
-* `firebaseData.floatData`
+* `fbdo.floatData`
 
-* `firebaseData.doubleData`
+* `fbdo.doubleData`
 
-* `firebaseData.boolData`
+* `fbdo.boolData`
 
-* `firebaseData.stringData`
+* `fbdo.stringData`
 
-* `firebaseData.jsonString`
+* `fbdo.jsonString`
 
-* `firebaseData.jsonObject`
+* `fbdo.jsonObject`
 
-* `firebaseData.jsonObjectPtr`
+* `fbdo.jsonObjectPtr`
 
-* `firebaseData.jsonArray` 
+* `fbdo.jsonArray` 
 
-* `firebaseData.jsonArrayPtr`
+* `fbdo.jsonArrayPtr`
 
-* `firebaseData.jsonData` (for keeping parse/get result)
+* `fbdo.jsonData` (for keeping parse/get result)
 
 and
 
-* `firebaseData.blobData`
+* `fbdo.blobData`
 
 
 Read the data which its type does not match the data type in the database from above functions will return empty (string, object or array).
 
 
-The data type of returning payload can be determined by `firebaseData.getDataType`.
+The data type of returning payload can be determined by `fbdo.getDataType`.
 
 
 BLOB and file stream data are store as special base64 encode string which only supported and implemented by this library.
@@ -227,14 +249,14 @@ The following example showed how to read integer value from "/test/int".
 
 
 ```C++
-  if (Firebase.getInt(firebaseData, "/test/int")) {
+  if (Firebase.getInt(fbdo, "/test/int")) {
 
-    if (firebaseData.dataType() == "int")) {
-      Serial.println(firebaseData.intData());
+    if (fbdo.dataType() == "int")) {
+      Serial.println(fbdo.intData());
     }
 
   } else {
-    Serial.println(firebaseData.errorReason());
+    Serial.println(fbdo.errorReason());
   }
 ```
 
@@ -268,14 +290,14 @@ ETag at any database path can be read through `Firebase.getETag`.  ETag value ch
 
 The server's **Timestamp** can be stored in the database through `Firebase.setTimestamp`. 
 
-The returned **Timestamp** value can get from `firebaseData.getInt()`. 
+The returned **Timestamp** value can get from `fbdo.getInt()`. 
 
 The following example showed how to store file data to Flash memory at "/test/file_data".
 
 
 ```C++
 
-if (Firebase.getFile(firebaseData, StorateType::SPIFFS, "/test/file_data", "/test.txt"))
+if (Firebase.getFile(fbdo, StorateType::SPIFFS, "/test/file_data", "/test.txt"))
 {
   //SPIFFS.begin(); //not need to begin again due to it has been called in function.
   File file = SPIFFS.open("/test.txt", "r");
@@ -288,7 +310,7 @@ if (Firebase.getFile(firebaseData, StorateType::SPIFFS, "/test/file_data", "/tes
   Serial.println();
 
 } else {
-  Serial.println(firebaseData.fileTransferError());
+  Serial.println(fbdo.fileTransferError());
 }
 ```
 
@@ -305,7 +327,7 @@ The function included `push`, `pushInt`, `pushFloat`, `pushDouble`, `pushBool`, 
 
 These functions return boolean value indicates the success of the operation.
 
-The **unique key** of a new appended node can be determined from `firebaseData.pushName`.
+The **unique key** of a new appended node can be determined from `fbdo.pushName`.
 
 As get functions, the Firebase's push functions support **priority**.
 
@@ -328,16 +350,16 @@ json2.set("child_of_002", 123.456);
 json.set("parent_001", "parent 001 text");
 json.set("parent 002", json2);
 
-if (Firebase.pushJSON(firebaseData, "/test/append", json)) {
+if (Firebase.pushJSON(fbdo, "/test/append", json)) {
 
-  Serial.println(firebaseData.dataPath());
+  Serial.println(fbdo.dataPath());
 
-  Serial.println(firebaseData.pushName());
+  Serial.println(fbdo.pushName());
 
-  Serial.println(firebaseData.dataPath() + "/"+ firebaseData.pushName());
+  Serial.println(fbdo.dataPath() + "/"+ fbdo.pushName());
 
 } else {
-  Serial.println(firebaseData.errorReason());
+  Serial.println(fbdo.errorReason());
 }
 ```
 
@@ -367,16 +389,16 @@ json.set("_data2","_value2");
 updateData.set("data1","value1");
 updateData.set("data2", json);
 
-if (Firebase.updateNode(firebaseData, "/test/update", updateData)) {
+if (Firebase.updateNode(fbdo, "/test/update", updateData)) {
 
-  Serial.println(firebaseData.dataPath());
+  Serial.println(fbdo.dataPath());
 
-  Serial.println(firebaseData.dataType());
+  Serial.println(fbdo.dataType());
 
-  Serial.println(firebaseData.jsonString()); 
+  Serial.println(fbdo.jsonString()); 
 
 } else {
-  Serial.println(firebaseData.errorReason());
+  Serial.println(fbdo.errorReason());
 }
 ```
 
@@ -390,7 +412,7 @@ if (Firebase.updateNode(firebaseData, "/test/update", updateData)) {
 The following example showed how to delete data and its children at "/test/append"
 
 ```C++
-Firebase.deleteNode(firebaseData, "/test/append");
+Firebase.deleteNode(fbdo, "/test/append");
 ```
 
 
@@ -450,15 +472,15 @@ query.endAt(8);
 query.limitToLast(5);
 
 
-if (Firebase.getJSON(firebaseData, "/test/data", query))
+if (Firebase.getJSON(fbdo, "/test/data", query))
 {
   //Success, then try to read the JSON payload value
-  Serial.println(firebaseData.jsonString());
+  Serial.println(fbdo.jsonString());
 }
 else
 {
   //Failed to get JSON data at defined database path, print out the error reason
-  Serial.println(firebaseData.errorReason());
+  Serial.println(fbdo.errorReason());
 }
 
 //Clear all query parameters
@@ -495,42 +517,53 @@ To check the stream manually, use `readStream`.
 
 Function `readStream` used in the loop() task to continuously read the stream changes event and data.
 
-After `readStream`, determine the availability of stream with Firebase Data object function `firebaseData.streamAvailable` 
+After `readStream`, determine the availability of stream with Firebase Data object function `fbdo.streamAvailable` 
 
-Function `firebaseData.streamAvailable` returned true when new stream data was available. 
+Function `fbdo.streamAvailable` returned true when new stream data was available. 
 
 When new stream data was available, its data and event can be accessed from Firebase Data object functions.
 
 
-* `firebaseData.intData`
+* `fbdo.intData`
 
-* `firebaseData.floatData`
+* `fbdo.floatData`
 
-* `firebaseData.doubleData`
+* `fbdo.doubleData`
 
-* `firebaseData.boolData`
+* `fbdo.boolData`
 
-* `firebaseData.stringData`
+* `fbdo.stringData`
 
-* `firebaseData.jsonString`
+* `fbdo.jsonString`
 
-* `firebaseData.jsonObject`
+* `fbdo.jsonObject`
 
-* `firebaseData.jsonObjectPtr`
+* `fbdo.jsonObjectPtr`
 
-* `firebaseData.jsonArray` 
+* `fbdo.jsonArray` 
 
-* `firebaseData.jsonArrayPtr`
+* `fbdo.jsonArrayPtr`
 
-* `firebaseData.jsonData` (for keeping parse/get result)
+* `fbdo.jsonData` (for keeping parse/get result)
 
 and
 
-* `firebaseData.blobData`
+* `fbdo.blobData`
 
 
 Function `endStream` ends the stream operation.
 
+
+Note that, when using the shared Firebase Data object for stream and other usages i.e. normal operation to read and store data,
+the stream will be interrupted to use in other tassks, the stream will be resumed (reconnection) after that normal usage was finished.
+
+For the above case, you need to provide the free time for stream to listen to the server event data. The changes on the server at the streaming node path during the stream interruption will be missed.
+
+To avoid this sitation, don't share the usagge of stream's Firebase Data object, use other Firebase Data object instead.
+
+In addition, delay function used in the same loop block of readStream() will interrupt the stream operation, the server data changes may be missed.
+
+More use of Firebase Data object at the same scope i.e more than 2 can lead to out of memory error as the most memory used in Firebase Data object is due to SSL client.
 
 
 The following example showed how to subscribe to the stream changes at "/test/data" with a callback function.
@@ -542,14 +575,14 @@ The following example showed how to subscribe to the stream changes at "/test/da
 //streamTimeoutCallback is the function that called when the connection between the server 
 //and client was timeout during HTTP stream
 
-Firebase.setStreamCallback(firebaseData, streamCallback, streamTimeoutCallback);
+Firebase.setStreamCallback(fbdo, streamCallback, streamTimeoutCallback);
 
 //In setup(), set the streaming path to "/test/data" and begin stream connection
 
-if (!Firebase.beginStream(firebaseData, "/test/data"))
+if (!Firebase.beginStream(fbdo, "/test/data"))
 {
   //Could not begin stream connection, then print out the error detail
-  Serial.println(firebaseData.errorReason());
+  Serial.println(fbdo.errorReason());
 }
 
   
@@ -601,38 +634,38 @@ The following example showed how to subscribe to the stream changes at "/test/da
 
 ```C++
 //In setup(), set the streaming path to "/test/data" and begin stream connection
-if (!Firebase.beginStream(firebaseData, "/test/data"))
+if (!Firebase.beginStream(fbdo, "/test/data"))
 {
-  Serial.println(firebaseData.errorReason());
+  Serial.println(fbdo.errorReason());
 }
 
 //In loop()
-if (!Firebase.readStream(firebaseData))
+if (!Firebase.readStream(fbdo))
 {
-  Serial.println(firebaseData.errorReason());
+  Serial.println(fbdo.errorReason());
 }
 
-if (firebaseData.streamTimeout())
+if (fbdo.streamTimeout())
 {
   Serial.println("Stream timeout, resume streaming...");
   Serial.println();
 }
 
-if (firebaseData.streamAvailable())
+if (fbdo.streamAvailable())
 {
 
-  if (firebaseData.dataType() == "int")
-    Serial.println(firebaseData.intData());
-  else if (firebaseData.dataType() == "float")
-    Serial.println(firebaseData.floatData(), 5);
-  else if (firebaseData.dataType() == "double")
-    printf("%.9lf\n", firebaseData.doubleData());
-  else if (firebaseData.dataType() == "boolean")
-    Serial.println(firebaseData.boolData() == 1 ? "true" : "false");
-  else if (firebaseData.dataType() == "string")
-    Serial.println(firebaseData.stringData());
-  else if (firebaseData.dataType() == "json")
-    Serial.println(firebaseData.jsonString());
+  if (fbdo.dataType() == "int")
+    Serial.println(fbdo.intData());
+  else if (fbdo.dataType() == "float")
+    Serial.println(fbdo.floatData(), 5);
+  else if (fbdo.dataType() == "double")
+    printf("%.9lf\n", fbdo.doubleData());
+  else if (fbdo.dataType() == "boolean")
+    Serial.println(fbdo.boolData() == 1 ? "true" : "false");
+  else if (fbdo.dataType() == "string")
+    Serial.println(fbdo.stringData());
+  else if (fbdo.dataType() == "json")
+    Serial.println(fbdo.jsonString());
     
 }
 ```
@@ -659,26 +692,26 @@ The following example showed how to backup all database data at "/" and restore.
 ```C++
  String backupFileName = "";
 
- if (!Firebase.backup(firebaseData, StorateType::SD, "/", "/backup.txt"))
+ if (!Firebase.backup(fbdo, StorateType::SD, "/", "/backup.txt"))
  {
-   Serial.println(firebaseData.fileTransferError());
+   Serial.println(fbdo.fileTransferError());
  }
  else
  {
-   Serial.println(firebaseData.getBackupFilename());
-   Serial.println(firebaseData.getBackupFileSize());
-   backupFileName = firebaseData.getBackupFilename();
+   Serial.println(fbdo.getBackupFilename());
+   Serial.println(fbdo.getBackupFileSize());
+   backupFileName = fbdo.getBackupFilename();
   }
 
 
   //Begin restore backed dup data back to database
-  if (!Firebase.restore(firebaseData, StorateType::SD, "/", backupFileName))
+  if (!Firebase.restore(fbdo, StorateType::SD, "/", backupFileName))
   {
-    Serial.println(firebaseData.fileTransferError());
+    Serial.println(fbdo.fileTransferError());
   }
   else
   {
-    Serial.println(firebaseData.getBackupFilename());
+    Serial.println(fbdo.getBackupFilename());
   }
 ```
 
@@ -691,7 +724,7 @@ These operations can retry and queued after the retry amount was reached maximum
 
 ```C++
 //set maximum retry amount to 3
- Firebase.setMaxRetry(firebaseData, 3);
+ Firebase.setMaxRetry(fbdo, 3);
 ```
 
 The function `setMaxErrorQueue` limits the maximum queues in Error Queue collection.
@@ -701,10 +734,10 @@ The full of queue collection can be checked through function `isErrorQueueFull`.
 
 ```C++
  //set maximum queues to 10
- Firebase.setMaxErrorQueue(firebaseData, 10);
+ Firebase.setMaxErrorQueue(fbdo, 10);
 
  //determine whether Error Queue collection is full or not
- Firebase.isErrorQueueFull(firebaseData);
+ Firebase.isErrorQueueFull(fbdo);
 ```
 
 This library provides two approaches to run or process Error Queues with two functions. 
@@ -737,14 +770,14 @@ The following example showed how to run Error Queues automatically and track the
 //Set the maximum Firebase Error Queues in collection (0 - 255).
 //Firebase read/store operation causes by network problems and buffer overflow will be 
 //added to Firebase Error Queues collection.
-Firebase.setMaxErrorQueue(firebaseData, 10);
+Firebase.setMaxErrorQueue(fbdo, 10);
 
 //Begin to run Error Queues in Error Queue collection  
-Firebase.beginAutoRunErrorQueue(firebaseData, callback);
+Firebase.beginAutoRunErrorQueue(fbdo, callback);
 
 
 //Use to stop the auto run queues
-//Firebase.endAutoRunErrorQueue(firebaseData);
+//Firebase.endAutoRunErrorQueue(fbdo);
 
 void errorQueueCallback (QueueInfo queueinfo){
 
@@ -780,22 +813,22 @@ The following example showed how to run Error Queues and track its status manual
 //Set the maximum Firebase Error Queues in collection (0 - 255).
 //Firebase read/store operation causes by network problems and buffer overflow will be added to 
 //Firebase Error Queues collection.
-Firebase.setMaxErrorQueue(firebaseData, 10);
+Firebase.setMaxErrorQueue(fbdo, 10);
 
 
 //All of the following are in loop()
 
-Firebase.processErrorQueue(firebaseData);
+Firebase.processErrorQueue(fbdo);
 
 //Detrnine the queue status
-if (Firebase.isErrorQueueFull(firebaseData))
+if (Firebase.isErrorQueueFull(fbdo))
 {
   Serial.println("Queue is full");
 }
 
 //Remaining Error Queues in Error Queue collection
 Serial.print("Remaining queues: ");
-Serial.println(Firebase.errorQueueCount(firebaseData));
+Serial.println(Firebase.errorQueueCount(fbdo));
 
 //Assumed that queueID is unsigned integer array of queue that added to Error Queue collection 
 //when error and use Firebase.getErrorQueueID to get this Error Queue id.
@@ -804,7 +837,7 @@ for (uint8_t i = 0; i < LENGTH_OF_QUEUEID_ARRAY; i++)
 {
   Serial.print("Error Queue ");
   Serial.print(queueID[i]);
-  if (Firebase.isErrorQueueExisted(firebaseData, queueID[i]))
+  if (Firebase.isErrorQueueExisted(fbdo, queueID[i]))
     Serial.println(" is queuing");
   else
     Serial.println(" is done");
@@ -826,14 +859,14 @@ The following example showed how to restore and save Error Queues in /test.txt f
 ```C++
 //To restore Error Queues
 
-if (Firebase.errorQueueCount(firebaseData, "/test.txt", StorageType::SPIFFS) > 0)
+if (Firebase.errorQueueCount(fbdo, "/test.txt", StorageType::SPIFFS) > 0)
 {
-    Firebase.restoreErrorQueue(firebaseData, "/test.txt", StorageType::SPIFFS);
+    Firebase.restoreErrorQueue(fbdo, "/test.txt", StorageType::SPIFFS);
     Firebase.deleteStorageFile("/test.txt", StorageType::SPIFFS);
 }
 
 //To save Error Queues to file
-Firebase.saveErrorQueue(firebaseData, "/test.txt", StorageType::SPIFFS);
+Firebase.saveErrorQueue(fbdo, "/test.txt", StorageType::SPIFFS);
 
 ```
 
@@ -857,55 +890,55 @@ The FCM message itself offers a broad range of messaging options and capabilitie
 For Android, iOS and web platforms, these basic options can be set and work for all platforms. 
 
 
-Function `firebaseData.fcm.begin` used to assign the server key of your Firebase project.
+Function `fbdo.fcm.begin` used to assign the server key of your Firebase project.
 
-Function `firebaseData.fcm.addDeviceToken` used to add recipient registered device token which wants to send message to. 
+Function `fbdo.fcm.addDeviceToken` used to add recipient registered device token which wants to send message to. 
 
-Functions `firebaseData.fcm.removeDeviceToken` and `firebaseData.fcm.clearDeviceToken` used to remove or clear recipient device.
+Functions `fbdo.fcm.removeDeviceToken` and `fbdo.fcm.clearDeviceToken` used to remove or clear recipient device.
 
 
-For the notification message, title, body, icon (optional), and click_action (optional) can be set through `firebaseData.fcm.setNotifyMessage`. 
+For the notification message, title, body, icon (optional), and click_action (optional) can be set through `fbdo.fcm.setNotifyMessage`. 
 
-And clear these notify message data with `firebaseData.fcm.clearNotifyMessage`.
+And clear these notify message data with `fbdo.fcm.clearNotifyMessage`.
 
-For the data message, provide your custom data as JSON object (FirebaseJson object or string) to `firebaseData.fcm.setDataMessage` which can be clear with `firebaseData.fcm.clearDataMessage`.
+For the data message, provide your custom data as JSON object (FirebaseJson object or string) to `fbdo.fcm.setDataMessage` which can be clear with `fbdo.fcm.clearDataMessage`.
 
 The other options are `priority`, `collapse key`, `Time to Live` of the message and `topic` to send messages to, can be set from the following functions.
 
-Call `firebaseData.fcm.setPriority` for priority ("normal" or "high"), `firebaseData.fcm.setCollapseKey` for collapse key setup, `firebaseData.fcm.setTimeToLive` for life span of message setup between 0 sec. to 2,419,200 sec.  (or 4 weeks), and `firebaseData.fcm.setTopic` for assigning the topic that message to send to.
+Call `fbdo.fcm.setPriority` for priority ("normal" or "high"), `fbdo.fcm.setCollapseKey` for collapse key setup, `fbdo.fcm.setTimeToLive` for life span of message setup between 0 sec. to 2,419,200 sec.  (or 4 weeks), and `fbdo.fcm.setTopic` for assigning the topic that message to send to.
 
 
 The following example showed how to send FCM message.
 
 ```C++
 //Provide your Firebase project's server key here
-firebaseData.fcm.begin(FIREBASE_FCM_SERVER_KEY);
+fbdo.fcm.begin(FIREBASE_FCM_SERVER_KEY);
 
 //Prvide one or more the recipient registered token or instant ID token
-firebaseData.fcm.addDeviceToken(FIREBASE_FCM_DEVICE_TOKEN);
+fbdo.fcm.addDeviceToken(FIREBASE_FCM_DEVICE_TOKEN);
 
 //Provide the priority (optional)
-firebaseData.fcm.setPriority("normal");
+fbdo.fcm.setPriority("normal");
 
 //Provide the time to live (optional)
-firebaseData.fcm.setTimeToLive(5000);
+fbdo.fcm.setTimeToLive(5000);
 
 //Set the notification message data
-firebaseData.fcm.setNotifyMessage("Notification", "Hello World!", "firebase-logo.png", "http://www.google.com");
+fbdo.fcm.setNotifyMessage("Notification", "Hello World!", "firebase-logo.png", "http://www.google.com");
 
 //Set the custom message data
-firebaseData.fcm.setDataMessage("{\"myData\":\"myValue\"}");
+fbdo.fcm.setDataMessage("{\"myData\":\"myValue\"}");
 
 //Send message to one recipient with inddex 1 (index starts from 0)
-if (Firebase.sendMessage(firebaseData, 1))
+if (Firebase.sendMessage(fbdo, 1))
 {
   //Success, print the result returned from server
-  Serial.println(firebaseData.fcm.getSendResult());
+  Serial.println(fbdo.fcm.getSendResult());
 }
 else
 {
   //Failed, print the error reason
-  Serial.println(firebaseData.errorReason());
+  Serial.println(fbdo.errorReason());
 }
 ```
 
@@ -1306,7 +1339,7 @@ The result of the above code
 
 The MIT License (MIT)
 
-Copyright (c) 2019 K. Suwatchai (Mobizt)
+Copyright (c) 2020 K. Suwatchai (Mobizt)
 
 
 Permission is hereby granted, free of charge, to any person returning a copy of

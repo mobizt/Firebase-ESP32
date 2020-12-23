@@ -1,4 +1,4 @@
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -6,24 +6,25 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
- * This example is for FirebaseESP8266 Arduino library v 3.7.3 or newer
  *
 */
 
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
 
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
 
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //Define FirebaseESP8266 data object
-FirebaseData firebaseData1;
-FirebaseData firebaseData2;
+FirebaseData fbdo1;
+FirebaseData fbdo2;
 
 unsigned long sendDataPrevMillis = 0;
 
@@ -86,18 +87,18 @@ void setup()
 
 
 
-  if (!Firebase.beginMultiPathStream(firebaseData1, parentPath, childPath, childPathSize))
+  if (!Firebase.beginMultiPathStream(fbdo1, parentPath, childPath, childPathSize))
   {
     Serial.println("------------------------------------");
     Serial.println("Can't begin stream connection...");
-    Serial.println("REASON: " + firebaseData1.errorReason());
+    Serial.println("REASON: " + fbdo1.errorReason());
     Serial.println("------------------------------------");
     Serial.println();
   }
 
   //Set the reserved size of stack memory in bytes for internal stream callback processing RTOS task.
   //8192 is the minimum size.
-  Firebase.setMultiPathStreamCallback(firebaseData1, streamCallback, streamTimeoutCallback, 8192);
+  Firebase.setMultiPathStreamCallback(fbdo1, streamCallback, streamTimeoutCallback, 8192);
 }
 
 void loop()
@@ -116,7 +117,7 @@ void loop()
     json.set("node1/num", count);
     json.set("node2/data", "hi");
     json.set("node2/num", count);
-    if (Firebase.setJSON(firebaseData2, parentPath, json))
+    if (Firebase.setJSON(fbdo2, parentPath, json))
     {
       Serial.println("PASSED");
       Serial.println();
@@ -124,7 +125,7 @@ void loop()
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData2.errorReason());
+      Serial.println("REASON: " + fbdo2.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -134,7 +135,7 @@ void loop()
     Serial.println("------------------------------------");
     Serial.println("Set string...");
 
-    if (Firebase.setString(firebaseData2, parentPath + "/node2/new/data", "test"))
+    if (Firebase.setString(fbdo2, parentPath + "/node2/new/data", "test"))
     {
       Serial.println("PASSED");
       Serial.println();
@@ -142,7 +143,7 @@ void loop()
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData2.errorReason());
+      Serial.println("REASON: " + fbdo2.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -152,7 +153,7 @@ void loop()
     Serial.println("------------------------------------");
     Serial.println("Set int...");
 
-    if (Firebase.setInt(firebaseData2, parentPath + "/node1/new/data", count))
+    if (Firebase.setInt(fbdo2, parentPath + "/node1/new/data", count))
     {
       Serial.println("PASSED");
       Serial.println();
@@ -160,7 +161,7 @@ void loop()
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData2.errorReason());
+      Serial.println("REASON: " + fbdo2.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }

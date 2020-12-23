@@ -1,4 +1,4 @@
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -6,8 +6,6 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
- * This example is for FirebaseESP32 Arduino library v 3.7.3 and later
  *
 */
 
@@ -17,13 +15,18 @@
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //Define the Firebase Data object
-FirebaseData firebaseData;
+FirebaseData fbdo;
 
 FirebaseJson json;
 
@@ -64,19 +67,19 @@ void setup()
 
     //Also can use Firebase.push instead of Firebase.pushJSON
     //JSON string does not support in v 2.6.0 and later, only FirebaseJson object is supported.
-    if (Firebase.pushJSON(firebaseData, "/Test/Int", json))
+    if (Firebase.pushJSON(fbdo, "/Test/Int", json))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + firebaseData.dataPath());
+      Serial.println("PATH: " + fbdo.dataPath());
       Serial.print("PUSH NAME: ");
-      Serial.println(firebaseData.pushName());
+      Serial.println(fbdo.pushName());
       Serial.println("------------------------------------");
       Serial.println();
     }
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData.errorReason());
+      Serial.println("REASON: " + fbdo.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -85,7 +88,7 @@ void setup()
   //Add an index to the node that being query.
   //Update the existing database rules by adding key "Test/Int/.indexOn" and value "Data2"
   //Check your database rules changes after running this function.
-  updateDatabaseRules(firebaseData);
+  updateDatabaseRules(fbdo);
 
   QueryFilter query;
 
@@ -99,19 +102,19 @@ void setup()
   Serial.println("------------------------------------");
   Serial.println("Data Filtering test...");
 
-  if (Firebase.getJSON(firebaseData, "/Test/Int", query))
+  if (Firebase.getJSON(fbdo, "/Test/Int", query))
   {
 
     Serial.println("PASSED");
     Serial.println("JSON DATA: ");
-    printResult(firebaseData);
+    printResult(fbdo);
     Serial.println("------------------------------------");
     Serial.println();
   }
   else
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.println("REASON: " + fbdo.errorReason());
     Serial.println("------------------------------------");
     Serial.println();
   }

@@ -1,4 +1,4 @@
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -6,11 +6,8 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
- * This example is for FirebaseESP32 Arduino library v 3.7.3 or later
  *
 */
-
 
 //This example shows how to read and write database rules
 
@@ -18,13 +15,22 @@
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder.
+ * 
+ * To access the database rules, this requires the sign in as admin (sign in with OAuth2.0 access token)
+ * or legacy token (database secret)
+ *  
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //Define Firebase Data object
-FirebaseData firebaseData;
+FirebaseData fbdo;
 
 void setup()
 {
@@ -53,12 +59,12 @@ void setup()
   Serial.println("------------------------------------");
   Serial.println("Read Database Rules test...");
 
-  if (Firebase.getRules(firebaseData))
+  if (Firebase.getRules(fbdo))
   {
     Serial.println("PASSED");
     Serial.println("DATABASE RULES: ");
 
-    FirebaseJson &json = firebaseData.jsonObject();
+    FirebaseJson &json = fbdo.jsonObject();
     json.toString(rules, true);
     Serial.println(rules);
 
@@ -91,7 +97,7 @@ void setup()
   else
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.println("REASON: " + fbdo.errorReason());
     Serial.println("------------------------------------");
     Serial.println();
   }
@@ -100,7 +106,7 @@ void setup()
   Serial.println("------------------------------------");
   Serial.println("Write Database Rules test...");
 
-  if (Firebase.setRules(firebaseData, rules))
+  if (Firebase.setRules(fbdo, rules))
   {
     Serial.println("PASSED");
     Serial.println("------------------------------------");
@@ -109,7 +115,7 @@ void setup()
   else
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.println("REASON: " + fbdo.errorReason());
     Serial.println("------------------------------------");
     Serial.println();
   }

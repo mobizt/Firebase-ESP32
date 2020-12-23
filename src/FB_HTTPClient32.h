@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload with STARTTLS support
  * 
- * v 1.0.3
+ * v 1.0.4
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -45,7 +45,11 @@
 #error WiFi UART bridge was not supported.
 #endif
 
+
+#define FLASH_FS SPIFFS
+
 #define FIREBASE_DEFAULT_TCP_TIMEOUT_SEC 5
+
 
 /// HTTP client errors
 #define FIREBASE_ERROR_HTTPC_ERROR_CONNECTION_REFUSED (-1)
@@ -72,7 +76,14 @@
 #define FIREBASE_ERROR_CANNOT_CONFIG_TIME -22
 #define FIREBASE_ERROR_SSL_RX_BUFFER_SIZE_TOO_SMALL -23
 #define FIREBASE_ERROR_FILE_IO_ERROR -24
+#define FIREBASE_ERROR_UNINITIALIZED -25
 
+#define FIREBASE_ERROR_TOKEN_SET_TIME -26
+#define FIREBASE_ERROR_TOKEN_CREATE_HASH -27
+#define FIREBASE_ERROR_TOKEN_PARSE_PK -28
+#define FIREBASE_ERROR_TOKEN_SIGN -29
+#define FIREBASE_ERROR_TOKEN_EXCHANGE -30
+#define FIREBASE_ERROR_TOKEN_NOT_REDY -31
 
 /// HTTP codes see RFC7231
 
@@ -108,7 +119,6 @@
 #define FIREBASE_ERROR_HTTP_CODE_HTTP_VERSION_NOT_SUPPORTED 505
 #define FIREBASE_ERROR_HTTP_CODE_LOOP_DETECTED 508
 #define FIREBASE_ERROR_HTTP_CODE_NETWORK_AUTHENTICATION_REQUIRED 511
-
 
 class TransportTraits
 {
@@ -205,13 +215,13 @@ public:
 
   uint16_t tcpTimeout = FIREBASE_DEFAULT_TCP_TIMEOUT_SEC * 1000;
   bool connect(void);
-  void setCACert(const char *rootCA);
-  void setCertFile(std::string &rootCAFile, uint8_t storageType);
+  void setCACert(const char *caCert);
+  void setCertFile(std::string &caCertFile, uint8_t storageType);
 
 
   int _certType = -1;
-  std::string _rootCAFile = "";
-  uint8_t _rootCAFileStoreageType = 0;
+  std::string _caCertFile = "";
+  uint8_t _caCertFileStoreageType = 0;
 
 protected:
   TransportTraitsPtr transportTraits;

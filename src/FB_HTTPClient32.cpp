@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload with STARTTLS support
  * 
- * v 1.0.3
+ * v 1.0.4
  * 
  * The MIT License (MIT)
  * Copyright (c) 2019 K. Suwatchai (Mobizt)
@@ -52,7 +52,7 @@ FB_HTTPClient32::~FB_HTTPClient32()
         _wcs.release();
     }
     std::string().swap(_host);
-    std::string().swap(_rootCAFile);
+    std::string().swap(_caCertFile);
     _cacert.reset(new char);
     _cacert = nullptr;
     transportTraits.reset(nullptr);
@@ -132,22 +132,22 @@ bool FB_HTTPClient32::connect(void)
     return connected();
 }
 
-void FB_HTTPClient32::setCACert(const char *rootCA)
+void FB_HTTPClient32::setCACert(const char *caCert)
 {
-    if (rootCA)
+    if (caCert)
     {
         transportTraits.reset(nullptr);
-        transportTraits = TransportTraitsPtr(new TLSTraits(rootCA));
+        transportTraits = TransportTraitsPtr(new TLSTraits(caCert));
         _certType = 1;
     }
     else
         _certType = 0;
 }
 
-void FB_HTTPClient32::setCertFile(std::string &rootCAFile, uint8_t storageType)
+void FB_HTTPClient32::setCertFile(std::string &caCertFile, uint8_t storageType)
 {
 
-    if (rootCAFile.length() > 0)
+    if (caCertFile.length() > 0)
     {
         bool t = false;
         _certType = 2;
@@ -162,13 +162,13 @@ void FB_HTTPClient32::setCertFile(std::string &rootCAFile, uint8_t storageType)
         File f;
         if (storageType == 0)
         {
-            if (SPIFFS.exists(rootCAFile.c_str()))
-                f = SPIFFS.open(rootCAFile.c_str(), FILE_READ);
+            if (SPIFFS.exists(caCertFile.c_str()))
+                f = SPIFFS.open(caCertFile.c_str(), FILE_READ);
         }
         else
         {
-            if (SD.exists(rootCAFile.c_str()))
-                f = SD.open(rootCAFile.c_str(), FILE_READ);
+            if (SD.exists(caCertFile.c_str()))
+                f = SD.open(caCertFile.c_str(), FILE_READ);
         }
 
         if (f)

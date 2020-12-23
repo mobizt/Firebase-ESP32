@@ -10,36 +10,37 @@
  *
 */
 
-//This example shows how to set array data through FirebaseJsonArray object then read the data back and parse them.
-
+/** This example will show how to authenticate using 
+ * the legacy token or database secret with the new APIs (using config and auth data).
+*/
 
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
+/* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
+/* 2. Define the Firebase project host name (required) */
 #define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
-
-/** The database secret is obsoleted, please use other authentication methods, 
- * see examples in the Authentications folder. 
-*/
 #define FIREBASE_AUTH "DATABASE_SECRET"
 
-//Define Firebase Data Object
+
+/* 3. Define the Firebase Data object */
 FirebaseData fbdo;
 
+/* 4, Define the FirebaseAuth data for authentication data */
+FirebaseAuth auth;
 
-FirebaseJsonArray arr;
+/* Define the FirebaseConfig data for config data */
+FirebaseConfig config;
 
+/* The function to print the operating results */
 void printResult(FirebaseData &data);
 
-
-unsigned long sendDataPrevMillis = 0;
-
-String path = "/Test/Array";
-
-uint16_t count = 0;
+String path = "/Test";
+unsigned long dataMillis = 0;
+int count = 0;
 
 void setup()
 {
@@ -58,39 +59,36 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+    /* Assign the certificate file (optional) */
+    //config.cert.file = "/cert.cer";
+    //config.cert.file_storage = StorageType::FLASH;
+
+    /* Assign the project host and database secret(required) */
+    config.host = FIREBASE_HOST;
+    config.signer.tokens.legacy_token = FIREBASE_AUTH;
+
+
     Firebase.reconnectWiFi(true);
 
-    if (!Firebase.beginStream(fbdo, path))
-    {
-        Serial.println("------------------------------------");
-        Serial.println("Can't begin stream connection...");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
+    /* Initialize the library with the Firebase authen and config */
+    Firebase.begin(&config, &auth);
 }
 
 void loop()
 {
-
-    if (millis() - sendDataPrevMillis > 15000)
+    if (millis() - dataMillis > 5000)
     {
-        sendDataPrevMillis = millis();
-        count++;
+        dataMillis = millis();
 
         Serial.println("------------------------------------");
-        Serial.println("Set Array...");
+        Serial.println("Set int test...");
 
-        arr.clear();
-        arr.set("/[0]", count);
-        arr.set("/[1]", "hello");
-        arr.set("/[4]", 76.54);
-        if (Firebase.set(fbdo, path + "/Data", arr))
+        if (Firebase.set(fbdo, path + "/int", count++))
         {
             Serial.println("PASSED");
             Serial.println("PATH: " + fbdo.dataPath());
             Serial.println("TYPE: " + fbdo.dataType());
+            Serial.println("ETag: " + fbdo.ETag());
             Serial.print("VALUE: ");
             printResult(fbdo);
             Serial.println("------------------------------------");
@@ -103,55 +101,6 @@ void loop()
             Serial.println("------------------------------------");
             Serial.println();
         }
-
-        Serial.println("------------------------------------");
-        Serial.println("Get Array...");
-        if (Firebase.get(fbdo,  path + "/Data"))
-        {   
-            Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo.dataPath());
-            Serial.println("TYPE: " + fbdo.dataType());
-            Serial.print("VALUE: ");
-            printResult(fbdo);               
-            Serial.println("------------------------------------");
-            Serial.println();
-        }
-        else
-        {
-            Serial.println("FAILED");
-            Serial.println("REASON: " + fbdo.errorReason());
-            Serial.println("------------------------------------");
-            Serial.println();
-        }
-    }
-
-    if (!Firebase.readStream(fbdo))
-    {
-        Serial.println("------------------------------------");
-        Serial.println("Can't read stream data...");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-    }
-
-    if (fbdo.streamTimeout())
-    {
-        Serial.println("Stream timeout, resume streaming...");
-        Serial.println();
-    }
-
-    if (fbdo.streamAvailable())
-    {
-        Serial.println("------------------------------------");
-        Serial.println("Stream Data available...");
-        Serial.println("STREAM PATH: " + fbdo.streamPath());
-        Serial.println("EVENT PATH: " + fbdo.dataPath());
-        Serial.println("DATA TYPE: " + fbdo.dataType());
-        Serial.println("EVENT TYPE: " + fbdo.eventType());
-        Serial.print("VALUE: ");
-        printResult(fbdo);
-        Serial.println("------------------------------------");
-        Serial.println();
     }
 }
 

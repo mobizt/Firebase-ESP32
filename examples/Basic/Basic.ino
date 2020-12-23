@@ -1,5 +1,5 @@
 
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -7,8 +7,6 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
- * This example is for FirebaseESP32 Arduino library v 3.7.3 and later
  *
 */
 
@@ -17,15 +15,18 @@
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
 
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
 
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //Define FirebaseESP32 data object
-FirebaseData firebaseData;
+FirebaseData fbdo;
 
 FirebaseJson json;
 
@@ -52,10 +53,10 @@ void setup()
   Firebase.reconnectWiFi(true);
 
   //Set database read timeout to 1 minute (max 15 minutes)
-  Firebase.setReadTimeout(firebaseData, 1000 * 60);
+  Firebase.setReadTimeout(fbdo, 1000 * 60);
   //tiny, small, medium, large and unlimited.
   //Size and its write timeout e.g. tiny (1s), small (10s), medium (30s) and large (60s).
-  Firebase.setwriteSizeLimit(firebaseData, "tiny");
+  Firebase.setwriteSizeLimit(fbdo, "tiny");
 
   //optional, set the decimal places for float and double data to be stored in database
   Firebase.setFloatDigits(2);
@@ -65,7 +66,7 @@ void setup()
   This option allows get and delete functions (PUT and DELETE HTTP requests) works for device connected behind the
   Firewall that allows only GET and POST requests.
   
-  Firebase.enableClassicRequest(firebaseData, true);
+  Firebase.enableClassicRequest(fbdo, true);
   */
 
   String path = "/Test";
@@ -76,21 +77,21 @@ void setup()
   for (uint8_t i = 0; i < 10; i++)
   {
     //Also can use Firebase.set instead of Firebase.setDouble
-    if (Firebase.setDouble(firebaseData, path + "/Double/Data" + (i + 1), ((i + 1) * 10) + 0.123456789))
+    if (Firebase.setDouble(fbdo, path + "/Double/Data" + (i + 1), ((i + 1) * 10) + 0.123456789))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + firebaseData.dataPath());
-      Serial.println("TYPE: " + firebaseData.dataType());
-      Serial.println("ETag: " + firebaseData.ETag());
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("TYPE: " + fbdo.dataType());
+      Serial.println("ETag: " + fbdo.ETag());
       Serial.print("VALUE: ");
-      printResult(firebaseData);
+      printResult(fbdo);
       Serial.println("------------------------------------");
       Serial.println();
     }
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData.errorReason());
+      Serial.println("REASON: " + fbdo.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -102,21 +103,21 @@ void setup()
   for (uint8_t i = 0; i < 10; i++)
   {
     //Also can use Firebase.get instead of Firebase.setInt
-    if (Firebase.getInt(firebaseData, path + "/Double/Data" + (i + 1)))
+    if (Firebase.getInt(fbdo, path + "/Double/Data" + (i + 1)))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + firebaseData.dataPath());
-      Serial.println("TYPE: " + firebaseData.dataType());
-      Serial.println("ETag: " + firebaseData.ETag());
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("TYPE: " + fbdo.dataType());
+      Serial.println("ETag: " + fbdo.ETag());
       Serial.print("VALUE: ");
-      printResult(firebaseData);
+      printResult(fbdo);
       Serial.println("------------------------------------");
       Serial.println();
     }
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData.errorReason());
+      Serial.println("REASON: " + fbdo.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -128,20 +129,20 @@ void setup()
   for (uint8_t i = 0; i < 5; i++)
   {
     //Also can use Firebase.push instead of Firebase.pushInt
-    if (Firebase.pushInt(firebaseData, path + "/Push/Int", (i + 1)))
+    if (Firebase.pushInt(fbdo, path + "/Push/Int", (i + 1)))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + firebaseData.dataPath());
+      Serial.println("PATH: " + fbdo.dataPath());
       Serial.print("PUSH NAME: ");
-      Serial.println(firebaseData.pushName());
-      Serial.println("ETag: " + firebaseData.ETag());
+      Serial.println(fbdo.pushName());
+      Serial.println("ETag: " + fbdo.ETag());
       Serial.println("------------------------------------");
       Serial.println();
     }
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData.errorReason());
+      Serial.println("REASON: " + fbdo.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -157,20 +158,20 @@ void setup()
 
     //Also can use Firebase.push instead of Firebase.pushJSON
     //Json string is not support in v 2.6.0 and later, only FirebaseJson object is supported.
-    if (Firebase.pushJSON(firebaseData, path + "/Push/Int", json))
+    if (Firebase.pushJSON(fbdo, path + "/Push/Int", json))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + firebaseData.dataPath());
+      Serial.println("PATH: " + fbdo.dataPath());
       Serial.print("PUSH NAME: ");
-      Serial.println(firebaseData.pushName());
-      Serial.println("ETag: " + firebaseData.ETag());
+      Serial.println(fbdo.pushName());
+      Serial.println("ETag: " + fbdo.ETag());
       Serial.println("------------------------------------");
       Serial.println();
     }
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData.errorReason());
+      Serial.println("REASON: " + fbdo.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -184,21 +185,21 @@ void setup()
 
     json.set("Data" + String(i + 1), i + 5.5);
 
-    if (Firebase.updateNode(firebaseData, path + "/float", json))
+    if (Firebase.updateNode(fbdo, path + "/float", json))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + firebaseData.dataPath());
-      Serial.println("TYPE: " + firebaseData.dataType());
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("TYPE: " + fbdo.dataType());
       //No ETag available
       Serial.print("VALUE: ");
-      printResult(firebaseData);
+      printResult(fbdo);
       Serial.println("------------------------------------");
       Serial.println();
     }
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData.errorReason());
+      Serial.println("REASON: " + fbdo.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -291,7 +292,7 @@ void printResult(FirebaseData &data)
 
     Serial.println();
 
-    for (int i = 0; i < data.blobData().size(); i++)
+    for (size_t i = 0; i < data.blobData().size(); i++)
     {
       if (i > 0 && i % 16 == 0)
         Serial.println();

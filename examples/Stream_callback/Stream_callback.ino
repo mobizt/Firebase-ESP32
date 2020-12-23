@@ -1,5 +1,5 @@
 
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -7,8 +7,6 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
- * This example is for FirebaseESP32 Arduino library v 3.7.3 or later
  *
 */
 
@@ -19,15 +17,19 @@
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
 
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //Define Firebase data object
-FirebaseData firebaseData1;
-FirebaseData firebaseData2;
+FirebaseData fbdo1;
+FirebaseData fbdo2;
 
 unsigned long sendDataPrevMillis = 0;
 
@@ -82,11 +84,11 @@ void setup()
   Firebase.reconnectWiFi(true);
   
 
-  if (!Firebase.beginStream(firebaseData1, path))
+  if (!Firebase.beginStream(fbdo1, path))
   {
     Serial.println("------------------------------------");
     Serial.println("Can't begin stream connection...");
-    Serial.println("REASON: " + firebaseData1.errorReason());
+    Serial.println("REASON: " + fbdo1.errorReason());
     Serial.println("------------------------------------");
     Serial.println();
   }
@@ -94,7 +96,7 @@ void setup()
   //Set the reserved size of stack memory in bytes for internal stream callback processing RTOS task.
   //8192 is the minimum size.
 
-  Firebase.setStreamCallback(firebaseData1, streamCallback, streamTimeoutCallback, 8192);
+  Firebase.setStreamCallback(fbdo1, streamCallback, streamTimeoutCallback, 8192);
 }
 
 void loop()
@@ -110,20 +112,20 @@ void loop()
 
     FirebaseJson json;
     json.add("data", "hello").add("num", count);
-    if (Firebase.setJSON(firebaseData2, path + "/Json", json))
+    if (Firebase.setJSON(fbdo2, path + "/Json", json))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + firebaseData2.dataPath());
-      Serial.println("TYPE: " + firebaseData2.dataType());
+      Serial.println("PATH: " + fbdo2.dataPath());
+      Serial.println("TYPE: " + fbdo2.dataType());
       Serial.print("VALUE: ");
-      printResult(firebaseData2);
+      printResult(fbdo2);
       Serial.println("------------------------------------");
       Serial.println();
     }
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData2.errorReason());
+      Serial.println("REASON: " + fbdo2.errorReason());
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -131,7 +133,7 @@ void loop()
     //Stop WiFi client will gain the free memory
     //This requires more time for the SSL handshake process in the next connection
     // due to the previous connection was completely stopped.
-    firebaseData2.stopWiFiClient();
+    fbdo2.stopWiFiClient();
 
     Serial.print("Free Heap: ");
     Serial.println(ESP.getFreeHeap());
@@ -225,7 +227,7 @@ void printResult(FirebaseData &data)
 
     Serial.println();
 
-    for (int i = 0; i < data.blobData().size(); i++)
+    for (size_t i = 0; i < data.blobData().size(); i++)
     {
       if (i > 0 && i % 16 == 0)
         Serial.println();
@@ -352,7 +354,7 @@ void printResult(StreamData &data)
 
     Serial.println();
 
-    for (int i = 0; i < data.blobData().size(); i++)
+    for (size_t i = 0; i < data.blobData().size(); i++)
     {
       if (i > 0 && i % 16 == 0)
         Serial.println();

@@ -1,5 +1,5 @@
 
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -24,14 +24,19 @@
 #include <FirebaseESP32.h>
 #include <LineNotifyESP32.h>
 
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
-#define LINE_TOKEN "YOUR_LINE_NOTIFY_TOKEN"
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+
+/** The database secret is obsoleted, please use other authentication methods, 
+ * see examples in the Authentications folder. 
+*/
+#define FIREBASE_AUTH "DATABASE_SECRET"
+#define LINE_TOKEN "LINE_NOTIFY_TOKEN"
 
 //Define Firebase Data object
-FirebaseData firebaseData;
+FirebaseData fbdo;
 
 HTTPClientESP32Ex client;
 
@@ -71,10 +76,10 @@ void setup()
 
   Serial.println("------------------------------------");
   Serial.println("Begin stream...");
-  if (!Firebase.beginStream(firebaseData, path + "/Stream/String"))
+  if (!Firebase.beginStream(fbdo, path + "/Stream/String"))
   {
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.println("REASON: " + fbdo.errorReason());
     Serial.println("------------------------------------");
     Serial.println();
   }
@@ -96,20 +101,20 @@ void loop()
 
     Serial.println("------------------------------------");
     Serial.println("Set Data...");
-    if (Firebase.setString(firebaseData, path + "/Stream/String", "Hello World! " + String(count)))
+    if (Firebase.setString(fbdo, path + "/Stream/String", "Hello World! " + String(count)))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + firebaseData.dataPath());
-      Serial.println("TYPE: " + firebaseData.dataType());
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("TYPE: " + fbdo.dataType());
       Serial.print("VALUE: ");
-      printResult(firebaseData);
+      printResult(fbdo);
       Serial.println("--------------------------------");
       Serial.println();
     }
     else
     {
       Serial.println("FAILED");
-      Serial.println("REASON: " + firebaseData.errorReason());
+      Serial.println("REASON: " + fbdo.errorReason());
       Serial.println("--------------------------------");
       Serial.println();
     }
@@ -147,32 +152,32 @@ void loop()
     Serial.println();
   }
 
-  if (!Firebase.readStream(firebaseData))
+  if (!Firebase.readStream(fbdo))
   {
     Serial.println("------------------------------------");
     Serial.println("Read stream...");
     Serial.println("FAILED");
-    Serial.println("REASON: " + firebaseData.errorReason());
+    Serial.println("REASON: " + fbdo.errorReason());
     Serial.println("------------------------------------");
     Serial.println();
   }
 
-  if (firebaseData.streamTimeout())
+  if (fbdo.streamTimeout())
   {
     Serial.println("Stream timeout, resume streaming...");
     Serial.println();
   }
 
-  if (firebaseData.streamAvailable())
+  if (fbdo.streamAvailable())
   {
     Serial.println("------------------------------------");
     Serial.println("Stream Data available...");
-    Serial.println("STREAM PATH: " + firebaseData.streamPath());
-    Serial.println("EVENT PATH: " + firebaseData.dataPath());
-    Serial.println("DATA TYPE: " + firebaseData.dataType());
-    Serial.println("EVENT TYPE: " + firebaseData.eventType());
+    Serial.println("STREAM PATH: " + fbdo.streamPath());
+    Serial.println("EVENT PATH: " + fbdo.dataPath());
+    Serial.println("DATA TYPE: " + fbdo.dataType());
+    Serial.println("EVENT TYPE: " + fbdo.eventType());
     Serial.print("VALUE: ");
-    printResult(firebaseData);
+    printResult(fbdo);
     Serial.println("------------------------------------");
     Serial.println();
   }

@@ -1,5 +1,5 @@
 
-/*
+/**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
@@ -7,24 +7,20 @@
  * Github: https://github.com/mobizt
  * 
  * Copyright (c) 2020 mobizt
- * 
- * This example is for the beginner
  *
 */
-
 
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 
 //1. Change the following info
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT.firebaseio.com"
-#define FIREBASE_AUTH "YOUR_FIREBASE_DATABASE_SECRET"
-#define WIFI_SSID "YOUR_WIFI_AP"
-#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
-
+#define WIFI_SSID "WIFI_AP"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+#define FIREBASE_AUTH "DATABASE_SECRET"
 
 //2. Define FirebaseESP8266 data object for data sending and receiving
-FirebaseData firebaseData;
+FirebaseData fbdo;
 
 
 void setup()
@@ -54,34 +50,34 @@ void setup()
 
   //5. Try to set int data to Firebase
   //The set function returns bool for the status of operation
-  //firebaseData requires for sending the data
-  if(Firebase.setInt(firebaseData, "/LED_Status", 1))
+  //fbdo requires for sending the data
+  if(Firebase.setInt(fbdo, "/LED_Status", 1))
   {
     //Success
      Serial.println("Set int data success");
 
   }else{
-    //Failed?, get the error reason from firebaseData
+    //Failed?, get the error reason from fbdo
 
     Serial.print("Error in setInt, ");
-    Serial.println(firebaseData.errorReason());
+    Serial.println(fbdo.errorReason());
   }
 
 
   //6. Try to get int data from Firebase
   //The get function returns bool for the status of operation
-  //firebaseData requires for receiving the data
-  if(Firebase.getInt(firebaseData, "/LED_Status"))
+  //fbdo requires for receiving the data
+  if(Firebase.getInt(fbdo, "/LED_Status"))
   {
     //Success
     Serial.print("Get int data success, int = ");
-    Serial.println(firebaseData.intData());
+    Serial.println(fbdo.intData());
 
   }else{
-    //Failed?, get the error reason from firebaseData
+    //Failed?, get the error reason from fbdo
 
     Serial.print("Error in getInt, ");
-    Serial.println(firebaseData.errorReason());
+    Serial.println(fbdo.errorReason());
   }
 
   /*
@@ -94,27 +90,27 @@ void setup()
 
   */
 
- if(Firebase.get(firebaseData, "/LED_Status"))
+ if(Firebase.get(fbdo, "/LED_Status"))
   {
     //Success
     Serial.print("Get variant data success, type = ");
-    Serial.println(firebaseData.dataType());
+    Serial.println(fbdo.dataType());
 
-    if(firebaseData.dataType() == "int"){
+    if(fbdo.dataType() == "int"){
       Serial.print("data = ");
-      Serial.println(firebaseData.intData());
-    }else if(firebaseData.dataType() == "bool"){
-      if(firebaseData.boolData())
+      Serial.println(fbdo.intData());
+    }else if(fbdo.dataType() == "bool"){
+      if(fbdo.boolData())
         Serial.println("data = true");
       else
         Serial.println("data = false");
     }
 
   }else{
-    //Failed?, get the error reason from firebaseData
+    //Failed?, get the error reason from fbdo
 
     Serial.print("Error in get, ");
-    Serial.println(firebaseData.errorReason());
+    Serial.println(fbdo.errorReason());
   }
 
   /*
@@ -125,8 +121,6 @@ void setup()
   If you have questions or found the bugs, feel free to open the issue here https://github.com/mobizt/Firebase-ESP32
 
   */
-
-
 
 
 }
