@@ -26,7 +26,7 @@ This library supports ESP32 MCU from Espressif. The following are platforms in w
 ## Unsupported Mobile network modem bridge
 
 The library access the internet through WiFi or Ethernet connection, the ESP32 based module that may has Mobile
-network modem i.e. 2G (GPRS), 3G or 4G built-in modules can't not use if it access the internet trourgh these 
+network modem i.e. 2G (GPRS), 3G or 4G built-in modules cannot use if it accesses the internet trourgh these 
 modules by sending the AT commands.
 
 The others UART/Serial bridge mobile network modem which work with AT commands and ESP32 AT commands were unsupported.
