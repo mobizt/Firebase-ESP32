@@ -27,7 +27,7 @@
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
 /* 2. Define the Firebase project host name (required) */
-#define FIREBASE_HOST "YOUR_FIREBASE_PROJECT_ID.firebaseio.com"
+#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
 
 /** 3. Define the API key
  * 

@@ -1,7 +1,10 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.10
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
+
+
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.11
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -12,7 +15,6 @@ This library supports ESP32 MCU from Espressif. The following are platforms in w
 
 * [Arduino WiFi Shield 101 and Arduino MKR1000 WIFI](https://github.com/mobizt/Firebase-Arduino-WiFi101)
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 ## Tested Devices
 
@@ -20,6 +22,15 @@ This library supports ESP32 MCU from Espressif. The following are platforms in w
  * NodeMCU-32
  * WEMOS LOLIN32
  * TTGO T8 V1.8
+
+## Unsupported Mobile network modem bridge
+
+The library access the internet through WiFi or Ethernet connection, the ESP32 based module that may has Mobile
+network modem i.e. 2G (GPRS), 3G or 4G built-in modules can't not use if it access the internet trourgh these 
+modules by sending the AT commands.
+
+The others UART/Serial bridge mobile network modem which work with AT commands and ESP32 AT commands were unsupported.
+
 
 
 ## Features
@@ -184,7 +195,7 @@ Firebase.enableClassicRequest(fbdo, true);
 
 //Optional, set the size of HTTP response buffer
 //Prevent out of memory for large payload but data may be truncated and can't determine its type.
-fbdo.setResponseSize(1024); //minimum size is 400 bytes
+fbdo.setResponseSize(8192); //minimum size is 4096 bytes
 ```
 See [Other authentication examples](/examples/Authentications) for more sign in methods.
 
