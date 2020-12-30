@@ -1,12 +1,10 @@
-/*
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.11
+/**
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.12
  * 
- * December 29, 2020
+ * December 30, 2020
  * 
-*   Updates:
- * - Fix the possible crash due to access the enexpected closed ssl client resources.
- * - Fix the invalid path in setPriority function.
- * - Fix getJson function.
+ *   Updates:
+ * - Fix the possible crash due too small FCM chunk buffer size.
  * 
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
@@ -4325,7 +4323,6 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 
   unsigned long dataTime = millis();
 
-
   char *pChunk = nullptr;
   char *tmp = nullptr;
   char *header = nullptr;
@@ -4347,7 +4344,6 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
   int chunkedDataSize = 0;
   int chunkedDataLen = 0;
   int defaultChunkSize = fbdo._responseBufSize;
-  ;
 
   fbdo._httpCode = FIREBASE_ERROR_HTTP_CODE_OK;
   fbdo._contentLength = -1;
@@ -4393,15 +4389,22 @@ bool FirebaseESP32::handleResponse(FirebaseData &fbdo)
 
       if (chunkBufSize > 0)
       {
-        if (pChunkIdx == 0)
+        if (!fbdo._isFCM)
         {
-          if (chunkBufSize > defaultChunkSize + strlen_P(fb_esp_pgm_str_93))
-            chunkBufSize = defaultChunkSize + strlen_P(fb_esp_pgm_str_93); //plus file header length for later base64 decoding
+          if (pChunkIdx == 0)
+          {
+            if (chunkBufSize > defaultChunkSize + strlen_P(fb_esp_pgm_str_93))
+              chunkBufSize = defaultChunkSize + strlen_P(fb_esp_pgm_str_93); //plus file header length for later base64 decoding
+          }
+          else
+          {
+            if (chunkBufSize > defaultChunkSize)
+              chunkBufSize = defaultChunkSize;
+          }
         }
         else
         {
-          if (chunkBufSize > defaultChunkSize)
-            chunkBufSize = defaultChunkSize;
+          chunkBufSize = defaultChunkSize;
         }
 
         if (chunkIdx == 0)

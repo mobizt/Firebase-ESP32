@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.11
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.12
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -155,7 +155,7 @@ See [Function description](/src/README.md) for all available functions.
 #include <WiFi.h>
 
 //Include Firebase ESP32 library (this library)
-#include "FirebaseESP32.h"
+#include <FirebaseESP32.h>
 
 //Define the Firebase Data object
 FirebaseData fbdo;
