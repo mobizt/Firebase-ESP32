@@ -2,10 +2,10 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload with STARTTLS support
  * 
- * v 1.0.4
+ * v 1.0.5
  * 
  * The MIT License (MIT)
- * Copyright (c) 2019 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * HTTPClient Arduino library for ESP32
  *
@@ -120,10 +120,10 @@
 #define FIREBASE_ERROR_HTTP_CODE_LOOP_DETECTED 508
 #define FIREBASE_ERROR_HTTP_CODE_NETWORK_AUTHENTICATION_REQUIRED 511
 
-class TransportTraits
+class FB_ESP32_TransportTraits
 {
 public:
-  virtual ~TransportTraits() {}
+  virtual ~FB_ESP32_TransportTraits() {}
 
   virtual std::unique_ptr<WiFiClient> create()
   {
@@ -137,7 +137,7 @@ public:
   }
 };
 
-class TLSTraits : public TransportTraits
+class TLSTraits : public FB_ESP32_TransportTraits
 {
 public:
   TLSTraits(const char *CAcert, const char *clicert = nullptr, const char *clikey = nullptr) : _cacert(CAcert), _clicert(clicert), _clikey(clikey) {}
@@ -162,7 +162,7 @@ protected:
   const char *_clikey;
 };
 
-typedef std::unique_ptr<TransportTraits> TransportTraitsPtr;
+typedef std::unique_ptr<FB_ESP32_TransportTraits> FB_ESP32_TransportTraitsPtr;
 
 class FB_HTTPClient32
 {
@@ -224,7 +224,7 @@ public:
   uint8_t _caCertFileStoreageType = 0;
 
 protected:
-  TransportTraitsPtr transportTraits;
+  FB_ESP32_TransportTraitsPtr transportTraits;
   std::unique_ptr<WiFiClient> _wcs;
   std::unique_ptr<char> _cacert;
 

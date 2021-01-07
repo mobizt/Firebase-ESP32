@@ -2,10 +2,10 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload with STARTTLS support
  * 
- * v 1.0.4
+ * v 1.0.5
  * 
  * The MIT License (MIT)
- * Copyright (c) 2019 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * HTTPClient Arduino library for ESP32
  *
@@ -39,7 +39,7 @@
 
 FB_HTTPClient32::FB_HTTPClient32()
 {
-    transportTraits = TransportTraitsPtr(new TLSTraits(nullptr));
+    transportTraits = FB_ESP32_TransportTraitsPtr(new TLSTraits(nullptr));
     _wcs = transportTraits->create();
 }
 
@@ -137,7 +137,7 @@ void FB_HTTPClient32::setCACert(const char *caCert)
     if (caCert)
     {
         transportTraits.reset(nullptr);
-        transportTraits = TransportTraitsPtr(new TLSTraits(caCert));
+        transportTraits = FB_ESP32_TransportTraitsPtr(new TLSTraits(caCert));
         _certType = 1;
     }
     else
@@ -184,7 +184,7 @@ void FB_HTTPClient32::setCertFile(std::string &caCertFile, uint8_t storageType)
             f.close();
 
             transportTraits.reset(nullptr);
-            transportTraits = TransportTraitsPtr(new TLSTraits(_cacert.get()));
+            transportTraits = FB_ESP32_TransportTraitsPtr(new TLSTraits(_cacert.get()));
         }
     }
 }
