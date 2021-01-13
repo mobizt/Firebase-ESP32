@@ -16,6 +16,16 @@ This library supports ESP32 MCU from Espressif. The following are platforms in w
 * [Arduino WiFi Shield 101 and Arduino MKR1000 WIFI](https://github.com/mobizt/Firebase-Arduino-WiFi101)
 
 
+
+## New library for ESP8266 and ESP32 is available
+
+The unified version for ESP8266 and ESP32 with Cloud Storage and new Cloud Messaging supported is now available.
+
+Please try it here https://github.com/mobizt/Firebase-ESP-Client
+
+
+
+
 ## Tested Devices
 
  * Sparkfun ESP32 Thing
