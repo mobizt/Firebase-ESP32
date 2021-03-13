@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.13
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.2
 
 
 ## Global functions
@@ -76,6 +76,8 @@ param **`caCert`** Root CA certificate base64 string (PEM file).
 param **`caCertFile`** Root CA certificate DER file (binary).
 
 param **`StorageType`** Type of storage, StorageType::SD and StorageType::FLASH.
+
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```C++
 void begin(const String &host, const String &auth);
@@ -772,6 +774,8 @@ return **`Boolean`** type status indicates the success of the operation.
 
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
+
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```C++
 bool pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
@@ -1528,6 +1532,8 @@ return **`Boolean`** type status indicates the success of the operation.
 
 No payload returned from the server.
 
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
+
 ```C++
 bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 
@@ -1569,6 +1575,8 @@ No payload returned from the server.
 
 If ETag at the defined database path does not match the provided ETag parameter,
 the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
+
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```C++
 bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
@@ -2282,6 +2290,8 @@ param **`fileName`** File name included its path in SD card/Flash memory.
 
 return **`Boolean`** type status indicates the success of the operation.
 
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
+
 ```C++
 bool getFile(FirebaseData &fbdo, uint8_t storageType, const String &nodePath, const String &fileName);
 ```
@@ -2523,6 +2533,7 @@ Only 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension) can be s
 
 return **`Boolean`** type status indicates the success of the operation.
 
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```C++
 bool backup(FirebaseData &fbdo, uint8_t storageType, const String &nodePath, const String &fileName);
@@ -2543,6 +2554,8 @@ param **`nodePath`** Database path to be restored.
 param **`fileName`** File name to read.
 
 return **`Boolean`** type status indicates the success of the operation.
+
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```C++
 bool restore(FirebaseData &fbdo, uint8_t storageType const String &nodePath, const String &fileName);
@@ -2584,7 +2597,7 @@ void setMaxErrorQueue(FirebaseData &fbdo, uint8_t num);
 
 
    
-#### Save Firebase Error Queues as SPIFFS file (save only database store queues)
+#### Save Firebase Error Queues as FLASH file (save only database store queues)
 
 Firebase read (get) operation will not be saved.
 
@@ -2593,6 +2606,8 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 param **`filename`** File name to be saved.
 
 param **`storageType`** Type of storage to save file, StorageType::FLASH or StorageType::SD.
+
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
     
 ```C++
 bool saveErrorQueue(FirebaseData &fbdo, const String &filename, uint8_t storageType);
@@ -2603,11 +2618,13 @@ bool saveErrorQueue(FirebaseData &fbdo, const String &filename, uint8_t storageT
 
 
 
-#### Delete file in Flash (SPIFFS) or SD card
+#### Delete file in Flash (FLASH) or SD card
 
 param **`filename`** File name to delete.
 
 param **`storageType`** Type of storage to save file, StorageType::FLASH or StorageType::SD.
+
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
     
 ```C++
 bool deleteStorageFile(const String &filename, uint8_t storageType);
@@ -2617,13 +2634,15 @@ bool deleteStorageFile(const String &filename, uint8_t storageType);
 
 
    
-#### Restore Firebase Error Queues from SPIFFS file
+#### Restore Firebase Error Queues from FLASH file
 
 param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`filename`** Filename to be read and restore queues.
 
 param **`storageType`** Type of storage to read file, StorageType::FLASH or StorageType::SD.
+
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
     
 ```C++
 bool restoreErrorQueue(FirebaseData &fbdo, const String &filename, uint8_t storageType);
@@ -2633,7 +2652,7 @@ bool restoreErrorQueue(FirebaseData &fbdo, const String &filename, uint8_t stora
 
 
 
-#### Determine the number of Firebase Error Queues stored in defined SPIFFS file
+#### Determine the number of Firebase Error Queues stored in defined FLASH file
 
 param **`fbdo`** Firebase Data Object to hold data and instances.
 
@@ -2641,8 +2660,9 @@ param **`filename`** Filename to be read and count for queues.
 
 param **`storageType`** Type of storage to read file, StorageType::FLASH or StorageType::SD.
 
+return **`Number`** (0-255) of queues store in defined FLASH file.
 
-return **`Number`** (0-255) of queues store in defined SPIFFS file.
+The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```C++
 uint8_t errorQueueCount(FirebaseData &fbdo, const String &filename, uint8_t storageType);
@@ -2832,7 +2852,9 @@ bool sendTopic(FirebaseData &fbdo);
 
 
 
-#### Init SD card with GPIO pins
+#### SD card config with GPIO pins
+
+param **`ss`** SPI Chip/Slave Select pin.
 
 param **`sck`** SPI Clock pin.
 
@@ -2840,28 +2862,13 @@ param **`miso`** SPI MISO pin.
 
 param **`mosi`** SPI MOSI pin.
 
-param **`ss`** SPI Chip/Slave Select pin.
-
 return **`Boolean`** type status indicates the success of the operation.
 
 
 ```C++
-void sdBegin(uint8_t sck, uint8_t miso, uint8_t mosi, uint8_t ss);
+void sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 ```
 
-
-
-
-
-
-#### Init SD card with default GPIO pins
-
-return **`Boolean`** type status indicates the success of the operation.
-
-
-```C++
-void sdBegin(void);
-```
 
 
 

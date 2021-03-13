@@ -12,6 +12,12 @@
 
 /** This example will show how to authenticate as admin using 
  * the Service Account file to create the access token to sign in internally.
+ * 
+ * The library will connect to NTP server to get the time (in case your device time was not set) 
+ * and waiting for the time to be ready.
+ * 
+ * If the waiting is timed out and the system time is not ready, the custom and OAuth2.0 acces tokens generation will fail 
+ * because of invalid expiration time in JWT token that used in the id/access token request.
 */
 
 #include <WiFi.h>
@@ -32,6 +38,9 @@ FirebaseAuth auth;
 
 /* 5. Define the FirebaseConfig data for config data */
 FirebaseConfig config;
+
+/* The calback function to print the token generation status */
+void tokenStatusCallback(TokenInfo info);
 
 /* The function to print the operating results */
 void printResult(FirebaseData &data);
@@ -67,20 +76,26 @@ void setup()
     Serial.println();
 
     /* Assign the certificate file (optional) */
-    config.cert.file = "/cert.cer";
-    config.cert.file_storage = StorageType::FLASH;
+    config.cert.file = "/gsr2.pem";
+    config.cert.file_storage = StorageType::FLASH; //Don't assign number, use struct instead
 
     /* Assign the project host (required) */
     config.host = FIREBASE_HOST;
 
     /* Assign the sevice account JSON file and the file storage type (required) */
     config.service_account.json.path = "/service_account_file.json"; //change this for your json file
-    config.service_account.json.storage_type = StorageType::FLASH;
+    config.service_account.json.storage_type = StorageType::FLASH;   //Don't assign number, use struct instead
 
     /** The user UID set to empty to sign in as admin */
     auth.token.uid = "";
 
     Firebase.reconnectWiFi(true);
+
+    /** Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback;
+
+    /** Assign the maximum retry of token generation */
+    config.max_token_generation_retry = 5;
 
     /* Now we start to signin using access token */
 
@@ -105,39 +120,53 @@ void loop()
         dataMillis = millis();
 
         /* Get the token status */
-        struct token_info_t info = Firebase.authTokenInfo();
-        Serial.println("------------------------------------");
-        if (info.status == token_status_error)
+        TokenInfo info = Firebase.authTokenInfo();
+        if (info.status == token_status_ready)
         {
-            Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
-            Serial.printf("Token error: %s\n\n", getTokenError(info).c_str());
-        }
-        else
-        {
-            Serial.printf("Token info: type = %s, status = %s\n\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
-        }
-
-        Serial.println("------------------------------------");
-        Serial.println("Set int test...");
-
-        if (Firebase.set(fbdo, path + "/int", count++))
-        {
-            Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo.dataPath());
-            Serial.println("TYPE: " + fbdo.dataType());
-            Serial.println("ETag: " + fbdo.ETag());
-            Serial.print("VALUE: ");
-            printResult(fbdo);
             Serial.println("------------------------------------");
-            Serial.println();
+            Serial.println("Set int test...");
+
+            if (Firebase.set(fbdo, path + "/int", count++))
+            {
+                Serial.println("PASSED");
+                Serial.println("PATH: " + fbdo.dataPath());
+                Serial.println("TYPE: " + fbdo.dataType());
+                Serial.println("ETag: " + fbdo.ETag());
+                Serial.print("VALUE: ");
+                printResult(fbdo);
+                Serial.println("------------------------------------");
+                Serial.println();
+            }
+            else
+            {
+                Serial.println("FAILED");
+                Serial.println("REASON: " + fbdo.errorReason());
+                Serial.println("------------------------------------");
+                Serial.println();
+            }
         }
-        else
-        {
-            Serial.println("FAILED");
-            Serial.println("REASON: " + fbdo.errorReason());
-            Serial.println("------------------------------------");
-            Serial.println();
-        }
+    }
+}
+
+void tokenStatusCallback(TokenInfo info)
+{
+    /** fb_esp_auth_token_status enum
+     * token_status_uninitialized,
+     * token_status_on_initialize,
+     * token_status_on_signing,
+     * token_status_on_request,
+     * token_status_on_refresh,
+     * token_status_ready,
+     * token_status_error
+    */
+    if (info.status == token_status_error)
+    {
+        Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
+        Serial.printf("Token error: %s\n", getTokenError(info).c_str());
+    }
+    else
+    {
+        Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
     }
 }
 
@@ -304,6 +333,9 @@ String getTokenStatus(struct token_info_t info)
     {
     case token_status_uninitialized:
         return "uninitialized";
+
+    case token_status_on_initialize:
+        return "on initializing";
 
     case token_status_on_signing:
         return "on signing";

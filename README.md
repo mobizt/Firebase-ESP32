@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.13
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.2
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -19,7 +19,7 @@ This library supports ESP32 MCU from Espressif. The following are platforms in w
 
 ## New library for ESP8266 and ESP32 is available
 
-The unified version for ESP8266 and ESP32 with Cloud Storage and new Cloud Messaging supported is now available.
+The Firebase Client for ESP8266 and ESP32 supports Cloud Firestore, Firebase Storage, Google Cloud Storage and new API Cloud Messaging and Cloud Functions for Firebase is now available.
 
 Please try it here https://github.com/mobizt/Firebase-ESP-Client
 
@@ -28,10 +28,11 @@ Please try it here https://github.com/mobizt/Firebase-ESP-Client
 
 ## Tested Devices
 
- * Sparkfun ESP32 Thing
  * NodeMCU-32
  * WEMOS LOLIN32
  * TTGO T8 V1.8
+ 
+ Most ESP32 boards are supported unless Sparkfun ESP32 Thing ([old version](https://www.sparkfun.com/products/13907)) is not recommended due to it built with non-standard 26 MHz clock on board instead of 40 MHz which causes the bugs and unstable network connection.
 
 ## Unsupported Mobile network modem bridge
 
@@ -318,10 +319,10 @@ The following example showed how to store file data to Flash memory at "/test/fi
 
 ```C++
 
-if (Firebase.getFile(fbdo, StorateType::SPIFFS, "/test/file_data", "/test.txt"))
+if (Firebase.getFile(fbdo, StorateType::FLASH, "/test/file_data", "/test.txt"))
 {
-  //SPIFFS.begin(); //not need to begin again due to it has been called in function.
-  File file = SPIFFS.open("/test.txt", "r");
+  //FLASH.begin(); //not need to begin again due to it has been called in function.
+  File file = FLASH.open("/test.txt", "r");
 
   while (file.available())
   {     
@@ -698,7 +699,7 @@ if (fbdo.streamAvailable())
 
 This library allows you to backup and restores the database at the defined path.
 
-The backup file will store in SD card or Flash memory (SPIFFS).
+The backup file will store in SD card or Flash memory (FLASH).
 
 Due to SD library used, only 8.3 DOS format file name supported.
 
@@ -871,7 +872,7 @@ Error Queues can be saved as a file in SD card or Flash memory with function `sa
 
 Error Queues store as a file can be restored to Error Queue collection with function `restoreErrorQueue`.
 
-Two types of storage can be assigned with these functions, `StorageType::SPIFFS` and `StorageType::SD`.
+Two types of storage can be assigned with these functions, `StorageType::FLASH` and `StorageType::SD`.
 
 Read data (get) operation is not support queues restore
 
@@ -880,14 +881,14 @@ The following example showed how to restore and save Error Queues in /test.txt f
 ```C++
 //To restore Error Queues
 
-if (Firebase.errorQueueCount(fbdo, "/test.txt", StorageType::SPIFFS) > 0)
+if (Firebase.errorQueueCount(fbdo, "/test.txt", StorageType::FLASH) > 0)
 {
-    Firebase.restoreErrorQueue(fbdo, "/test.txt", StorageType::SPIFFS);
-    Firebase.deleteStorageFile("/test.txt", StorageType::SPIFFS);
+    Firebase.restoreErrorQueue(fbdo, "/test.txt", StorageType::FLASH);
+    Firebase.deleteStorageFile("/test.txt", StorageType::FLASH);
 }
 
 //To save Error Queues to file
-Firebase.saveErrorQueue(fbdo, "/test.txt", StorageType::SPIFFS);
+Firebase.saveErrorQueue(fbdo, "/test.txt", StorageType::FLASH);
 
 ```
 
