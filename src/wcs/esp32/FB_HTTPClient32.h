@@ -2,7 +2,7 @@
  * Customized version of ESP32 HTTPClient Library. 
  * Allow custom header and payload
  * 
- * v 1.0.7
+ * v 1.0.8
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -46,6 +46,10 @@
 #error WiFi UART bridge was not supported.
 #endif
 
+#if __has_include(<esp_idf_version.h>)
+#include <esp_idf_version.h>
+#endif
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #define FLASH_FS DEFAULT_FLASH_FS
@@ -58,10 +62,10 @@ static const char esp_idf_branch_str[] PROGMEM = "release/v";
 
 struct fb_esp_sd_config_info_t
 {
-  int8_t sck = -1;
-  int8_t miso = -1;
-  int8_t mosi = -1;
-  int8_t ss = -1;
+  int sck = -1;
+  int miso = -1;
+  int mosi = -1;
+  int ss = -1;
 };
 
 class FB_HTTPClient32

@@ -1,18 +1,18 @@
 /**
- * Customized version of ESP32 HTTPClient Library. 
+ * Customized version of ESP32 HTTPClient Library.
  * Allow custom header and payload
- * 
- * v 1.0.7
- * 
+ *
+ * v 1.0.8
+ *
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
- * 
+ *
  * HTTPClient Arduino library for ESP32
  *
  * Copyright (c) 2015 Markus Sattler. All rights reserved.
  * This file is part of the HTTPClient for Arduino.
- * Port to ESP32 by Evandro Luis Copercini (2017), 
- * changed fingerprints to CA verification. 	
+ * Port to ESP32 by Evandro Luis Copercini (2017),
+ * changed fingerprints to CA verification.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -37,9 +37,7 @@
 
 #include "FB_HTTPClient32.h"
 
-FB_HTTPClient32::FB_HTTPClient32()
-{
-}
+FB_HTTPClient32::FB_HTTPClient32() {}
 
 FB_HTTPClient32::~FB_HTTPClient32()
 {
@@ -132,19 +130,10 @@ bool FB_HTTPClient32::connect(void)
 
 void FB_HTTPClient32::setInsecure()
 {
-#ifdef CONFIG_ARDUINO_IDF_BRANCH
-    size_t len = strlen_P(esp_idf_branch_str);
-    char *tmp = new char[len + 1];
-    memset(tmp, 0, len + 1);
-    std::string s = CONFIG_ARDUINO_IDF_BRANCH;
-    size_t p1 = s.find(tmp, 0);
-    if (p1 != std::string::npos)
-    {
-        float v = atof(s.substr(p1 + len, s.length() - p1 - len).c_str());
-        if (v >= 3.3f)
-            _wcs->setInsecure();
-    }
-    delete[] tmp;
+#if __has_include(<esp_idf_version.h>)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(3, 3, 0)
+    _wcs->setInsecure();
+#endif
 #endif
 }
 
@@ -175,7 +164,6 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
                 FLASH_FS.begin(true);
             else
                 FLASH_FS.begin();
-                
             if (FLASH_FS.exists(caCertFile))
                 f = FLASH_FS.open(caCertFile, FILE_READ);
         }
@@ -184,11 +172,11 @@ void FB_HTTPClient32::setCACertFile(const char *caCertFile, uint8_t storageType,
             if (sd_config.ss > -1)
             {
                 SPI.begin(sd_config.sck, sd_config.miso, sd_config.mosi, sd_config.ss);
-               SD_FS.begin(sd_config.ss, SPI);
+                SD_FS.begin(sd_config.ss, SPI);
             }
             else
                 SD_FS.begin();
-                
+
             if (SD_FS.exists(caCertFile))
                 f = SD_FS.open(caCertFile, FILE_READ);
         }
