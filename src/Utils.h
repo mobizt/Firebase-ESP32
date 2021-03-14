@@ -1410,7 +1410,7 @@ public:
     bool flashTest()
     {
 #if defined(ESP32)
-        if (FORMAT_SPIFFS == 1)
+        if (FORMAT_FLASH == 1)
             config->_int.fb_flash_rdy = FLASH_FS.begin(true);
         else
             config->_int.fb_flash_rdy = FLASH_FS.begin();
