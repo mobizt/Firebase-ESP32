@@ -119,7 +119,7 @@ void setup()
     if (!Firebase.beginStream(firebaseData1, path + "/control"))
         Serial.println(firebaseData1.errorReason());
 
-    Firebase.setStreamCallback(firebaseData1, streamCallback, streamTimeoutCallback);
+    Firebase.setStreamCallback(firebaseData1, streamCallback, streamTimeoutCallback, 8192);
 
     Firebase.set(firebaseData2, path + "/control/cmd", "idle");
 
