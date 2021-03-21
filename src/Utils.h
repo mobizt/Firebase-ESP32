@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.6
+ * Google's Firebase Util class, Utils.h version 1.0.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 11, 2021
+ * Created March 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -39,11 +39,11 @@
 class UtilsClass
 {
     friend class FirebaseSession;
-    friend class FirebaseESP32;
+    friend class Firebase_ESP_Client;
 
 public:
     long default_ts = ESP_DEFAULT_TS;
-    uint16_t ntpTimeout = 3000;
+    uint16_t ntpTimeout = 20;
     callback_function_t _callback_function = nullptr;
     FirebaseConfig *config = nullptr;
 
@@ -1264,7 +1264,7 @@ public:
                 now = time(nullptr);
                 if (now > default_ts || millis() - timeout > ntpTimeout)
                     break;
-                delay(200);
+                delay(10);
             }
 
             delS(server1);
@@ -1274,6 +1274,7 @@ public:
         config->_int.fb_clock_rdy = now > default_ts;
         if (config->_int.fb_clock_rdy)
             config->_int.fb_gmt_offset = gmtOffset;
+
         return config->_int.fb_clock_rdy;
     }
 
@@ -1552,6 +1553,23 @@ public:
             str.replace(start_pos, from.length(), to);
             start_pos += to.length(); // In case 'to' contains 'from', like replacing 'x' with 'yx'
         }
+    }
+
+    bool validJS(const char *c)
+    {
+        size_t ob = 0, cb = 0, os = 0, cs = 0;
+        for (size_t i = 0; i < strlen(c); i++)
+        {
+            if (c[i] == '{')
+                ob++;
+            else if (c[i] == '}')
+                cb++;
+            else if (c[i] == '[')
+                os++;
+            else if (c[i] == ']')
+                cs++;
+        }
+        return (ob == cb && os == cs);
     }
 
 private:

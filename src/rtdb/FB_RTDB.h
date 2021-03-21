@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.3
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.5
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created February 21, 2021
+ * Created March 21, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -1270,7 +1270,7 @@ public:
   /** Set the stream callback functions.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param dataAvailableCallback The Callback function that accepts FirebaseStream parameter.
+   * @param dataAvailableCallback The Callback function that accepts StreamData parameter.
    * @param timeoutCallback The Callback function will be called when the stream connection was timed out (optional).
    * 
    * ESP32 only parameter
@@ -1281,9 +1281,9 @@ public:
    * 
    * The payload returned from the server will be one of these integer, float, string, JSON and blob types.
    * 
-   * Call [FirebaseStream object].dataType to determine what type of data successfully stores in the database. 
+   * Call [StreamData object].dataType to determine what type of data successfully stores in the database. 
    * 
-   * Call [FirebaseStream object].xxxData will return the appropriate data type of 
+   * Call [StreamData object].xxxData will return the appropriate data type of 
    * the payload returned from the server.
   */
 #if defined(ESP32)
@@ -1295,7 +1295,7 @@ public:
    * setMultiPathStreamCallback should be called before Firebase.beginMultiPathStream.
    * 
    * @param fbdo The pointer to Firebase Data Object.
-   * @param multiPathDataCallback The Callback function that accepts MultiPathStream parameter.
+   * @param multiPathDataCallback The Callback function that accepts MultiPathStreamData parameter.
    * @param timeoutCallback The Callback function will be called when the stream connection was timed out (optional).
    * 
    * ESP32 only parameter
@@ -1306,11 +1306,11 @@ public:
    * 
    * The payload returned from the server will be one of these types e.g. boolean, integer, float, string, JSON, array, blob and file.
    * 
-   * Call [MultiPathStream object].get to get the child node value, type and its data path. 
+   * Call [MultiPathStreamData object].get to get the child node value, type and its data path. 
    * 
-   * The properties [MultiPathStream object].value, [MultiPathStream object].dataPath, and [MultiPathStream object].type will return the value, path of data, and type of data respectively.
+   * The properties [MultiPathStreamData object].value, [MultiPathStreamData object].dataPath, and [MultiPathStreamData object].type will return the value, path of data, and type of data respectively.
    * 
-   * These properties will store the result from calling the function [MultiPathStream object].get.
+   * These properties will store the result from calling the function [MultiPathStreamData object].get.
   */
 #if defined(ESP32)
   void setMultiPathStreamCallback(FirebaseData *fbdo, FirebaseData::MultiPathStreamEventCallback multiPathDataCallback, FirebaseData::StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
@@ -1529,7 +1529,7 @@ private:
   void prepareHeader(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req, int payloadLength, std::string &header, bool sv);
   bool waitResponse(FirebaseData *fbdo);
   bool handleResponse(FirebaseData *fbdo);
-  void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, char *payload);
+  void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const char *payload);
   bool processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   bool processRequestFile(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   bool pushInt(FirebaseData *fbdo, const char *path, int intValue, bool queue, const char *priority);
@@ -1553,10 +1553,13 @@ private:
   bool handleStreamRequest(FirebaseData *fbdo, const std::string &path);
   bool connectionError(FirebaseData *fbdo);
   bool handleStreamRead(FirebaseData *fbdo);
+  void sendCB(FirebaseData *fbdo);
+  void splitStreamPayload(const char *payloads, std::vector<std::string> &payload);
+  void parseStreamPayload(FirebaseData *fbdo, const char *payload);
 #if defined(ESP32)
-  void runStreamTask(FirebaseData *fbdo, const char *taskName);
+      void runStreamTask(FirebaseData *fbdo, const char *taskName);
 #elif defined(ESP8266)
-  void runStreamTask();
+      void runStreamTask();
   void runErrorQueueTask();
 #endif
   uint8_t openErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType, uint8_t mode);
