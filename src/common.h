@@ -1,6 +1,6 @@
 
 /**
- * Created February 17, 2021
+ * Created March 23, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -465,7 +465,8 @@ struct fb_esp_token_signer_resources_t
     bool signup = false;
     bool tokenTaskRunning = false;
     unsigned long lastReqMillis = 0;
-    unsigned long preRefreshMillis = 5 * 60 * 1000;
+    unsigned long preRefreshSeconds = 60;
+    unsigned long expiredSeconds = 3600;
     unsigned long reqTO = 2000;
     std::string pk;
     size_t hashSize = 32; //SHA256 size (256 bits or 32 bytes)
