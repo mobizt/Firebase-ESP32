@@ -1,9 +1,9 @@
 /*
- * FirebaseJson, version 2.3.10
+ * FirebaseJson, version 2.3.11
  * 
- * The Easiest ESP8266/ESP32 Arduino library for parse, create and edit JSON object using a relative path.
+ * The Easiest Arduino library to parse, create and edit JSON object using a relative path.
  * 
- * December 24, 2020
+ * March 25, 2021
  * 
  * Features
  * - None recursive operations
@@ -14,7 +14,7 @@
  * The zserge's JSON object parser library used as part of this library
  * 
  * The MIT License (MIT)
- * Copyright (c) 2019 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * Copyright (c) 2012–2018, Serge Zaitsev, zaitsev.serge@gmail.com
  * 
  * 
@@ -42,6 +42,22 @@
 #include <Arduino.h>
 #include <memory>
 #include <vector>
+#include <string>
+#include <stdio.h>
+#include <strings.h>
+#include <functional>
+
+#if defined __has_include
+#if __has_include(<avr/pgmspace.h>)
+#include <avr/pgmspace.h>
+#endif
+#endif
+
+#if defined(__arm__)
+#include <avr/dtostrf.h>
+#elif defined(__AVR__)
+#else
+#endif
 
 static const char FirebaseJson_STR_1[] PROGMEM = ",";
 static const char FirebaseJson_STR_2[] PROGMEM = "\"";
@@ -73,13 +89,138 @@ static const char FirebaseJson_STR_27[] PROGMEM = "/";
 class FirebaseJson;
 class FirebaseJsonArray;
 
+class FirebaseJsonHelper
+{
+public:
+    FirebaseJsonHelper(){};
+    ~FirebaseJsonHelper(){};
+
+    /** dtostrf function is taken from 
+     * https://github.com/stm32duino/Arduino_Core_STM32/blob/master/cores/arduino/avr/dtostrf.c
+    */
+
+    /**
+     * dtostrf - Emulation for dtostrf function from avr-libc
+     * Copyright (c) 2013 Arduino.  All rights reserved.
+     * Written by Cristian Maglie <c.maglie@arduino.cc>
+     * This library is free software; you can redistribute it and/or
+     * modify it under the terms of the GNU Lesser General Public
+     * License as published by the Free Software Foundation; either
+     * version 2.1 of the License, or (at your option) any later version.
+     * This library is distributed in the hope that it will be useful,
+     * but WITHOUT ANY WARRANTY; without even the implied warranty of
+     * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+     * Lesser General Public License for more details.
+     * You should have received a copy of the GNU Lesser General Public
+     * License along with this library; if not, write to the Free Software
+     * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    */
+
+    char *dtostrf(double val, signed char width, unsigned char prec, char *sout)
+    {
+        //Commented code is the original version
+        /**
+          char fmt[20];
+          sprintf(fmt, "%%%d.%df", width, prec);
+          sprintf(sout, fmt, val);
+          return sout;
+        */
+
+        // Handle negative numbers
+        uint8_t negative = 0;
+        if (val < 0.0)
+        {
+            negative = 1;
+            val = -val;
+        }
+
+        // Round correctly so that print(1.999, 2) prints as "2.00"
+        double rounding = 0.5;
+        for (int i = 0; i < prec; ++i)
+        {
+            rounding /= 10.0;
+        }
+
+        val += rounding;
+
+        // Extract the integer part of the number
+        unsigned long int_part = (unsigned long)val;
+        double remainder = val - (double)int_part;
+
+        if (prec > 0)
+        {
+            // Extract digits from the remainder
+            unsigned long dec_part = 0;
+            double decade = 1.0;
+            for (int i = 0; i < prec; i++)
+            {
+                decade *= 10.0;
+            }
+            remainder *= decade;
+            dec_part = (int)remainder;
+
+            if (negative)
+            {
+                sprintf(sout, "-%ld.%0*ld", int_part, prec, dec_part);
+            }
+            else
+            {
+                sprintf(sout, "%ld.%0*ld", int_part, prec, dec_part);
+            }
+        }
+        else
+        {
+            if (negative)
+            {
+                sprintf(sout, "-%ld", int_part);
+            }
+            else
+            {
+                sprintf(sout, "%ld", int_part);
+            }
+        }
+        // Handle minimum field width of the output string
+        // width is signed value, negative for left adjustment.
+        // Range -128,127
+        char fmt[129] = "";
+        unsigned int w = width;
+        if (width < 0)
+        {
+            negative = 1;
+            w = -width;
+        }
+        else
+        {
+            negative = 0;
+        }
+
+        if (strlen(sout) < w)
+        {
+            memset(fmt, ' ', 128);
+            fmt[w - strlen(sout)] = '\0';
+            if (negative == 0)
+            {
+                char *tmp = (char *)malloc(strlen(sout) + 1);
+                strcpy(tmp, sout);
+                strcpy(sout, fmt);
+                strcat(sout, tmp);
+                free(tmp);
+            }
+            else
+            {
+                // left adjustment
+                strcat(sout, fmt);
+            }
+        }
+
+        return sout;
+    }
+};
+
 class FirebaseJsonData
 {
     friend class FirebaseJson;
     friend class FirebaseJsonArray;
-    friend class FCMObject;
-    friend class StreamData;
-    friend class FirebaseData;
 
 public:
     FirebaseJsonData();
@@ -164,20 +305,10 @@ class FirebaseJson
 {
     friend class FirebaseJsonArray;
     friend class FirebaseJsonData;
-    friend class Firebase_ESP_Client;
-    friend class Firebase_Signer;
-    friend class FirebaseData;
-    friend class StreamData;
-    friend class FB_RTDB;
-    friend class FB_CM;
-    friend class FB_Firestore;
-    friend class FB_Functions;
-    friend class PolicyBuilder;
-    friend class PolicyInfo;
-    friend class GG_CloudStorage;
 
 public:
-    typedef enum {
+    typedef enum
+    {
         JSON_UNDEFINED = 0,
         JSON_OBJECT = 1,
         JSON_ARRAY = 2,
@@ -189,7 +320,8 @@ public:
         JSON_NULL = 8
     } jsonDataType;
 
-    typedef enum {
+    typedef enum
+    {
         PRINT_MODE_NONE = -1,
         PRINT_MODE_PLAIN = 0,
         PRINT_MODE_PRETTY = 1
@@ -246,7 +378,8 @@ public:
     * 	o String
     * 	o Other primitive: number, boolean (true/false) or null
     */
-    typedef enum {
+    typedef enum
+    {
         JSMN_UNDEFINED = 0,
         JSMN_OBJECT = 1,
         JSMN_ARRAY = 2,
@@ -637,7 +770,15 @@ public:
     template <typename T>
     bool set(const String &path, T value);
 
+    void int_parse(const char *path, PRINT_MODE printMode);
+    void int_clearPathTk();
+    void int_clearTokens();
+    size_t int_get_jsondata_len();
+    void int_tostr(std::string &s, bool prettify = false);
+    void int_toStdString(std::string &s, bool isJson = true);
+
 private:
+    FirebaseJsonHelper helper;
     int _nextToken = 0;
     int _refToken = -1;
     int _nextDepth = 0;
@@ -723,28 +864,27 @@ private:
     void _compile(const char *key, int depth, int index, const char *replace, PRINT_MODE printMode, int refTokenIndex = -1, bool removeTk = false);
     void _remove(const char *key, int depth, int index, const char *replace, int refTokenIndex = -1, bool removeTk = false);
     void _fbjs_parse(bool collectTk = false);
-    bool _updateTkIndex(uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode, bool advanceCount);
-    bool _updateTkIndex2(std::string &str, uint16_t index, int &depth, char *searchKey, int searchIndex, char *replace, PRINT_MODE printMode);
-    bool _updateTkIndex3(uint16_t index, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode);
+    bool _updateTkIndex(uint16_t index, int &depth, const char *searchKey, int searchIndex, const char *replace, PRINT_MODE printMode, bool advanceCount);
+    bool _updateTkIndex2(std::string &str, uint16_t index, int &depth, const char *searchKey, int searchIndex, const char *replace, PRINT_MODE printMode);
+    bool _updateTkIndex3(uint16_t index, int &depth, const char *searchKey, int searchIndex, PRINT_MODE printMode);
     void _getTkIndex(int depth, tk_index_t &tk);
     void _setMark(int depth, bool mark);
     void _setSkip(int depth, bool skip);
     void _setRef(int depth, bool ref);
-    void _insertChilds(char *data, PRINT_MODE printMode);
-    void _addObjNodes(std::string &str, std::string &str2, int index, char *data, PRINT_MODE printMode);
-    void _addArrNodes(std::string &str, std::string &str2, int index, char *data, PRINT_MODE printMode);
-    void _compileToken(uint16_t &i, char *buf, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex = -1, bool removeTk = false);
-    void _parseToken(uint16_t &i, char *buf, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode);
-    void _removeToken(uint16_t &i, char *buf, int &depth, char *searchKey, int searchIndex, PRINT_MODE printMode, char *replace, int refTokenIndex = -1, bool removeTk = false);
+    void _insertChilds(const char *data, PRINT_MODE printMode);
+    void _addObjNodes(std::string &str, std::string &str2, int index, const char *data, PRINT_MODE printMode);
+    void _addArrNodes(std::string &str, std::string &str2, int index, const char *data, PRINT_MODE printMode);
+    void _compileToken(uint16_t &i, char *buf, int &depth, const char *searchKey, int searchIndex, PRINT_MODE printMode, const char *replace, int refTokenIndex = -1, bool removeTk = false);
+    void _parseToken(uint16_t &i, char *buf, int &depth, const char *searchKey, int searchIndex, PRINT_MODE printMode);
+    void _removeToken(uint16_t &i, char *buf, int &depth, const char *searchKey, int searchIndex, PRINT_MODE printMode, const char *replace, int refTokenIndex = -1, bool removeTk = false);
     single_child_parent_t _findSCParent(int depth);
     bool _isArrTk(int index);
     bool _isStrTk(int index);
     int _getArrIndex(int index);
-    char *getFloatString(float value);
-    char *getDoubleString(double value);
-    char *getIntString(int value);
-    char *getBoolString(bool value);
-    char *getPGMString(PGM_P pgm);
+    char *floatStr(float value);
+    char *doubleStr(double value);
+    char *intStr(int value);
+    char *boolStr(bool value);
     void _trimDouble(char *buf);
     void _get(const char *key, int depth, int index = -1);
     void _ltrim(std::string &str, const std::string &chars = " ");
@@ -753,14 +893,14 @@ private:
     void _toStdString(std::string &s, bool isJson = true);
     void _tostr(std::string &s, bool prettify = false);
     void _strToTk(const std::string &str, std::vector<path_tk_t> &tk, char delim);
-    int _strpos(const char *haystack, const char *needle, int offset);
-    int _rstrpos(const char *haystack, const char *needle, int offset);
-    char *_rstrstr(const char *haystack, const char *needle);
-    void _delPtr(char *p);
-    char *_newPtr(size_t len);
-    char *_newPtr(char *p, size_t len);
-    char *_newPtr(char *p, size_t len, char *d);
-    char *_getPGMString(PGM_P pgm);
+    int strpos(const char *haystack, const char *needle, int offset);
+    int rstrpos(const char *haystack, const char *needle, int offset);
+    char *rstrstr(const char *haystack, const char *needle);
+    void delS(char *p);
+    char *newS(size_t len);
+    char *newS(char *p, size_t len);
+    char *newS(char *p, size_t len, char *d);
+    char *strP(PGM_P pgm);
 
     void fbjs_init(fbjs_parser *parser);
     int fbjs_parse(fbjs_parser *parser, const char *js, size_t len,
@@ -780,12 +920,6 @@ class FirebaseJsonArray
 
     friend class FirebaseJson;
     friend class FirebaseJsonData;
-    friend class FirebaseESP32;
-    friend class Firebase_Signer;
-    friend class FirebaseData;
-    friend class StreamData;
-    friend class FB_RTDB;
-    friend class FCMObject;
 
 public:
     FirebaseJsonArray();
@@ -1181,7 +1315,16 @@ public:
     template <typename T>
     FirebaseJsonArray &add(T value);
 
+    std::string *int_dbuf();
+    std::string *int_tbuf();
+    std::string *int_jbuf();
+    std::string *int_rawbuf();
+    FirebaseJson *int_json();
+    void int_set_arr_len(size_t len);
+    void int_toStdString(std::string &s);
+
 private:
+    FirebaseJsonHelper helper;
     std::string _jbuf = "";
     FirebaseJson _json;
     size_t _arrLen = 0;
@@ -1227,18 +1370,18 @@ private:
     bool _get(FirebaseJsonData &jsonData, const char *path);
     bool _remove(const char *path);
     void _trimDouble(char *buf);
-    char *getFloatString(float value);
-    char *getDoubleString(double value);
-    char *getIntString(int value);
-    char *getBoolString(bool value);
-    char *_getPGMString(PGM_P pgm);
-    int _strpos(const char *haystack, const char *needle, int offset);
-    int _rstrpos(const char *haystack, const char *needle, int offset);
-    char *_rstrstr(const char *haystack, const char *needle);
-    void _delPtr(char *p);
-    char *_newPtr(size_t len);
-    char *_newPtr(char *p, size_t len);
-    char *_newPtr(char *p, size_t len, char *d);
+    char *floatStr(float value);
+    char *doubleStr(double value);
+    char *intStr(int value);
+    char *boolStr(bool value);
+    char *strP(PGM_P pgm);
+    int strpos(const char *haystack, const char *needle, int offset);
+    int rstrpos(const char *haystack, const char *needle, int offset);
+    char *rstrstr(const char *haystack, const char *needle);
+    void delS(char *p);
+    char *newS(size_t len);
+    char *newS(char *p, size_t len);
+    char *newS(char *p, size_t len, char *d);
 };
 
 #endif
