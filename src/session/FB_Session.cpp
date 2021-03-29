@@ -1352,8 +1352,6 @@ bool FCMObject::fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType)
 
     fcm_preparePayload(msg, messageType);
     fcm_prepareHeader(header, msg.length());
-    Serial.println(header.c_str());
-    Serial.println(msg.c_str());
 
     int ret = fbdo.httpClient.send(header.c_str(), msg.c_str());
     std::string().swap(msg);
