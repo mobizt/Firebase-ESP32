@@ -6,23 +6,20 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2020 mobizt
+ * Copyright (c) 2021 mobizt
  *
 */
 
 /*
  * This shows how to pause the Firbase and send LINE Notify.
- * 1. Install HTTPClientESP32Ex library for use with Line Notify library from https://github.com/mobizt/HTTPClientESP32Ex
- * 2. Install Line Notify Arduino library for ESP32 https://github.com/mobizt/LINE-Notify-ESP32
+ * Install Line Notify Arduino library for ESP8266 and ESP32 https://github.com/mobizt/ESP-Line-Notify
  *
  * More about Line Notify service https://notify-bot.line.me/en/
  */
 
 #include <WiFi.h>
-#include <FS.h>
-#include <SPIFFS.h>
 #include <FirebaseESP32.h>
-#include <LineNotifyESP32.h>
+#include <ESP_Line_Notify.h>
 
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
@@ -33,12 +30,8 @@
  * see examples in the Authentications folder. 
 */
 #define FIREBASE_AUTH "DATABASE_SECRET"
-#define LINE_TOKEN "LINE_NOTIFY_TOKEN"
 
-//Define Firebase Data object
 FirebaseData fbdo;
-
-HTTPClientESP32Ex client;
 
 String path = "/Test";
 
@@ -47,6 +40,15 @@ unsigned long sendDataPrevMillis = 0;
 unsigned long sendMessagePrevMillis = 0;
 
 uint16_t count = 0;
+
+/* Define the LineNotifyClient object */
+LineNotiFyClient client;
+
+/* Function to print the sending result via Serial (optional) */
+void LineNotifyResult(LineNotifySendingResult result);
+
+/* The sending callback function (optional) */
+void LineNotifyCallback(LineNotifySendingResult result);
 
 void printResult(FirebaseData &data);
 
@@ -68,8 +70,6 @@ void setup()
   Serial.print("Connected with IP: ");
   Serial.println(WiFi.localIP());
   Serial.println();
-
-  lineNotify.init(LINE_TOKEN);
 
   Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
   Firebase.reconnectWiFi(true);
@@ -119,37 +119,31 @@ void loop()
       Serial.println();
     }
 
-    Serial.println("------------------------------------");
-    Serial.println("Send Line Message...");
-
-    //Pause Firebase and use WiFiClient accessed through client
-    uint8_t status = lineNotify.sendLineMessage(client, "Instant sending message after call!");
-    if (status == LineNotifyESP32::LineStatus::SENT_COMPLETED)
-      Serial.println("PASSED");
-    else if (status == LineNotifyESP32::LineStatus::SENT_FAILED)
-      Serial.println("FAILED");
-    else if (status == LineNotifyESP32::LineStatus::CONNECTION_FAILED)
-      Serial.println("FAILED");
-    Serial.println("--------------------------------");
-    Serial.println();
-  }
-
-  if (millis() - sendMessagePrevMillis > 60000)
-  {
-    sendMessagePrevMillis = millis();
+    //pause Firebase
+    fbdo.pauseFirebase(true);
 
     Serial.println("------------------------------------");
-    Serial.println("Send Line Message...");
 
-    uint8_t status = lineNotify.sendLineMessage(client, "Schedule message sending!");
-    if (status == LineNotifyESP32::LineStatus::SENT_COMPLETED)
-      Serial.println("PASSED");
-    else if (status == LineNotifyESP32::LineStatus::SENT_FAILED)
-      Serial.println("FAILED");
-    else if (status == LineNotifyESP32::LineStatus::CONNECTION_FAILED)
-      Serial.println("FAILED");
+    client.reconnect_wifi = true;
+
+    Serial.println("Sending Line Notify message...");
+
+    client.token = "Your Line Notify Access Token";
+    client.message = "Hello world";
+    
+    //Assign the Line Notify Sending Callback function.
+    client.sendingg_callback = LineNotifyCallback;
+
+    LineNotifySendingResult result = LineNotify.send(client);
+
+    //Print the Line Notify sending result.
+    LineNotifyResult(result);
+
     Serial.println("--------------------------------");
     Serial.println();
+
+    //resume Firebase
+    fbdo.pauseFirebase(false);
   }
 
   if (!Firebase.readStream(fbdo))
@@ -263,5 +257,53 @@ void printResult(FirebaseData &data)
                jsonData.typeNum == FirebaseJson::JSON_ARRAY)
         Serial.println(jsonData.stringValue);
     }
+  }
+}
+
+/* Function to print the sending result via Serial */
+void LineNotifyResult(LineNotifySendingResult result)
+{
+  if (result.status == LineNotify_Sending_Success)
+  {
+    Serial.printf("Status: %s\n", "success");
+    Serial.printf("Text limit: %d\n", result.quota.text.limit);
+    Serial.printf("Text remaining: %d\n", result.quota.text.remaining);
+    Serial.printf("Image limit: %d\n", result.quota.image.limit);
+    Serial.printf("Image remaining: %d\n", result.quota.image.remaining);
+    Serial.printf("Reset: %d\n", result.quota.reset);
+  }
+  else if (result.status == LineNotify_Sending_Error)
+  {
+    Serial.printf("Status: %s\n", "error");
+    Serial.printf("error code: %d\n", result.error.code);
+    Serial.printf("error msg: %s\n", result.error.message.c_str());
+  }
+}
+
+/* The sending callback function (optional) */
+void LineNotifyCallback(LineNotifySendingResult result)
+{
+  if (result.status == LineNotify_Sending_Begin)
+  {
+    Serial.println("Sending begin");
+  }
+  else if (result.status == LineNotify_Sending_Upload)
+  {
+    Serial.printf("Uploaded %s, %d%s\n", result.file_name.c_str(), (int)result.progress, "%");
+  }
+  else if (result.status == LineNotify_Sending_Success)
+  {
+    Serial.println("Sending success\n\n");
+    Serial.printf("Text limit: %d\n", result.quota.text.limit);
+    Serial.printf("Text remaining: %d\n", result.quota.text.remaining);
+    Serial.printf("Image limit: %d\n", result.quota.image.limit);
+    Serial.printf("Image remaining: %d\n", result.quota.image.remaining);
+    Serial.printf("Reset: %d\n", result.quota.reset);
+  }
+  else if (result.status == LineNotify_Sending_Error)
+  {
+    Serial.println("Sending failed\n\n");
+    Serial.printf("error code: %d\n", result.error.code);
+    Serial.printf("error msg: %s\n", result.error.message.c_str());
   }
 }

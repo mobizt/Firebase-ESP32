@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.23
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.24
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -69,6 +69,8 @@ The others UART/Serial bridge mobile network modem which work with AT commands a
 * **Supports SD and Flash's CA certificate file.**
 
 * **Built-in easiest and non-recursive JSON parser and builder.**
+
+* **Supports Ethernet using LAN8720, TLK110 and IP101 Ethernet boards.**
 
 
 

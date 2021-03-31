@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.0.6
+ * Google's Firebase Data class, FB_Session.h version 1.0.7
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created  March 29, 2021
+ * Created  April 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
