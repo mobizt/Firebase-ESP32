@@ -36,7 +36,7 @@
 /** 3. Define the API key
  * 
  * The API key (required) can be obtained since you created the project and set up 
- * the Authentication in Firebase conssole. Then you will get the API key from
+ * the Authentication in Firebase console. Then you will get the API key from
  * Firebase project Web API key in Project settings, on General tab should show the
  * Web API Key.
  * 
@@ -47,7 +47,7 @@
 */
 #define API_KEY "WEB_API_KEY"
 
-/* 4. Define the user Email and password that alreadey registerd or added in your project */
+/* 4. Define the user Email and password that already registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
@@ -134,7 +134,7 @@ void setup()
      * which located at some level in the rule structure and use as reference variable
      * in .read, .write and .validate rules
      * 
-     * If you database rules has been modified, plesse comment this code out
+     * If you database rules has been modified, please comment this code out
     */
     String var = "$user";
     String val = "(auth.uid === $user)";
@@ -219,7 +219,7 @@ void prepareDatabaseRules(const char *path, const char *var, const char *readVal
     Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
 
     Serial.println("------------------------------------");
-    Serial.println("Read database ruless...");
+    Serial.println("Read database rules...");
     if (Firebase.getRules(fbdo))
     {
         FirebaseJsonData result;

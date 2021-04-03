@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.8
+ * Google's Firebase Realtime Database class, FB_RTDB.cpp version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created March 30, 2021
+ * Created April 3, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -2433,7 +2433,6 @@ void FB_RTDB::runStreamTask()
     static int id = Signer.getCfg()->_int.fb_stream_idx - 1;
 
     TaskFunction_t taskCode = [](void *param) {
-        
         while (Signer.getCfg()->_int.fb_sdo[id].get()._ss.rtdb.stream_task_enable)
         {
 
@@ -2444,10 +2443,10 @@ void FB_RTDB::runStreamTask()
 
                 if (Signer.getCfg()->_int.fb_sdo[id].get().streamTimeout() && Signer.getCfg()->_int.fb_sdo[id].get()._timeoutCallback)
                     Signer.getCfg()->_int.fb_sdo[id].get()._timeoutCallback(true);
-             }
+            }
 
-             yield();
-             vTaskDelay(3 / portTICK_PERIOD_MS);
+            yield();
+            vTaskDelay(3 / portTICK_PERIOD_MS);
         }
 
         Signer.getCfg()->_int.fb_sdo[id].get()._ss.rtdb.stream_task_handle = NULL;
@@ -3626,11 +3625,15 @@ int FB_RTDB::sendRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *
 bool FB_RTDB::waitResponse(FirebaseData *fbdo)
 {
 #if defined(ESP32)
+
+    //if currently perform stream payload handling process, skip it.
     if (Signer.getCfg()->_int.fb_processing && fbdo->_ss.con_mode == fb_esp_con_mode_rtdb_stream)
         return true;
-
+        
+    //set the blocking flag
     Signer.getCfg()->_int.fb_processing = true;
     bool ret = handleResponse(fbdo);
+    //reset the blocking flag
     Signer.getCfg()->_int.fb_processing = false;
 
     return ret;
@@ -4273,6 +4276,9 @@ bool FB_RTDB::handleResponse(FirebaseData *fbdo)
 
 void FB_RTDB::sendCB(FirebaseData *fbdo)
 {
+    //to allow other subsequence request which can be occurred in the user stream callback 
+    Signer.getCfg()->_int.fb_processing = false;
+
     if (fbdo->_dataAvailableCallback)
     {
         StreamData s;
@@ -4291,7 +4297,7 @@ void FB_RTDB::sendCB(FirebaseData *fbdo)
         if (fbdo->_ss.rtdb.resp_data_type == fb_esp_data_type::d_blob)
         {
             s.sif->blob = fbdo->_ss.rtdb.blob;
-            //Free ram in case of the callback data was used
+            //Free memory in case of the callback blob data was used
             fbdo->_ss.rtdb.blob.clear();
         }
         fbdo->_dataAvailableCallback(s);
