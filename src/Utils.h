@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.9
+ * Google's Firebase Util class, Utils.h version 1.0.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 1, 2021
+ * Created April 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -565,6 +565,26 @@ public:
         return idx;
     }
 
+    int readLine(WiFiClient *stream, std::string &buf)
+    {
+        int res = -1;
+        char c = 0;
+        int idx = 0;
+        while (stream->available())
+        {
+            res = stream->read();
+            if (res > -1)
+            {
+                c = (char)res;
+                buf += c;
+                idx++;
+                if (c == '\n')
+                    return idx;
+            }
+        }
+        return idx;
+    }
+
     int readChunkedData(WiFiClient *stream, char *out, int &chunkState, int &chunkedSize, int &dataLen, int bufLen)
     {
 
@@ -686,6 +706,83 @@ public:
         }
 
         return nullptr;
+    }
+
+    int readChunkedData(WiFiClient *stream, std::string &out, int &chunkState, int &chunkedSize, int &dataLen)
+    {
+
+        char *tmp = nullptr;
+        int p1 = 0;
+        int olen = 0;
+
+        if (chunkState == 0)
+        {
+            chunkState = 1;
+            chunkedSize = -1;
+            dataLen = 0;
+            std::string s;
+            int readLen = readLine(stream, s);
+            if (readLen)
+            {
+                tmp = strP(fb_esp_pgm_str_79);
+                p1 = strpos(s.c_str(), tmp, 0);
+                delS(tmp);
+                if (p1 == -1)
+                {
+                    tmp = strP(fb_esp_pgm_str_21);
+                    p1 = strpos(s.c_str(), tmp, 0);
+                    delS(tmp);
+                }
+
+                if (p1 != -1)
+                {
+                    tmp = newS(p1 + 1);
+                    memcpy(tmp, s.c_str(), p1);
+                    chunkedSize = hex2int(tmp);
+                    delS(tmp);
+                }
+
+                //last chunk
+                if (chunkedSize < 1)
+                    olen = -1;
+            }
+            else
+                chunkState = 0;
+        }
+        else
+        {
+
+            if (chunkedSize > -1)
+            {
+                std::string s;
+                int readLen = readLine(stream, s);
+
+                if (readLen > 0)
+                {
+                    //chunk may contain trailing
+                    if (dataLen + readLen - 2 < chunkedSize)
+                    {
+                        dataLen += readLen;
+                        out += s;
+                        olen = readLen;
+                    }
+                    else
+                    {
+                        if (chunkedSize - dataLen > 0)
+                            out += s;
+                        dataLen = chunkedSize;
+                        chunkState = 0;
+                        olen = readLen;
+                    }
+                }
+                else
+                {
+                    olen = -1;
+                }
+            }
+        }
+
+        return olen;
     }
 
     void parseRespPayload(const char *buf, struct server_response_data_t &response, bool getOfs)

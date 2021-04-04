@@ -257,8 +257,6 @@ public:
 
   bool push(FirebaseData *fbdo, const char *path, const String &stringValue);
 
-  bool push(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue);
-
   /** Append (post) new string and the virtual child ".priority" to the defined node.
   */
   bool pushString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
@@ -266,8 +264,6 @@ public:
   bool push(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
 
   bool push(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
-
-  bool push(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, float priority);
 
   /** Append (post) new child (s) to the defined node.
    * 
@@ -571,8 +567,6 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, const String &stringValue);
 
-  bool set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue);
-
   /** Set (put) string value and virtual child ".priority" at the defined node.
   */
   bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
@@ -580,8 +574,6 @@ public:
   bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
 
   bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
-
-  bool set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, float priority);
 
   /** Set (put) string at the defined node if defined node's ETag matched the ETag value.
    * 
@@ -606,8 +598,6 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
 
-  bool set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, const char *ETag);
-
   /** Set string data and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
@@ -615,8 +605,6 @@ public:
   bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
-
-  bool set(FirebaseData *fbdo, const char *path, const StringSumHelper &stringValue, float priority, const char *ETag);
 
   /** Set (put) the child (s) nodes to the defined node. 
    * The old content in defined node will be replaced.

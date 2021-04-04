@@ -1,10 +1,11 @@
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.25
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.26
  * 
- * April 3, 2021
+ * April 4, 2021
  * 
  *   Updates:
- * - Allows other Firebase calls inside the stream and multipath stream callback function.
+ * - Fix the memory leaks in internal JSON parser.
+ * - Fix the token pre-refreshment issue.
  * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls. 
@@ -386,8 +387,6 @@ public:
 
   bool push(FirebaseData &fbdo, const String &path, const String &stringValue);
 
-  bool push(FirebaseData &fbdo, const String &path, const StringSumHelper &stringValue);
-
   /** Append new string (text) and the virtual child ".priority" to the defined database path.
   */
   bool pushString(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
@@ -395,8 +394,6 @@ public:
   bool push(FirebaseData &fbdo, const String &path, const char *stringValue, float priority);
 
   bool push(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
-
-  bool push(FirebaseData &fbdo, const String &path, const StringSumHelper &stringValue, float priority);
 
   /** Append new child nodes key and value (using FirebaseJson object) to the defined database path.
    * 
@@ -708,8 +705,6 @@ public:
 
   bool set(FirebaseData &fbdo, const String &path, const String &stringValue);
 
-  bool set(FirebaseData &fbdo, const String &path, const StringSumHelper &stringValue);
-
   /** Set string data and virtual child ".priority" at the defined database path.
   */
   bool setString(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
@@ -717,8 +712,6 @@ public:
   bool set(FirebaseData &fbdo, const String &path, const char *stringValue, float priority);
 
   bool set(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
-
-  bool set(FirebaseData &fbdo, const String &path, const StringSumHelper &stringValue, float priority);
 
   /** Set string (text) at the defined database path if defined database path's ETag matched the ETag value.
    * 
@@ -745,8 +738,6 @@ public:
 
   bool set(FirebaseData &fbdo, const String &path, const String &stringValue, const String &ETag);
 
-  bool set(FirebaseData &fbdo, const String &path, const StringSumHelper &stringValue, const String &ETag);
-
   /** Set string data and the virtual child ".priority" if defined ETag matches at the defined database path 
   */
   bool setString(FirebaseData &fbdo, const String &path, const String &stringValue, float priority, const String &ETag);
@@ -754,8 +745,6 @@ public:
   bool set(FirebaseData &fbdo, const String &path, const char *stringValue, float priority, const String &ETag);
 
   bool set(FirebaseData &fbdo, const String &path, const String &stringValue, float priority, const String &ETag);
-
-  bool set(FirebaseData &fbdo, const String &path, const StringSumHelper &stringValue, float priority, const String &ETag);
 
   /** Set the child node key and value (using FirebaseJson object) to the defined database path. 
    * This will replace any child nodes inside the defined path with node' s key 
