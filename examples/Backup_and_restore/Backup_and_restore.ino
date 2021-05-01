@@ -11,23 +11,38 @@
 
 //This example shows how to backup and restore database data
 
+#if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#endif
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+
+/* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+/* 2. Define the API Key */
+#define API_KEY "API_KEY"
 
-/** The database secret is obsoleted, please use other authentication methods, 
- * see examples in the Authentications folder. 
-*/
-#define FIREBASE_AUTH "DATABASE_SECRET"
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
-
+/* 4. Define the user Email and password that alreadey registerd or added in your project */
+#define USER_EMAIL "USER_EMAIL"
+#define USER_PASSWORD "USER_PASSWORD"
 
 //Define Firebase Data object
 FirebaseData fbdo;
+
+FirebaseAuth auth;
+FirebaseConfig config;
+
+bool taskCompleted = false;
 
 void setup()
 {
@@ -46,67 +61,80 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
+
+  /* Assign the user sign in credentials */
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+
+  Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
-  //Print to see stack size and free memory
-  UBaseType_t uxHighWaterMark = uxTaskGetStackHighWaterMark(NULL);
-  Serial.print("Stack: ");
-  Serial.println(uxHighWaterMark);
-  Serial.print("Heap: ");
-  Serial.println(esp_get_free_heap_size());
+#ifdef ESP8266
+  //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
+  fbdo.setBSSLBufferSize(1024, 1024);
+#endif
 
-  Serial.println("------------------------------------");
-  Serial.println("Backup test...");
-  
-  //Provide specific SD card interface
-  //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
-
-  //Download and save data at defined database path to SD card.
-  //{TARGET_NODE_PATH} is the full path of database to backup and restore.
-
-  if (!Firebase.backup(fbdo, StorageType::SD, "/{TARGET_NODE_PATH}", "/{PATH_IN_SD_CARD}"))
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("PASSED");
-    Serial.println("BACKUP FILE: " + fbdo.getBackupFilename());
-    Serial.println("FILE SIZE: " + String(fbdo.getBackupFileSize()));
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-
-  Serial.println("------------------------------------");
-  Serial.println("Restore test...");
-
-  //Restore data to defined database path using backup file on SD card.
-  //{TARGET_NODE_PATH} is the full path of database to restore
-
-  if (!Firebase.restore(fbdo, StorageType::SD, "/{TARGET_NODE_PATH}", "/{PATH_IN_SD_CARD}"))
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("PASSED");
-    Serial.println("BACKUP FILE: " + fbdo.getBackupFilename());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-
-  //Quit Firebase and release all resources
-  Firebase.end(fbdo);
-  
+  //Set the size of HTTP response buffers in the case where we want to work with large data.
+  fbdo.setResponseSize(1024);
 }
 
 void loop()
 {
+  if (Firebase.ready() && !taskCompleted)
+  {
+    taskCompleted = true;
+    Serial.println("------------------------------------");
+    Serial.println("Backup test...");
+
+    //Download and save data to SD card.
+    //<target node> is the full path of database to backup and restore.
+    //<file name> is file name in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+
+    if (!Firebase.backup(fbdo, StorageType::SD, "/<target node>", "/<file name>"))
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.fileTransferError());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+    else
+    {
+      Serial.println("PASSED");
+      Serial.println("BACKUP FILE: " + fbdo.getBackupFilename());
+      Serial.printf("FILE SIZE: %d\n", fbdo.getBackupFileSize());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+
+    Serial.println("------------------------------------");
+    Serial.println("Restore test...");
+
+    //Restore data to defined database path using backup file on SD card.
+    //<target node> is the full path of database to restore
+    //<file name> is file name in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+
+    //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
+    if (!Firebase.restore(fbdo, StorageType::SD, "/<target node>", "/<file name>"))
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.fileTransferError());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+    else
+    {
+      Serial.println("PASSED");
+      Serial.println("BACKUP FILE: " + fbdo.getBackupFilename());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+  }
 }

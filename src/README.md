@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.26
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.27
 
 
 ## Global functions
@@ -65,11 +65,37 @@ struct token_info_t authTokenInfo();
 
 
 
-#### Store Firebase's authentication credentials using database secret (obsoleted).
 
-param **`host`** Your Firebase database project host e.g. Your_ProjectID.firebaseio.com.
+#### Provide the ready status of token generation.
 
-param **`auth`** Your database secret.
+return **`Boolean`** type status indicates the token generation is completed.
+
+```C++
+bool ready();
+```
+
+
+
+
+
+
+#### Provide the grant access status for Firebase Services.
+
+return **`Boolean`** type status indicates the device can access to the services.
+
+```C++
+bool authenticated();
+```
+
+
+
+
+
+#### Store Firebase's legacy authentication credentials.
+
+param **`databaseURL`** Your RTDB URL e.g. <databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+param **`databaseSecret`** Your database secret.
 
 param **`caCert`** Root CA certificate base64 string (PEM file).
 
@@ -80,11 +106,11 @@ param **`StorageType`** Type of storage, StorageType::SD and StorageType::FLASH.
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```C++
-void begin(const String &host, const String &auth);
+void begin(const String &databaseURL, const String &databaseSecret);
 
-void begin(const String &host, const String &auth, const char *caCert);
+void begin(const String &databaseURL, const String &databaseSecret, const char *caCert);
 
-void begin(const String &host, const String &auth, const String &caCertFile, uint8_t storageType);
+void begin(const String &databaseURL, const String &databaseSecret, const String &caCertFile, uint8_t storageType);
 ```
 
 
@@ -312,6 +338,72 @@ bool setRules(FirebaseData &fbdo, const String &rules);
 
 
 
+#### Set the .read and .write database rules.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`path`** The parent path of child's node that the .read and .write rules are being set.
+
+param **`var`** The child node key that the .read and .write rules are being set.
+
+param **`readVal`** The child node key .read value.
+
+param **`writeVal`** The child node key .write value.
+
+param **`databaseSecret`** The database secret.
+
+return - **`Boolean`** value, indicates the success of the operation.
+
+note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in. 
+
+```cpp
+bool setReadWriteRules(FirebaseData &fbdo, const String &path, const String &var, const String &readVal, const String &writeVal, const String &databaseSecret);
+```
+
+
+
+
+
+#### Set the query index to the database rules.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`path`** The parent path of child's node that being query.
+
+param **`node`** The child node key that being query.
+
+param **`databaseSecret`** The database secret.
+
+return - **`Boolean`** value, indicates the success of the operation.
+
+note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in.
+
+```cpp
+bool setQueryIndex(FirebaseData &fbdo, const String &path, const String &node, const String &databaseSecret);
+```
+
+
+
+
+
+#### Remove the query index from the database rules.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`path`** The parent path of child's node that the index is being removed.
+
+param **`databaseSecret`** The database secret.
+
+return - **`Boolean`** value, indicates the success of the operation.
+
+note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in.
+
+```cpp
+bool removeQueryIndex(FirebaseData &fbdo, const String &path, const String &databaseSecret);
+```
+
+
+
 
 
 #### Determine whether defined database path exists or not
@@ -324,6 +416,8 @@ return - **`Boolean`** type result indicates whether the defined database path h
 
 ```C++
 bool pathExist(FirebaseData &fbdo, const String &path);
+
+bool pathExisted(FirebaseData &dataObj, const String &path);
 ```
 
 
@@ -2867,6 +2961,42 @@ return **`Boolean`** type status indicates the success of the operation.
 
 ```C++
 void sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+```
+
+
+
+
+
+
+#### Initialize the SD_MMC card.
+
+param **`mountpoint`** The mounting point.
+
+param **`mode1bit`** Allow 1 bit data line (SPI mode).
+
+param **`format_if_mount_failed`** Format SD_MMC card if mount failed.
+
+return **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+bool sdMMCBegin(const String &mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
+```
+
+
+
+
+
+
+#### Set system time with timestamp.
+
+param **`ts`** timestamp in seconds from midnight Jan 1, 1970.
+
+return **`Boolean`** type status indicates the success of the operation.
+
+This function allows the internal time setting by timestamp i.e. timestamp from external RTC. 
+
+```cpp
+bool setSystemTime(time_t ts);
 ```
 
 

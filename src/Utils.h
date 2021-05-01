@@ -375,37 +375,30 @@ public:
         return o - dec;
     }
 
-    std::string url_encode(std::string s)
+    std::string url_encode(const std::string &s) 
     {
-        const char *str = s.c_str();
-        std::vector<char> v(s.size());
-        v.clear();
-        for (size_t i = 0, l = s.size(); i < l; i++)
-        {
-            char c = str[i];
-            if ((c >= '0' && c <= '9') ||
-                (c >= 'A' && c <= 'Z') ||
-                (c >= 'a' && c <= 'z') ||
-                c == '-' || c == '_' || c == '.' || c == '!' || c == '~' ||
-                c == '*' || c == '\'' || c == '(' || c == ')')
-            {
-                v.push_back(c);
-            }
-            else if (c == ' ')
-            {
-                v.push_back('+');
-            }
-            else
-            {
-                v.push_back('%');
-                unsigned char d1, d2;
-                hexchar(c, d1, d2);
-                v.push_back(d1);
-                v.push_back(d2);
-            }
+      const char *str = s.c_str();
+      std::vector<char> v(s.size());
+      v.clear();
+      for (size_t i = 0, l = s.size(); i < l; i++) {
+        char c = str[i];
+        if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') ||
+            (c >= 'a' && c <= 'z') || c == '-' || c == '_' || c == '.' ||
+            c == '!' || c == '~' || c == '*' || c == '\'' || c == '(' ||
+            c == ')') {
+          v.push_back(c);
+        } else if (c == ' ') {
+          v.push_back('+');
+        } else {
+          v.push_back('%');
+          unsigned char d1, d2;
+          hexchar(c, d1, d2);
+          v.push_back(d1);
+          v.push_back(d2);
         }
+      }
 
-        return std::string(v.cbegin(), v.cend());
+      return std::string(v.cbegin(), v.cend());
     }
 
     inline int ishex(int x)
@@ -550,8 +543,12 @@ public:
         int res = -1;
         char c = 0;
         int idx = 0;
+        if (!stream)
+            return idx;
         while (stream->available() && idx <= bufLen)
         {
+            if (!stream)
+                break;
             res = stream->read();
             if (res > -1)
             {
@@ -570,8 +567,12 @@ public:
         int res = -1;
         char c = 0;
         int idx = 0;
+        if (!stream)
+            return idx;
         while (stream->available())
         {
+            if (!stream)
+                break;
             res = stream->read();
             if (res > -1)
             {
@@ -1480,6 +1481,7 @@ public:
         return ((len + 2) / 3 * 4) + 1;
     }
 
+#if defined(CARD_TYPE_SD)
     bool sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
     {
         if (config)
@@ -1504,6 +1506,22 @@ public:
             return SD_FS.begin(SD_CS_PIN);
 #endif
     }
+#endif
+
+#if defined(ESP32)
+#if defined(CARD_TYPE_SD_MMC)
+    bool sdBegin(const char *mountpoint, bool mode1bit, bool format_if_mount_failed)
+    {
+        if (config)
+        {
+            config->_int.sd_config.sd_mmc_mountpoint = mountpoint;
+            config->_int.sd_config.sd_mmc_mode1bit = mode1bit;
+            config->_int.sd_config.sd_mmc_format_if_mount_failed = format_if_mount_failed;
+        }
+        return SD_FS.begin(mountpoint, mode1bit, format_if_mount_failed);
+    }
+#endif
+#endif
 
     bool flashTest()
     {
@@ -1521,10 +1539,16 @@ public:
     bool sdTest(fs::File file)
     {
         std::string filepath = "/sdtest01.txt";
-
+#if defined(CARD_TYPE_SD)
         if (!sdBegin(config->_int.sd_config.ss, config->_int.sd_config.sck, config->_int.sd_config.miso, config->_int.sd_config.mosi))
             return false;
-
+#endif
+#if defined(ESP32)
+#if defined(CARD_TYPE_SD_MMC)
+        if (!sdBegin(config->_int.sd_config.sd_mmc_mountpoint, config->_int.sd_config.sd_mmc_mode1bit, config->_int.sd_config.sd_mmc_format_if_mount_failed))
+            return false;
+#endif
+#endif
         file = SD_FS.open(filepath.c_str(), FILE_WRITE);
         if (!file)
             return false;
@@ -1708,6 +1732,12 @@ public:
         }
 
         return status;
+    }
+
+    int setTimestamp(time_t ts)
+    {
+        struct timeval tm = {ts, 0}; // sec, us
+        return settimeofday((const timeval *)&tm, 0);
     }
 
 private:

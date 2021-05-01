@@ -11,18 +11,16 @@
 
 //This example shows how to send Firebase Cloud Messaging.
 
+#if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#endif
 
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
-
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
-
-/** The database secret is obsoleted, please use other authentication methods, 
- * see examples in the Authentications folder. 
-*/
-#define FIREBASE_AUTH "DATABASE_SECRET"
 
 #define FIREBASE_FCM_SERVER_KEY "FIREBASE_PROJECT_CLOUD_MESSAGING_SERVER_KEY"
 #define FIREBASE_FCM_DEVICE_TOKEN_1 "RECIPIENT_DEVICE_TOKEN"
@@ -53,8 +51,13 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
-    Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
     Firebase.reconnectWiFi(true);
+
+    //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
+    fbdo1.setBSSLBufferSize(1024, 1024);
+
+    //Set the size of HTTP response buffers in the case where we want to work with large data.
+    fbdo1.setResponseSize(1024);
 
     fbdo1.fcm.begin(FIREBASE_FCM_SERVER_KEY);
 

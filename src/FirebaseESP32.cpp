@@ -1,35 +1,55 @@
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.26
- * 
- * April 4, 2021
- * 
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.9.0
+ *
+ * May 1, 2021
+ *
  *   Updates:
- * - Fix the memory leaks in internal JSON parser.
- * - Fix the token pre-refreshment issue.
  * 
- * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
- * and delete calls. 
+ * - Add SD_MMC config function.
+ * - Add Firebase.ready() function for token generation ready checking.
+ * - Add Firebase.setSystemTime function for setting the system timestamp manually.
+ * - Add Firebase.RTDB.setQueryIndex and removeQueryIndex functions for database query indexing.
+ * - Add Firebase.RTDB.setReadWriteRules function for adding or removing the read and write rules in the RTDB rules.
+ * - Add FireSense addon, the Programmable Data Logging and IO Control library.
+ * - Improve the token handling in the examples.
+ * - Change the ambiguous defined macro FIREBASE_HOST and FIREBASE_AUTH to FIREBASE_URL and DATABASE_SECRET.
+ * - Remove Firebase.begin requirement from FCM.
+ * - Fix the backup function session.
+ * - Fix compilation errors of conflicts between different FirebaseJson class.
+ * - Fix the RTDB streamAvailable issue.
+ *
  * 
+ * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
+ * DELETE data from/to with Google's Firebase database using get, set, update
+ * and delete calls.
+ *
  * The library was tested and work well with ESP32 based modules.
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
- * 
- * 
- * Permission is hereby granted, free of charge, to any person returning a copy of
+ *
+ *
+ * Permission is hereby granted, free of charge, to any person returning a copy
+ * of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so,
  * subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+ * OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
@@ -59,26 +79,8 @@ FirebaseESP32::~FirebaseESP32()
 
 void FirebaseESP32::begin(FirebaseConfig *config, FirebaseAuth *auth)
 {
-    _auth = auth;
-    _cfg = config;
-
-    if (_cfg == nullptr)
-        _cfg = &_cfg_;
-
-    if (_auth == nullptr)
-        _auth = &_auth_;
-
-    ut = new UtilsClass(_cfg);
-
-    RTDB.begin(ut);
-
-    _cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
-
-    _cfg->signer.signup = false;
-    _cfg_.signer.signup = false;
-    Signer.begin(ut, _cfg, _auth);
-    std::string().swap(_cfg_.signer.tokens.error.message);
-
+    init(config, auth);
+    
     if (_cfg->service_account.json.path.length() > 0)
     {
         if (!Signer.parseSAFile())
@@ -101,9 +103,12 @@ void FirebaseESP32::begin(FirebaseConfig *config, FirebaseAuth *auth)
     _cfg->_int.fb_auth_uri = _cfg->signer.tokens.token_type == token_type_legacy_token || _cfg->signer.tokens.token_type == token_type_id_token;
 
     if (_cfg->host.length() > 0)
+        _cfg->database_url = _cfg->host;
+
+    if (_cfg->database_url.length() > 0)
     {
-        ut->getUrlInfo(_cfg->host.c_str(), uinfo);
-        _cfg->host = uinfo.host;
+        ut->getUrlInfo(_cfg->database_url.c_str(), uinfo);
+        _cfg->database_url = uinfo.host;
     }
 
     if (strlen_P(_cfg->cert.data))
@@ -120,25 +125,25 @@ void FirebaseESP32::begin(FirebaseConfig *config, FirebaseAuth *auth)
     Signer.handleToken();
 }
 
-void FirebaseESP32::begin(const String &host, const String &auth)
+void FirebaseESP32::begin(const String &databaseURL, const String &databaseSecret)
 {
-    _cfg_.host = host.c_str();
-    _cfg_.signer.tokens.legacy_token = auth.c_str();
+    _cfg_.database_url = databaseURL.c_str();
+    _cfg_.signer.tokens.legacy_token = databaseSecret.c_str();
     begin(&_cfg_, &_auth_);
 }
 
-void FirebaseESP32::begin(const String &host, const String &auth, const char *caCert)
+void FirebaseESP32::begin(const String &databaseURL, const String &databaseSecret, const char *caCert)
 {
-    _cfg_.host = host.c_str();
-    _cfg_.signer.tokens.legacy_token = auth.c_str();
+    _cfg_.database_url = databaseURL.c_str();
+    _cfg_.signer.tokens.legacy_token = databaseSecret.c_str();
     _cfg_.cert.data = caCert;
     begin(&_cfg_, &_auth_);
 }
 
-void FirebaseESP32::begin(const String &host, const String &auth, const String &caCertFile, uint8_t storageType)
+void FirebaseESP32::begin(const String &databaseURL, const String &databaseSecret, const String &caCertFile, uint8_t storageType)
 {
-    _cfg_.host = host.c_str();
-    _cfg_.signer.tokens.legacy_token = auth.c_str();
+    _cfg_.database_url = databaseURL.c_str();
+    _cfg_.signer.tokens.legacy_token = databaseSecret.c_str();
     _cfg_.cert.file = caCertFile.c_str();
     _cfg_.cert.file_storage = storageType;
     begin(&_cfg_, &_auth_);
@@ -146,30 +151,19 @@ void FirebaseESP32::begin(const String &host, const String &auth, const String &
 
 bool FirebaseESP32::signUp(FirebaseConfig *config, FirebaseAuth *auth, const char *email, const char *password)
 {
-    _auth = auth;
-    _cfg = config;
-
-    if (_auth == nullptr)
-        _auth = &_auth_;
-    if (_cfg == nullptr)
-        _cfg = &_cfg_;
-
+    init(config, auth);
     return Signer.getIdToken(true, email, password);
 }
 
 bool FirebaseESP32::sendEmailVerification(FirebaseConfig *config, const char *idToken)
 {
-    _cfg = config;
-    if (_cfg == nullptr)
-        _cfg = &_cfg_;
+    init(config, nullptr);
     return Signer.handleEmailSending(idToken, fb_esp_user_email_sending_type_verify);
 }
 
 bool FirebaseESP32::sendResetPassword(FirebaseConfig *config, const char *email)
 {
-    _cfg = config;
-    if (_cfg == nullptr)
-        _cfg = &_cfg_;
+    init(config, nullptr);
     return Signer.handleEmailSending(email, fb_esp_user_email_sending_type_reset_psw);
 }
 
@@ -193,6 +187,42 @@ void FirebaseESP32::allowMultipleRequests(bool enable)
 struct token_info_t FirebaseESP32::authTokenInfo()
 {
     return Signer.tokenInfo;
+}
+
+bool FirebaseESP32::ready()
+{
+    return Signer.tokenReady();
+}
+
+bool FirebaseESP32::authenticated()
+{
+  return Signer.authenticated;
+}
+
+void FirebaseESP32::init(FirebaseConfig *config, FirebaseAuth *auth)
+{
+    _auth = auth;
+    _cfg = config;
+
+    if (_cfg == nullptr)
+        _cfg = &_cfg_;
+
+    if (_auth == nullptr)
+        _auth = &_auth_;
+
+    if (ut)
+        delete ut;
+
+    ut = new UtilsClass(config);
+
+    RTDB.begin(ut);
+
+    _cfg->_int.fb_reconnect_wifi = WiFi.getAutoReconnect();
+
+    _cfg->signer.signup = false;
+    _cfg_.signer.signup = false;
+    Signer.begin(ut, _cfg, _auth);
+    std::string().swap(_cfg_.signer.tokens.error.message);
 }
 
 void FirebaseESP32::reconnectWiFi(bool reconnect)
@@ -232,17 +262,29 @@ bool FirebaseESP32::setRules(FirebaseData &fbdo, const String &rules)
     return RTDB.setRules(&fbdo, rules.c_str());
 }
 
+bool FirebaseESP32::setQueryIndex(FirebaseData &fbdo, const String &path, const String &node, const String &databaseSecret)
+{
+    return RTDB.setQueryIndex(&fbdo, path.c_str(), node.c_str(), databaseSecret.c_str());
+}
+
+bool FirebaseESP32::removeQueryIndex(FirebaseData &fbdo, const String &path, const String &databaseSecret)
+{
+    return RTDB.removeQueryIndex(&fbdo, path.c_str(), databaseSecret.c_str());
+}
+
+bool FirebaseESP32::setReadWriteRules(FirebaseData &fbdo, const String &path, const String &var, const String &readVal, const String &writeVal, const String &databaseSecret)
+{
+    return RTDB.setReadWriteRules(&fbdo, path.c_str(), var.c_str(), readVal.c_str(), writeVal.c_str(), databaseSecret.c_str());
+}
+
 bool FirebaseESP32::pathExist(FirebaseData &fbdo, const String &path)
 {
-    fbdo.queryFilter.clear();
-    struct fb_esp_rtdb_request_info_t req;
-    req.path = path.c_str();
-    req.method = m_get_nocontent;
-    req.dataType = d_string;
-    if (RTDB.handleRequest(&fbdo, &req))
-        return !fbdo._ss.rtdb.path_not_found;
-    else
-        return false;
+    return RTDB.pathExisted(&fbdo, path.c_str());
+}
+
+bool FirebaseESP32::pathExisted(FirebaseData &fbdo, const String &path)
+{
+    return RTDB.pathExisted(&fbdo, path.c_str());
 }
 
 String FirebaseESP32::getETag(FirebaseData &fbdo, const String &path)
@@ -1348,7 +1390,10 @@ bool FirebaseESP32::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
     if (ss > -1)
     {
         SPI.begin(sck, miso, mosi, ss);
+#if defined(CARD_TYPE_SD)
         return SD_FS.begin(ss, SPI);
+#endif
+        return false;
     }
     else
         return SD_FS.begin();
@@ -1361,9 +1406,30 @@ bool FirebaseESP32::sdBegin(int8_t ss, int8_t sck, int8_t miso, int8_t mosi)
     return false;
 }
 
+bool FirebaseESP32::sdMMCBegin(const String &mountpoint, bool mode1bit, bool format_if_mount_failed)
+{
+#if defined(ESP32)
+#if defined(CARD_TYPE_SD_MMC)
+    if (Signer.getCfg())
+    {
+        Signer.getCfg()->_int.sd_config.sd_mmc_mountpoint = mountpoint;
+        Signer.getCfg()->_int.sd_config.sd_mmc_mode1bit = mode1bit;
+        Signer.getCfg()->_int.sd_config.sd_mmc_format_if_mount_failed = format_if_mount_failed;
+    }
+    return SD_FS.begin(mountpoint, mode1bit, format_if_mount_failed);
+#endif
+#endif
+    return false;
+}
+
 fb_esp_mem_storage_type FirebaseESP32::getMemStorageType(uint8_t old_type)
 {
     return (fb_esp_mem_storage_type)(old_type);
+}
+
+bool FirebaseESP32::setSystemTime(time_t ts)
+{
+    return ut->setTimestamp(ts) == 0;
 }
 
 FirebaseESP32 Firebase = FirebaseESP32();

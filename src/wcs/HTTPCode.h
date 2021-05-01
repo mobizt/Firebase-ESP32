@@ -1,11 +1,11 @@
 /**
- * Created February 17, 2021
+ * Created May 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021, 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -73,6 +73,8 @@
 #define FIREBASE_ERROR_HTTPC_NO_FCM_TOPIC_PROVIDED -37
 #define FIREBASE_ERROR_HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED -38
 #define FIREBASE_ERROR_HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED -39
+
+#define FIREBASE_ERROR_HTTP_CODE_UNDEFINED -1000
 
 /// HTTP codes see RFC7231
 

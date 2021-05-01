@@ -22,17 +22,24 @@
  * guard the unauthorized access with the uid and custom claims assigned in the token.
 */
 
+#if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#endif
+
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-/* 2. Define the Firebase project host name (required) */
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
-
-/** 3. Define the API key
+/** 2. Define the API key
  * 
  * The API key can be obtained since you created the project and set up 
  * the Authentication in Firebase console.
@@ -42,7 +49,7 @@
  * The API key also available by click at the link APPLICATION SETUP DETAILS.
  * 
 */
-#define API_KEY "WEB_API_KEY"
+#define API_KEY "API_KEY"
 
 /** 3. Define the Service Account credentials (required for token generation)
  * 
@@ -54,6 +61,9 @@
 #define FIREBASE_PROJECT_ID "PROJECT_ID"
 #define FIREBASE_CLIENT_EMAIL "CLIENT_EMAIL"
 const char PRIVATE_KEY[] PROGMEM = "-----BEGIN PRIVATE KEY-----XXXXXXXXXXXX-----END PRIVATE KEY-----\n";
+
+/* 4. If work with RTDB, define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
 /* This is Google root CA certificate */
 /*
@@ -87,7 +97,7 @@ const char rootCACert[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
  * 
  * If you edit the database rules yourself, this is not required.
 */
-#define FIREBASE_AUTH "DATABASE_SECRET"
+#define DATABASE_SECRET "DATABASE_SECRET"
 
 /* 5. Define the Firebase Data object */
 FirebaseData fbdo;
@@ -97,24 +107,6 @@ FirebaseAuth auth;
 
 /* 7. Define the FirebaseConfig data for config data */
 FirebaseConfig config;
-
-/* The calback function to print the token generation status */
-void tokenStatusCallback(TokenInfo info);
-
-/* The helper function to modify the database rules (optional) */
-void prepareDatabaseRules(const char *path, const char *var, const char *readVal, const char *writeVal);
-
-/* The function to print the operating results */
-void printResult(FirebaseData &data);
-
-/* The helper function to get the token status string */
-String getTokenStatus(struct token_info_t info);
-
-/* The helper function to get the token type string */
-String getTokenType(struct token_info_t info);
-
-/* The helper function to get the token error string */
-String getTokenError(struct token_info_t info);
 
 String path = "";
 unsigned long dataMillis = 0;
@@ -140,8 +132,7 @@ void setup()
     /* Assign the certificate data (optional) */
     //config.cert.data = rootCACert;
 
-    /* Assign the project host and api key (required) */
-    config.host = FIREBASE_HOST;
+    /* Assign the api key (required) */
     config.api_key = API_KEY;
 
     /* Assign the sevice account credentials and private key (required) */
@@ -170,38 +161,17 @@ void setup()
     auth.token.claims.add("premium_account", true);
     auth.token.claims.add("admin", true);
 
+    /* Assign the RTDB URL */
+    config.database_url = DATABASE_URL;
+
     Firebase.reconnectWiFi(true);
     fbdo.setResponseSize(4096);
 
     /* path for user data is now "/UsersData/Node1" */
     String base_path = "/UsersData/";
 
-    /** Now modify the database rules (if not yet modified)
-     *
-     * The user, Node1 in this case will be granted to read and write
-     * at the curtain location i.e. "/UsersData/Node1" and we will also check the 
-     * custom claims in the rules which must be matched.
-     * 
-     * To modify the database rules in this exanple, we need the full access rights then 
-     * using the database secret in prepareDatabaseRules function to sign in.
-     * 
-     * If you database rules has been modified, please comment this code out.
-     * 
-     * The character $ is to make a wildcard variable (can be any name) represents any node key 
-     * which located at some level in the rule structure and use as reference variable
-     * in .read, .write and .validate rules
-     * 
-     * For this case $userId represents any xxxx node that places under UsersData node i.e.
-     * /UsersData/xxxxx which xxxx is user UID or "Node1" in this case.
-     * 
-     * Please check your the database rules to see the changes after run the below code.
-    */
-    String var = "$userId";
-    String val = "($userId === auth.uid && auth.token.premium_account === true && auth.token.admin === true)";
-    prepareDatabaseRules(base_path.c_str(), var.c_str(), val.c_str(), val.c_str());
-
-    /** Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback;
+    /* Assign the callback function for the long running token generation task */
+    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
     /** Assign the maximum retry of token generation */
     config.max_token_generation_retry = 5;
@@ -218,6 +188,27 @@ void setup()
      * Theses process may take time to complete.
     */
     Firebase.begin(&config, &auth);
+
+    /** Now modify the database rules (if not yet modified)
+     *
+     * The user, Node1 in this case will be granted to read and write
+     * at the curtain location i.e. "/UsersData/Node1" and we will also check the 
+     * custom claims in the rules which must be matched.
+     * 
+     * If you database rules has been modified, please comment this code out.
+     * 
+     * The character $ is to make a wildcard variable (can be any name) represents any node key 
+     * which located at some level in the rule structure and use as reference variable
+     * in .read, .write and .validate rules
+     * 
+     * For this case $userId represents any xxxx node that places under UsersData node i.e.
+     * /UsersData/xxxxx which xxxx is user UID or "Node1" in this case.
+     * 
+     * Please check your the database rules to see the changes after run the below code.
+    */
+    String var = "$userId";
+    String val = "($userId === auth.uid && auth.token.premium_account === true && auth.token.admin === true)";
+    Firebase.setReadWriteRules(fbdo, base_path.c_str(), var.c_str(), val.c_str(), val.c_str(), DATABASE_SECRET);
 
     /** 
      * The custom token which created internally in this library will use 
@@ -236,323 +227,32 @@ void setup()
 
 void loop()
 {
-    if (millis() - dataMillis > 5000)
+    if (millis() - dataMillis > 5000 && Firebase.ready())
     {
         dataMillis = millis();
 
-        /* Get the token status */
-        TokenInfo info = Firebase.authTokenInfo();
-        if (info.status == token_status_ready)
+        Serial.println("------------------------------------");
+        Serial.println("Set int test...");
+
+        String node = path + "/int";
+
+        if (Firebase.set(fbdo, node.c_str(), count++))
         {
+            Serial.println("PASSED");
+            Serial.println("PATH: " + fbdo.dataPath());
+            Serial.println("TYPE: " + fbdo.dataType());
+            Serial.println("ETag: " + fbdo.ETag());
+            Serial.print("VALUE: ");
+            printResult(fbdo); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
-            Serial.println("Set int test...");
-
-            if (Firebase.set(fbdo, path + "/int", count++))
-            {
-                Serial.println("PASSED");
-                Serial.println("PATH: " + fbdo.dataPath());
-                Serial.println("TYPE: " + fbdo.dataType());
-                Serial.println("ETag: " + fbdo.ETag());
-                Serial.print("VALUE: ");
-                printResult(fbdo);
-                Serial.println("------------------------------------");
-                Serial.println();
-            }
-            else
-            {
-                Serial.println("FAILED");
-                Serial.println("REASON: " + fbdo.errorReason());
-                Serial.println("------------------------------------");
-                Serial.println();
-            }
+            Serial.println();
         }
-    }
-}
-
-void tokenStatusCallback(TokenInfo info)
-{
-    /** fb_esp_auth_token_status enum
-     * token_status_uninitialized,
-     * token_status_on_initialize,
-     * token_status_on_signing,
-     * token_status_on_request,
-     * token_status_on_refresh,
-     * token_status_ready,
-     * token_status_error
-    */
-    if (info.status == token_status_error)
-    {
-        Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
-        Serial.printf("Token error: %s\n", getTokenError(info).c_str());
-    }
-    else
-    {
-        Serial.printf("Token info: type = %s, status = %s\n", getTokenType(info).c_str(), getTokenStatus(info).c_str());
-    }
-}
-
-/* The helper function to modify the database rules (optional) */
-void prepareDatabaseRules(const char *path, const char *var, const char *readVal, const char *writeVal)
-{
-    //We will sign in using legacy token (database secret) for full RTDB access
-    Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
-
-    Serial.println("------------------------------------");
-    Serial.println("Read database rules...");
-    if (Firebase.getRules(fbdo))
-    {
-        FirebaseJsonData result;
-        FirebaseJson &json = fbdo.jsonObject();
-        bool rd = false, wr = false;
-
-        String _path = "rules";
-        if (path[0] != '/')
-            _path += "/";
-        _path += path;
-        _path += "/";
-        _path += var;
-
-        if (strlen(readVal) > 0)
+        else
         {
-            rd = true;
-            json.get(result, _path + "/.read");
-            if (result.success)
-                if (strcmp(result.stringValue.c_str(), readVal) == 0)
-                    rd = false;
-        }
-
-        if (strlen(writeVal) > 0)
-        {
-            wr = true;
-            json.get(result, _path + "/.write");
-            if (result.success)
-                if (strcmp(result.stringValue.c_str(), writeVal) == 0)
-                    wr = false;
-        }
-
-        //modify if the rules changed or does not exist.
-        if (wr || rd)
-        {
-            FirebaseJson js;
-            std::string s;
-            if (rd)
-                js.add(".read", readVal);
-
-            if (wr)
-                js.add(".write", writeVal);
-
-            Serial.println("Set database rules...");
-            json.set(_path, js);
-            String rules = "";
-            json.toString(rules, true);
-            if (!Firebase.setRules(fbdo, rules))
-            {
-                Serial.println("Failed to edit the database rules, " + fbdo.errorReason());
-            }
-        }
-
-        json.clear();
-    }
-    else
-    {
-        Serial.println("Failed to read the database rules, " + fbdo.errorReason());
-    }
-}
-
-void printResult(FirebaseData &data)
-{
-
-    if (data.dataType() == "int")
-        Serial.println(data.intData());
-    else if (data.dataType() == "float")
-        Serial.println(data.floatData(), 5);
-    else if (data.dataType() == "double")
-        printf("%.9lf\n", data.doubleData());
-    else if (data.dataType() == "boolean")
-        Serial.println(data.boolData() == 1 ? "true" : "false");
-    else if (data.dataType() == "string")
-        Serial.println(data.stringData());
-    else if (data.dataType() == "json")
-    {
-        Serial.println();
-        FirebaseJson &json = data.jsonObject();
-        //Print all object data
-        Serial.println("Pretty printed JSON data:");
-        String jsonStr;
-        json.toString(jsonStr, true);
-        Serial.println(jsonStr);
-        Serial.println();
-        Serial.println("Iterate JSON data:");
-        Serial.println();
-        size_t len = json.iteratorBegin();
-        String key, value = "";
-        int type = 0;
-        for (size_t i = 0; i < len; i++)
-        {
-            json.iteratorGet(i, type, key, value);
-            Serial.print(i);
-            Serial.print(", ");
-            Serial.print("Type: ");
-            Serial.print(type == FirebaseJson::JSON_OBJECT ? "object" : "array");
-            if (type == FirebaseJson::JSON_OBJECT)
-            {
-                Serial.print(", Key: ");
-                Serial.print(key);
-            }
-            Serial.print(", Value: ");
-            Serial.println(value);
-        }
-        json.iteratorEnd();
-    }
-    else if (data.dataType() == "array")
-    {
-        Serial.println();
-        //get array data from FirebaseData using FirebaseJsonArray object
-        FirebaseJsonArray &arr = data.jsonArray();
-        //Print all array values
-        Serial.println("Pretty printed Array:");
-        String arrStr;
-        arr.toString(arrStr, true);
-        Serial.println(arrStr);
-        Serial.println();
-        Serial.println("Iterate array values:");
-        Serial.println();
-        for (size_t i = 0; i < arr.size(); i++)
-        {
-            Serial.print(i);
-            Serial.print(", Value: ");
-
-            FirebaseJsonData &jsonData = data.jsonData();
-            //Get the result data from FirebaseJsonArray object
-            arr.get(jsonData, i);
-            if (jsonData.typeNum == FirebaseJson::JSON_BOOL)
-                Serial.println(jsonData.boolValue ? "true" : "false");
-            else if (jsonData.typeNum == FirebaseJson::JSON_INT)
-                Serial.println(jsonData.intValue);
-            else if (jsonData.typeNum == FirebaseJson::JSON_FLOAT)
-                Serial.println(jsonData.floatValue);
-            else if (jsonData.typeNum == FirebaseJson::JSON_DOUBLE)
-                printf("%.9lf\n", jsonData.doubleValue);
-            else if (jsonData.typeNum == FirebaseJson::JSON_STRING ||
-                     jsonData.typeNum == FirebaseJson::JSON_NULL ||
-                     jsonData.typeNum == FirebaseJson::JSON_OBJECT ||
-                     jsonData.typeNum == FirebaseJson::JSON_ARRAY)
-                Serial.println(jsonData.stringValue);
+            Serial.println("FAILED");
+            Serial.println("REASON: " + fbdo.errorReason());
+            Serial.println("------------------------------------");
+            Serial.println();
         }
     }
-    else if (data.dataType() == "blob")
-    {
-
-        Serial.println();
-
-        for (size_t i = 0; i < data.blobData().size(); i++)
-        {
-            if (i > 0 && i % 16 == 0)
-                Serial.println();
-
-            if (i < 16)
-                Serial.print("0");
-
-            Serial.print(data.blobData()[i], HEX);
-            Serial.print(" ");
-        }
-        Serial.println();
-    }
-    else if (data.dataType() == "file")
-    {
-
-        Serial.println();
-
-        File file = data.fileStream();
-        int i = 0;
-
-        while (file.available())
-        {
-            if (i > 0 && i % 16 == 0)
-                Serial.println();
-
-            int v = file.read();
-
-            if (v < 16)
-                Serial.print("0");
-
-            Serial.print(v, HEX);
-            Serial.print(" ");
-            i++;
-        }
-        Serial.println();
-        file.close();
-    }
-    else
-    {
-        Serial.println(data.payload());
-    }
-}
-
-/* The helper function to get the token type string */
-String getTokenType(struct token_info_t info)
-{
-    switch (info.type)
-    {
-    case token_type_undefined:
-        return "undefined";
-
-    case token_type_legacy_token:
-        return "legacy token";
-
-    case token_type_id_token:
-        return "id token";
-
-    case token_type_custom_token:
-        return "custom token";
-
-    case token_type_oauth2_access_token:
-        return "OAuth2.0 access token";
-
-    default:
-        break;
-    }
-    return "undefined";
-}
-
-/* The helper function to get the token status string */
-String getTokenStatus(struct token_info_t info)
-{
-    switch (info.status)
-    {
-    case token_status_uninitialized:
-        return "uninitialized";
-
-    case token_status_on_initialize:
-        return "on initializing";
-
-    case token_status_on_signing:
-        return "on signing";
-
-    case token_status_on_request:
-        return "on request";
-
-    case token_status_on_refresh:
-        return "on refreshing";
-
-    case token_status_ready:
-        return "ready";
-
-    case token_status_error:
-        return "error";
-
-    default:
-        break;
-    }
-    return "uninitialized";
-}
-
-/* The helper function to get the token error string */
-String getTokenError(struct token_info_t info)
-{
-    String s = "code: ";
-    s += String(info.error.code);
-    s += ", message: ";
-    s += info.error.message.c_str();
-    return s;
 }

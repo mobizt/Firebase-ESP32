@@ -9,41 +9,56 @@
  *
 */
 
+#if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#endif
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
+
+/* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+/* 2. Define the API Key */
+#define API_KEY "API_KEY"
 
-/** The database secret is obsoleted, please use other authentication methods, 
- * see examples in the Authentications folder. 
-*/
-#define FIREBASE_AUTH "DATABASE_SECRET"
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/* 4. Define the user Email and password that alreadey registerd or added in your project */
+#define USER_EMAIL "USER_EMAIL"
+#define USER_PASSWORD "USER_PASSWORD"
 
 //Define FirebaseESP8266 data object
 FirebaseData fbdo1;
 FirebaseData fbdo2;
 
+FirebaseAuth auth;
+FirebaseConfig config;
+
 unsigned long sendDataPrevMillis = 0;
 
 String parentPath = "/Test/Stream";
-String childPath[2] = {"/node1","/node2"};
+String childPath[2] = {"/node1", "/node2"};
 size_t childPathSize = 2;
 
 uint16_t count = 0;
-
-void printResult(FirebaseData &data);
 
 void streamCallback(MultiPathStreamData stream)
 {
   Serial.println();
   Serial.println("Stream Data1 available...");
 
-  size_t numChild = sizeof(childPath)/sizeof(childPath[0]);
+  size_t numChild = sizeof(childPath) / sizeof(childPath[0]);
 
-  for(size_t i = 0;i< numChild;i++)
+  for (size_t i = 0; i < numChild; i++)
   {
     if (stream.get(childPath[i]))
     {
@@ -52,7 +67,6 @@ void streamCallback(MultiPathStreamData stream)
   }
 
   Serial.println();
-  
 }
 
 void streamTimeoutCallback(bool timeout)
@@ -82,12 +96,47 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
+
+  /* Assign the user sign in credentials */
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+
+  Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
+#if defined(ESP8266)
+  //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
+  fbdo1.setBSSLBufferSize(1024, 1024);
+#endif
 
+  //Set the size of HTTP response buffers in the case where we want to work with large data.
+  fbdo1.setResponseSize(1024);
 
-  if (!Firebase.beginMultiPathStream(fbdo1, parentPath, childPath, childPathSize))
+#if defined(ESP8266)
+  //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
+  fbdo2.setBSSLBufferSize(1024, 1024);
+#endif
+
+  //Set the size of HTTP response buffers in the case where we want to work with large data.
+  fbdo2.setResponseSize(1024);
+
+  //The data under the node being stream (parent path) should keep small
+  //Large stream payload leads to the parsing error due to memory allocation.
+
+  //The operations is the same as normal stream unless the JSON stream payload will be parsed
+  //with the predefined node path (child paths).
+
+  //The changes occurred in any child node that is not in the child paths array will sent to the
+  //client as usual.
+  if (!Firebase.beginMultiPathStream(fbdo1, parentPath.c_str(), childPath, childPathSize))
   {
     Serial.println("------------------------------------");
     Serial.println("Can't begin stream connection...");
@@ -96,15 +145,13 @@ void setup()
     Serial.println();
   }
 
-  //Set the reserved size of stack memory in bytes for internal stream callback processing RTOS task.
-  //8192 is the minimum size.
-  Firebase.setMultiPathStreamCallback(fbdo1, streamCallback, streamTimeoutCallback, 8192);
+  Firebase.setMultiPathStreamCallback(fbdo1, streamCallback, streamTimeoutCallback);
 }
 
 void loop()
 {
 
-  if (millis() - sendDataPrevMillis > 15000)
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
     count++;
@@ -117,7 +164,7 @@ void loop()
     json.set("node1/num", count);
     json.set("node2/data", "hi");
     json.set("node2/num", count);
-    if (Firebase.setJSON(fbdo2, parentPath, json))
+    if (Firebase.setJSON(fbdo2, parentPath.c_str(), json))
     {
       Serial.println("PASSED");
       Serial.println();
@@ -135,7 +182,9 @@ void loop()
     Serial.println("------------------------------------");
     Serial.println("Set string...");
 
-    if (Firebase.setString(fbdo2, parentPath + "/node2/new/data", "test"))
+    String Path = parentPath + "/node2/new/data";
+
+    if (Firebase.setString(fbdo2, Path.c_str(), "test"))
     {
       Serial.println("PASSED");
       Serial.println();
@@ -148,12 +197,14 @@ void loop()
       Serial.println();
     }
 
-     //This will trig the another stream event.
+    //This will trig the another stream event.
 
     Serial.println("------------------------------------");
     Serial.println("Set int...");
 
-    if (Firebase.setInt(fbdo2, parentPath + "/node1/new/data", count))
+    Path = parentPath + "/node1/new/data";
+
+    if (Firebase.setInt(fbdo2, Path.c_str(), count))
     {
       Serial.println("PASSED");
       Serial.println();

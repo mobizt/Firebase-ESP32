@@ -11,22 +11,40 @@
 
 //This example shows how to store and read binary data from file on SD card to database.
 
+#if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
-#include <SD.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#endif
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
+
+/* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+/* 2. Define the API Key */
+#define API_KEY "API_KEY"
 
-/** The database secret is obsoleted, please use other authentication methods, 
- * see examples in the Authentications folder. 
-*/
-#define FIREBASE_AUTH "DATABASE_SECRET"
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/* 4. Define the user Email and password that alreadey registerd or added in your project */
+#define USER_EMAIL "USER_EMAIL"
+#define USER_PASSWORD "USER_PASSWORD"
 
 //Define Firebase Data object
 FirebaseData fbdo;
+
+FirebaseAuth auth;
+FirebaseConfig config;
+
+bool taskCompleted = false;
 
 String path = "/Test";
 
@@ -51,168 +69,120 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
+
+  /* Assign the user sign in credentials */
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+
+  Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
+#if defined(ESP8266)
+  //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
+  fbdo.setBSSLBufferSize(1024, 1024);
+#endif
+
+  //Set the size of HTTP response buffers in the case where we want to work with large data.
+  fbdo.setResponseSize(1024);
+
   //Mount SD card
-
-  if (!Firebase.sdBegin())
+  if (!SD.begin(15))
   {
     Serial.println("SD Card mounted failed");
     return;
   }
-
-  /*
-  if (!Firebase.sdBegin(14, 2, 15, 13)) //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
-  {
-    Serial.println("SD Card mounted failed");
-    return;
-  }
-  */
 
   //Delete demo files
-  if (SD.exists("/source.txt"))
-    SD.remove("/source.txt");
+  if (SD.exists("/file1.txt"))
+    SD.remove("/file1.txt");
 
-  if (SD.exists("/target_1.txt"))
-    SD.remove("/target_1.txt");
+  if (SD.exists("/file2.txt"))
+    SD.remove("/file2.txt");
 
-  if (SD.exists("/push_in.txt"))
-    SD.remove("/push_in.txt");
+  if (SD.exists("/file3.txt"))
+    SD.remove("/file3.txt");
 
-  if (SD.exists("/push_out.txt"))
-    SD.remove("/push_out.txt");
+  Serial.println("------------------------------------");
+  Serial.println("Set file data test...");
 
-  //Write demo data to file (8192 bytes)
-  file = SD.open("/source.txt", FILE_WRITE);
+  //Write demo data to file
+  file = SD.open("/file1.txt", FILE_WRITE);
   uint8_t v = 0;
-  for (int i = 0; i < 400000; i++)
+  for (int i = 0; i < 512; i++)
   {
     file.write(v);
     v++;
   }
 
   file.close();
+}
 
-  Serial.println("-----------------------------------");
-  Serial.println("Set file data 1 test...");
-
-  //Set file (read file from SD card and set to database)
-  if (Firebase.setFile(fbdo, StorageType::SD, path + "/Binary/File/data1", "/source.txt"))
+void loop()
+{
+  if (Firebase.ready() && !taskCompleted)
   {
-    Serial.println("PASSED");
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("-------------------------------------");
-    Serial.println();
-  }
+    taskCompleted = true;
 
-  Serial.println("-----------------------------------");
-  Serial.println("Get file data 1 test...");
+    //In case of Root CA was set, set this option to false to disable low memory for secured mode BearSSL to support large file data
+    //Firebase.lowMemBSSL(false);
 
-  //Get file (download file to SD card)
-  if (Firebase.getFile(fbdo, StorageType::SD, path + "/Binary/File/data1", "/target_1.txt"))
-  {
+    String Path = path + "/Binary/File/data";
 
-    //Need to begin SD card again due to File system closed by library
-    SD.begin(); //or use Firebase.sdBegin();
-    //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
-
-    Serial.println("PASSED");
-    Serial.println("DATA");
-
-    //Readout the downloaded file
-    file = SD.open("/target_1.txt", FILE_READ);
-    int i = 0;
-
-    while (file.available())
+    //Set file (read file from SD card and set to database)
+    //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+    if (Firebase.setFile(fbdo, StorageType::SD, Path.c_str(), "/file1.txt"))
     {
-      if (i > 0 && i % 16 == 0)
-        Serial.println();
-
-      v = file.read();
-
-      if (v < 16)
-        Serial.print("0");
-
-      Serial.print(v, HEX);
-      Serial.print(" ");
-      i++;
+      Serial.println("PASSED");
+      Serial.println("------------------------------------");
+      Serial.println();
     }
-    Serial.println();
-    Serial.println("--------------------------------");
-    Serial.println();
-    file.close();
-  }
-  else
-  {
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.fileTransferError());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
 
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("--------------------------------");
-    Serial.println();
-  }
+    Serial.println("------------------------------------");
+    Serial.println("Get file data test...");
 
-  Serial.println("-----------------------------------");
-  Serial.println("Append file data test...");
-
-  //Need to begin SD card again due to File system closed by library
-  SD.begin(); //or use Firebase.sdBegin();
-  //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
-
-  //Write demo data to file
-  file = SD.open("/push_in.txt", FILE_WRITE);
-  for (int i = 255; i >= 0; i--)
-    file.write(i);
-
-  file.close();
-
-  //Append file data to database
-  if (Firebase.pushFile(fbdo, StorageType::SD, path + "/Binary/File/Logs", "/push_in.txt"))
-  {
-    Serial.println("PASSED");
-    Serial.println("PATH: " + fbdo.dataPath());
-    Serial.println("PUSH NAME: " + fbdo.pushName());
-    Serial.println("-------------------------------------");
-
-    Serial.println();
-
-    Serial.println("-----------------------------------");
-    Serial.println("Get appended file data test...");
-
-    //Get the recently appended file (download file to SD card)
-    if (Firebase.getFile(fbdo, StorageType::SD, path + "/Binary/File/Logs/" + fbdo.pushName(), "/push_out.txt"))
+    //Get file (download file to SD card)
+    //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+    if (Firebase.getFile(fbdo, StorageType::SD, Path.c_str(), "/file2.txt"))
     {
 
       Serial.println("PASSED");
       Serial.println("DATA");
 
-      //Need to begin SD card again due to File system closed by library
-      SD.begin(); //or use Firebase.sdBegin();
-      //Firebase.sdBegin(14, 2, 15, 13); //SCK, MISO, MOSI,SS for TTGO T8 v1.7 or 1.8
-
       //Readout the downloaded file
-      file = SD.open("/push_out.txt", FILE_READ);
+      file = SD.open("/file2.txt", FILE_READ);
       int i = 0;
 
       while (file.available())
       {
-        i = file.read();
-        if (i < 16)
-          Serial.print("0");
-
-        Serial.print(i, HEX);
-        Serial.print(" ");
         if (i > 0 && i % 16 == 0)
           Serial.println();
+
+        uint8_t v = file.read();
+
+        if (v < 16)
+          Serial.print("0");
+
+        Serial.print(v, HEX);
+        Serial.print(" ");
+        i++;
       }
       Serial.println();
-      Serial.println("-------------------------------------");
+      Serial.println("------------------------------------");
       Serial.println();
       file.close();
     }
@@ -221,19 +191,87 @@ void setup()
 
       Serial.println("FAILED");
       Serial.println("REASON: " + fbdo.fileTransferError());
-      Serial.println("--------------------------------");
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+
+    Serial.println("------------------------------------");
+    Serial.println("Append file data test...");
+
+    if (SD.exists("/file1.txt"))
+      SD.remove("/file1.txt");
+
+    //Write demo data to file
+    file = SD.open("/file1.txt", FILE_WRITE);
+    for (int i = 255; i >= 0; i--)
+      file.write((uint8_t)i);
+
+    file.close();
+
+    Path = path + "/Binary/File/Logs";
+
+    //Append file data to database
+    //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+    if (Firebase.pushFile(fbdo, StorageType::SD, Path.c_str(), "/file1.txt"))
+    {
+      Serial.println("PASSED");
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("PUSH NAME: " + fbdo.pushName());
+      Serial.println("------------------------------------");
+
+      Serial.println();
+
+      Serial.println("------------------------------------");
+      Serial.println("Get appended file data test...");
+
+      Path = path + "/Binary/File/Logs/" + fbdo.pushName();
+
+      //Get the recently appended file (download file to SD card)
+      //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
+      if (Firebase.getFile(fbdo, StorageType::SD, Path.c_str(), "/file3.txt"))
+      {
+
+        Serial.println("PASSED");
+        Serial.println("DATA");
+
+        //Readout the downloaded file
+        file = SD.open("/file3.txt", FILE_READ);
+        int i = 0;
+        int idx = 0;
+
+        while (file.available())
+        {
+          i = file.read();
+          if (i < 16)
+            Serial.print("0");
+
+          Serial.print(i, HEX);
+          Serial.print(" ");
+
+          if (idx > 0 && (idx + 1) % 16 == 0)
+            Serial.println();
+          idx++;
+        }
+        Serial.println();
+        Serial.println("------------------------------------");
+        Serial.println();
+        file.close();
+      }
+      else
+      {
+
+        Serial.println("FAILED");
+        Serial.println("REASON: " + fbdo.fileTransferError());
+        Serial.println("------------------------------------");
+        Serial.println();
+      }
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.fileTransferError());
+      Serial.println("------------------------------------");
       Serial.println();
     }
   }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.fileTransferError());
-    Serial.println("--------------------------------");
-    Serial.println();
-  }
-}
-
-void loop()
-{
 }

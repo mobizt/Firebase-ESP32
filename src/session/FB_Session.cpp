@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.7
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.9
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 1, 2021
+ * Created May 1, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -115,28 +115,31 @@ void FirebaseData::setResponseSize(uint16_t len)
 
 bool FirebaseData::pauseFirebase(bool pause)
 {
-    if (WiFi.status() != WL_CONNECTED && !ut->ethLinkUp())
+    if ((WiFi.status() != WL_CONNECTED && !ut->ethLinkUp()) || !httpClient.stream())
+    {
+        _ss.connected = false;
+        _ss.rtdb.pause = true;
         return false;
+    }
 
-    if (httpClient.connected() && pause != _ss.rtdb.pause)
+    if (pause == _ss.rtdb.pause)
+        return true;
+
+    _ss.rtdb.pause = pause;
+
+    if (pause)
     {
         if (httpClient.stream()->connected())
             httpClient.stream()->stop();
-
         _ss.connected = false;
+    }
 
-        if (!httpClient.connected())
-        {
-            _ss.rtdb.pause = pause;
-            return true;
-        }
-        return false;
-    }
-    else
-    {
-        _ss.rtdb.pause = pause;
-        return true;
-    }
+    return true;
+}
+
+bool FirebaseData::isPause()
+{
+    return _ss.rtdb.pause;
 }
 
 void FirebaseData::stopWiFiClient()
@@ -561,7 +564,7 @@ int FirebaseData::httpCode()
 
 void FirebaseData::closeSession()
 {
-    if (WiFi.status() == WL_CONNECTED || ut->ethLinkUp())
+    if (WiFi.status() == WL_CONNECTED || !ut->ethLinkUp())
     {
         //close the socket and free the resources used by the BearSSL data
         if (_ss.connected || httpClient.stream())
@@ -674,7 +677,7 @@ void FirebaseData::setSecure()
 
 bool FirebaseData::validRequest(const std::string &path)
 {
-    if (path.length() == 0 || Signer.getCfg()->host.length() == 0 || (Signer.getToken(token_type_legacy_token).length() == 0 && Signer.getToken(token_type_id_token).length() == 0 && Signer.getToken(token_type_oauth2_access_token).length() == 0))
+    if (path.length() == 0 || (Signer.getCfg()->database_url.length() == 0 && Signer.getCfg()->host.length() == 0) || (Signer.getToken(token_type_legacy_token).length() == 0 && Signer.getToken(token_type_id_token).length() == 0 && Signer.getToken(token_type_oauth2_access_token).length() == 0))
     {
         _ss.http_code = FIREBASE_ERROR_HTTP_CODE_BAD_REQUEST;
         return false;
@@ -815,7 +818,14 @@ void FCMObject::begin(UtilsClass *u)
 void FCMObject::begin(const String &serverKey)
 {
     if (!init())
-        return;
+    {
+        if (_ut)
+            delete _ut;
+
+        _ut = new UtilsClass(&_cfg_);
+
+        Signer.begin(_ut, &_cfg_, &_auth_);
+    }
     _server_key = serverKey.c_str();
 }
 

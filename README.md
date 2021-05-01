@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.26
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.9.0
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -225,7 +225,11 @@ See [Other authentication examples](/examples/Authentications) for more authenti
 
 Some authentication methods need the token generaion and exchanging process which take more time than using the legacy token.
 
-The authentication with custom and OAuth2.0 tokens take the time in overall process included NTP time acquisition, JWT token generation and signing, more than 10 seconds in ESP8266 and 1 or 2 seconds in ESP32.
+The authentication with custom and OAuth2.0 tokens takes the time, several seconds in overall process included NTP time acquisition, JWT token generation and signing.
+
+Set the system time prior to calling the Firebase.begin to skip the internal NTP time acquisition process.
+
+To set the system time with RTC or timestamp, use **`Firebase.setSystemTime`**.
 
 While using Email and password sign-in which use in the id token generation process takes minimum time.
 

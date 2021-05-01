@@ -1,35 +1,55 @@
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.8.26
- * 
- * April 4, 2021
- * 
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.9.0
+ *
+ * May 1, 2021
+ *
  *   Updates:
- * - Fix the memory leaks in internal JSON parser.
- * - Fix the token pre-refreshment issue.
  * 
- * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH, DELETE data from/to with Google's Firebase database using get, set, update
- * and delete calls. 
+ * - Add SD_MMC config function.
+ * - Add Firebase.ready() function for token generation ready checking.
+ * - Add Firebase.setSystemTime function for setting the system timestamp manually.
+ * - Add Firebase.RTDB.setQueryIndex and removeQueryIndex functions for database query indexing.
+ * - Add Firebase.RTDB.setReadWriteRules function for adding or removing the read and write rules in the RTDB rules.
+ * - Add FireSense addon, the Programmable Data Logging and IO Control library.
+ * - Improve the token handling in the examples.
+ * - Change the ambiguous defined macro FIREBASE_HOST and FIREBASE_AUTH to FIREBASE_URL and DATABASE_SECRET.
+ * - Remove Firebase.begin requirement from FCM.
+ * - Fix the backup function session.
+ * - Fix compilation errors of conflicts between different FirebaseJson class.
+ * - Fix the RTDB streamAvailable issue.
+ *
  * 
+ * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
+ * DELETE data from/to with Google's Firebase database using get, set, update
+ * and delete calls.
+ *
  * The library was tested and work well with ESP32 based modules.
- * 
+ *
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
- * 
- * 
- * Permission is hereby granted, free of charge, to any person returning a copy of
+ *
+ *
+ * Permission is hereby granted, free of charge, to any person returning a copy
+ * of
  * this software and associated documentation files (the "Software"), to deal in
  * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
- * the Software, and to permit persons to whom the Software is furnished to do so,
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of
+ * the Software, and to permit persons to whom the Software is furnished to do
+ * so,
  * subject to the following conditions:
- * 
- * The above copyright notice and this permission notice shall be included in all
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
- * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS
+ * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS
+ * OR
+ * COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
@@ -90,21 +110,33 @@ public:
   */
   struct token_info_t authTokenInfo();
 
-  /** Store Firebase's authentication credentials using database secret (obsoleted).
+  /** Provide the ready state of token generation.
    * 
-   * @param host Your Firebase database project host e.g. Your_ProjectID.firebaseio.com.
-   * @param auth Your database secret.
+   * @return Boolean type status indicates the token generation is completed.
+  */
+  bool ready();
+
+  /** Provide the grant access status for Firebase Services.
+   *
+   * @return Boolean type status indicates the device can access to the services
+  */
+  bool authenticated();
+
+  /** Store Firebase's legacy authentication credentials.
+   * 
+   * @param databaseURL Your RTDB URL e.g. <databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+   * @param databaseSecret Your database secret.
    * @param caCert Root CA certificate base64 string (PEM file).
    * @param caCertFile Root CA certificate DER file (binary).
    * @param StorageType Type of storage, StorageType::SD and StorageType::FLASH.
    * 
    * The file systems for flash and sd memory can be changed in FirebaseFS.h.
   */
-  void begin(const String &host, const String &auth);
+  void begin(const String &databaseURL, const String &databaseSecret);
 
-  void begin(const String &host, const String &auth, const char *caCert);
+  void begin(const String &databaseURL, const String &databaseSecret, const char *caCert);
 
-  void begin(const String &host, const String &auth, const String &caCertFile, uint8_t storageType);
+  void begin(const String &databaseURL, const String &databaseSecret, const String &caCertFile, uint8_t storageType);
 
   /** Stop Firebase and release all resources.
    * 
@@ -231,6 +263,46 @@ public:
   */
   bool setRules(FirebaseData &fbdo, const String &rules);
 
+  /** Set the .read and .write database rules.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param path The parent path of child's node that the .read and .write rules are being set.
+   * @param var The child node key that the .read and .write rules are being set.
+   * @param readVal The child node key .read value.
+   * @param writeVal The child node key .write value.
+   * @param databaseSecret The database secret. 
+   * @return Boolean value, indicates the success of the operation.
+   * 
+   * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
+   * is Email/Password sign-in.
+  */
+  bool setReadWriteRules(FirebaseData &fbdo, const String &path, const String &var, const String &readVal, const String &writeVal, const String &databaseSecret);
+
+  /** Set the query index to the database rules.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param path The parent path of child's node that being query.
+   * @param node The child node key that being query.
+   * @param databaseSecret The database secret. 
+   * @return Boolean value, indicates the success of the operation.
+   * 
+   * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
+   * is Email/Password sign-in.
+  */
+  bool setQueryIndex(FirebaseData &fbdo, const String &path, const String &node, const String &databaseSecret);
+
+  /** Remove the query index from the database rules.
+   * 
+   * @param fbdo The pointer to Firebase Data Object.
+   * @param path The parent path of child's node that the index is being removed.
+   * @param databaseSecret The database secret. 
+   * @return Boolean value, indicates the success of the operation.
+   * 
+   * @note The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type
+   * is Email/Password sign-in.
+  */
+  bool removeQueryIndex(FirebaseData &fbdo, const String &path, const String &databaseSecret);
+
   /** Determine whether the defined database path exists or not.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
@@ -238,6 +310,7 @@ public:
    * @return Boolean type result indicates whether the defined path existed or not.
    */
   bool pathExist(FirebaseData &fbdo, const String &path);
+  bool pathExisted(FirebaseData &fbdo, const String &path);
 
   /** Determine the unique identifier (ETag) of current data at the defined database path.
    * 
@@ -1643,6 +1716,22 @@ public:
     */
   bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 
+  /** Initialize the SD_MMC card (ESP32 only).
+  *
+  * @param mountpoint The mounting point.
+  * @param mode1bit Allow 1 bit data line (SPI mode).
+  * @param format_if_mount_failed Format SD_MMC card if mount failed.
+  * @return The boolean value indicates the success of operation.
+ */
+  bool sdMMCBegin(const String &mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
+
+  /** Set system time with timestamp.
+     *
+     * @param ts timestamp in seconds from midnight Jan 1, 1970.
+     * @return Boolean type status indicates the success of the operation.
+    */
+  bool setSystemTime(time_t ts);
+
   /** Provide the http code error string
    * 
    * @param httpCode The http code.
@@ -1696,7 +1785,7 @@ private:
   //internal or used by legacy data
   FirebaseAuth _auth_;
   FirebaseConfig _cfg_;
-  
+  void init(FirebaseConfig *config, FirebaseAuth *auth);
 };
 
 extern FirebaseESP32 Firebase;

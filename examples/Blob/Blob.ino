@@ -11,23 +11,40 @@
 
 //This example shows how to store and read binary data from memory to database.
 
-
+#if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
-#include <SD.h>
+#elif defined(ESP8266)
+#include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#endif
 
+//Provide the token generation process info.
+#include "addons/TokenHelper.h"
+//Provide the RTDB payload printing info and other helper functions.
+#include "addons/RTDBHelper.h"
+
+/* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-#define FIREBASE_HOST "PROJECT_ID.firebaseio.com"
+/* 2. Define the API Key */
+#define API_KEY "API_KEY"
 
-/** The database secret is obsoleted, please use other authentication methods, 
- * see examples in the Authentications folder. 
-*/
-#define FIREBASE_AUTH "DATABASE_SECRET"
+/* 3. Define the RTDB URL */
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+/* 4. Define the user Email and password that alreadey registerd or added in your project */
+#define USER_EMAIL "USER_EMAIL"
+#define USER_PASSWORD "USER_PASSWORD"
 
 //Define Firebase Data object
 FirebaseData fbdo;
+
+FirebaseAuth auth;
+FirebaseConfig config;
+
+bool taskCompleted = false;
 
 String path = "/Test";
 
@@ -50,115 +67,50 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
+
+  /* Assign the user sign in credentials */
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
+
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+
+  Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 
-  Serial.println("------------------------------------");
-  Serial.println("Set BLOB data test...");
+#if defined(ESP8266)
+  //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
+  fbdo.setBSSLBufferSize(1024, 1024);
+#endif
 
-  //Create demo data
-  uint8_t data[256];
-  for (int i = 0; i < 256; i++)
-    data[i] = i;
+  //Set the size of HTTP response buffers in the case where we want to work with large data.
+  fbdo.setResponseSize(1024);
+}
 
-  //Set binary data to database (also can use Firebase.set)
-  if (Firebase.setBlob(fbdo, path + "/Binary/Blob/data", data, sizeof(data)))
+void loop()
+{
+  if (Firebase.ready() && !taskCompleted)
   {
-    Serial.println("PASSED");
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-
-  Serial.println("------------------------------------");
-  Serial.println("Get BLOB data test...");
-
-  //Get binary data from database (also can use Firebase.get)
-  if (Firebase.getBlob(fbdo, path + "/Binary/Blob/data"))
-  {
-    Serial.println("PASSED");
-    Serial.println("PATH: " + fbdo.dataPath());
-    Serial.println("TYPE: " + fbdo.dataType());
-    Serial.print("VALUE: ");
-    if (fbdo.dataType() == "blob")
-    {
-
-      std::vector<uint8_t> blob = fbdo.blobData();
-
-      Serial.println();
-
-      for (size_t i = 0; i < blob.size(); i++)
-      {
-        if (i > 0 && i % 16 == 0)
-          Serial.println();
-
-        if (i < 16)
-          Serial.print("0");
-
-        Serial.print(blob[i], HEX);
-        Serial.print(" ");
-      }
-      Serial.println();
-    }
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-
-  Serial.println("------------------------------------");
-  Serial.println("Append BLOB data test...");
-
-  //Create demo data
-  for (int i = 0; i < 256; i++)
-    data[i] = 255 - i;
-
-  //Append binary data to database (also can use Firebase.push)
-  if (Firebase.pushBlob(fbdo, path + "/Binary/Blob/Logs", data, sizeof(data)))
-  {
-    Serial.println("PASSED");
-    Serial.println("PATH: " + fbdo.dataPath());
-    Serial.println("PUSH NAME: " + fbdo.pushName());
-    Serial.println("------------------------------------");
-    Serial.println();
+    taskCompleted = true;
 
     Serial.println("------------------------------------");
-    Serial.println("Get appended BLOB data test...");
+    Serial.println("Set BLOB data test...");
 
-    //Get appended binary data from database (also can use Firebase.get)
-    if (Firebase.getBlob(fbdo, path + "/Binary/Blob/Logs/" + fbdo.pushName()))
+    //Create demo data
+    uint8_t data[256];
+    for (int i = 0; i < 256; i++)
+      data[i] = i;
+
+    String Path = path + "/Binary/Blob/data";
+    //Set binary data to database (also can use Firebase.set)
+    if (Firebase.setBlob(fbdo, Path.c_str(), data, sizeof(data)))
     {
       Serial.println("PASSED");
-      Serial.println("PATH: " + fbdo.dataPath());
-      Serial.println("TYPE: " + fbdo.dataType());
-      Serial.print("VALUE: ");
-      if (fbdo.dataType() == "blob")
-      {
-
-        std::vector<uint8_t> blob = fbdo.blobData();
-        Serial.println();
-        for (size_t i = 0; i < blob.size(); i++)
-        {
-          if (i > 0 && i % 16 == 0)
-            Serial.println();
-          if (blob[i] < 16)
-            Serial.print("0");
-          Serial.print(blob[i], HEX);
-          Serial.print(" ");
-        }
-        Serial.println();
-      }
       Serial.println("------------------------------------");
       Serial.println();
     }
@@ -169,16 +121,77 @@ void setup()
       Serial.println("------------------------------------");
       Serial.println();
     }
-  }
-  else
-  {
-    Serial.println("FAILED");
-    Serial.println("REASON: " + fbdo.errorReason());
-    Serial.println("------------------------------------");
-    Serial.println();
-  }
-}
 
-void loop()
-{
+    Serial.println("------------------------------------");
+    Serial.println("Get BLOB data test...");
+
+    //Get binary data from database (also can use Firebase.get)
+    if (Firebase.getBlob(fbdo, Path.c_str()))
+    {
+      Serial.println("PASSED");
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("TYPE: " + fbdo.dataType());
+      Serial.print("VALUE: ");
+      printResult(fbdo); //see addons/RTDBHelper.h
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+
+    Serial.println("------------------------------------");
+    Serial.println("Append BLOB data test...");
+
+    //Create demo data
+    for (int i = 0; i < 256; i++)
+      data[i] = 255 - i;
+
+    Path = path + "/Binary/Blob/Logs";
+
+    //Append binary data to database (also can use Firebase.push)
+    if (Firebase.pushBlob(fbdo, Path.c_str(), data, sizeof(data)))
+    {
+      Serial.println("PASSED");
+      Serial.println("PATH: " + fbdo.dataPath());
+      Serial.println("PUSH NAME: " + fbdo.pushName());
+      Serial.println("------------------------------------");
+      Serial.println();
+
+      Serial.println("------------------------------------");
+      Serial.println("Get appended BLOB data test...");
+
+      Path = path + "/Binary/Blob/Logs/" + fbdo.pushName();
+
+      //Get appended binary data from database (also can use Firebase.get)
+      if (Firebase.getBlob(fbdo, Path.c_str()))
+      {
+        Serial.println("PASSED");
+        Serial.println("PATH: " + fbdo.dataPath());
+        Serial.println("TYPE: " + fbdo.dataType());
+        Serial.print("VALUE: ");
+        printResult(fbdo); //see addons/RTDBHelper.h
+        Serial.println("------------------------------------");
+        Serial.println();
+      }
+      else
+      {
+        Serial.println("FAILED");
+        Serial.println("REASON: " + fbdo.errorReason());
+        Serial.println("------------------------------------");
+        Serial.println();
+      }
+    }
+    else
+    {
+      Serial.println("FAILED");
+      Serial.println("REASON: " + fbdo.errorReason());
+      Serial.println("------------------------------------");
+      Serial.println();
+    }
+  }
 }
