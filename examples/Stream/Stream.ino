@@ -131,7 +131,7 @@ void loop()
       Serial.println();
     }
   }
-  if (Firebase.authTokenInfo().status == token_status_ready)
+  if (Firebase.ready())
   {
 
     if (!Firebase.readStream(fbdo))
