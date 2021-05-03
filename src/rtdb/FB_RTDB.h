@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.12
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.13
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 1, 2021
+ * Created May 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -191,6 +191,8 @@ public:
    */
   bool setPriority(FirebaseData *fbdo, const char *path, float priority);
 
+  bool setPriorityAsync(FirebaseData *fbdo, const char *path, float priority);
+
   /** Read the virtual child node ".priority" value at the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
@@ -214,11 +216,19 @@ public:
 
   bool push(FirebaseData *fbdo, const char *path, int intValue);
 
+  bool pushIntAsync(FirebaseData *fbdo, const char *path, int intValue);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, int intValue);
+
   /** Append (post) new integer value and the virtual child ".priority" to the defined node.
   */
   bool pushInt(FirebaseData *fbdo, const char *path, int intValue, float priority);
 
   bool push(FirebaseData *fbdo, const char *path, int intValue, float priority);
+
+  bool pushIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
 
   /** Append (post) new float value to the defined node.
    * 
@@ -234,11 +244,19 @@ public:
 
   bool push(FirebaseData *fbdo, const char *path, float floatValue);
 
+  bool pushFloatAsync(FirebaseData *fbdo, const char *path, float floatValue);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, float floatValue);
+
   /** Append (post) new float value and the virtual child ".priority" to the defined node.
   */
   bool pushFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority);
 
   bool push(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+
+  bool pushFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
 
   /** Append (post) new double value (8 bytes) to the defined node.
    * 
@@ -254,11 +272,19 @@ public:
 
   bool push(FirebaseData *fbdo, const char *path, double doubleValue);
 
+  bool pushDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, double doubleValue);
+
   /** Append (post) new double value (8 bytes) and the virtual child ".priority" to the defined node.
   */
   bool pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
 
   bool push(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+
+  bool pushDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
 
   /** Append (post) new Boolean value to the defined node.
    * 
@@ -275,11 +301,19 @@ public:
 
   bool push(FirebaseData *fbdo, const char *path, bool boolValue);
 
+  bool pushBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, bool boolValue);
+
   /** Append (post) the new Boolean value and the virtual child ".priority" to the defined node.
   */
   bool pushBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
 
   bool push(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+
+  bool pushBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
 
   /** Append (post) a new string (text) to the defined node.
    * 
@@ -297,6 +331,12 @@ public:
 
   bool push(FirebaseData *fbdo, const char *path, const String &stringValue);
 
+  bool pushStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, const char *stringValue);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
+
   /** Append (post) new string and the virtual child ".priority" to the defined node.
   */
   bool pushString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
@@ -304,6 +344,12 @@ public:
   bool push(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
 
   bool push(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+
+  bool pushStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
 
   /** Append (post) new child (s) to the defined node.
    * 
@@ -319,11 +365,19 @@ public:
 
   bool push(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
+  bool pushJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
   /** Append (post) new child (s) and the virtual child ".priority" to the defined node.
   */
   bool pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 
   bool push(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+  bool pushJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 
   /** Append (post) array to the defined node. 
    * The old content in defined node will be replaced.
@@ -340,12 +394,20 @@ public:
 
   bool push(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
 
+  bool pushArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+
   /** Append (post) array and virtual child ".priority" at the defined node.
   */
 
   bool pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
 
   bool push(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+
+  bool pushArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
 
   /** Append (post) new blob (binary data) to the defined node.
    * 
@@ -362,11 +424,19 @@ public:
 
   bool push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 
+  bool pushBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+
   /** Append (post) new blob (binary data) and the virtual child ".priority" to the defined node.
   */
   bool pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 
   bool push(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
+
+  bool pushBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 
   /** Append (post) new binary data from file stores on storage memory to the defined node.
    * 
@@ -383,11 +453,19 @@ public:
 
   bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 
+  bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+
+  bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+
   /** Append (post) new binary data from file and the virtual child ".priority" to the defined node.
   */
   bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 
   bool push(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
+
+  bool pushFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
+
+  bool pushAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 
   /** Append (post) the new Firebase server's timestamp to the defined node.
    * 
@@ -399,6 +477,8 @@ public:
    * call [FirebaseData object].pushName() to get the key.
    */
   bool pushTimestamp(FirebaseData *fbdo, const char *path);
+
+  bool pushTimestampAsync(FirebaseData *fbdo, const char *path);
 
   /** Set (put) the integer value at the defined node.
    * 
@@ -414,11 +494,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, int intValue);
 
+  bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, int intValue);
+
   /** Set (put) the integer value and virtual child ".priority" at the defined node.
   */
   bool setInt(FirebaseData *fbdo, const char *path, int intValue, float priority);
 
   bool set(FirebaseData *fbdo, const char *path, int intValue, float priority);
+
+  bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, int intValue, float priority);
 
   /** Set (put) the integer value at the defined node if defined node's ETag matched the defined ETag value.
    * 
@@ -441,11 +529,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
 
+  bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, int intValue, const char *ETag);
+
   /** Set (put) integer value and the virtual child ".priority" if defined ETag matches at the defined node 
   */
   bool setInt(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
+
+  bool setIntAsync(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, int intValue, float priority, const char *ETag);
 
   /** Set (put) float value at the defined node.
    * 
@@ -461,11 +557,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, float floatValue);
 
+  bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, float floatValue);
+
   /** Set (put) float value and virtual child ".priority" at the defined node.
   */
   bool setFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority);
 
   bool set(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+
+  bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority);
 
   /** Set (put) float value at the defined node if defined node's ETag matched the ETag value.
    * 
@@ -488,11 +592,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
 
+  bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, float floatValue, const char *ETag);
+
   /** Set (put) float value and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   bool setFloat(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
+
+  bool setFloatAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, float floatValue, float priority, const char *ETag);
 
   /** Set (put) double value at the defined node.
    * 
@@ -511,11 +623,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, double doubleValue);
 
+  bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue);
+
   /** Set (put) double value and virtual child ".priority" at the defined node.
   */
   bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
 
   bool set(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+
+  bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority);
 
   /** Set (put) double value at the defined node if defined node's ETag matched the ETag value.
    * 
@@ -538,11 +658,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
 
+  bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue, const char *ETag);
+
   /** Set (put) double value and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   bool setDouble(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
+
+  bool setDoubleAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, double doubleValue, float priority, const char *ETag);
 
   /** Set (put) boolean value at the defined node.
    * 
@@ -558,11 +686,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, bool boolValue);
 
+  bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue);
+
   /** Set (put) boolean value and virtual child ".priority" at the defined node.
   */
   bool setBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
 
   bool set(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+
+  bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority);
 
   /** Set (put) boolean value at the defined node if defined node's ETag matched the ETag value.
    * 
@@ -585,11 +721,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
 
+  bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue, const char *ETag);
+
   /** Set (put) boolean value and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   bool setBool(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
+
+  bool setBoolAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, bool boolValue, float priority, const char *ETag);
 
   /** Set (put) string at the defined node. 
    * 
@@ -607,6 +751,12 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, const String &stringValue);
 
+  bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue);
+
   /** Set (put) string value and virtual child ".priority" at the defined node.
   */
   bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
@@ -614,6 +764,12 @@ public:
   bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
 
   bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+
+  bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority);
 
   /** Set (put) string at the defined node if defined node's ETag matched the ETag value.
    * 
@@ -638,6 +794,12 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
 
+  bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, const char *ETag);
+
   /** Set string data and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   bool setString(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
@@ -645,6 +807,12 @@ public:
   bool set(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
+
+  bool setStringAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, const char *stringValue, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, const String &stringValue, float priority, const char *ETag);
 
   /** Set (put) the child (s) nodes to the defined node. 
    * The old content in defined node will be replaced.
@@ -662,12 +830,20 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
+  bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
   /** Set (put) the child (s) nodes and virtual child ".priority" at the defined node.
   */
 
   bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 
   bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+  bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 
   /** Set (put) the child (s) nodes to the defined node, if defined node's ETag matched the ETag value. 
    * The old content in defined node will be replaced.
@@ -692,11 +868,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
 
+  bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *ETag);
+
   /** Set (put) the child (s) nodes and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
+
+  bool setJSONAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority, const char *ETag);
 
   /** Set (put) the array to the defined node. 
    * The old content in defined node will be replaced.
@@ -715,11 +899,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
 
+  bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr);
+
   /** Set (put) array and virtual child ".priority" at the defined node.
   */
   bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
 
   bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+
+  bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority);
 
   /** Set (put) the array to the defined node if defined node's ETag matched the ETag value. 
    * The old content in defined node will be replaced.
@@ -745,11 +937,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
 
+  bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *ETag);
+
   /** Set (put) array and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
+
+  bool setArrayAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, float priority, const char *ETag);
 
   /** Set (put) the blob (binary data) at the defined node. 
    * The old content in defined node will be replaced.
@@ -766,11 +966,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
 
+  bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size);
+
   /** Set (put) the blob data and virtual child ".priority" at the defined node.
   */
   bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 
   bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
+
+  bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority);
 
   /** Set blob (binary data) at the defined node if defined node's ETag matched the ETag value. 
    * The old content in defined node will be replaced.
@@ -791,11 +999,19 @@ public:
 
   bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
 
+  bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, const char *ETag);
+
   /** Set (put) the binary data and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   bool setBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
+
+  bool setBlobAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, float priority, const char *ETag);
 
   /** Set (put) the binary data from file to the defined node. 
    * 
@@ -811,11 +1027,19 @@ public:
 
   bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
 
+  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+
+  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName);
+
   /** Set (put) the binary data from file and virtual child ".priority" at the defined node.
   */
   bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 
   bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
+
+  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
+
+  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority);
 
   /** Set (put) the binary data from file to the defined node if defined node's ETag matched the ETag value.
    * 
@@ -835,11 +1059,19 @@ public:
 
   bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
 
+  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *ETag);
+
   /** Set (put) the binary data from the file and the virtual child ".priority" if defined ETag matches at the defined node. 
   */
   bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
 
   bool set(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
+
+  bool setFileAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
+
+  bool setAsync(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, float priority, const char *ETag);
 
   /** Set (put) the Firebase server's timestamp to the defined node.
    * 
@@ -855,6 +1087,8 @@ public:
   */
   bool setTimestamp(FirebaseData *fbdo, const char *path);
 
+  bool setTimestampAsync(FirebaseData *fbdo, const char *path);
+
   /** Update (patch) the child (s) nodes to the defined node.
    * 
    * @param fbdo The pointer to Firebase Data Object.
@@ -869,9 +1103,13 @@ public:
   */
   bool updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
+  bool updateNodeAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
   /** Update (patch) the child (s) nodess and virtual child ".priority" to the defined node.
   */
   bool updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+  bool updateNodeAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 
   /** Update (patch) the child (s) nodes to the defined node.
    * 
@@ -885,9 +1123,13 @@ public:
   */
   bool updateNodeSilent(FirebaseData *fbdo, const char *path, FirebaseJson *json);
 
+  bool updateNodeSilentAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json);
+
   /** Update (patch) the child (s) nodes and virtual child ".priority" to the defined node.
   */
   bool updateNodeSilent(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
+
+  bool updateNodeSilentAsync(FirebaseData *fbdo, const char *path, FirebaseJson *json, float priority);
 
   /** Read any type of value at the defined node.
    * 
@@ -1574,24 +1816,28 @@ private:
   void handlePayload(FirebaseData *fbdo, struct server_response_data_t &response, const char *payload);
   bool processRequest(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
   bool processRequestFile(FirebaseData *fbdo, struct fb_esp_rtdb_request_info_t *req);
-  bool pushInt(FirebaseData *fbdo, const char *path, int intValue, bool queue, const char *priority);
-  bool pushFloat(FirebaseData *fbdo, const char *path, float floatValue, bool queue, const char *priority);
-  bool pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, bool queue, const char *priority);
-  bool pushBool(FirebaseData *fbdo, const char *path, bool boolValue, bool queue, const char *priority);
-  bool pushString(FirebaseData *fbdo, const char *path, const String &stringValue, const char *priority);
-  bool pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority);
-  bool pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority);
-  bool pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, bool queue, const char *priority);
-  bool pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority);
-  bool setInt(FirebaseData *rtdb, const char *path, int intValue, bool queue, const char *priority, const char *etag);
-  bool setFloat(FirebaseData *rtdb, const char *path, float floatValue, bool queue, const char *priority, const char *etag);
-  bool setDouble(FirebaseData *rtdb, const char *path, double doubleValue, bool queue, const char *priority, const char *etag);
-  bool setBool(FirebaseData *rtdb, const char *path, bool boolValue, bool queue, const char *priority, const char *etag);
-  bool setString(FirebaseData *fbdo, const char *path, const char *stringValue, const char *priority, const char *etag);
-  bool setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, const char *etag);
-  bool setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, const char *ETag);
-  bool setBlob(FirebaseData *rtdb, const char *path, uint8_t *blob, size_t size, bool queue, const char *priority, const char *etag);
-  bool setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, const char *etag);
+  bool int_pushInt(FirebaseData *fbdo, const char *path, int intValue, bool queue, const char *priority, bool async);
+  bool int_pushFloat(FirebaseData *fbdo, const char *path, float floatValue, bool queue, const char *priority, bool async);
+  bool int_pushDouble(FirebaseData *fbdo, const char *path, double doubleValue, bool queue, const char *priority, bool async);
+  bool int_pushBool(FirebaseData *fbdo, const char *path, bool boolValue, bool queue, const char *priority, bool async);
+  bool int_pushString(FirebaseData *fbdo, const char *path, const String &stringValue, const char *priority, bool async);
+  bool int_pushJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, bool async);
+  bool int_pushArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, bool async);
+  bool int_pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, bool queue, const char *priority, bool async);
+  bool int_pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, bool async);
+  bool int_pushTimestamp(FirebaseData *fbdo, const char *path, bool async);
+  bool int_setInt(FirebaseData *rtdb, const char *path, int intValue, bool queue, const char *priority, const char *etag, bool async);
+  bool int_setFloat(FirebaseData *rtdb, const char *path, float floatValue, bool queue, const char *priority, const char *etag, bool async);
+  bool int_setDouble(FirebaseData *rtdb, const char *path, double doubleValue, bool queue, const char *priority, const char *etag, bool async);
+  bool int_setBool(FirebaseData *rtdb, const char *path, bool boolValue, bool queue, const char *priority, const char *etag, bool async);
+  bool int_setString(FirebaseData *fbdo, const char *path, const char *stringValue, const char *priority, const char *etag, bool async);
+  bool int_setJSON(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, const char *etag, bool async);
+  bool int_setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, const char *ETag, bool async);
+  bool int_setBlob(FirebaseData *rtdb, const char *path, uint8_t *blob, size_t size, bool queue, const char *priority, const char *etag, bool async);
+  bool int_setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, const char *etag, bool async);
+  bool int_setPriority(FirebaseData *fbdo, const char *path, float priority,bool async);
+  bool int_setTimestamp(FirebaseData *fbdo, const char *path, bool async);
+  bool int_updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, bool silent, bool async);
   bool handleStreamRequest(FirebaseData *fbdo, const std::string &path);
   bool connectionError(FirebaseData *fbdo);
   bool handleStreamRead(FirebaseData *fbdo);
@@ -1599,10 +1845,11 @@ private:
   void splitStreamPayload(const char *payloads, std::vector<std::string> &payload);
   void parseStreamPayload(FirebaseData *fbdo, const char *payload);
   bool int_setQueryIndex(FirebaseData *fbdo, const char *path, const char *node, const char *databaseSecret);
+  bool int_beginStream(FirebaseData *fbdo, const char *path, bool clearNodeList = true);
 #if defined(ESP32)
-      void runStreamTask(FirebaseData *fbdo, const char *taskName);
+  void runStreamTask(FirebaseData *fbdo, const char *taskName);
 #elif defined(ESP8266)
-      void runStreamTask();
+  void runStreamTask();
   void runErrorQueueTask();
 #endif
   uint8_t openErrorQueue(FirebaseData *fbdo, const char *filename, fb_esp_mem_storage_type storageType, uint8_t mode);

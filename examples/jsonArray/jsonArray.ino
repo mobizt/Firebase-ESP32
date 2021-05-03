@@ -84,6 +84,10 @@ void setup()
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
+
+    //Or use legacy authenticate method
+    //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+
     Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)
@@ -120,7 +124,7 @@ void loop()
         arr.set("/[1]", "hello");
         arr.set("/[4]", 76.54);
         String Path = path + "/Data";
-        if (Firebase.set(fbdo, Path.c_str(), &arr))
+        if (Firebase.set(fbdo, Path.c_str(), arr))
         {
             Serial.println("PASSED");
             Serial.println("PATH: " + fbdo.dataPath());

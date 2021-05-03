@@ -79,6 +79,9 @@ void setup()
   /* 12. Initialize the library with the autentication data */
   Firebase.begin(&config, &auth);
 
+  //Or use legacy authenticate method
+  //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+
   /* 13. Enable auto reconnect the WiFi when connection lost */
   Firebase.reconnectWiFi(true);
 }
@@ -93,7 +96,7 @@ void loop()
     /* 15. Try to set int data to Firebase */
     //The set function returns bool for the status of operation
     //fbdo requires for sending the data and pass as the pointer
-    if (Firebase.setInt(fbdo, "/LED_Status", 1))
+    if (Firebase.setIntAsync(fbdo, "/LED_Status", 1))
     {
       //Success
       Serial.println("Set int data success");

@@ -192,6 +192,9 @@ void setup()
 
     Firebase.begin(&config, &auth);
 
+    //Or use legacy authenticate method
+    //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+
     Firebase.reconnectWiFi(true);
 
     //Set up the config

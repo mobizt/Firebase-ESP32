@@ -100,6 +100,10 @@ void setup()
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   Firebase.begin(&config, &auth);
+
+  //Or use legacy authenticate method
+  //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+
   Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)
@@ -188,14 +192,9 @@ BLYNK_WRITE(V1)
   Serial.println("------------------------------------");
   Serial.println("Set integer...");
   //Also can use Firebase.set instead of Firebase.setInt
-  if (Firebase.setInt(fbdo2, path.c_str(), pinValue))
+  if (Firebase.setIntAsync(fbdo2, path.c_str(), pinValue))
   {
     Serial.println("PASSED");
-    Serial.println("PATH: " + fbdo2.dataPath());
-    Serial.println("TYPE: " + fbdo2.dataType());
-    Serial.print("VALUE: ");
-    if (fbdo2.dataType() == "int")
-      Serial.println(fbdo2.intData());
     Serial.println("------------------------------------");
     Serial.println();
   }

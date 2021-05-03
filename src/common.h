@@ -1,6 +1,6 @@
 
 /**
- * Created May 1, 2021
+ * Created May 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -332,6 +332,7 @@ struct fb_esp_rtdb_request_info_t
     std::string priority = "";
     std::string etag = "";
     bool queue = false;
+    bool async = false;
     std::string filename = "";
     //fb_esp_mem_storage_type storageType = mem_storage_type_undefined;
     uint8_t storageType = StorageType::UNDEFINED;
@@ -596,6 +597,7 @@ struct fb_esp_cfg_t
     std::string database_url;
     std::string api_key;
     float time_zone = 0;
+    size_t async_close_session_max_request = 100;
     struct fb_esp_auth_cert_t cert;
     struct fb_esp_token_signer_resources_t signer;
     struct fb_esp_cfg_int_t _int;
@@ -619,6 +621,8 @@ struct fb_esp_rtdb_info_t
     bool path_not_found = false;
     bool pause = false;
     bool stream_stop = true;
+    bool async = false;
+    size_t async_count = 0;
 
     uint8_t connection_status = 0;
     uint32_t queue_ID = 0;
@@ -969,7 +973,7 @@ struct fb_esp_session_info_t
     unsigned long last_conn_ms = 0;
     const uint32_t conn_timeout = 3 * 60 * 1000;
 
-    uint16_t resp_size = 2048;
+    uint16_t resp_size = 4096;
     int http_code = FIREBASE_ERROR_HTTP_CODE_UNDEFINED;
     int content_length = 0;
     std::string error = "";

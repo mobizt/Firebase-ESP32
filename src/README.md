@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.8.27
+Google's Firebase Realtime Database Arduino Library for ESP32 v 3.9.1
 
 
 ## Global functions
@@ -511,6 +511,8 @@ The returned priority value from server can read from function [FirebaseData obj
 
 ```C++
 bool setPriority(FirebaseData &fbdo, const String &path, float priority);
+
+bool setPriorityAsync(FirebaseData &fbdo, const String &path, float priority);
 ```
 
 
@@ -556,6 +558,10 @@ which its value can be accessed via function [FirebaseData object].pushName().
 bool pushInt(FirebaseData &fbdo, const String &path, int intValue);
 
 bool push(FirebaseData &fbdo, const String &path, int intValue);
+
+bool pushIntAsync(FirebaseData &fbdo, const String &path, int intValue);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, int intValue);
 ```
 
 
@@ -569,6 +575,10 @@ bool push(FirebaseData &fbdo, const String &path, int intValue);
 bool pushInt(FirebaseData &fbdo, const String &path, int intValue, float priority);
 
 bool push(FirebaseData &fbdo, const String &path, int intValue, float priority);
+
+bool pushIntAsync(FirebaseData &fbdo, const String &path, int intValue, float priority);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, int intValue, float priority);
 ```
 
 
@@ -593,6 +603,10 @@ which its value can be accessed via function [FirebaseData object].pushName().
 bool pushFloat(FirebaseData &fbdo, const String &path, float floatValue);
 
 bool push(FirebaseData &fbdo, const String &path, float floatValue);
+
+bool pushFloatAsync(FirebaseData &fbdo, const String &path, float floatValue);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, float floatValue);
 ```
 
 
@@ -607,6 +621,10 @@ bool push(FirebaseData &fbdo, const String &path, float floatValue);
 bool pushFloat(FirebaseData &fbdo, const String &path, float floatValue, float priority);
 
 bool push(FirebaseData &fbdo, const String &path, float floatValue, float priority);
+
+bool pushFloatAsync(FirebaseData &fbdo, const String &path, float floatValue, float priority);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, float floatValue, float priority);
 ```
 
 
@@ -633,6 +651,10 @@ which its value can be accessed via function [FirebaseData object].pushName().
 bool pushDouble(FirebaseData &fbdo, const String &path, double doubleValue);
 
 bool push(FirebaseData &fbdo, const String &path, double doubleValue);
+
+bool pushDoubleAsync(FirebaseData &fbdo, const String &path, double doubleValue);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, double doubleValue);
 ```
 
 
@@ -645,6 +667,10 @@ bool push(FirebaseData &fbdo, const String &path, double doubleValue);
 bool pushDouble(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
 
 bool push(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
+
+bool pushDoubleAsync(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
 ```
 
 
@@ -669,6 +695,10 @@ which its value can be accessed via function [FirebaseData object].pushName().
 bool pushBool(FirebaseData &fbdo, const String &path, bool boolValue);
 
 bool push(FirebaseData &fbdo, const String &path, bool boolValue);
+
+bool pushBoolAsync(FirebaseData &fbdo, const String &path, bool boolValue);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, bool boolValue);
 ```
 
 
@@ -683,6 +713,10 @@ bool push(FirebaseData &fbdo, const String &path, bool boolValue);
 bool pushBool(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
 
 bool push(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
+
+bool pushBoolAsync(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
 ```
 
 
@@ -711,6 +745,12 @@ bool pushString(FirebaseData &fbdo, const String &path, const String &stringValu
 bool push(FirebaseData &fbdo, const String &path, const char *stringValue);
 
 bool push(FirebaseData &fbdo, const String &path, const String &stringValue);
+
+bool pushStringAsync(FirebaseData &fbdo, const String &path, const String &stringValue);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, const char *stringValue);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, const String &stringValue);
 ```
 
 
@@ -727,6 +767,12 @@ bool pushString(FirebaseData &fbdo, const String &path, const String &stringValu
 bool push(FirebaseData &fbdo, const String &path, const char *stringValue, float priority);
 
 bool push(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
+
+bool pushStringAsync(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, const char *stringValue, float priority);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
 ```
 
 
@@ -752,6 +798,10 @@ which its value can be accessed via function [FirebaseData object].pushName().
 bool pushJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 
 bool push(FirebaseData &fbdo, const String &path, FirebaseJson &json);
+
+bool pushJSONAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 ```
 
 
@@ -768,6 +818,10 @@ bool push(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 bool pushJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 
 bool push(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
+
+bool pushJSONAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 ```
 
 
@@ -792,6 +846,10 @@ which its value can be accessed via function [FirebaseData object].pushName().
 bool pushArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 
 bool push(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
+
+bool pushArrayAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 ```
 
 
@@ -805,6 +863,10 @@ bool push(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 bool pushArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
 
 bool push(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
+
+bool pushArrayAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
 ```
 
 
@@ -834,6 +896,10 @@ which its value can be accessed via function [FirebaseData object].pushName().
 bool pushBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 
 bool push(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
+
+bool pushBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 ```
 
 
@@ -847,6 +913,10 @@ bool push(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 bool pushBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
 
 bool push(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
+
+bool pushBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
+
+bool pushAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
 ```
 
 
@@ -875,6 +945,10 @@ The file systems for flash and sd memory can be changed in FirebaseFS.h.
 bool pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 
 bool push(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
+
+bool pushFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
+
+bool pushAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 ```
 
 
@@ -888,6 +962,10 @@ bool push(FirebaseData &fbdo, uint8_t storageType, const String &path, const Str
 bool pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 
 bool push(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
+
+bool pushFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
+
+bool pushAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 ```
 
 
@@ -908,7 +986,9 @@ The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
 ```C++
-bool pushTimestamp(FirebaseData &fbdo, const String &path);
+bool pushTimestampAsync(FirebaseData &fbdo, const String &path);
+
+bool pushTimestampAsync(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -937,6 +1017,10 @@ the payload returned from the server.
 bool setInt(FirebaseData &fbdo, const String &path, int intValue);
 
 bool set(FirebaseData &fbdo, const String &path, int intValue);
+
+bool setIntAsync(FirebaseData &fbdo, const String &path, int intValue);
+
+bool setAsync(FirebaseData &fbdo, const String &path, int intValue);
 ```
 
 
@@ -948,6 +1032,10 @@ bool set(FirebaseData &fbdo, const String &path, int intValue);
 bool setInt(FirebaseData &fbdo, const String &path, int intValue, float priority);
 
 bool set(FirebaseData &fbdo, const String &path, int intValue, float priority);
+
+bool setIntAsync(FirebaseData &fbdo, const String &path, int intValue, float priority);
+
+bool setAsync(FirebaseData &fbdo, const String &path, int intValue, float priority);
 ```
 
 
@@ -976,6 +1064,10 @@ Also call [FirebaseData object].intData to get the current integer value.
 bool setInt(FirebaseData &fbdo, const String &path, int intValue, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, int intValue, const String &ETag);
+
+bool setIntAsync(FirebaseData &fbdo, const String &path, int intValue, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, int intValue, const String &ETag);
 ```
 
 
@@ -989,6 +1081,10 @@ bool set(FirebaseData &fbdo, const String &path, int intValue, const String &ETa
 bool setInt(FirebaseData &fbdo, const String &path, int intValue, float priority, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, int intValue, float priority, const String &ETag);
+
+bool setIntAsync(FirebaseData &fbdo, const String &path, int intValue, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, int intValue, float priority, const String &ETag);
 ```
 
 
@@ -1015,6 +1111,10 @@ the payload returned from the server.
 bool setFloat(FirebaseData &fbdo, const String &path, float floatValue);
 
 bool set(FirebaseData &fbdo, const String &path, float floatValue);
+
+bool setFloatAsync(FirebaseData &fbdo, const String &path, float floatValue);
+
+bool setAsync(FirebaseData &fbdo, const String &path, float floatValue);
 ```
 
 
@@ -1026,6 +1126,10 @@ bool set(FirebaseData &fbdo, const String &path, float floatValue);
 bool setFloat(FirebaseData &fbdo, const String &path, float floatValue, float priority);
 
 bool set(FirebaseData &fbdo, const String &path, float floatValue, float priority);
+
+bool setFloatAsync(FirebaseData &fbdo, const String &path, float floatValue, float priority);
+
+bool setAsync(FirebaseData &fbdo, const String &path, float floatValue, float priority);
 ```
 
 
@@ -1056,6 +1160,10 @@ Also call [FirebaseData object].floatData to get the current float value.
 bool setFloat(FirebaseData &fbdo, const String &path, float floatValue, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, float floatValue, const String &ETag);
+
+bool setFloatAsync(FirebaseData &fbdo, const String &path, float floatValue, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, float floatValue, const String &ETag);
 ```
 
 
@@ -1067,6 +1175,10 @@ bool set(FirebaseData &fbdo, const String &path, float floatValue, const String 
 bool setFloat(FirebaseData &fbdo, const String &path, float floatValue, float priority, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, float floatValue, float priority, const String &ETag);
+
+bool setFloatAsync(FirebaseData &fbdo, const String &path, float floatValue, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, float floatValue, float priority, const String &ETag);
 ```
 
 
@@ -1097,6 +1209,10 @@ use printf("%.9lf\n", firebaseData.doubleData()); for print the returned double 
 bool setDouble(FirebaseData &fbdo, const String &path, double doubleValue);
 
 bool set(FirebaseData &fbdo, const String &path, double doubleValue);
+
+bool setDoubleAsync(FirebaseData &fbdo, const String &path, double doubleValue);
+
+bool setAsync(FirebaseData &fbdo, const String &path, double doubleValue);
 ```
 
 
@@ -1109,6 +1225,10 @@ bool set(FirebaseData &fbdo, const String &path, double doubleValue);
 bool setDouble(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
 
 bool set(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
+
+bool setDoubleAsync(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
+
+bool setAsync(FirebaseData &fbdo, const String &path, double doubleValue, float priority);
 ```
 
 
@@ -1140,6 +1260,10 @@ Also call [FirebaseData object].doubeData to get the current double value.
 bool setDouble(FirebaseData &fbdo, const String &path, double doubleValue, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, double doubleValue, const String &ETag);
+
+bool setDoubleAsync(FirebaseData &fbdo, const String &path, double doubleValue, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, double doubleValue, const String &ETag);
 ```
 
 
@@ -1153,6 +1277,10 @@ bool set(FirebaseData &fbdo, const String &path, double doubleValue, const Strin
 bool setDouble(FirebaseData &fbdo, const String &path, double doubleValue, float priority, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, double doubleValue, float priority, const String &ETag);
+
+bool setDoubleAsync(FirebaseData &fbdo, const String &path, double doubleValue, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, double doubleValue, float priority, const String &ETag);
 ```
 
 
@@ -1178,6 +1306,10 @@ the payload returned from the server.
 bool setBool(FirebaseData &fbdo, const String &path, bool boolValue);
 
 bool set(FirebaseData &fbdo, const String &path, bool boolValue);
+
+bool setBoolAsync(FirebaseData &fbdo, const String &path, bool boolValue);
+
+bool setAsync(FirebaseData &fbdo, const String &path, bool boolValue);
 ```
 
 
@@ -1190,6 +1322,10 @@ bool set(FirebaseData &fbdo, const String &path, bool boolValue);
 bool setBool(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
 
 bool set(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
+
+bool setBoolAsync(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
+
+bool setAsync(FirebaseData &fbdo, const String &path, bool boolValue, float priority);
 ```
 
 
@@ -1224,6 +1360,10 @@ Also call [FirebaseData object].doubeData to get the current boolean value.
 bool setBool(FirebaseData &fbdo, const String &path, bool boolValue, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, bool boolValue, const String &ETag);
+
+bool setBoolAsync(FirebaseData &fbdo, const String &path, bool boolValue, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, bool boolValue, const String &ETag);
 ```
 
 
@@ -1236,6 +1376,10 @@ bool set(FirebaseData &fbdo, const String &path, bool boolValue, const String &E
 bool setBool(FirebaseData &fbdo, const String &path, bool boolValue, float priority, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, bool boolValue, float priority, const String &ETag);
+
+bool setBoolAsync(FirebaseData &fbdo, const String &path, bool boolValue, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, bool boolValue, float priority, const String &ETag);
 ```
 
 
@@ -1264,6 +1408,12 @@ bool setString(FirebaseData &fbdo, const String &path, const String &stringValue
 bool set(FirebaseData &fbdo, const String &path, const char *stringValue);
 
 bool set(FirebaseData &fbdo, const String &path, const String &stringValue);
+
+bool setStringAsync(FirebaseData &fbdo, const String &path, const String &stringValue);
+
+bool setAsync(FirebaseData &fbdo, const String &path, const char *stringValue);
+
+bool setAsync(FirebaseData &fbdo, const String &path, const String &stringValue);
 ```
 
 
@@ -1279,6 +1429,12 @@ bool setString(FirebaseData &fbdo, const String &path, const String &stringValue
 bool set(FirebaseData &fbdo, const String &path, const char *stringValue, float priority);
 
 bool set(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
+
+bool setStringAsync(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
+
+bool setAsync(FirebaseData &fbdo, const String &path, const char *stringValue, float priority);
+
+bool setAsync(FirebaseData &fbdo, const String &path, const String &stringValue, float priority);
 ```
 
 
@@ -1315,6 +1471,12 @@ bool setString(FirebaseData &fbdo, const String &path, const String &stringValue
 bool set(FirebaseData &fbdo, const String &path, const char *stringValue, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, const String &stringValue, const String &ETag);
+
+bool setStringAsync(FirebaseData &fbdo, const String &path, const String &stringValue, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, const char *stringValue, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, const String &stringValue, const String &ETag);
 ```
 
 
@@ -1329,6 +1491,12 @@ bool setString(FirebaseData &fbdo, const String &path, const String &stringValue
 bool set(FirebaseData &fbdo, const String &path, const char *stringValue, float priority, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, const String &stringValue, float priority, const String &ETag);
+
+bool setStringAsync(FirebaseData &fbdo, const String &path, const String &stringValue, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, const char *stringValue, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, const String &stringValue, float priority, const String &ETag);
 ```
 
 
@@ -1362,6 +1530,10 @@ payload returned from server.
 bool setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 
 bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json);
+
+bool setJSONAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json);
+
+bool setAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 ```
 
 
@@ -1376,6 +1548,10 @@ bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 bool setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 
 bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
+
+bool setJSONAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
+
+bool setAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 ```
 
 
@@ -1422,6 +1598,10 @@ to get the FirebaseJson object.
 bool setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json, const String &ETag);
+
+bool setJSONAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, const String &ETag);
 ```
 
 
@@ -1435,6 +1615,10 @@ bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json, const Strin
 bool setJSON(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority, const String &ETag);
+
+bool setJSONAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority, const String &ETag);
 ```
 
 
@@ -1464,6 +1648,10 @@ payload returned from server, get the array payload using FirebaseJsonArray *arr
 bool setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 
 bool set(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
+
+bool setArrayAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
+
+bool setAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 ```
 
 
@@ -1478,6 +1666,10 @@ bool set(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr);
 bool setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
 
 bool set(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
+
+bool setArrayAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
+
+bool setAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority);
 ```
 
 
@@ -1516,14 +1708,23 @@ Also call [FirebaseData object].jsonArray to get the pointer to FirebaseJsonArra
 bool setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, const String &ETag);
+
+bool setArray(AsyncFirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, const String &ETag);
 ```
 
-    Set FirebaseJsonArray object and the virtual child ".priority" if defined ETag matches at the defined database path 
+
+Set FirebaseJsonArray object and the virtual child ".priority" if defined ETag matches at the defined database path 
 
 ```C++
 bool setArray(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority, const String &ETag);
+
+bool setArrayAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, FirebaseJsonArray &arr, float priority, const String &ETag);
 ```
 
 
@@ -1550,6 +1751,10 @@ No payload returned from the server.
 bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 
 bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
+
+bool setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
+
+bool setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 ```
 
 
@@ -1562,6 +1767,10 @@ bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
 
 bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
+
+bool setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
+
+bool setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
 ```
 
 
@@ -1594,6 +1803,10 @@ the operation will fail with HTTP code 412, Precondition Failed (ETag is not mat
 bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag);
+
+bool setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag);
 ```
 
 
@@ -1606,6 +1819,10 @@ bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, con
 bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
 
 bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
+
+bool setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
 ```
 
 
@@ -1632,6 +1849,10 @@ The file systems for flash and sd memory can be changed in FirebaseFS.h.
 bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 
 bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
+
+bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
+
+bool setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 ```
 
 
@@ -1644,6 +1865,10 @@ bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const Stri
 bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 
 bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
+
+bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
+
+bool setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 ```
 
 
@@ -1676,6 +1901,10 @@ The file systems for flash and sd memory can be changed in FirebaseFS.h.
 bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
 
 bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
+
+bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
 ```
 
 
@@ -1689,6 +1918,10 @@ bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const Stri
 bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
 
 bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
+
+bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
+
+bool setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
 
 ```
 
@@ -1712,6 +1945,8 @@ use printf("%.0lf\n", firebaseData.doubleData());.
 
 ```C++
 bool setTimestamp(FirebaseData &fbdo, const String &path);
+
+bool setTimestampAsync(FirebaseData &fbdo, const String &path);
 ```
 
 
@@ -1743,6 +1978,8 @@ To reduce network data usage, use updateNodeSilent instead.
 ```C++
 bool updateNode(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 
+bool updateNodeAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json);
+
 ```
 
 
@@ -1756,6 +1993,8 @@ bool updateNode(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 ```C++
 
 bool updateNode(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
+
+bool updateNodeAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 
 ```
 
@@ -1781,6 +2020,8 @@ no payload will be returned from the server.
 ```C++
 bool updateNodeSilent(FirebaseData &fbdo, const String &path, FirebaseJson &json);
 
+bool updateNodeSilentAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json);
+
 ```
 
 
@@ -1790,8 +2031,9 @@ bool updateNodeSilent(FirebaseData &fbdo, const String &path, FirebaseJson &json
 #### Update child node key and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
 
 ```C++
-
 bool updateNodeSilent(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
+
+bool updateNodeSilentAsync(FirebaseData &fbdo, const String &path, FirebaseJson &json, float priority);
 ```
 
 

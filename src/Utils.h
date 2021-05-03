@@ -58,7 +58,6 @@ public:
     {
         size_t len = strlen_P(pgm) + 5;
         char *buf = newS(len);
-        memset(buf, 0, len);
         strcpy_P(buf, pgm);
         return buf;
     }
@@ -117,7 +116,6 @@ public:
     char *floatStr(float value)
     {
         char *buf = newS(36);
-        memset(buf, 0, 36);
         dtostrf(value, 7, config->_int.fb_float_digits, buf);
         return buf;
     }
@@ -125,7 +123,6 @@ public:
     char *intStr(int value)
     {
         char *buf = newS(36);
-        memset(buf, 0, 36);
         itoa(value, buf, 10);
         return buf;
     }
@@ -143,7 +140,6 @@ public:
     char *doubleStr(double value)
     {
         char *buf = newS(36);
-        memset(buf, 0, 36);
         dtostrf(value, 12, config->_int.fb_double_digits, buf);
         return buf;
     }
@@ -246,6 +242,7 @@ public:
     {
         if (p != nullptr)
             delete[] p;
+        p = nullptr;
     }
 
     char *newS(size_t len)
@@ -255,51 +252,38 @@ public:
         return p;
     }
 
-    char *newS(char *p, size_t len)
-    {
-        delS(p);
-        p = newS(len);
-        return p;
-    }
-
-    char *newS(char *p, size_t len, char *d)
-    {
-        delS(p);
-        p = newS(len);
-        strcpy(p, d);
-        return p;
-    }
-
     std::vector<std::string> splitString(int size, const char *str, const char delim)
     {
         uint16_t index = 0;
         uint16_t len = strlen(str);
         int buffSize = (int)(size * 1.4f);
-        char *buf = newS(buffSize);
+        char *buf = nullptr;
         std::vector<std::string> out;
 
         for (uint16_t i = 0; i < len; i++)
         {
             if (str[i] == delim)
             {
-                buf = newS(buf, buffSize);
+                buf = newS(buffSize);
                 strncpy(buf, (char *)str + index, i - index);
                 buf[i - index] = '\0';
                 index = i + 1;
                 out.push_back(buf);
+                delS(buf);
             }
         }
+
         if (index < len + 1)
         {
-            buf = newS(buf, buffSize);
+            buf = newS(buffSize);
             strncpy(buf, (char *)str + index, len - index);
             buf[len - index] = '\0';
             out.push_back(buf);
+            delS(buf);
         }
-
-        delS(buf);
         return out;
     }
+
     void getUrlInfo(const std::string url, struct fb_esp_url_info_t &info)
     {
         char *host = newS(url.length() + 5);

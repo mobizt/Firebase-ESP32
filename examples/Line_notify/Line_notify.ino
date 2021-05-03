@@ -102,6 +102,10 @@ void setup()
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   Firebase.begin(&config, &auth);
+
+  //Or use legacy authenticate method
+  //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+
   Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)

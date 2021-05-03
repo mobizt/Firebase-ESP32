@@ -110,6 +110,10 @@ void setup()
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   Firebase.begin(&config, &auth);
+
+  //Or use legacy authenticate method
+  //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+
   Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)
@@ -154,67 +158,31 @@ void loop()
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
-    count++;
 
     Serial.println("------------------------------------");
     Serial.println("Set JSON...");
 
     FirebaseJson json;
-    json.set("node1/data", "hello");
-    json.set("node1/num", count);
-    json.set("node2/data", "hi");
-    json.set("node2/num", count);
-    if (Firebase.setJSON(fbdo2, parentPath.c_str(), json))
+
+    for (size_t i = 0; i < 10; i++)
     {
-      Serial.println("PASSED");
-      Serial.println();
-    }
-    else
-    {
-      Serial.println("FAILED");
-      Serial.println("REASON: " + fbdo2.errorReason());
-      Serial.println("------------------------------------");
-      Serial.println();
-    }
-
-    //This will trig the another stream event.
-
-    Serial.println("------------------------------------");
-    Serial.println("Set string...");
-
-    String Path = parentPath + "/node2/new/data";
-
-    if (Firebase.setString(fbdo2, Path.c_str(), "test"))
-    {
-      Serial.println("PASSED");
-      Serial.println();
-    }
-    else
-    {
-      Serial.println("FAILED");
-      Serial.println("REASON: " + fbdo2.errorReason());
-      Serial.println("------------------------------------");
-      Serial.println();
-    }
-
-    //This will trig the another stream event.
-
-    Serial.println("------------------------------------");
-    Serial.println("Set int...");
-
-    Path = parentPath + "/node1/new/data";
-
-    if (Firebase.setInt(fbdo2, Path.c_str(), count))
-    {
-      Serial.println("PASSED");
-      Serial.println();
-    }
-    else
-    {
-      Serial.println("FAILED");
-      Serial.println("REASON: " + fbdo2.errorReason());
-      Serial.println("------------------------------------");
-      Serial.println();
+      json.set("node1/data", "hello");
+      json.set("node1/num", count);
+      json.set("node2/data", "hi");
+      json.set("node2/num", count);
+      if (Firebase.setJSONAsync(fbdo2, parentPath.c_str(), json))
+      {
+        Serial.println("PASSED");
+        Serial.println();
+      }
+      else
+      {
+        Serial.println("FAILED");
+        Serial.println("REASON: " + fbdo2.errorReason());
+        Serial.println("------------------------------------");
+        Serial.println();
+      }
+      count++;
     }
   }
 }

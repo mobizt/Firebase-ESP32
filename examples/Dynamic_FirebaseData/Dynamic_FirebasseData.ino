@@ -108,6 +108,10 @@ void setup()
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
     Firebase.begin(&config, &auth);
+
+    //Or use legacy authenticate method
+    //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+
     Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)
@@ -200,13 +204,9 @@ void loop()
         Serial.println("Set Int...");
         String Path = path + "/Int";
 
-        if (Firebase.set(*fbdo2, Path.c_str(), count))
+        if (Firebase.setAsync(*fbdo2, Path.c_str(), count))
         {
             Serial.println("PASSED");
-            Serial.println("PATH: " + fbdo2->dataPath());
-            Serial.println("TYPE: " + fbdo2->dataType());
-            Serial.print("VALUE: ");
-            printResult(*fbdo2); //see addons/RTDBHelper.h
             Serial.println("------------------------------------");
             Serial.println();
         }

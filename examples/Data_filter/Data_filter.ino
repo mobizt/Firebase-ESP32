@@ -84,6 +84,10 @@ void setup()
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
   Firebase.begin(&config, &auth);
+
+  //Or use legacy authenticate method
+  //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+
   Firebase.reconnectWiFi(true);
 
 #if defined(ESP8266)
@@ -110,13 +114,9 @@ void loop()
       json.set("Data2", i + 100);
 
       //Also can use Firebase.push instead of Firebase.pushJSON
-      //JSON string does not support in v 2.6.0 and later, only FirebaseJson object is supported.
-      if (Firebase.pushJSON(fbdo, "/Test/Int", json))
+      if (Firebase.pushJSONAsync(fbdo, "/Test/Int", json))
       {
         Serial.println("PASSED");
-        Serial.println("PATH: " + fbdo.dataPath());
-        Serial.print("PUSH NAME: ");
-        Serial.println(fbdo.pushName());
         Serial.println("------------------------------------");
         Serial.println();
       }
