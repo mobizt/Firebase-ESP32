@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Token Generation class, Signer.cpp version 1.0.10
+ * Google's Firebase Token Generation class, Signer.cpp version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 1, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
@@ -614,12 +614,7 @@ bool Firebase_Signer::refreshToken()
                 config->signer.json->get(*config->signer.data, tmp);
                 ut->delS(tmp);
                 if (config->signer.data->success)
-                {
-                    time_t ts = time(nullptr);
-                    unsigned long ms = millis();
-                    config->signer.tokens.expires = ts + atoi(config->signer.data->stringValue.c_str());
-                    config->signer.tokens.last_millis = ms;
-                }
+                    getExpiration(config->signer.data->stringValue);
 
                 tmp = ut->strP(fb_esp_pgm_str_175);
                 config->signer.json->get(*config->signer.data, tmp);
@@ -1032,10 +1027,11 @@ bool Firebase_Signer::createJWT()
             ut->appendP(s, fb_esp_pgm_str_6);
             s += buri;
             ut->appendP(s, fb_esp_pgm_str_225);
-
+#if defined(FIREBASE_ESP_CLIENT)
             ut->appendP(s, fb_esp_pgm_str_6);
             s += buri;
             ut->appendP(s, fb_esp_pgm_str_451);
+#endif
 
             if (config->signer.tokens.scope.length() > 0)
             {
@@ -1641,10 +1637,10 @@ bool Firebase_Signer::requestTokens()
 
 void Firebase_Signer::getExpiration(const String &exp)
 {
-        time_t ts = time(nullptr);
-        unsigned long ms = millis();
-        config->signer.tokens.expires = ts + atoi(config->signer.data->stringValue.c_str());
-        config->signer.tokens.last_millis = ms;
+    time_t ts = time(nullptr);
+    unsigned long ms = millis();
+    config->signer.tokens.expires = ts + atoi(config->signer.data->stringValue.c_str());
+    config->signer.tokens.last_millis = ms;
 }
 
 bool Firebase_Signer::handleEmailSending(const char *payload, fb_esp_user_email_sending_type type)
@@ -1818,7 +1814,7 @@ bool Firebase_Signer::tokenReady()
 {
     if (!auth || !config)
         return false;
-        
+
     checkToken();
     return config->signer.tokens.status == token_status_ready;
 };
@@ -1967,20 +1963,12 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
     case FIREBASE_ERROR_FILE_IO_ERROR:
         ut->appendP(buff, fb_esp_pgm_str_192);
         return;
+#if defined(FIREBASE_ESP_CLIENT)
     case FIREBASE_ERROR_FILE_NOT_FOUND:
         ut->appendP(buff, fb_esp_pgm_str_449);
         return;
     case FIREBASE_ERROR_ARCHIVE_NOT_FOUND:
         ut->appendP(buff, fb_esp_pgm_str_450);
-        return;
-    case FIREBASE_ERROR_TOKEN_NOT_READY:
-        ut->appendP(buff, fb_esp_pgm_str_252);
-        return;
-    case FIREBASE_ERROR_UNINITIALIZED:
-        ut->appendP(buff, fb_esp_pgm_str_256);
-        return;
-    case FIREBASE_ERROR_HTTPC_FCM_OAUTH2_REQUIRED:
-        ut->appendP(buff, fb_esp_pgm_str_328);
         return;
     case FIREBASE_ERROR_LONG_RUNNING_TASK:
         ut->appendP(buff, fb_esp_pgm_str_534);
@@ -1990,6 +1978,16 @@ void Firebase_Signer::errorToString(int httpCode, std::string &buff)
         return;
     case FIREBASE_ERROR_UPLOAD_DATA_ERRROR:
         ut->appendP(buff, fb_esp_pgm_str_541);
+        return;
+#endif
+    case FIREBASE_ERROR_TOKEN_NOT_READY:
+        ut->appendP(buff, fb_esp_pgm_str_252);
+        return;
+    case FIREBASE_ERROR_UNINITIALIZED:
+        ut->appendP(buff, fb_esp_pgm_str_256);
+        return;
+    case FIREBASE_ERROR_HTTPC_FCM_OAUTH2_REQUIRED:
+        ut->appendP(buff, fb_esp_pgm_str_328);
         return;
     default:
         return;

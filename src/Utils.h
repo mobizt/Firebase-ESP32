@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Util class, Utils.h version 1.0.10
+ * Google's Firebase Util class, Utils.h version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created April 4, 2021
+ * Created May 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -59,6 +59,7 @@ public:
         size_t len = strlen_P(pgm) + 5;
         char *buf = newS(len);
         strcpy_P(buf, pgm);
+        buf[strlen_P(pgm)] = 0;
         return buf;
     }
 
@@ -359,30 +360,37 @@ public:
         return o - dec;
     }
 
-    std::string url_encode(const std::string &s) 
+    std::string url_encode(const std::string &s)
     {
-      const char *str = s.c_str();
-      std::vector<char> v(s.size());
-      v.clear();
-      for (size_t i = 0, l = s.size(); i < l; i++) {
-        char c = str[i];
-        if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') ||
-            (c >= 'a' && c <= 'z') || c == '-' || c == '_' || c == '.' ||
-            c == '!' || c == '~' || c == '*' || c == '\'' || c == '(' ||
-            c == ')') {
-          v.push_back(c);
-        } else if (c == ' ') {
-          v.push_back('+');
-        } else {
-          v.push_back('%');
-          unsigned char d1, d2;
-          hexchar(c, d1, d2);
-          v.push_back(d1);
-          v.push_back(d2);
+        const char *str = s.c_str();
+        std::vector<char> v(s.size());
+        v.clear();
+        for (size_t i = 0, l = s.size(); i < l; i++)
+        {
+            char c = str[i];
+            if ((c >= '0' && c <= '9') ||
+                (c >= 'A' && c <= 'Z') ||
+                (c >= 'a' && c <= 'z') ||
+                c == '-' || c == '_' || c == '.' || c == '!' || c == '~' ||
+                c == '*' || c == '\'' || c == '(' || c == ')')
+            {
+                v.push_back(c);
+            }
+            else if (c == ' ')
+            {
+                v.push_back('+');
+            }
+            else
+            {
+                v.push_back('%');
+                unsigned char d1, d2;
+                hexchar(c, d1, d2);
+                v.push_back(d1);
+                v.push_back(d2);
+            }
         }
-      }
 
-      return std::string(v.cbegin(), v.cend());
+        return std::string(v.cbegin(), v.cend());
     }
 
     inline int ishex(int x)
@@ -652,47 +660,6 @@ public:
         return olen;
     }
 
-    char *getHeader(const char *buf, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
-    {
-
-        char *tmp = strP(beginH);
-        int p1 = strpos(buf, tmp, beginPos);
-        int ofs = 0;
-        delS(tmp);
-        if (p1 != -1)
-        {
-            tmp = strP(endH);
-            int p2 = -1;
-            if (endPos > 0)
-                p2 = endPos;
-            else if (endPos == 0)
-            {
-                ofs = strlen_P(endH);
-                p2 = strpos(buf, tmp, p1 + strlen_P(beginH) + 1);
-            }
-            else if (endPos == -1)
-            {
-                beginPos = p1 + strlen_P(beginH);
-            }
-
-            if (p2 == -1)
-                p2 = strlen(buf);
-
-            delS(tmp);
-
-            if (p2 != -1)
-            {
-                beginPos = p2 + ofs;
-                int len = p2 - p1 - strlen_P(beginH);
-                tmp = newS(len + 1);
-                memcpy(tmp, &buf[p1 + strlen_P(beginH)], len);
-                return tmp;
-            }
-        }
-
-        return nullptr;
-    }
-
     int readChunkedData(WiFiClient *stream, std::string &out, int &chunkState, int &chunkedSize, int &dataLen)
     {
 
@@ -768,6 +735,84 @@ public:
         }
 
         return olen;
+    }
+
+    char *getHeader(const char *buf, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
+    {
+
+        char *tmp = strP(beginH);
+        int p1 = strpos(buf, tmp, beginPos);
+        int ofs = 0;
+        delS(tmp);
+        if (p1 != -1)
+        {
+            tmp = strP(endH);
+            int p2 = -1;
+            if (endPos > 0)
+                p2 = endPos;
+            else if (endPos == 0)
+            {
+                ofs = strlen_P(endH);
+                p2 = strpos(buf, tmp, p1 + strlen_P(beginH) + 1);
+            }
+            else if (endPos == -1)
+            {
+                beginPos = p1 + strlen_P(beginH);
+            }
+
+            if (p2 == -1)
+                p2 = strlen(buf);
+
+            delS(tmp);
+
+            if (p2 != -1)
+            {
+                beginPos = p2 + ofs;
+                int len = p2 - p1 - strlen_P(beginH);
+                tmp = newS(len + 1);
+                memcpy(tmp, &buf[p1 + strlen_P(beginH)], len);
+                return tmp;
+            }
+        }
+
+        return nullptr;
+    }
+
+    void getHeaderStr(const std::string &in, std::string &out, PGM_P beginH, PGM_P endH, int &beginPos, int endPos)
+    {
+
+        char *tmp = strP(beginH);
+        int p1 = strpos(in.c_str(), tmp, beginPos);
+        int ofs = 0;
+        delS(tmp);
+        if (p1 != -1)
+        {
+            tmp = strP(endH);
+            int p2 = -1;
+            if (endPos > 0)
+                p2 = endPos;
+            else if (endPos == 0)
+            {
+                ofs = strlen_P(endH);
+                p2 = strpos(in.c_str(), tmp, p1 + strlen_P(beginH) + 1);
+            }
+            else if (endPos == -1)
+            {
+                beginPos = p1 + strlen_P(beginH);
+            }
+
+            if (p2 == -1)
+                p2 = in.length();
+
+            delS(tmp);
+
+            if (p2 != -1)
+            {
+                beginPos = p2 + ofs;
+                int len = p2 - p1 - strlen_P(beginH);
+                out = in.substr(p1 + strlen_P(beginH), len);
+            }
+        }
     }
 
     void parseRespPayload(const char *buf, struct server_response_data_t &response, bool getOfs)

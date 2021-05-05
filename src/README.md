@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.9.1
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.9.2
 
 
 ## Global functions
@@ -2672,6 +2672,38 @@ the operation will fail with HTTP code 412, Precondition Failed (ETag is not mat
 ```C++
 bool deleteNode(FirebaseData &fbdo, const String &path, const String &ETag);
 ```
+
+
+
+
+
+
+
+
+
+#### Delete nodes that its timestamp node exceeded the data retaining period.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`path`** The parent path of children nodes that being delete.
+
+param **`timestampNode`** The sub-child node that keep the timestamp. 
+
+param **`limit`** The maximum number of children nodes to delete at once, 30 is maximum.
+
+param **`dataRetentionPeriod`**The period in seconds of data in the past which will be retained.
+
+return **`Boolean`** value, indicates the success of the operation.*
+
+note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in.
+
+```cpp
+ bool deleteNodesByTimestamp(FirebaseData &fbdo, const String &path, const String &timestampNode, size_t limit, unsigned long dataRetentionPeriod);
+```
+
+
+
+
 
 
 

@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.cpp version 1.0.9
+ * Google's Firebase Data class, FB_Session.cpp version 1.0.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 1, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -49,10 +49,8 @@ bool FirebaseData::init()
     if (!Signer.getCfg())
         return false;
 
-    if (ut == nullptr)
+    if (!ut)
         ut = new UtilsClass(Signer.getCfg());
-
-    fcm.begin(ut);
 
     return true;
 }
@@ -399,7 +397,9 @@ fs::File FirebaseData::fileStream()
     {
         char *tmp = ut->strP(fb_esp_pgm_str_184);
 
-        if (ut->flashTest())
+        ut->flashTest();
+
+        if (Signer.getCfg()->_int.fb_flash_rdy)
             Signer.getCfg()->_int.fb_file = FLASH_FS.open(tmp, "r");
         ut->delS(tmp);
     }
@@ -478,10 +478,12 @@ String FirebaseData::payload()
 {
     if (_ss.con_mode == fb_esp_con_mode_rtdb)
         return _ss.rtdb.data.c_str();
+#if defined(FIREBASE_ESP_CLIENT)
     else if (_ss.con_mode == fb_esp_con_mode_firestore)
         return _ss.cfs.payload.c_str();
     else if (_ss.con_mode == fb_esp_con_mode_functions)
         return _ss.cfn.payload.c_str();
+#endif
     else
         return "";
 }
@@ -496,6 +498,7 @@ String FirebaseData::errorReason()
     return buf.c_str();
 }
 
+#if defined(FIREBASE_ESP_CLIENT)
 FileMetaInfo FirebaseData::metaData()
 {
     if (_ss.con_mode == fb_esp_con_mode_gc_storage)
@@ -556,6 +559,7 @@ String FirebaseData::downloadURL()
 
     return link.c_str();
 }
+#endif
 
 int FirebaseData::httpCode()
 {
@@ -564,7 +568,7 @@ int FirebaseData::httpCode()
 
 void FirebaseData::closeSession()
 {
-    if (WiFi.status() == WL_CONNECTED || !ut->ethLinkUp())
+    if (WiFi.status() == WL_CONNECTED || ut->ethLinkUp())
     {
         //close the socket and free the resources used by the BearSSL data
         if (_ss.connected || httpClient.stream())
@@ -724,16 +728,20 @@ void FirebaseData::addQueue(struct fb_esp_rtdb_queue_info_t *qinfo)
         else
             item.queryFilter.clear();
 
-        item.stringPtr = qinfo->stringTarget;
-        item.intPtr = qinfo->intTarget;
-        item.floatPtr = qinfo->floatTarget;
-        item.doublePtr = qinfo->doubleTarget;
-        item.boolPtr = qinfo->boolTarget;
-        item.jsonPtr = qinfo->jsonTarget;
-        item.arrPtr = qinfo->arrTarget;
-        item.blobPtr = qinfo->blobTarget;
+        item.stringPtr = qinfo->stringPtr;
+        item.intPtr = qinfo->intPtr;
+        item.floatPtr = qinfo->floatPtr;
+        item.doublePtr = qinfo->doublePtr;
+        item.boolPtr = qinfo->boolPtr;
+        item.jsonPtr = qinfo->jsonPtr;
+        item.arrPtr = qinfo->arrPtr;
+        item.blobPtr = qinfo->blobPtr;
         item.qID = random(100000, 200000);
+#if defined(FIREBASE_ESP_CLIENT)
+        item.storageType = qinfo->storageType;
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
         item.storageType = (fb_esp_mem_storage_type)qinfo->storageType;
+#endif
         if (_qMan.add(item))
             _ss.rtdb.queue_ID = item.qID;
         else
@@ -754,9 +762,10 @@ void FirebaseData::clear()
             httpClient.stream()->stop();
         _ss.connected = false;
     }
+#if defined(FIREBASE_ESP_CLIENT)
     _ss.cfn.payload.clear();
-    std::string()
-        .swap(_ss.cfn.payload);
+    std::string().swap(_ss.cfn.payload);
+#endif
     _ss.json.clear();
     _ss.arr.clear();
 
@@ -769,7 +778,7 @@ void FirebaseData::clear()
     std::string().swap(_ss.rtdb.req_etag);
     std::string().swap(_ss.rtdb.resp_etag);
     std::string().swap(_ss.rtdb.priority);
-
+#if defined(FIREBASE_ESP_CLIENT)
     std::string().swap(_ss.gcs.meta.bucket);
     std::string().swap(_ss.gcs.meta.contentType);
     std::string().swap(_ss.gcs.meta.crc32);
@@ -791,9 +800,14 @@ void FirebaseData::clear()
     std::string().swap(_ss.fcs.meta.name);
     _ss.fcs.files.items.clear();
     std::string().swap(_ss.cfs.payload);
+#endif
 }
 
-FCMObject::FCMObject() {}
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
+
+FCMObject::FCMObject()
+{
+}
 FCMObject::~FCMObject()
 {
     clear();
@@ -1409,5 +1423,6 @@ void FCMObject::clear()
     clearDeviceToken();
     std::vector<std::string>().swap(_deviceToken);
 }
+#endif
 
 #endif

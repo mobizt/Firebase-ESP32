@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v 3.9.1
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.9.2
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.

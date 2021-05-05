@@ -1,15 +1,15 @@
 /**
- * Google's Firebase Token Generation class, Signer.h version 1.0.10
+ * Google's Firebase Token Generation class, Signer.h version 1.0.11
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 1, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
  * 
  * The MIT License (MIT)
- * Copyright (c) 2021 K. Suwatchai (Mobizt)
+ * Copyright (c) 2020, 2021 K. Suwatchai (Mobizt)
  * 
  * 
  * Permission is hereby granted, free of charge, to any person returning a copy of
@@ -38,20 +38,34 @@
 
 class Firebase_Signer
 {
+#if defined(FIREBASE_ESP_CLIENT)
+    friend class Firebase_ESP_Client;
+    friend class FB_CM;
+    friend class FB_Storage;
+    friend class GG_CloudStorage;
+    friend class FB_Firestore;
+    friend class FB_Functions;
+    friend class Binding;
+    friend class PolicyBuilder;
+    friend class AuditLogConfig;
+    friend class AuditConfig;
+    friend class FunctionsConfig;
 
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #if defined(ESP32)
     friend class FirebaseESP32;
 #elif defined(ESP8266)
     friend class FirebaseESP8266;
 #endif
-    friend class FirebaseData;
-    friend class FB_RTDB;
     friend class FCMObject;
+#endif
+    friend class FIREBASE_STREAM_CLASS;
+    friend class FIREBASE_MP_STREAM_CLASS;
     friend class UtilsClass;
-    friend class StreamData;
+    friend class FB_RTDB;
+    friend class FirebaseData;
     friend class QueryFilter;
-    friend class MultiPathStream;
-
+  
 public:
     Firebase_Signer();
     ~Firebase_Signer();

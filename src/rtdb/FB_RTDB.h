@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.13
+ * Google's Firebase Realtime Database class, FB_RTDB.h version 1.0.14
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created May 4, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -42,9 +42,17 @@
 class FB_RTDB
 {
 #if defined(ESP32)
+#if defined(FIREBASE_ESP32_CLIENT)
   friend class FirebaseESP32;
+#endif
 #elif defined(ESP8266)
+#if defined(FIREBASE_ESP8266_CLIENT)
   friend class FirebaseESP8266;
+#endif
+#endif
+
+#if defined(FIREBASE_ESP_CLIENT)
+  friend class Firebase_ESP_Client;
 #endif
 
 public:
@@ -1826,6 +1834,7 @@ private:
   bool int_pushBlob(FirebaseData *fbdo, const char *path, uint8_t *blob, size_t size, bool queue, const char *priority, bool async);
   bool int_pushFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, bool async);
   bool int_pushTimestamp(FirebaseData *fbdo, const char *path, bool async);
+  bool int_get(FirebaseData *fbdo, struct fb_esp_rtdb_request_data_info *data);
   bool int_setInt(FirebaseData *rtdb, const char *path, int intValue, bool queue, const char *priority, const char *etag, bool async);
   bool int_setFloat(FirebaseData *rtdb, const char *path, float floatValue, bool queue, const char *priority, const char *etag, bool async);
   bool int_setDouble(FirebaseData *rtdb, const char *path, double doubleValue, bool queue, const char *priority, const char *etag, bool async);
@@ -1835,7 +1844,7 @@ private:
   bool int_setArray(FirebaseData *fbdo, const char *path, FirebaseJsonArray *arr, const char *priority, const char *ETag, bool async);
   bool int_setBlob(FirebaseData *rtdb, const char *path, uint8_t *blob, size_t size, bool queue, const char *priority, const char *etag, bool async);
   bool int_setFile(FirebaseData *fbdo, fb_esp_mem_storage_type storageType, const char *path, const char *fileName, const char *priority, const char *etag, bool async);
-  bool int_setPriority(FirebaseData *fbdo, const char *path, float priority,bool async);
+  bool int_setPriority(FirebaseData *fbdo, const char *path, float priority, bool async);
   bool int_setTimestamp(FirebaseData *fbdo, const char *path, bool async);
   bool int_updateNode(FirebaseData *fbdo, const char *path, FirebaseJson *json, const char *priority, bool silent, bool async);
   bool handleStreamRequest(FirebaseData *fbdo, const std::string &path);

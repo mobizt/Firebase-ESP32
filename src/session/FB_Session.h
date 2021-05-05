@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.0.9
+ * Google's Firebase Data class, FB_Session.h version 1.0.10
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created  May 1, 2021
+ * Created May 5, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -40,6 +40,8 @@
 #include "rtdb/QueueManager.h"
 
 #include "signer/Signer.h"
+
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 
 enum fb_esp_fcm_msg_type
 {
@@ -199,20 +201,30 @@ private:
   FirebaseConfig _cfg_;
 };
 
+#endif
+
 class FirebaseData
 {
+  friend class FB_RTDB;
+  friend class UtilsClass;
+#if defined(FIREBASE_ESP_CLIENT)
+  friend class FB_CM;
+  friend class GG_CloudStorage;
+  friend class FB_Storage;
+  friend class FB_Firestore;
+  friend class FB_Functions;
+#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
 #if defined(ESP32)
   friend class FirebaseESP32;
 #elif defined(ESP8266)
   friend class FirebaseESP8266;
 #endif
   friend class FCMObject;
-  friend class FB_RTDB;
-  friend class UtilsClass;
+#endif
 
 public:
-  typedef void (*StreamEventCallback)(StreamData);
-  typedef void (*MultiPathStreamEventCallback)(MultiPathStreamData);
+  typedef void (*StreamEventCallback)(FIREBASE_STREAM_CLASS);
+  typedef void (*MultiPathStreamEventCallback)(FIREBASE_MP_STREAM_CLASS);
   typedef void (*StreamTimeoutCallback)(bool);
   typedef void (*QueueInfoCallback)(QueueInfo);
 
@@ -244,9 +256,9 @@ public:
   bool pauseFirebase(bool pause);
 
   /** Check the pause status of Firebase Data object.
-  *
-  * @return Boolean type value of pause status.
- */
+   * 
+   * @return Boolean type value of pause status.
+  */
   bool isPause();
 
   /** Get a WiFi client instance.
@@ -302,6 +314,8 @@ public:
   */
   String dataPath();
 
+#if defined(FIREBASE_ESP_CLIENT)
+
   /** Get the metadata of a file in the Firebase storage data bucket.
    * 
    * @return The FileMetaInfo data of file.
@@ -333,6 +347,8 @@ public:
    * @return The URL to download file.
   */
   String downloadURL();
+
+#endif
 
   /** Get the error reason String from the process.
    * 
@@ -528,14 +544,18 @@ public:
 #endif
 
   QueryFilter queryFilter;
+#if defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
   FCMObject fcm;
+#endif
 
 private:
   StreamEventCallback _dataAvailableCallback = NULL;
   MultiPathStreamEventCallback _multiPathDataCallback = NULL;
   StreamTimeoutCallback _timeoutCallback = NULL;
   QueueInfoCallback _queueInfoCallback = NULL;
+#if defined(FIREBASE_ESP_CLIENT)
   FunctionsOperationCallback _functionsOperationCallback = NULL;
+#endif
 
   UtilsClass *ut = nullptr;
   QueueManager _qMan;
