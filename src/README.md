@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.9.2
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.9.3
 
 
 ## Global functions
