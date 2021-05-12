@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.9.3
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.9.4
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -284,7 +284,7 @@ The session was close when the host or ip changes or server closed or the sessio
 When the new session need to be opened, the SSL handshake will be processed again and used the time approx 1 - 2 seconds to be done.
 
 
-For post (push) or put (set) the request in RTDB, to speed up the data transfer, use pushAsync or setAsync instead.
+For post (push) or put (set) request in RTDB, to speed up the data transfer, use pushAsync or setAsync instead.
 
 
 With pushAsync and setAsync, the payload response will be ignored and the next data will be processed immediately.
