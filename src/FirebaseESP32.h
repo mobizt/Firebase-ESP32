@@ -1,11 +1,12 @@
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.9.4
+ * Google's Firebase Realtime Database Arduino Library for ESP32, version 3.9.5
  *
- * May 12, 2021
+ * May 17, 2021
  *
  *   Updates:
  *
- * - Fix FirebaseJson tokens extraction issue.
+ * - Fix the SD check issue.
+ * - Fix RTDB File get issue.
  * 
  *
  * 

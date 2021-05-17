@@ -98,7 +98,7 @@ void setup()
   fbdo.setResponseSize(1024);
 
   //Mount SD card
-  if (!SD.begin(15))
+  if (!Firebase.sdBegin(13, 14, 2, 15)) //SS, SCK,MISO, MOSI
   {
     Serial.println("SD Card mounted failed");
     return;
@@ -166,6 +166,8 @@ void loop()
 
       Serial.println("PASSED");
       Serial.println("DATA");
+
+      Firebase.sdBegin(13, 14, 2, 15); //SS, SCK,MISO, MOSI
 
       //Readout the downloaded file
       file = SD.open("/file2.txt", FILE_READ);
@@ -237,6 +239,8 @@ void loop()
 
         Serial.println("PASSED");
         Serial.println("DATA");
+
+        Firebase.sdBegin(13, 14, 2, 15); //SS, SCK,MISO, MOSI
 
         //Readout the downloaded file
         file = SD.open("/file3.txt", FILE_READ);

@@ -114,7 +114,7 @@ void loop()
       json.set("Data2", i + 100);
 
       //Also can use Firebase.push instead of Firebase.pushJSON
-      if (Firebase.pushJSONAsync(fbdo, "/Test/Int", json))
+      if (Firebase.pushJSON(fbdo, "/Test/Int", json))
       {
         Serial.println("PASSED");
         Serial.println("------------------------------------");

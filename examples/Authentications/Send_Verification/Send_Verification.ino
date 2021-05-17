@@ -138,7 +138,7 @@ void loop()
 
         String Path = path + "/int";
 
-        if (Firebase.setAsync(fbdo, Path.c_str(), count++))
+        if (Firebase.set(fbdo, Path.c_str(), count++))
         {
             Serial.println("PASSED");
             Serial.println("------------------------------------");

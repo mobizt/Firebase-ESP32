@@ -186,7 +186,7 @@ void loop()
     Serial.println("------------------------------------");
     Serial.println("Update Data 1...");
     Path = path + "/Stream/data1";
-    if (Firebase.updateNodeAsync(fbdo1, Path.c_str(), json))
+    if (Firebase.updateNode(fbdo1, Path.c_str(), json))
     {
       Serial.println("PASSED");
       Serial.println("------------------------------------");

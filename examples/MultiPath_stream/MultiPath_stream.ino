@@ -170,18 +170,10 @@ void loop()
       json.set("node1/num", count);
       json.set("node2/data", "hi");
       json.set("node2/num", count);
-      if (Firebase.setJSONAsync(fbdo2, parentPath.c_str(), json))
-      {
-        Serial.println("PASSED");
-        Serial.println();
-      }
-      else
-      {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo2.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
+      
+      //The response is ignored in this async function, it may return true as long as the connection is established.
+      //The purpose for this async function is to set, push and update data instantly.
+      Firebase.setJSONAsync(fbdo2, parentPath.c_str(), json);
       count++;
     }
   }

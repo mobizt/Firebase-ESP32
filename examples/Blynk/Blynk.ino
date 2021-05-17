@@ -192,7 +192,7 @@ BLYNK_WRITE(V1)
   Serial.println("------------------------------------");
   Serial.println("Set integer...");
   //Also can use Firebase.set instead of Firebase.setInt
-  if (Firebase.setIntAsync(fbdo2, path.c_str(), pinValue))
+  if (Firebase.setInt(fbdo2, path.c_str(), pinValue))
   {
     Serial.println("PASSED");
     Serial.println("------------------------------------");
