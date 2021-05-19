@@ -38,13 +38,11 @@
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-//Define FirebaseESP8266 data object
+//Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
 FirebaseConfig config;
-
-String path = "/Test/Async";
 
 unsigned long sendDataPrevMillis = 0;
 
@@ -69,6 +67,8 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
+    Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+
     /* Assign the api key (required) */
     config.api_key = API_KEY;
 
@@ -85,10 +85,9 @@ void setup()
     Firebase.begin(&config, &auth);
 
     //Or use legacy authenticate method
-    //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+    //Firebase.begin(DATABASE_URL, "<database secret>");
 
     Firebase.reconnectWiFi(true);
-
 }
 
 void loop()
@@ -97,14 +96,15 @@ void loop()
     {
         sendDataPrevMillis = millis();
 
-        Serial.println("Set Int Async...");
+        Serial.print("Set int async... ");
 
         for (size_t i = 0; i < 10; i++)
         {
             //The response is ignored in this async function, it may return true as long as the connection is established.
             //The purpose for this async function is to set, push and update data instantly.
-            Firebase.setIntAsync(fbdo, path.c_str(), count);
+            Firebase.setIntAsync(fbdo, "/test/int", count);
             count++;
         }
+        Serial.println("ok");
     }
 }

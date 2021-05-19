@@ -41,7 +41,7 @@
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-//Define FirebaseESP8266 data object
+//Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
@@ -70,6 +70,8 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
+    Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+
     /* Assign the api key (required) */
     config.api_key = API_KEY;
 
@@ -86,17 +88,9 @@ void setup()
     Firebase.begin(&config, &auth);
 
     //Or use legacy authenticate method
-    //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
+    //Firebase.begin(DATABASE_URL, "<database secret>");
 
     Firebase.reconnectWiFi(true);
-
-#if defined(ESP8266)
-    //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
-    fbdo.setBSSLBufferSize(1024, 1024);
-#endif
-
-    //Set the size of HTTP response buffers in the case where we want to work with large data.
-    fbdo.setResponseSize(1024);
 }
 
 void loop()
@@ -104,11 +98,6 @@ void loop()
     if (Firebase.ready() && !taskCompleted)
     {
         taskCompleted = true;
-
-        String path = "/Test";
-
-        Serial.println("------------------------------------");
-        Serial.println("Set priority test...");
 
         for (int i = 0; i < 15; i++)
         {
@@ -118,53 +107,19 @@ void loop()
             String val = "value_" + String(i + 1);
             json.clear();
             json.set(key, val);
-            String Path = path + "/Items/priority_" + String(15 - i);
+            String Path =  "/test/items/priority_" + String(15 - i);
 
-            if (Firebase.setJSON(fbdo, Path.c_str(), json, priority))
-            {
-                Serial.println("PASSED");
-                Serial.println("PATH: " + fbdo.dataPath());
-                Serial.println("TYPE: " + fbdo.dataType());
-                Serial.println("CURRENT ETag: " + fbdo.ETag());
-                Serial.print("VALUE: ");
-                printResult(fbdo); //see addons/RTDBHelper.h
-                Serial.println("------------------------------------");
-                Serial.println();
-            }
-            else
-            {
-                Serial.println("FAILED");
-                Serial.println("REASON: " + fbdo.errorReason());
-                Serial.println("------------------------------------");
-                Serial.println();
-            }
+            Serial.printf("Set json with proprity... %s\n", Firebase.setJSONAsync(fbdo, Path.c_str(), json, priority) ? "ok" : fbdo.errorReason().c_str());
         }
 
-        //Qury child nodes under "/Test/Item" with priority between 3.0 and 8.0
+        //Qury child nodes under "/test/items" with priority between 3.0 and 8.0
         //Since data ordering is not supported in Firebase's REST APIs, then the query result will not sorted.
         QueryFilter query;
         query.orderBy("$priority").startAt(3.0).endAt(8.0);
 
-        Serial.println("------------------------------------");
-        Serial.println("Filtering based on priority test...");
+        Serial.printf("Set json with proprity... %s\n", Firebase.getJSON(fbdo, "/test/items", query) ? "ok" : fbdo.errorReason().c_str());
 
-        String Path = path + "/Items";
-
-        if (Firebase.getJSON(fbdo, Path.c_str(), query))
-        {
-
-            Serial.println("PASSED");
-            Serial.println("JSON DATA: ");
+        if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
             printResult(fbdo); //see addons/RTDBHelper.h
-            Serial.println("------------------------------------");
-            Serial.println();
-        }
-        else
-        {
-            Serial.println("FAILED");
-            Serial.println("REASON: " + fbdo.errorReason());
-            Serial.println("------------------------------------");
-            Serial.println();
-        }
     }
 }

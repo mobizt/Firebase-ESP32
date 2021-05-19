@@ -161,6 +161,8 @@ void setup()
     Serial.println(WiFi.localIP());
     Serial.println();
 
+    Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+
     /* Assign the api key (required) */
     config.api_key = API_KEY;
 

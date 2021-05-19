@@ -43,9 +43,9 @@ FirebaseData fbdo;
 FirebaseAuth auth;
 FirebaseConfig config;
 
-bool taskCompleted = false;
+unsigned long sendDataPrevMillis = 0;
 
-FirebaseJson json;
+int count = 0;
 
 void setup()
 {
@@ -64,6 +64,8 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
+  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+
   /* Assign the api key (required) */
   config.api_key = API_KEY;
 
@@ -80,166 +82,27 @@ void setup()
   Firebase.begin(&config, &auth);
 
   //Or use legacy authenticate method
-  //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
-
-  Firebase.reconnectWiFi(true);
-
-#if defined(ESP8266)
-  //Set the size of WiFi rx/tx buffers in the case where we want to work with large data.
-  fbdo.setBSSLBufferSize(1024, 1024);
-#endif
-
-  //Set the size of HTTP response buffers in the case where we want to work with large data.
-  fbdo.setResponseSize(1024);
-
-  //Set database read timeout to 1 minute (max 15 minutes)
-  Firebase.setReadTimeout(fbdo, 1000 * 60);
-  //tiny, small, medium, large and unlimited.
-  //Size and its write timeout e.g. tiny (1s), small (10s), medium (30s) and large (60s).
-  Firebase.setwriteSizeLimit(fbdo, "tiny");
-
-  //optional, set the decimal places for float and double data to be stored in database
-  Firebase.setFloatDigits(2);
-  Firebase.setDoubleDigits(6);
-
-  /**
-   * This option allows get and delete functions (PUT and DELETE HTTP requests) works for device connected behind the
-   * Firewall that allows only GET and POST requests.
-   * 
-   * Firebase.enableClassicRequest(&fbdo, true);
-  */
+  //Firebase.begin(DATABASE_URL, "<database secret>");
 }
 
 void loop()
 {
-  if (Firebase.ready() && !taskCompleted)
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
-    taskCompleted = true;
+    sendDataPrevMillis = millis();
 
-    String path = "/Test";
-    String node;
+    Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, "/test/int", count) ? "ok" : fbdo.errorReason().c_str());
 
-    Serial.println("------------------------------------");
-    Serial.println("Set double test...");
+    Serial.printf("Get int... %s\n", Firebase.getInt(fbdo, "/test/int") ? String(fbdo.intData()).c_str() : fbdo.errorReason().c_str());
 
-    for (uint8_t i = 0; i < 10; i++)
-    {
-      node = path + "/Double/Data" + String(i + 1);
-      //Also can use Firebase.set instead of Firebase.setDouble
-      if (Firebase.setDouble(fbdo, node.c_str(), ((i + 1) * 10) + 0.123456789))
-      {
-        Serial.println("PASSED");
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-      else
-      {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-    }
+    FirebaseJson json;
+    json.add("value", count);
 
-    Serial.println("------------------------------------");
-    Serial.println("Get double test...");
+    Serial.printf("Push json... %s\n", Firebase.pushJSON(fbdo, "/test/push", json) ? "ok" : fbdo.errorReason().c_str());
 
-    for (uint8_t i = 0; i < 10; i++)
-    {
-      node = path + "/Double/Data" + String(i + 1);
-      //Also can use Firebase.get instead of Firebase.setInt
-      if (Firebase.getInt(fbdo, node.c_str()))
-      {
-        Serial.println("PASSED");
-        Serial.println("PATH: " + fbdo.dataPath());
-        Serial.println("TYPE: " + fbdo.dataType());
-        Serial.println("ETag: " + fbdo.ETag());
-        Serial.print("VALUE: ");
-        printResult(fbdo); //see addons/RTDBHelper.h
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-      else
-      {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-    }
+    json.set("value", count + 100);
+    Serial.printf("Update json... %s\n\n", Firebase.updateNode(fbdo, String("/test/push/" + fbdo.pushName()), json) ? "ok" : fbdo.errorReason().c_str());
 
-    Serial.println("------------------------------------");
-    Serial.println("Push integer test...");
-
-    for (uint8_t i = 0; i < 5; i++)
-    {
-      node = path + "/Push/Int";
-      //Also can use Firebase.push instead of Firebase.pushInt
-      if (Firebase.pushInt(fbdo, node.c_str(), (i + 1)))
-      {
-        Serial.println("PASSED");
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-      else
-      {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-    }
-
-    Serial.println("------------------------------------");
-    Serial.println("Push JSON test...");
-
-    for (uint8_t i = 5; i < 10; i++)
-    {
-
-      json.clear().add("Data" + String(i + 1), i + 1);
-
-      node = path + "/Push/Int";
-
-      //Also can use Firebase.push instead of Firebase.pushJSON
-      //Json string is not support in v 2.6.0 and later, only FirebaseJson object is supported.
-      if (Firebase.pushJSON(fbdo, node.c_str(), json))
-      {
-        Serial.println("PASSED");
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-      else
-      {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-    }
-
-    Serial.println("------------------------------------");
-    Serial.println("Update test...");
-
-    for (uint8_t i = 0; i < 5; i++)
-    {
-
-      json.set("Data" + String(i + 1), i + 5.5);
-
-      node = path + "/float";
-
-      if (Firebase.updateNode(fbdo, node.c_str(), json))
-      {
-        Serial.println("PASSED");
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-      else
-      {
-        Serial.println("FAILED");
-        Serial.println("REASON: " + fbdo.errorReason());
-        Serial.println("------------------------------------");
-        Serial.println();
-      }
-    }
+    count++;
   }
 }
