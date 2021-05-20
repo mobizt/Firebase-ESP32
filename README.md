@@ -218,7 +218,7 @@ See [Other authentication examples](/examples/Authentications) for more sign in 
 
 
 
-### Authentication
+## Authentication
 
 This library supports many types of authentications.
 
