@@ -1,15 +1,15 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.9.6"
+#define FIREBASE_CLIENT_VERSION "3.9.7"
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.9.6
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.9.7
  *
- * May 19, 2021
+ * June 10, 2021
  *
  *   Updates:
  *
- * - Rewrite Authentications and RTDB examples.
+ * - Add payload and dataTypeEnum functions for the StreamData object.
  * 
  *
  * 
