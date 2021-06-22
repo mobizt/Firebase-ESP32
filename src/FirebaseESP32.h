@@ -1,15 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.9.7"
+#define FIREBASE_CLIENT_VERSION "3.10.0"
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.9.7
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.10.0
  *
- * June 10, 2021
+ * June 22, 2021
  *
  *   Updates:
- *
- * - Add payload and dataTypeEnum functions for the StreamData object.
+ * 
+ * - Improve memory usage.
+ * - Add support classes exclusion.
  * 
  *
  * 
@@ -55,9 +56,11 @@
 
 #include <Arduino.h>
 #include "signer/Signer.h"
+#ifdef ENABLE_RTDB
 #include "rtdb/FB_RTDB.h"
+#endif
 #include "Utils.h"
-
+#include "session/FB_Session.h"
 
 class FirebaseESP32
 {
@@ -65,7 +68,9 @@ class FirebaseESP32
   friend class FirebaseSession;
 
 public:
+#ifdef ENABLE_RTDB
   FB_RTDB RTDB;
+#endif
 
   FirebaseESP32();
   ~FirebaseESP32();
@@ -222,6 +227,8 @@ public:
    * @param digits The decimal places. 
   */
   void setDoubleDigits(uint8_t digits);
+
+#ifdef ENABLE_RTDB
 
   /** Set the timeout of Firebase.get functions.
    * 
@@ -1936,27 +1943,35 @@ public:
   */
   void clearErrorQueue(FirebaseData &fbdo);
 
+#endif
+
   /** Send Firebase Cloud Messaging to the device with the first registration token which added by firebaseData.fcm.addDeviceToken.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
    * @param index The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
    * @return Boolean type status indicates the success of the operation.
   */
+#ifdef ENABLE_FCM
   bool sendMessage(FirebaseData &fbdo, uint16_t index);
+#endif
 
   /** Send Firebase Cloud Messaging to all devices (multicast) which added by firebaseData.fcm.addDeviceToken.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
    * @return Boolean type status indicates the success of the operation.
   */
+#ifdef ENABLE_FCM
   bool broadcastMessage(FirebaseData &fbdo);
+#endif
 
   /** Send Firebase Cloud Messaging to devices that subscribed to the topic.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
    * @return Boolean type status indicates the success of the operation.
   */
+#ifdef ENABLE_FCM
   bool sendTopic(FirebaseData &fbdo);
+#endif
 
   /** SD card config with GPIO pins.
      * 
@@ -2028,16 +2043,15 @@ public:
   bool push(FirebaseData &fbdo, const String &path, T value, size_t size, float priority);
 
 private:
+#ifdef ENABLE_FCM
   bool handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
+#endif
   fb_esp_mem_storage_type getMemStorageType(uint8_t old_type);
   void init(FirebaseConfig *config, FirebaseAuth *auth);
   
   UtilsClass *ut = nullptr;
-  FirebaseAuth *_auth = nullptr;
-  FirebaseConfig *_cfg = nullptr;
-  //internal or used by legacy data
-  FirebaseAuth _auth_;
-  FirebaseConfig _cfg_;
+  FirebaseAuth *auth = nullptr;
+  FirebaseConfig *cfg = nullptr;
 };
 
 extern FirebaseESP32 Firebase;
