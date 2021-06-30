@@ -1,11 +1,11 @@
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.10.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.10.4
  *
- * June 27, 2021
+ * June 30, 2021
  *
  *   Updates:
  * 
- * - Fix the empty JSON and JSON Array objects issues in RTDB's Firebase Data object response payload.
+ * - Fix unhandled exception caused by Firebase.begin when using database url and secret as arguments.
  * 
  *
  * 
@@ -66,11 +66,14 @@ FirebaseESP32::~FirebaseESP32()
     if (ut)
         delete ut;
 
-    if (cfg)
-        delete cfg;
+    if (!extConfig)
+    {
+        if (cfg)
+            delete cfg;
 
-    if (auth)
-        delete auth;
+        if (auth)
+            delete auth;
+    }
 }
 
 void FirebaseESP32::begin(FirebaseConfig *config, FirebaseAuth *auth)
@@ -123,11 +126,14 @@ void FirebaseESP32::begin(FirebaseConfig *config, FirebaseAuth *auth)
 
 void FirebaseESP32::begin(const String &databaseURL, const String &databaseSecret)
 {
+
     if (!cfg)
         cfg = new FirebaseConfig();
 
     if (!auth)
         auth = new FirebaseAuth();
+
+    extConfig = false;
 
     cfg->database_url = databaseURL.c_str();
     cfg->signer.tokens.legacy_token = databaseSecret.c_str();
@@ -142,6 +148,8 @@ void FirebaseESP32::begin(const String &databaseURL, const String &databaseSecre
     if (!auth)
         auth = new FirebaseAuth();
 
+    extConfig = false;
+
     cfg->database_url = databaseURL.c_str();
     cfg->signer.tokens.legacy_token = databaseSecret.c_str();
     cfg->cert.data = caCert;
@@ -155,6 +163,8 @@ void FirebaseESP32::begin(const String &databaseURL, const String &databaseSecre
 
     if (!auth)
         auth = new FirebaseAuth();
+
+    extConfig = false;
 
     cfg->database_url = databaseURL.c_str();
     cfg->signer.tokens.legacy_token = databaseSecret.c_str();
@@ -217,14 +227,11 @@ bool FirebaseESP32::authenticated()
 
 void FirebaseESP32::init(FirebaseConfig *config, FirebaseAuth *auth)
 {
-    if (this->cfg)
-        delete this->cfg;
+    if (!this->auth)
+        this->auth = auth;
 
-    if (this->auth)
-        delete this->auth;
-
-    this->auth = auth;
-    this->cfg = config;
+    if (!this->cfg)
+        this->cfg = config;
 
     if (!this->cfg)
         this->cfg = new FirebaseConfig();
