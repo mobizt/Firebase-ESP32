@@ -1,0 +1,87 @@
+name: Compile examples
+
+on:
+  push:
+    paths-ignore:
+      - '.github/workflows/cpp_lint.yml'
+      - '.github/workflows/compile_library.yml'
+  pull_request:
+    paths-ignore:
+      - '.github/workflows/cpp_lint.yml'
+      - '.github/workflows/compile_library.yml'
+
+jobs:
+  esp32:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: 
+        - "examples/Authentications/LegacyTokenAuthen/LegacyTokenAuthen.ino"
+        - "examples/Authentications/SignInAsAdmin/AccessTokenFile/AccessTokenFile.ino"
+        - "examples/Authentications/SignInAsGuest/AnonymousSignin/AnonymousSignin.ino"
+        - "examples/Authentications/SignInAsUser/CustomToken/CustomToken.ino"
+        - "examples/Authentications/SignInAsUser/CustomTokenFile/CustomTokenFile.ino"
+        - "examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino"
+        - "examples/Authentications/UserManagement/ResetPassword/ResetPassword.ino"
+        - "examples/Authentications/UserManagement/SendVerification/SendVerification.ino"
+        - "examples/Authentications/UserManagement/Signup/Signup.ino"
+
+        - "examples/BackupRestore/Flash/Flash.ino"
+        - "examples/BackupRestore/SD/SD.ino"
+        - "examples/Basic/Basic.ino"
+        - "examples/BasicCert/BasicCert.ino"
+        - "examples/BasicEthernet/BasicEthernet.ino"
+        - "examples/Blob/Blob.ino"
+        - "examples/DatabaseRules/DatabaseRules.ino"
+        - "examples/DataChangesListener/Callback/Callback.ino"
+        - "examples/DataChangesListener/MultiPath/MultiPath.ino"
+        - "examples/DataChangesListener/NoCallback/NoCallback.ino"
+        - "examples/DataChangesListener/SingleDataObject/SingleDataObject.ino"
+        - "examples/DataFilter/DataFilter.ino"
+        - "examples/ETag/ETag.ino"
+        - "examples/FastSend/FastSend.ino"
+        - "examples/File/Flash/Flash.ino"
+        - "examples/File/SD/SD.ino"
+        #- "examples/FireSense/AnalogRead/AnalogRead.ino"
+        #- "examples/FireSense/AutomaticPlantWatering/AutomaticPlantWatering.ino"
+        #- "examples/FireSense/Sensors/Sensors.ino"
+        #- "examples/FireSense/Blink/Blink.ino"
+        - "examples/Messaging/Messaging.ino"
+        - "examples/Priority/Priority.ino"
+        - "examples/Queue/Queue.ino"
+        - "examples/ShallowedData/ShallowedData.ino"
+        - "examples/Timestamp/Timestamp.ino"
+    steps:
+    - uses: actions/checkout@v2
+    - name: Cache pip
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: ${{ runner.os }}-pip-
+    - name: Cache PlatformIO
+      uses: actions/cache@v2
+      with:
+        path: ~/.platformio
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+    - name: Set up Python
+      uses: actions/setup-python@v2
+    - name: Install PlatformIO
+      run: |
+        python -m pip install --upgrade pip
+        pip install --upgrade platformio
+
+    - name: Install 3rd party dependecies
+      run: | 
+        pio lib -g install \
+        https://github.com/mobizt/Firebase-ESP-Client
+
+    - name: Run PlatformIO Examples
+      run: |
+        pio ci --board=esp32dev \
+         --lib=src/addons/FireSense/FireSense.h \
+         --lib=src/addons/RTDBHelper.h \
+         --lib=src/addons/TokenHelper.h \
+      env:
+        PLATFORMIO_CI_SRC: ${{ matrix.example }}

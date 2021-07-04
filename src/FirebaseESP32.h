@@ -1,18 +1,20 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.10.4"
+#define FIREBASE_CLIENT_VERSION "3.10.5"
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.10.4
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.10.5
  *
- * June 30, 2021
+ * July 4, 2021
  *
  *   Updates:
  * 
- * - Fix unhandled exception caused by Firebase.begin when using database url and secret as arguments.
+ * - Fix data type mismatch issue.
+ * - Fix FireSense addon issue.
+ * - Reduce memory usage.
+ * - Remove priority parameter in set and push of File and Blob functions.
  * 
  *
- * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
  * DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls.
@@ -591,16 +593,6 @@ public:
 
   bool pushAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 
-  /** Append new blob (binary data) and the virtual child ".priority" to the defined database path.
-  */
-  bool pushBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
-
-  bool push(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
-
-  bool pushBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
-
-  bool pushAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
-
   /** Append new binary data from the file stores on SD card/Flash memory to the defined database path.
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
@@ -621,17 +613,6 @@ public:
   bool pushFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 
   bool pushAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
-
-  /** Append new binary data from the file stores on SD card/Flash memory and the virtual child ".priority" 
-   * to the defined database path.
-  */
-  bool pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
-
-  bool push(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
-
-  bool pushFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
-
-  bool pushAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 
   /** Append the new Firebase server's timestamp to the defined database path.*
    * 
@@ -1147,16 +1128,6 @@ public:
 
   bool setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size);
 
-  /** Set blob data and virtual child ".priority" at the defined database path.
-  */
-  bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
-
-  bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
-
-  bool setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
-
-  bool setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority);
-
   /** Set blob (binary data) at the defined database path if defined database path's ETag matched the ETag value. 
    * This will replace any child nodes inside the defined path with a blob or binary data.
    * 
@@ -1179,16 +1150,6 @@ public:
 
   bool setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag);
 
-  /** Set blob data and the virtual child ".priority" if defined ETag matches at the defined database path 
-  */
-  bool setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
-
-  bool set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
-
-  bool setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
-
-  bool setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag);
-
   /** Set binary data from the file store on SD card/Flash memory to the defined database path. 
    * 
    * @param fbdo Firebase Data Object to hold data and instance.
@@ -1208,16 +1169,6 @@ public:
   bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
 
   bool setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName);
-
-  /** Set binary data from the file and virtual child ".priority" at the defined database path.
-  */
-  bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
-
-  bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
-
-  bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
-
-  bool setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority);
 
   /** Set binary data from file stored on SD card/Flash memory to the defined database path if defined database path's ETag matched the ETag value.
    * 
@@ -1242,16 +1193,6 @@ public:
   bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
 
   bool setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag);
-
-  /** Set binary data from the file and the virtual child ".priority" if defined ETag matches at the defined database path 
-  */
-  bool setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
-
-  bool set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
-
-  bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
-
-  bool setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag);
 
 
   /** Set Firebase server's timestamp to the defined database path.

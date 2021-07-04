@@ -1,14 +1,16 @@
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.10.4
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.10.5
  *
- * June 30, 2021
+ * July 4, 2021
  *
  *   Updates:
  * 
- * - Fix unhandled exception caused by Firebase.begin when using database url and secret as arguments.
+ * - Fix data type mismatch issue.
+ * - Fix FireSense addon issue.
+ * - Reduce memory usage.
+ * - Remove priority parameter in set and push of File and Blob functions.
  * 
  *
- * 
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
  * DELETE data from/to with Google's Firebase database using get, set, update
  * and delete calls.
@@ -517,15 +519,6 @@ bool FirebaseESP32::pushAsync(FirebaseData &fbdo, const String &path, uint8_t *b
     return RTDB.pushBlobAsync(&fbdo, path.c_str(), blob, size);
 }
 
-bool FirebaseESP32::push(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
-{
-    return RTDB.pushBlob(&fbdo, path.c_str(), blob, size, priority);
-}
-
-bool FirebaseESP32::pushAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
-{
-    return RTDB.pushBlobAsync(&fbdo, path.c_str(), blob, size, priority);
-}
 
 bool FirebaseESP32::push(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName)
 {
@@ -535,16 +528,6 @@ bool FirebaseESP32::push(FirebaseData &fbdo, uint8_t storageType, const String &
 bool FirebaseESP32::pushAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName)
 {
     return RTDB.pushFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str());
-}
-
-bool FirebaseESP32::push(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
-{
-    return RTDB.pushFile(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority);
-}
-
-bool FirebaseESP32::pushAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
-{
-    return RTDB.pushFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority);
 }
 
 template <typename T>
@@ -749,16 +732,6 @@ bool FirebaseESP32::pushBlobAsync(FirebaseData &fbdo, const String &path, uint8_
     return RTDB.pushBlobAsync(&fbdo, path.c_str(), blob, size);
 }
 
-bool FirebaseESP32::pushBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
-{
-    return RTDB.pushBlob(&fbdo, path.c_str(), blob, size, priority);
-}
-
-bool FirebaseESP32::pushBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
-{
-    return RTDB.pushBlobAsync(&fbdo, path.c_str(), blob, size, priority);
-}
-
 bool FirebaseESP32::pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName)
 {
     return RTDB.pushFile(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str());
@@ -767,16 +740,6 @@ bool FirebaseESP32::pushFile(FirebaseData &fbdo, uint8_t storageType, const Stri
 bool FirebaseESP32::pushFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName)
 {
     return RTDB.pushFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str());
-}
-
-bool FirebaseESP32::pushFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
-{
-    return RTDB.pushFile(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority);
-}
-
-bool FirebaseESP32::pushFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
-{
-    return RTDB.pushFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority);
 }
 
 bool FirebaseESP32::pushTimestamp(FirebaseData &fbdo, const String &path)
@@ -1119,15 +1082,6 @@ bool FirebaseESP32::setAsync(FirebaseData &fbdo, const String &path, uint8_t *bl
     return RTDB.setBlobAsync(&fbdo, path.c_str(), blob, size);
 }
 
-bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
-{
-    return RTDB.setBlob(&fbdo, path.c_str(), blob, size, priority);
-}
-
-bool FirebaseESP32::setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
-{
-    return RTDB.setBlobAsync(&fbdo, path.c_str(), blob, size, priority);
-}
 
 bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag)
 {
@@ -1137,16 +1091,6 @@ bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, uint8_t *blob, s
 bool FirebaseESP32::setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag)
 {
     return RTDB.setBlobAsync(&fbdo, path.c_str(), blob, size, ETag.c_str());
-}
-
-bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag)
-{
-    return RTDB.setBlob(&fbdo, path.c_str(), blob, size, priority, ETag.c_str());
-}
-
-bool FirebaseESP32::setAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag)
-{
-    return RTDB.setBlobAsync(&fbdo, path.c_str(), blob, size, priority, ETag.c_str());
 }
 
 bool FirebaseESP32::set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName)
@@ -1159,16 +1103,6 @@ bool FirebaseESP32::setAsync(FirebaseData &fbdo, uint8_t storageType, const Stri
     return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str());
 }
 
-bool FirebaseESP32::set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
-{
-    return RTDB.setFile(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority);
-}
-
-bool FirebaseESP32::setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
-{
-    return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority);
-}
-
 bool FirebaseESP32::set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag)
 {
     return RTDB.setFile(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), ETag.c_str());
@@ -1177,16 +1111,6 @@ bool FirebaseESP32::set(FirebaseData &fbdo, uint8_t storageType, const String &p
 bool FirebaseESP32::setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag)
 {
     return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), ETag.c_str());
-}
-
-bool FirebaseESP32::set(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag)
-{
-    return RTDB.setFile(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority, ETag.c_str());
-}
-
-bool FirebaseESP32::setAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag)
-{
-    return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority, ETag.c_str());
 }
 
 template <typename T>
@@ -1237,13 +1161,6 @@ bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, T value, float p
 }
 
 template <typename T>
-bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, T value, size_t size, float priority)
-{
-    if (std::is_same<T, uint8_t *>::value)
-        return RTDB.setBlob(&fbdo, path.c_str(), value, size, priority);
-}
-
-template <typename T>
 bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, T value, const String &ETag)
 {
     if (std::is_same<T, int>::value)
@@ -1286,13 +1203,6 @@ bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, T value, float p
         return setJson(fbdo, path, value, priority, ETag);
     else if (std::is_same<T, FirebaseJsonArray &>::value)
         return setArray(fbdo, path, value, priority, ETag);
-}
-
-template <typename T>
-bool FirebaseESP32::set(FirebaseData &fbdo, const String &path, T value, size_t size, float priority, const String &ETag)
-{
-    if (std::is_same<T, uint8_t *>::value)
-        return RTDB.setBlob(&fbdo, path.c_str(), value, size, priority, ETag.c_str());
 }
 
 bool FirebaseESP32::setInt(FirebaseData &fbdo, const String &path, int intValue)
@@ -1585,15 +1495,6 @@ bool FirebaseESP32::setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t
     return RTDB.setBlobAsync(&fbdo, path.c_str(), blob, size);
 }
 
-bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
-{
-    return RTDB.setBlob(&fbdo, path.c_str(), blob, size, priority);
-}
-
-bool FirebaseESP32::setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority)
-{
-    return RTDB.setBlobAsync(&fbdo, path.c_str(), blob, size, priority);
-}
 
 bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag)
 {
@@ -1603,16 +1504,6 @@ bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blo
 bool FirebaseESP32::setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, const String &ETag)
 {
     return RTDB.setBlobAsync(&fbdo, path.c_str(), blob, size, ETag.c_str());
-}
-
-bool FirebaseESP32::setBlob(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag)
-{
-    return RTDB.setBlob(&fbdo, path.c_str(), blob, size, priority, ETag.c_str());
-}
-
-bool FirebaseESP32::setBlobAsync(FirebaseData &fbdo, const String &path, uint8_t *blob, size_t size, float priority, const String &ETag)
-{
-    return RTDB.setBlobAsync(&fbdo, path.c_str(), blob, size, priority, ETag.c_str());
 }
 
 bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName)
@@ -1625,16 +1516,6 @@ bool FirebaseESP32::setFileAsync(FirebaseData &fbdo, uint8_t storageType, const 
     return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str());
 }
 
-bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
-{
-    return RTDB.setFile(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority);
-}
-
-bool FirebaseESP32::setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority)
-{
-    return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority);
-}
-
 bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag)
 {
     return RTDB.setFile(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), ETag.c_str());
@@ -1643,16 +1524,6 @@ bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const Strin
 bool FirebaseESP32::setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, const String &ETag)
 {
     return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), ETag.c_str());
-}
-
-bool FirebaseESP32::setFile(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag)
-{
-    return RTDB.setFile(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority, ETag.c_str());
-}
-
-bool FirebaseESP32::setFileAsync(FirebaseData &fbdo, uint8_t storageType, const String &path, const String &fileName, float priority, const String &ETag)
-{
-    return RTDB.setFileAsync(&fbdo, getMemStorageType(storageType), path.c_str(), fileName.c_str(), priority, ETag.c_str());
 }
 
 bool FirebaseESP32::setTimestamp(FirebaseData &fbdo, const String &path)
@@ -1980,13 +1851,13 @@ bool FirebaseESP32::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type mes
 
     if (data.stringValue.length() == 0)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_HTTPC_NO_FCM_SERVER_KEY_PROVIDED;
+        fbdo._ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_SERVER_KEY_PROVIDED;
         return false;
     }
 
     if (fbdo.fcm.idTokens.length() == 0 && messageType == fb_esp_fcm_msg_type::msg_single)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_HTTPC_NO_FCM_DEVICE_TOKEN_PROVIDED;
+        fbdo._ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_DEVICE_TOKEN_PROVIDED;
         return false;
     }
 
@@ -1995,7 +1866,7 @@ bool FirebaseESP32::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type mes
 
     if (messageType == fb_esp_fcm_msg_type::msg_single && fbdo.fcm.idTokens.length() > 0 && fbdo.fcm._index > arr.size() - 1)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_HTTPC_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED;
+        fbdo._ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_INDEX_NOT_FOUND_IN_DEVICE_TOKEN_PROVIDED;
         return false;
     }
 
@@ -2005,7 +1876,7 @@ bool FirebaseESP32::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type mes
 
     if (messageType == fb_esp_fcm_msg_type::msg_topic && data.stringValue.length() == 0)
     {
-        fbdo._ss.http_code = FIREBASE_ERROR_HTTPC_NO_FCM_TOPIC_PROVIDED;
+        fbdo._ss.http_code = FIREBASE_ERROR_TCP_NO_FCM_TOPIC_PROVIDED;
         return false;
     }
 

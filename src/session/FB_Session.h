@@ -1,9 +1,9 @@
 /**
- * Google's Firebase Data class, FB_Session.h version 1.1.1
+ * Google's Firebase Data class, FB_Session.h version 1.1.2
  * 
  * This library supports Espressif ESP8266 and ESP32
  * 
- * Created June 27, 2021
+ * Created July 4, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -36,8 +36,8 @@
 #define FIREBASE_SESSION_H
 #include <Arduino.h>
 #include "Utils.h"
-#include "stream/FB_Stream.h"
-#include "stream/FB_MP_Stream.h"
+#include "rtdb/stream/FB_Stream.h"
+#include "rtdb/stream/FB_MP_Stream.h"
 #include "rtdb/QueueInfo.h"
 #include "rtdb/QueueManager.h"
 
@@ -180,7 +180,7 @@ private:
 
   bool fcm_send(FirebaseData &fbdo, fb_esp_fcm_msg_type messageType);
 
-  void fcm_prepareHeader(std::string &header, size_t payloadSize);
+  int fcm_sendHeader(FirebaseData &fbdo, size_t payloadSize);
 
   void fcm_preparePayload(fb_esp_fcm_msg_type messageType);
 
@@ -473,7 +473,6 @@ public:
   FirebaseJsonArray *jsonArrayPtr();
 #endif
 
-
   /** Return the blob data (uint8_t) array of server returned payload.
    * 
    * @return Dynamic array of 8-bit unsigned integer i.e. std::vector<uint8_t>.
@@ -621,11 +620,8 @@ public:
   */
   String payload();
 
-#if defined(ESP32)
-  FB_HTTPClient32 httpClient;
-#elif defined(ESP8266)
-  FB_HTTPClient httpClient;
-#endif
+
+  FB_TCP_Client tcpClient;
 
 #ifdef ENABLE_RTDB
   QueryFilter queryFilter;
@@ -659,6 +655,7 @@ private:
   void closeSession();
   bool handleStreamRead();
   void checkOvf(size_t len, struct server_response_data_t &resp);
+  int tcpSend(const char *data);
   bool reconnect(unsigned long dataTime = 0);
   std::string getDataType(uint8_t type);
   std::string getMethod(uint8_t method);
@@ -677,4 +674,3 @@ private:
 };
 
 #endif
-

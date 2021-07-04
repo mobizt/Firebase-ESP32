@@ -1,5 +1,5 @@
 /**
- * FireSense v1.0.4
+ * FireSense v1.0.5
  *
  * The Programmable Data Logging and IO Control library.
  *
@@ -7,7 +7,7 @@
  *
  * This library supports Espressif ESP8266 and ESP32
  *
- * Created June 10, 2021
+ * Created July 4, 2021
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -70,7 +70,6 @@
 #define FIREBASE_STREAM_CLASS StreamData
 #endif
 #endif
-
 
 class MillisTimer
 {
@@ -212,6 +211,9 @@ public:
 
     FireSenseClass();
     ~FireSenseClass();
+
+    FireSenseClass &operator=(FireSenseClass other);
+    FireSenseClass(const FireSenseClass &other);
 
     /** Initiate the FireSense Class.
      * 
@@ -702,13 +704,15 @@ private:
     void printUpdate(const char *msg, int type, float value = 0);
     void pauseStream();
     void unpauseStream();
+    void copyConstructor(const FireSenseClass &other);
 
 #if defined(ESP8266)
     void set_scheduled_callback(callback_function_t callback);
 #endif
 };
 
-FireSenseClass FireSense = FireSenseClass();
+FireSenseClass FireSense;
+
 #if defined(ESP32)
 TaskHandle_t firesense_run_task_handle = NULL;
 #endif
@@ -791,6 +795,49 @@ FireSenseClass::~FireSenseClass()
 {
 }
 
+FireSenseClass &FireSenseClass::operator=(FireSenseClass other)
+{
+    copyConstructor(other);
+    return *this;
+}
+
+FireSenseClass::FireSenseClass(const FireSenseClass &other)
+{
+    copyConstructor(other);
+}
+
+void FireSenseClass::copyConstructor(const FireSenseClass &other)
+{
+    channelsList = other.channelsList;
+    userValueList = other.userValueList;
+    functionList = other.functionList;
+    conditionsList = other.conditionsList;
+    config = new struct firesense_config_t();
+    *config = *other.config;
+    _callback_function = other._callback_function;
+    _jdat = other._jdat;
+    timeReady = other.timeReady;
+    initializing = other.initializing;
+    loadingConfig = other.loadingConfig;
+    loadingCondition = other.loadingCondition;
+    conditionsLoaded = other.conditionsLoaded;
+    loadingStatus = other.loadingStatus;
+    sendingLog = other.sendingLog;
+    config_existed = other.config_existed;
+    initReady = other.initReady;
+    configLoadReady = other.configLoadReady;
+    streamPause = other.streamPause;
+    controllerEnable = other.controllerEnable;
+    databaseSecret = other.databaseSecret;
+    defaultDataLoadCallback = other.defaultDataLoadCallback;
+    streamCmd = other.streamCmd;
+    lastSeenMillis = other.lastSeenMillis;
+    logMillis = other.logMillis;
+    conditionMillis = other.conditionMillis;
+    authen_check_millis = other.authen_check_millis;
+    deviceId = other.deviceId;
+}
+
 void FireSenseClass::sendReadyStatus()
 {
     if (!configReady())
@@ -862,9 +909,9 @@ bool FireSenseClass::begin(struct firesense_config_t *config, const char *databa
 
 #ifdef ESP8266
     if (this->config->shared_fbdo)
-        this->config->shared_fbdo->setBSSLBufferSize(1024, 512);
+        this->config->shared_fbdo->setBSSLBufferSize(1024, 1024);
     if (this->config->stream_fbdo)
-        this->config->stream_fbdo->setBSSLBufferSize(1024, 512);
+        this->config->stream_fbdo->setBSSLBufferSize(1024, 1024);
 #endif
 
     this->config->shared_fbdo->setResponseSize(1024);
@@ -1915,7 +1962,7 @@ void FireSenseClass::int_run()
                 sendLastSeen();
 
                 if (!config->stream_fbdo && !config->disable_command)
-                  readStream(config->shared_fbdo);
+                    readStream(config->shared_fbdo);
             }
         }
     }
@@ -1933,7 +1980,8 @@ void FireSenseClass::run()
 
     static FireSenseClass *_this = this;
 
-    TaskFunction_t taskCode = [](void *param) {
+    TaskFunction_t taskCode = [](void *param)
+    {
         for (;;)
         {
             _this->int_run();
@@ -2510,7 +2558,8 @@ void FireSenseClass::loadConditionsList()
 #if defined(ESP8266)
 void FireSenseClass::set_scheduled_callback(callback_function_t callback)
 {
-    _callback_function = std::move([callback]() { schedule_function(callback); });
+    _callback_function = std::move([callback]()
+                                   { schedule_function(callback); });
     _callback_function();
 }
 #endif
