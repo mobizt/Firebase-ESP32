@@ -82,6 +82,6 @@ jobs:
         pio ci --board=esp32dev \
          --lib=src/addons/FireSense/FireSense.h \
          --lib=src/addons/RTDBHelper.h \
-         --lib=src/addons/TokenHelper.h \
+         --lib=src/addons/TokenHelper.h
       env:
         PLATFORMIO_CI_SRC: ${{ matrix.example }}
