@@ -75,7 +75,7 @@ jobs:
     - name: Install 3rd party dependecies
       run: | 
         pio lib -g install \
-        https://github.com/mobizt/Firebase-ESP-Client
+        https://github.com/mobizt/Firebase-ESP32
 
     - name: Run PlatformIO Examples
       run: |
