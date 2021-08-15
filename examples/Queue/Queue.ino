@@ -1,10 +1,10 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- *
+ * 
  * Email: k_suwatchai@hotmail.com
- *
+ * 
  * Github: https://github.com/mobizt
- *
+ * 
  * Copyright (c) 2021 mobizt
  *
 */
@@ -34,8 +34,7 @@
 /* 3. Define the RTDB URL */
 #define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
-/* 4. Define the user Email and password that alreadey registerd or added in
- * your project */
+/* 4. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
@@ -52,6 +51,8 @@ double mydouble = 0;
 
 uint32_t queueID[20];
 uint8_t qIdx = 0;
+
+int queueCnt = 0;
 
 void callback(QueueInfo queueinfo)
 {
@@ -113,19 +114,24 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+  //Or use legacy authenticate method
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
+
   Firebase.begin(&config, &auth);
 
   //Or use legacy authenticate method
-  //Firebase.begin(DATABASE_URL, "<database secret>");
+  //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
 
   Firebase.reconnectWiFi(true);
 
   //Open and retore Firebase Error Queues from file.
   //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-  if (Firebase.errorQueueCount(fbdo, "/test.txt", StorageType::FLASH) > 0)
+
+  if (Firebase.errorQueueCount(fbdo, "/test.txt", mem_storage_type_flash) > 0)
   {
-    Firebase.restoreErrorQueue(fbdo, "/test.txt", StorageType::FLASH);
-    Firebase.deleteStorageFile("/test.txt", StorageType::FLASH);
+    Firebase.restoreErrorQueue(fbdo, "/test.txt", mem_storage_type_flash);
+    Firebase.deleteStorageFile("/test.txt", mem_storage_type_flash);
   }
 
   //Set maximum Firebase read/store retry operation (0 - 255) in case of
@@ -144,6 +150,9 @@ void setup()
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
@@ -152,7 +161,7 @@ void loop()
 
     if (fbdo.httpCode() != FIREBASE_ERROR_HTTP_CODE_OK && Firebase.getErrorQueueID(fbdo) > 0)
     {
-      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(fbdo)));
+      Serial.printf("Error Queue ID: %d\n", (int)Firebase.getErrorQueueID(fbdo));
       queueID[qIdx] = Firebase.getErrorQueueID(fbdo);
       qIdx++;
     }
@@ -166,7 +175,7 @@ void loop()
 
     if (fbdo.httpCode() != FIREBASE_ERROR_HTTP_CODE_OK && Firebase.getErrorQueueID(fbdo) > 0)
     {
-      Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(fbdo)));
+      Serial.printf("Error Queue ID: %d\n", (int)Firebase.getErrorQueueID(fbdo));
       queueID[qIdx] = Firebase.getErrorQueueID(fbdo);
       qIdx++;
     }
@@ -180,14 +189,14 @@ void loop()
       delay(10000);
     }
 
-    Serial.printf("Get double... %s\n", Firebase.getDouble(fbdo, "/test/double", mydouble) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Get double... %s\n", Firebase.getDouble(fbdo, "/test/double", &mydouble) ? "ok" : fbdo.errorReason().c_str());
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
       printResult(fbdo);
     else
     {
       if (Firebase.getErrorQueueID(fbdo) > 0)
       {
-        Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(fbdo)));
+        Serial.printf("Error Queue ID: %d\n", (int)Firebase.getErrorQueueID(fbdo));
         queueID[qIdx] = Firebase.getErrorQueueID(fbdo);
         qIdx++;
       }
@@ -200,7 +209,7 @@ void loop()
     {
       if (Firebase.getErrorQueueID(fbdo) > 0)
       {
-        Serial.println("Error Queue ID: " + String(Firebase.getErrorQueueID(fbdo)));
+        Serial.printf("Error Queue ID: %d\n", (int)Firebase.getErrorQueueID(fbdo));
         queueID[qIdx] = Firebase.getErrorQueueID(fbdo);
         qIdx++;
       }
@@ -215,18 +224,20 @@ void loop()
 
       //Save Error Queues to file
       //The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h.
-      Firebase.saveErrorQueue(fbdo, "/test.txt", StorageType::FLASH);
+      Firebase.saveErrorQueue(fbdo, "/test.txt", mem_storage_type_flash);
     }
 
     //Stop error queue auto run process
     //Firebase.endAutoRunErrorQueue(fbdo);
+
+    queueCnt = Firebase.errorQueueCount(fbdo);
   }
 
   /*
 
-    if Firebase.beginAutoRunErrorQueue was not call,
-    to manaul run the Firebase Error Queues, just call
-    Firebase.processErrorQueue in loop
+    //if Firebase.beginAutoRunErrorQueue was not call,
+    //to manaul run the Firebase Error Queues, just call
+    //Firebase.processErrorQueue in loop
 
 
     Firebase.processErrorQueue(fbdo);
@@ -254,28 +265,31 @@ void loop()
 
   */
 
-  if (mydouble > 0)
+  if (queueCnt > 0)
   {
-    Serial.println("Double Data gets from Queue");
-    printf("%.9lf\n", mydouble);
-    Serial.println();
-    mydouble = 0;
-  }
-
-  if (myblob.size() > 0)
-  {
-    Serial.println("Blob Data gets from Queue");
-    for (size_t i = 0; i < myblob.size(); i++)
+    if (mydouble > 0)
     {
-      if (i > 0 && i % 16 == 0)
-        Serial.println();
-      if (myblob[i] < 16)
-        Serial.print("0");
-      Serial.print(myblob[i], HEX);
-      Serial.print(" ");
+      Serial.println("Double Data gets from Queue");
+      printf("%.9lf\n", mydouble);
+      Serial.println();
+      mydouble = 0;
     }
-    Serial.println();
-    Serial.println();
-    myblob.clear();
+
+    if (myblob.size() > 0)
+    {
+      Serial.println("Blob Data gets from Queue");
+      for (size_t i = 0; i < myblob.size(); i++)
+      {
+        if (i > 0 && i % 16 == 0)
+          Serial.println();
+        if (myblob[i] < 16)
+          Serial.print("0");
+        Serial.print(myblob[i], HEX);
+        Serial.print(" ");
+      }
+      Serial.println();
+      Serial.println();
+      myblob.clear();
+    }
   }
 }

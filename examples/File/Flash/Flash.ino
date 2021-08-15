@@ -89,10 +89,16 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
-  Firebase.begin(&config, &auth);
+#if defined(ESP8266)
+      //required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 512 /* Tx buffer size in bytes from 512 - 16384 */);
+#endif
 
   //Or use legacy authenticate method
-  //Firebase.begin(DATABASE_URL, "<database secret>");
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
+
+  Firebase.begin(&config, &auth);
 
   Firebase.reconnectWiFi(true);
 
@@ -124,6 +130,9 @@ void setup()
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
@@ -135,7 +144,6 @@ void loop()
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
     {
-
       //Readout the downloaded file
       file = DEFAULT_FLASH_FS.open("/file2.txt", "r");
       int i = 0;

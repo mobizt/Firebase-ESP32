@@ -18,6 +18,7 @@
 #include <ESP8266WiFi.h>
 #include <FirebaseESP8266.h>
 #endif
+
 //Provide the token generation process info.
 #include "addons/TokenHelper.h"
 //Provide the RTDB payload printing info and other helper functions.
@@ -87,34 +88,41 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+  //Or use legacy authenticate method
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
+
   Firebase.begin(&config, &auth);
 
-  //Or use legacy authenticate method
-  //Firebase.begin(DATABASE_URL, "<database secret>");
-
   Firebase.reconnectWiFi(true);
+
+#if defined(ESP8266)
+  //required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+#endif
 }
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
 
-    String rules = "";
+    String rules;
 
     Serial.printf("Get RTDB rules... %s\n", Firebase.getRules(fbdo) ? "ok" : fbdo.errorReason().c_str());
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
     {
-
-      FirebaseJson &json = fbdo.jsonObject();
-      json.toString(rules, true);
+      FirebaseJson *json = fbdo.to<FirebaseJson *>();
+      json->toString(rules, true);
       Serial.println(rules);
       Serial.println();
     }
 
     Serial.printf("Set RTDB rules... %s\n", Firebase.setRules(fbdo, rules.c_str()) ? "ok" : fbdo.errorReason().c_str());
-
   }
 }

@@ -53,6 +53,8 @@ FirebaseConfig config;
 //Auth token for your Blynk app project
 #define BLYNK_AUTH "YOUR_BLYNK_APP_PROJECT_AUTH_TOKEN"
 
+String path = "/Blynk_Test/Int";
+
 //D4 or GPIO2 on Wemos D1 mini
 uint8_t BuiltIn_LED = 2;
 
@@ -99,10 +101,11 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
-  Firebase.begin(&config, &auth);
-
   //Or use legacy authenticate method
-  //Firebase.begin(DATABASE_URL, "<database secret>");
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
+
+  Firebase.begin(&config, &auth);
 
   Firebase.reconnectWiFi(true);
 

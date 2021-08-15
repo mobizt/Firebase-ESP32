@@ -19,9 +19,9 @@
 #include <FirebaseESP8266.h>
 #endif
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include "addons/TokenHelper.h"
-//Provide the RTDB payload printing info and other helper functions.
+// Provide the RTDB payload printing info and other helper functions.
 #include "addons/RTDBHelper.h"
 
 /* 1. Define the WiFi credentials */
@@ -32,9 +32,11 @@
 #define API_KEY "API_KEY"
 
 /* 3. Define the RTDB URL */
-#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+#define DATABASE_URL "URL" //<databaseName>.firebaseio.com or \
+                           //<databaseName>.<region>.firebasedatabase.app
 
-/* 4. Define the user Email and password that alreadey registerd or added in your project */
+/* 4. Define the user Email and password that alreadey registerd or added in
+ * your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
@@ -51,60 +53,67 @@ int count = 0;
 void setup()
 {
 
-    Serial.begin(115200);
-    Serial.println();
-    Serial.println();
+  Serial.begin(115200);
+  Serial.println();
+  Serial.println();
 
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    Serial.print("Connecting to Wi-Fi");
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        Serial.print(".");
-        delay(300);
-    }
-    Serial.println();
-    Serial.print("Connected with IP: ");
-    Serial.println(WiFi.localIP());
-    Serial.println();
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.println();
+  Serial.print("Connected with IP: ");
+  Serial.println(WiFi.localIP());
+  Serial.println();
 
-    Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
+  Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
-    /* Assign the api key (required) */
-    config.api_key = API_KEY;
+  /* Assign the api key (required) */
+  config.api_key = API_KEY;
 
-    /* Assign the user sign in credentials */
-    auth.user.email = USER_EMAIL;
-    auth.user.password = USER_PASSWORD;
+  /* Assign the user sign in credentials */
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
 
-    /* Assign the RTDB URL (required) */
-    config.database_url = DATABASE_URL;
+  /* Assign the RTDB URL (required) */
+  config.database_url = DATABASE_URL;
 
-    /* Assign the callback function for the long running token generation task */
-    config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  /* Assign the callback function for the long running token generation task */
+  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
-    Firebase.begin(&config, &auth);
+  //Or use legacy authenticate method
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
 
-    //Or use legacy authenticate method
-    //Firebase.begin(DATABASE_URL, "<database secret>");
+  Firebase.begin(&config, &auth);
 
-    Firebase.reconnectWiFi(true);
+  Firebase.reconnectWiFi(true);
+#if defined(ESP8266)
+  fbdo.setBSSLBufferSize(512, 2048);
+#endif
 }
 
 void loop()
 {
-    if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
+  {
+    sendDataPrevMillis = millis();
+
+    Serial.print("Set int async... ");
+
+    for (size_t i = 0; i < 10; i++)
     {
-        sendDataPrevMillis = millis();
-
-        Serial.print("Set int async... ");
-
-        for (size_t i = 0; i < 10; i++)
-        {
-            //The response is ignored in this async function, it may return true as long as the connection is established.
-            //The purpose for this async function is to set, push and update data instantly.
-            Firebase.setIntAsync(fbdo, "/test/int", count);
-            count++;
-        }
-        Serial.println("ok");
+      //The response is ignored in this async function, it may return true as long as the connection is established.
+      //The purpose for this async function is to set, push and update data instantly.
+      Firebase.setIntAsync(fbdo, "/test/int", count);
+      count++;
     }
+    Serial.println("ok");
+  }
 }

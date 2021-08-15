@@ -92,6 +92,7 @@
 /* 5. Define the database secret in case we need to access database rules*/
 #define DATABASE_SECRET "DATABASE_SECRET"
 
+//Define Firebase Data object
 FirebaseData fbdo1;
 
 FirebaseAuth auth;
@@ -178,9 +179,6 @@ void setup()
 
     Firebase.begin(&config, &auth);
 
-    //Or use legacy authenticate method
-    //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
-
     Firebase.reconnectWiFi(true);
 
     //Set up the config
@@ -193,7 +191,7 @@ void setup()
     fsConfig.condition_process_interval = 0;     // check the conditions continuously without delay
     fsConfig.dataRetainingPeriod = 24 * 60 * 60; //keep the log data within 1 day
     fsConfig.shared_fbdo = &fbdo1;               //for store/restore database values
-    
+
     //This new config added to disable internal command streaming when the fsConfig.stream_fbdo was not assigned.
     //This allows the session to be reuse for faster data sending.
     //The seesion will not close and open for usage changed between internal stream and normal data sending.
@@ -203,8 +201,13 @@ void setup()
 
     //Initiate the FireSense class
     FireSense.begin(&fsConfig, DATABASE_SECRET); //The database secret can be empty string when using the OAuthen2.0 sign-in method
+    
     //Load the config from database or create the default config
-    FireSense.loadConfig(loadDefaultConfig); //The loadDefaultConfig is the function to configure the channels and condition information.
+    if (!FireSense.loadConfig())
+    {
+        loadDefaultConfig(); //The loadDefaultConfig is the function to configure the channels and condition information.
+        FireSense.updateConfig();
+    }
 }
 
 void loop()

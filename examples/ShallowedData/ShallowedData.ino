@@ -46,7 +46,6 @@ FirebaseConfig config;
 
 bool taskCompleted = false;
 
-
 void setup()
 {
 
@@ -81,24 +80,27 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+  //Or use legacy authenticate method
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
+
   Firebase.begin(&config, &auth);
 
-  //Or use legacy authenticate method
-  //Firebase.begin(DATABASE_URL, "<database secret>");
-
   Firebase.reconnectWiFi(true);
-
 }
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && !taskCompleted)
   {
     taskCompleted = true;
 
     Serial.printf("Get shallow data... %s\n", Firebase.getShallowData(fbdo, "/") ? "ok" : fbdo.errorReason().c_str());
 
-     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
-       printResult(fbdo); //see addons/RTDBHelper.h
+    if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
+      printResult(fbdo); //see addons/RTDBHelper.h
   }
 }

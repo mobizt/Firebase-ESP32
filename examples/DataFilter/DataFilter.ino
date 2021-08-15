@@ -83,16 +83,23 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+  //Or use legacy authenticate method
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
+
   Firebase.begin(&config, &auth);
 
   //Or use legacy authenticate method
-  //Firebase.begin(DATABASE_URL, "<database secret>");
+  //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
 
   Firebase.reconnectWiFi(true);
 }
 
 void loop()
 {
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
+
   if (Firebase.ready() && !taskCompleted)
   {
 

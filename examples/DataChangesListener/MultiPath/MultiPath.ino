@@ -47,13 +47,11 @@ unsigned long sendDataPrevMillis = 0;
 
 String parentPath = "/test/stream/data";
 String childPath[2] = {"/node1", "/node2"};
-size_t childPathSize = 2;
 
 int count = 0;
 
 void streamCallback(MultiPathStreamData stream)
 {
-
   size_t numChild = sizeof(childPath) / sizeof(childPath[0]);
 
   for (size_t i = 0; i < numChild; i++)
@@ -65,12 +63,22 @@ void streamCallback(MultiPathStreamData stream)
   }
 
   Serial.println();
+
+  //This is the size of stream payload received (current and max value)
+  //Max payload size is the payload size under the stream path since the stream connected
+  //and read once and will not update until stream reconnection takes place.
+  //This max value will be zero as no payload received in case of ESP8266 which
+  //BearSSL reserved Rx buffer size is less than the actual stream payload.
+  Serial.printf("Received stream payload size: %d (Max. %d)\n\n", stream.payloadLength(), stream.maxPayloadLength());
 }
 
 void streamTimeoutCallback(bool timeout)
 {
   if (timeout)
     Serial.println("stream timeout, resuming...\n");
+
+  if (!stream.httpConnected())
+    Serial.printf("error code: %d, reason: %s\n\n", stream.httpCode(), stream.errorReason().c_str());
 }
 
 void setup()
@@ -105,23 +113,25 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+  //Or use legacy authenticate method
+  //config.database_url = DATABASE_URL;
+  //config.signer.tokens.legacy_token = "<database secret>";
+
   Firebase.begin(&config, &auth);
 
-  //Or use legacy authenticate method
-  //Firebase.begin(DATABASE_URL, "<database secret>");
-
   Firebase.reconnectWiFi(true);
+
+  //Recommend for ESP8266 stream, adjust the buffer size to match your stream data size
+#if defined(ESP8266)
+  stream.setBSSLBufferSize(2048 /* Rx in bytes, 512 - 16384 */, 512 /* Tx in bytes, 512 - 16384 */);
+#endif
 
   //The data under the node being stream (parent path) should keep small
   //Large stream payload leads to the parsing error due to memory allocation.
 
-  //The operations is the same as normal stream unless the JSON stream payload will be parsed
-  //with the predefined node path (child paths).
+  //The MultiPathStream works as normal stream with the payload parsing function.
 
-  //The changes occurred in any child node that is not in the child paths array will sent to the
-  //client as usual.
-
-  if (!Firebase.beginMultiPathStream(stream, parentPath.c_str(), childPath, childPathSize))
+  if (!Firebase.beginMultiPathStream(stream, parentPath))
     Serial.printf("sream begin error, %s\n\n", stream.errorReason().c_str());
 
   Firebase.setMultiPathStreamCallback(stream, streamCallback, streamTimeoutCallback);
@@ -129,6 +139,9 @@ void setup()
 
 void loop()
 {
+
+  //Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
@@ -146,7 +159,7 @@ void loop()
       json.set("node2/num", count * 3);
       //The response is ignored in this async function, it may return true as long as the connection is established.
       //The purpose for this async function is to set, push and update data instantly.
-      Firebase.setJSONAsync(fbdo, parentPath.c_str(), json);
+      Firebase.setJSONAsync(fbdo, parentPath, json);
       count++;
     }
 
