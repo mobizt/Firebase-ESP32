@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.0
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.1
 
 
 ## Global functions
@@ -4082,12 +4082,46 @@ Path can be wildcard with * in search path and * should use as key in part and d
 
 **`searchAll`** - The boolean option to search all occurrences of elements.
 
- ```C++
-size_t search(SearchCriteria &criteria) { return mSearch(root, criteria); }
+```C++
+size_t search(SearchCriteria &criteria);
 
-size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false) { return mSearch(root, result, criteria, prettify); }
- ```
+size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false);
+```
 
+
+
+
+
+
+
+
+#### Get the full path to any element in FirebaseJson object.
+
+param **`path`** The key or path to search in to.
+
+param **`searchAll`** Search all occurrences.
+
+return **`full path string`** in case of found.
+
+```C++
+String getPath(T path, bool searchAll = false);
+```
+
+
+
+
+
+
+
+#### Check whether key or path to the child element existed in FirebaseJson object or not.
+
+param **`path`** The key or path of child element check.
+
+return **`boolean`** status indicated the existence of element.
+
+```C++
+bool isMember(T path);
+```
 
 
 
@@ -4509,11 +4543,46 @@ Path can be wildcard with * in search path and * should use as key in part and d
 
 **`searchAll`** - The boolean option to search all occurrences of elements.
 
- ```C++
-size_t search(SearchCriteria &criteria) { return mSearch(root, criteria); }
+```C++
+size_t search(SearchCriteria &criteria);
 
-size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false) { return mSearch(root, result, criteria, prettify); }
- ```
+size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false);
+```
+
+
+
+
+
+
+#### Get the full path to any element in FirebaseJsonArray.
+
+param **`path`** The key or path to search in to.
+
+param **`searchAll`** Search all occurrences.
+
+return **`full path string`** in case of found.
+
+```C++
+String getPath(T path, bool searchAll = false);
+```
+
+
+
+
+
+
+
+#### Check whether key or path to the child element existed in FirebaseJsonArray or not.
+
+param **`path`** The key or path of child element check.
+
+return **`boolean`** status indicated the existence of element.
+
+```C++
+bool isMember(T path);
+```
+
+
 
 
 

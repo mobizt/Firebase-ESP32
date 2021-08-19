@@ -1,27 +1,17 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.11.0"
+#define FIREBASE_CLIENT_VERSION "3.11.1"
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.11.0
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.11.1
  *
- * Created August 15, 2021
+ * Created August 19, 2021
  *
  *   Updates:
  * 
- * - Code optimization and refactoring.
- * - Bugs fixed e.g. prevent zero length data sent in TCP client.
- * - Major updates with features added and improvement in FirebaseJson, RTDB and Session classes.
- * - Reduce memory usage.
- * - Features added e.g. FirebaseData object's setCert() for locally Root CA verification, to<type>() for any value casting.
- * - RTDB Data type checking is now optional.
- * - Fixed queue management code and file structure.
- * - Rewrite and update examples.
- * - MultipathStream begin and callback functions updated.
- * - FireSense class and example updates. The loadConfig function with default config callback function as argument is set to deprecate.
- * - Searchable Json object and array supported.
- * - FirebaseJsonData casting to any value type is now supported.
- * - FirebaseJson object and array serialize to writable object and deserialize from readable stream and client are supported.
+ * - Fix mising stringData in stream issue.
+ * - Fix issue that data type mismatch checking should not activated by default.
+ * - Add FirebaseJson features and fix for child of searching path existed in the search result.
  *
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
  * DELETE data from/to with Google's Firebase database using get, set, update
