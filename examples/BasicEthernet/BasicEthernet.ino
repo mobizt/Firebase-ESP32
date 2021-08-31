@@ -170,6 +170,8 @@ void setupFirebase()
 
 void testFirebase()
 {
+    //Flash string (PROGMEM and  (FPSTR), String,, String C/C++ string, const char, char array, string literal are supported
+    //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
     Serial.printf("Set bool... %s\n", Firebase.setBool(fbdo, "/test/bool", count % 2 == 0) ? "ok" : fbdo.errorReason().c_str());
 
