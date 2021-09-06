@@ -103,11 +103,13 @@ void loop()
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
     {
-      //Timestamp saved in millisecond, get its seconds from intData()
+      //In setTimestampAsync, the following timestamp will be 0 because the response payload was ignored for all async functions.
+
+      //Timestamp saved in millisecond, get its seconds from int value
       Serial.print("TIMESTAMP (Seconds): ");
       Serial.println(fbdo.to<int>());
 
-      //Or print the total milliseconds from doubleData()
+      //Or print the total milliseconds from double value
       //Due to bugs in Serial.print in Arduino library, use printf to print double instead.
       printf("TIMESTAMP (milliSeconds): %lld\n", fbdo.to<uint64_t>());
     }
