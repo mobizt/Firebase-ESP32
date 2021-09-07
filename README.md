@@ -380,11 +380,11 @@ The database data's payload (response) can be read or access through the casting
 
 * `FirebaseJson *json = fbdo.to<FirebaseJson *>();` or
 
-* `FirebaseJson json = fbdo.to<FirebaseJson>();`
+* `FirebaseJson &json = fbdo.to<FirebaseJson>();`
 
 * `FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();` or
 
-* `FirebaseJsonArray arr = fbdo.to<FirebaseJsonArray>();`
+* `FirebaseJsonArray &arr = fbdo.to<FirebaseJsonArray>();`
 
 * `std::vector<uint8_t> *blob = fbdo.to<std::vector<uint8_t> *>();`
 
