@@ -349,7 +349,7 @@ These functions return boolean value indicates the success of the operation whic
 * The data types matched between request and response.
 
 
-For generic get, use Firebase.RTDB.get(&fbdo, <path>).
+For generic get, use Firebase.get(fbdo, <path>).
 
 And check its type with fbdo.dataType() or fbdo.dataTypeEnum() and cast the value from it e.g. fbdo.to<int>(), fbdo.to<std::string>().
 
@@ -450,7 +450,7 @@ The function included `set`, `setInt`, `setFloat`, `setDouble`, `setBool`, `setS
 
 For faster sending data, non-waits or async mode functions are available e.g. `setAsync`, `setIntAsync`, `setFloatAsync`, `setDoubleAsync`, `setBoolAsync`, `setStringAsync`, `setJSONAsync`, `setArrayAsync`, `setBlobAsync` and `setFileAsync`. 
 
-For generic set, use Firebase.RTDB.set(&fbdo, <path>, <any variable or value>).
+For generic set, use Firebase.set(fbdo, <path>, <any variable or value>).
 
 These async functions will ignore the server responses.
 
@@ -474,9 +474,9 @@ Priority option was removed from File and Blob functions since v2.4.0.
 
 If defined Etag is not matched the defined path's ETag, the set operation will fail with result **412 Precondition Failed**.
 
-ETag at any node can be read through `Firebase.RTDB.getETag`.  ETag value changed upon the data was set or delete.
+ETag at any node can be read through `Firebase.getETag`.  ETag value changed upon the data was set or delete.
 
-The server's **Timestamp** can be stored in the database through `Firebase.RTDB.setTimestamp`. 
+The server's **Timestamp** can be stored in the database through `Firebase.setTimestamp`. 
 
 The returned **Timestamp** value can get from `fbdo.to<int>()`. 
 
@@ -523,9 +523,9 @@ The **unique key** of a new appended node can be determined from `fbdo.pushName(
 
 As set functions, the Firebase's push functions support **priority**.
 
-**ETag** was not available after push unless read the **ETag** at that new appended unique key later with `Firebase.RTDB.getETag`.
+**ETag** was not available after push unless read the **ETag** at that new appended unique key later with `Firebase.getETag`.
 
-The server's **Timestamp** can be appended in the database through `Firebase.RTDB.pushTimestamp`.
+The server's **Timestamp** can be appended in the database through `Firebase.pushTimestamp`.
 
 The unique key of Timestamp can be determined after Timestamp was appended.
 
@@ -1496,11 +1496,11 @@ if(result.success)
   //Type of parsed data
   Serial.println(result.type);
   //Its value
-  Serial.println(result.stringValue);
-  //Serial.println(result.intValue);
-  //Serial.println(result.boolValue);
-  //Serial.println(result.floatValue);
-  //Serial.println(result.doubleValue);
+  Serial.println(result.to<String>());
+  //Serial.println(result.to<int>());
+  //Serial.println(result.to<bool>());
+  //Serial.println(result.to<float>());
+  //Serial.println(result.to<double>());
 
 }
 
