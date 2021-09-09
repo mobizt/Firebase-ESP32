@@ -27,13 +27,9 @@
 // https://github.com/firebase/quickstart-ios
 // https://github.com/firebase/quickstart-js
 
-#if defined(ESP32)
+
 #include <WiFi.h>
 #include <FirebaseESP32.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <FirebaseESP8266.h>
-#endif
 
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"

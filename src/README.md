@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.4
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.5
 
 
 ## Global functions
@@ -15,7 +15,7 @@ param **`auth`** The pointer to FirebaseAuth data.
 
 note: For FirebaseConfig and FirebaseAuth data usage, see the examples.
 
-```C++
+```cpp
 void begin(FirebaseConfig *config, FirebaseAuth *auth);
 ```
 
@@ -57,7 +57,7 @@ In case of token generation and refreshment errors, use error.code property to g
 
 Use error.message property to get the error message string.
 
-```C++
+```cpp
 struct token_info_t authTokenInfo();
 ```
 
@@ -70,7 +70,7 @@ struct token_info_t authTokenInfo();
 
 return **`Boolean`** type status indicates the token generation is completed.
 
-```C++
+```cpp
 bool ready();
 ```
 
@@ -83,7 +83,7 @@ bool ready();
 
 return **`Boolean`** type status indicates the device can access to the services.
 
-```C++
+```cpp
 bool authenticated();
 ```
 
@@ -105,7 +105,7 @@ param **`StorageType`** Type of storage, StorageType::SD and StorageType::FLASH.
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
-```C++
+```cpp
 void begin(<string> databaseURL, <string> databaseSecret);
 
 void begin(<string> databaseURL, <string> databaseSecret, <char array> caCert);
@@ -121,7 +121,7 @@ void begin(<string> databaseURL, <string> databaseSecret, <string> caCertFile, u
 
 param **`fbdo`** Firebase Data Object to hold data and instance.
 
-```C++
+```cpp
 void end(FirebaseData &fbdo);
 ```
 
@@ -154,7 +154,7 @@ If the assigned email and passowrd are empty, the anonymous user will be created
 To enable Anonymous provider, from Firebase console, select Authentication, 
 select Sign-in method tab, under the Sign-in providers list, enable Anonymous provider.
 
-```C++
+```cpp
 bool signUp(FirebaseConfig *config, FirebaseAuth *auth, <string> email, <string> password);
 ```
 
@@ -176,7 +176,7 @@ If the idToken is not assigned, the internal config.signer.tokens.id_token will 
 
 See the Templates of Email address verification in the Firebase console, Authentication.
 
-```C++
+```cpp
 bool sendEmailVerification(FirebaseConfig *config,<string> idToken);
 ```
 
@@ -192,7 +192,7 @@ param **`email`** The user Email to send the password resset link.
 
 return **`Boolean`** type status indicates the success of the operation. 
 
-```C++
+```cpp
 bool sendResetPassword(FirebaseConfig *config, <string> email);
 ```
 
@@ -204,7 +204,7 @@ bool sendResetPassword(FirebaseConfig *config, <string> email);
 
 param **`reconnect`** The boolean to set/unset WiFi AP reconnection.
 
-```C++
+```cpp
 void reconnectWiFi(bool reconnect);
 ```
 
@@ -216,7 +216,7 @@ void reconnectWiFi(bool reconnect);
 
 return **`constant char*`** of currently used auth token.
 
-```C++
+```cpp
 const char *getToken();
 ```
 
@@ -229,7 +229,7 @@ const char *getToken();
 
 param **`digits`** The decimal places. 
 
-```C++
+```cpp
 void setFloatDigits(uint8_t digits);
 ```
   
@@ -241,7 +241,7 @@ void setFloatDigits(uint8_t digits);
 
 param **`digits`** The decimal places. 
 
-```C++
+```cpp
 void setDoubleDigits(uint8_t digits);
 ```
 
@@ -257,7 +257,7 @@ param **`enable`** The boolean value to enable/disable.
 The multiple HTTP requessts at a time is disable by default to prevent 
 the large memory used in multiple requests.
 
-```C++
+```cpp
   void allowMultipleRequests(bool enable);
 ```
 
@@ -273,7 +273,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`millisec`** The milliseconds to limit the request (0 - 900,000 ms or 15 min).
 
-```C++
+```cpp
 void setReadTimeout(FirebaseData &fbdo, int millisec);
 ```
 
@@ -290,7 +290,7 @@ param **`size`** The size identified string e.g. tiny, small, medium, large and 
 
 Size string and its write timeout in seconds e.g. tiny (1s), small (10s), medium (30s) and large (60s).
 
-```C++
+```cpp
 void setwriteSizeLimit(FirebaseData &fbdo, <string> size);
 ```
 
@@ -305,7 +305,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 return - **`Boolean`** type status indicates the success of the operation.
 
-```C++
+```cpp
 bool getRules(FirebaseData &fbdo);
 ```
 
@@ -323,7 +323,7 @@ param **`rules`** Database rules in jSON String format.
 
 return - **`Boolean`** type status indicates the success of the operation.
 
-```C++
+```cpp
 bool setRules(FirebaseData &fbdo, <string> rules);
 ```
 
@@ -407,7 +407,7 @@ param **`path`** Database path to be checked.
 
 return - **`Boolean`** type result indicates whether the defined database path has existed or not.
 
-```C++
+```cpp
 bool pathExisted(FirebaseData &dataObj, <string> path);
 ```
 
@@ -419,7 +419,7 @@ bool pathExisted(FirebaseData &dataObj, <string> path);
 
 return **`String`** of unique identifier.
 
-```C++
+```cpp
 String getETag(FirebaseData &fbdo, <string> path);
 ```
 
@@ -441,7 +441,7 @@ Return the child data with its value or JSON object (its values will be truncate
 
 The data can be read from FirebaseData object.
 
-```C++
+```cpp
 bool getShallowData(FirebaseData &fbdo, <string> path); 
 ```
 
@@ -462,7 +462,7 @@ that allows only HTTP GET and POST
     
 HTTP PATCH request was sent as PATCH which not affected by this option.
 
-```C++
+```cpp
 void enableClassicRequest(FirebaseData &fbdo, bool flag);
 ```
 
@@ -486,7 +486,7 @@ pushJSON, updateNode, and updateNodeSilent functions.
     
 The returned priority value from server can read from function [FirebaseData object].priority().
 
-```C++
+```cpp
 bool setPriority(FirebaseData &fbdo, <string> path, float priority);
 
 bool setPriorityAsync(FirebaseData &fbdo, <string> path, float priority);
@@ -509,7 +509,7 @@ return - **`Boolean`** type status indicates the success of the operation.
 
 The priority value from server can read from function [FirebaseData object].priority().
 
- ```C++
+ ```cpp
 bool getPriority(FirebaseData &fbdo, <string> path);
 ```
 
@@ -601,7 +601,7 @@ return **`Boolean`** type status indicates the success of the operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```C++
+```cpp
 bool pushInt(FirebaseData &fbdo, <string> path, <integer> value);
 
 bool pushIntAsync(FirebaseData &fbdo, <string> path, <integer> value);
@@ -614,7 +614,7 @@ bool pushIntAsync(FirebaseData &fbdo, <string> path, <integer> value);
 
 #### Append new integer value and the virtual child ".priority" to the defined database path.
 
-```C++
+```cpp
 bool pushInt(FirebaseData &fbdo, <string> path, <integer> value, float priority);
 
 bool pushIntAsync(FirebaseData &fbdo, <string> path, <integer> value, float priority);
@@ -638,7 +638,7 @@ return **`Boolean`** type status indicates the success of the operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```C++
+```cpp
 bool pushFloat(FirebaseData &fbdo, <string> path, float value);
 
 bool pushFloatAsync(FirebaseData &fbdo, <string> path, float value);
@@ -652,7 +652,7 @@ bool pushFloatAsync(FirebaseData &fbdo, <string> path, float value);
 
 #### Append new float value and the virtual child ".priority" to the defined database path.
 
-```C++
+```cpp
 bool pushFloat(FirebaseData &fbdo, <string> path, float value, float priority);
 
 bool pushFloatAsync(FirebaseData &fbdo, <string> path, float value, float priority);
@@ -678,7 +678,7 @@ return **`Boolean`** type status indicates the success of the operation.
 The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```C++
+```cpp
 bool pushDouble(FirebaseData &fbdo, <string> path, double value);
 
 bool pushDoubleAsync(FirebaseData &fbdo, <string> path, double value);
@@ -690,7 +690,7 @@ bool pushDoubleAsync(FirebaseData &fbdo, <string> path, double value);
 
 #### Append new double value (8 bytes) and the virtual child ".priority" to the defined database path.
 
-```C++
+```cpp
 bool pushDouble(FirebaseData &fbdo, <string> path, double value, float priority);
 
 bool pushDoubleAsync(FirebaseData &fbdo, <string> path, double value, float priority);
@@ -714,7 +714,7 @@ return **`Boolean`** type status indicates the success of the operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```C++
+```cpp
 bool pushBool(FirebaseData &fbdo, <string> path, bool value);
 
 bool pushBoolAsync(FirebaseData &fbdo, <string> path, bool value);
@@ -728,7 +728,7 @@ bool pushBoolAsync(FirebaseData &fbdo, <string> path, bool value);
 
 #### Append new Boolean value and the virtual child ".priority" to the defined database path.
 
-```C++
+```cpp
 bool pushBool(FirebaseData &fbdo, <string> path, bool value, float priority);
 
 bool pushBoolAsync(FirebaseData &fbdo, <string> path, bool value, float priority);
@@ -754,7 +754,7 @@ return **`Boolean`** type status indicates the success of the operation.
 The new appended node's key stored in Firebase Data object, 
 which can be accessed via function [FirebaseData object].pushName().
 
-```C++
+```cpp
 bool pushString(FirebaseData &fbdo, <string> path, <string> value);
 
 bool pushStringAsync(FirebaseData &fbdo, <string> path, <string> value);
@@ -768,7 +768,7 @@ bool pushStringAsync(FirebaseData &fbdo, <string> path, <string> value);
 
 #### Append new string (text) and the virtual child ".priority" to the defined database path.
 
-```C++
+```cpp
 bool pushString(FirebaseData &fbdo, <string> path, <string> value, float priority);
 
 bool pushStringAsync(FirebaseData &fbdo, <string> path, <string> value, float priority);
@@ -793,7 +793,7 @@ return **`Boolean`** type status indicates the success of the operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```C++
+```cpp
 bool pushJSON(FirebaseData &fbdo, <string> path, FirebaseJson &json);
 
 bool pushJSONAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json);
@@ -809,7 +809,7 @@ bool pushJSONAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json);
 
 #### Append new child node key and value (using JSON data or FirebaseJson object) and the virtual child ".priority" to the defined database path.
 
-```C++
+```cpp
 bool pushJSON(FirebaseData &fbdo, <string> path, FirebaseJson &json, float priority);
 
 bool pushJSONAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json, float priority);
@@ -833,7 +833,7 @@ return **`Boolean`** type status indicates the success of the operation.
 The new appended node's key will be stored in Firebase Data object,
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```C++
+```cpp
 bool pushArray(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr);
 
 bool pushArrayAsync(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr);
@@ -846,7 +846,7 @@ bool pushArrayAsync(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr);
 
 #### Append FirebaseJsonArray object and virtual child ".priority" at the defined database path.
 
-```C++
+```cpp
 bool pushArray(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr, float priority);
 
 bool pushArrayAsync(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr, float priority);
@@ -875,7 +875,7 @@ return **`Boolean`** type status indicates the success of the operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```C++
+```cpp
 bool pushBlob(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size);
 
 bool pushBlobAsync(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size);
@@ -904,7 +904,7 @@ which its value can be accessed via function [FirebaseData object].pushName().
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
-```C++
+```cpp
 bool pushFile(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName);
 
 bool pushFileAsync(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName);
@@ -926,7 +926,7 @@ return - **`Boolean`** type status indicates the success of the operation.
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function [FirebaseData object].pushName().
 
-```C++
+```cpp
 bool pushTimestampAsync(FirebaseData &fbdo, <string> path);
 
 bool pushTimestampAsync(FirebaseData &fbdo, <string> path);
@@ -1108,7 +1108,7 @@ stores in the database.
 Call [FirebaseData object].to<int>() will return the integer value of
 the payload returned from the server.
 
-```C++
+```cpp
 bool setInt(FirebaseData &fbdo, <string> path, <integer> value);
 
 bool setIntAsync(FirebaseData &fbdo, <string> path, <integer> value);
@@ -1119,7 +1119,7 @@ bool setIntAsync(FirebaseData &fbdo, <string> path, <integer> value);
 
 #### Set integer data and virtual child ".priority" at the defined database path.
 
-```C++
+```cpp
 bool setInt(FirebaseData &fbdo, <string> path, <integer> value, float priority);
 
 bool setIntAsync(FirebaseData &fbdo, <string> path, <integer> value, float priority);
@@ -1147,7 +1147,7 @@ If ETag at the defined database path does not match the provided ETag parameter,
 If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
 Also call [FirebaseData object].to<int>() to get the current integer value.
     
-```C++
+```cpp
 bool setInt(FirebaseData &fbdo, <string> path, <integer> value, <string> ETag);
 
 bool setIntAsync(FirebaseData &fbdo, <string> path, <integer> value, <string> ETag);
@@ -1160,7 +1160,7 @@ bool setIntAsync(FirebaseData &fbdo, <string> path, <integer> value, <string> ET
 
 #### Set integer data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
-```C++
+```cpp
 bool setInt(FirebaseData &fbdo, <string> path, <integer> value, float priority, <string> ETag);
 
 bool setIntAsync(FirebaseData &fbdo, <string> path, <integer> value, float priority, <string> ETag);
@@ -1186,7 +1186,7 @@ Call [FirebaseData object].dataType to determine what type of data successfully 
 Call [FirebaseData object].to<float>() will return the float value of
 the payload returned from the server.
 
-```C++
+```cpp
 bool setFloat(FirebaseData &fbdo, <string> path, float value);
 
 bool setFloatAsync(FirebaseData &fbdo, <string> path, float value);
@@ -1197,7 +1197,7 @@ bool setFloatAsync(FirebaseData &fbdo, <string> path, float value);
 
 #### Set float data and virtual child ".priority" at the defined database path.
 
-```C++
+```cpp
 bool setFloat(FirebaseData &fbdo, <string> path, float value, float priority);
 
 bool setFloatAsync(FirebaseData &fbdo, <string> path, float value, float priority);
@@ -1227,7 +1227,7 @@ If ETag at the defined database path does not match the provided ETag parameter,
 If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
 Also call [FirebaseData object].to<float>() to get the current float value.
 
-```C++
+```cpp
 bool setFloat(FirebaseData &fbdo, <string> path, float value, <string> ETag);
 
 bool setFloatAsync(FirebaseData &fbdo, <string> path, float value, <string> ETag);
@@ -1238,7 +1238,7 @@ bool setFloatAsync(FirebaseData &fbdo, <string> path, float value, <string> ETag
 
 #### Set float data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
-```C++
+```cpp
 bool setFloat(FirebaseData &fbdo, <string> path, float value, float priority, <string> ETag);
 
 bool setFloatAsync(FirebaseData &fbdo, <string> path, float value, float priority, <string> ETag);
@@ -1268,7 +1268,7 @@ Due to bugs in Serial.print in Arduino, to print large double value with zero de
 use printf("%.9lf\n", firebaseData.to<double>()); for print the returned double value up to 9 decimal places.
 
 
-```C++
+```cpp
 bool setDouble(FirebaseData &fbdo, <string> path, double value);
 
 bool setDoubleAsync(FirebaseData &fbdo, <string> path, double value);
@@ -1280,7 +1280,7 @@ bool setDoubleAsync(FirebaseData &fbdo, <string> path, double value);
 
 #### Set double data and virtual child ".priority" at the defined database path.
 
-```C++
+```cpp
 bool setDouble(FirebaseData &fbdo, <string> path, double value, float priority);
 
 bool setDoubleAsync(FirebaseData &fbdo, <string> path, double value, float priority);
@@ -1311,7 +1311,7 @@ If ETag at the defined database path does not match the provided ETag parameter,
 If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
 Also call [FirebaseData object].doubeData to get the current double value.
 
-```C++
+```cpp
 bool setDouble(FirebaseData &fbdo, <string> path, double value, <string> ETag);
 
 bool setDoubleAsync(FirebaseData &fbdo, <string> path, double value, <string> ETag);
@@ -1324,7 +1324,7 @@ bool setDoubleAsync(FirebaseData &fbdo, <string> path, double value, <string> ET
 
 #### Set double data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
-```C++
+```cpp
 bool setDouble(FirebaseData &fbdo, <string> path, double value, float priority, <string> ETag);
 
 bool setDoubleAsync(FirebaseData &fbdo, <string> path, double value, float priority, <string> ETag);
@@ -1349,7 +1349,7 @@ Call [FirebaseData object].dataType to determine what type of data successfully 
 Call [FirebaseData object].to<bool>() will return the Boolean value of
 the payload returned from the server.
 
-```C++
+```cpp
 bool setBool(FirebaseData &fbdo, <string> path, bool value);
 
 bool setBoolAsync(FirebaseData &fbdo, <string> path, bool value);
@@ -1361,7 +1361,7 @@ bool setBoolAsync(FirebaseData &fbdo, <string> path, bool value);
 
 #### Set boolean data and virtual child ".priority" at the defined database path.
 
-```C++
+```cpp
 bool setBool(FirebaseData &fbdo, <string> path, bool value, float priority);
 
 bool setBoolAsync(FirebaseData &fbdo, <string> path, bool value, float priority);
@@ -1395,7 +1395,7 @@ the operation will fail with HTTP code 412, Precondition Failed (ETag is not mat
 If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
 Also call [FirebaseData object].doubeData to get the current boolean value.
 
-```C++
+```cpp
 bool setBool(FirebaseData &fbdo, <string> path, bool value, <string> ETag);
 
 bool setBoolAsync(FirebaseData &fbdo, <string> path, bool value, <string> ETag);
@@ -1407,7 +1407,7 @@ bool setBoolAsync(FirebaseData &fbdo, <string> path, bool value, <string> ETag);
 
 #### Set boolean data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
-```C++
+```cpp
 bool setBool(FirebaseData &fbdo, <string> path, bool value, float priority, <string> ETag);
 
 bool setBoolAsync(FirebaseData &fbdo, <string> path, bool value, float priority, <string> ETag);
@@ -1433,7 +1433,7 @@ Call [FirebaseData object].dataType to determine what type of data successfully 
 Call [FirebaseData object].to<String>() will return the string value of
 the payload returned from the server.
 
-```C++
+```cpp
 bool setString(FirebaseData &fbdo, <string> path, <string> value);
 
 bool setStringAsync(FirebaseData &fbdo, <string> path, <string> value);
@@ -1446,7 +1446,7 @@ bool setStringAsync(FirebaseData &fbdo, <string> path, <string> value);
 
 #### Set string data and virtual child ".priority" at the defined database path.
 
-```C++
+```cpp
 bool setString(FirebaseData &fbdo, <string> path, <string> value, float priority);
 
 bool setStringAsync(FirebaseData &fbdo, <string> path, <string> value, float priority);
@@ -1480,7 +1480,7 @@ the operation will fail with HTTP code 412, Precondition Failed (ETag is not mat
 If the operation failed due to ETag is not match, call [FirebaseData object].ETag() to get the current ETag value.
 Also, call [FirebaseData object].to<String>() to get the current string value.
 
-```C++
+```cpp
 bool setString(FirebaseData &fbdo, <string> path, <string> value, <string> ETag);
 
 bool setStringAsync(FirebaseData &fbdo, <string> path, <string> value, <string> ETag);
@@ -1492,7 +1492,7 @@ bool setStringAsync(FirebaseData &fbdo, <string> path, <string> value, <string> 
 
 #### Set string data and the virtual child ".priority" if defined ETag matches at the defined database path 
 
-```C++
+```cpp
 bool setString(FirebaseData &fbdo, <string> path, <string> value, float priority, <string> ETag);
 
 bool setStringAsync(FirebaseData &fbdo, <string> path, <string> value, float priority, <string> ETag);
@@ -1521,7 +1521,7 @@ Call [FirebaseData object].dataType or [FirebaseData object].dataTypeNum to dete
 
 Call [FirebaseData object].to<FirebaseJson>() and [FirebaseData object].to<FirebaseJson *>() will return reference to object and pointer to FirebaseJson object from payload.
 
-```C++
+```cpp
 bool setJSON(FirebaseData &fbdo, <string> path, FirebaseJson &json);
 
 bool setJSONAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json);
@@ -1535,7 +1535,7 @@ bool setJSONAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json);
 
 #### Set JSON data or FirebaseJson object and virtual child ".priority" at the defined database path.
 
-```C++
+```cpp
 bool setJSON(FirebaseData &fbdo, <string> path, FirebaseJson &json, float priority);
 
 bool setJSONAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json, float priority);
@@ -1579,7 +1579,7 @@ Also call [FirebaseData object].dataType or [FirebaseData object].dataTypeNum to
 And [FirebaseData object].to<FirebaseJson>() and [FirebaseData object].to<FirebaseJson *>() will return reference to object and pointer to FirebaseJson object from payload.
 
 
-```C++
+```cpp
 bool setJSON(FirebaseData &fbdo, <string> path, FirebaseJson &json, <string> ETag);
 
 bool setJSONAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json, <string> ETag);
@@ -1592,7 +1592,7 @@ bool setJSONAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json, <string
 
 #### Set JSON data or FirebaseJson object and the virtual child ".priority" if defined ETag matches at the defined database path 
 
-```C++
+```cpp
 bool setJSON(FirebaseData &fbdo, <string> path, FirebaseJson &json, float priority, <string> ETag);
 
 bool setJSONAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json, float priority, <string> ETag);
@@ -1620,7 +1620,7 @@ stores in the database.
 
 Call [FirebaseData object].to<FirebaseJsonArray>() and [FirebaseData object].to<FirebaseJsonArray*>() will return reference to object and pointer to FirebaseJsonArray object that contains the array from payload. 
 
-```C++
+```cpp
 bool setArray(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr);
 
 bool setArrayAsync(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr);
@@ -1634,7 +1634,7 @@ bool setArrayAsync(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr);
 
 #### Set FirebaseJsonArray object and virtual child ".priority" at the defined database path.
 
-```C++
+```cpp
 bool setArray(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr, float priority);
 
 bool setArrayAsync(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr, float priority);
@@ -1670,7 +1670,7 @@ stores in the database.
 
 And [FirebaseData object].to<FirebaseJsonArray>() and [FirebaseData object].to<FirebaseJsonArray*>() will return reference to object and pointer to FirebaseJsonArray object that contains the array from payload. 
 
-```C++
+```cpp
 bool setArray(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr, <string> ETag);
 
 bool setArray(AsyncFirebaseData &fbdo, <string> path, FirebaseJsonArray &arr, <string> ETag);
@@ -1679,7 +1679,7 @@ bool setArray(AsyncFirebaseData &fbdo, <string> path, FirebaseJsonArray &arr, <s
 
 Set FirebaseJsonArray object and the virtual child ".priority" if defined ETag matches at the defined database path 
 
-```C++
+```cpp
 bool setArray(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr, float priority, <string> ETag);
 
 bool setArrayAsync(FirebaseData &fbdo, <string> path, FirebaseJsonArray &arr, float priority, <string> ETag);
@@ -1705,7 +1705,7 @@ return **`Boolean`** type status indicates the success of the operation.
 
 No payload returned from the server.
 
-```C++
+```cpp
 bool setBlob(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size);
 
 bool setBlobAsync(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size);
@@ -1738,7 +1738,7 @@ No payload returned from the server.
 If ETag at the defined database path does not match the provided ETag parameter,
 the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
-```C++
+```cpp
 bool setBlob(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size, <string> ETag);
 
 bool setBlobAsync(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size, <string> ETag);
@@ -1766,7 +1766,7 @@ No payload returned from the server.
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
-```C++
+```cpp
 bool setFile(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName);
 
 bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName);
@@ -1798,7 +1798,7 @@ the operation will fail with HTTP code 412, Precondition Failed (ETag is not mat
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
-```C++
+```cpp
 bool setFile(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, <string> ETag);
 
 bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, <string> ETag);
@@ -1823,7 +1823,7 @@ or [FirebaseData object].to<double>() to get millisecond timestamp.
 Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
 use printf("%.0lf\n", firebaseData.to<double>());.
 
-```C++
+```cpp
 bool setTimestamp(FirebaseData &fbdo, <string> path);
 
 bool setTimestampAsync(FirebaseData &fbdo, <string> path);
@@ -1851,7 +1851,7 @@ Call [FirebaseData object].to<FirebaseJson>() and [FirebaseData object].to<Fireb
 
 To reduce network data usage, use updateNodeSilent instead.
 
-```C++
+```cpp
 bool updateNode(FirebaseData &fbdo, <string> path, FirebaseJson &json);
 
 bool updateNodeAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json);
@@ -1866,7 +1866,7 @@ bool updateNodeAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json);
 
 #### Update child node key or existing key's value and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
 
-```C++
+```cpp
 
 bool updateNode(FirebaseData &fbdo, <string> path, FirebaseJson &json, float priority);
 
@@ -1893,7 +1893,7 @@ return **`Boolean`** type status indicates the success of the operation.
 Owing to the objective of this function to reduce network data usage, 
 no payload will be returned from the server.
 
-```C++
+```cpp
 bool updateNodeSilent(FirebaseData &fbdo, <string> path, FirebaseJson &json);
 
 bool updateNodeSilentAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json);
@@ -1906,7 +1906,7 @@ bool updateNodeSilentAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json
 
 #### Update child node key and virtual child ".priority" (using JSON data or FirebaseJson object) under the defined database path.
 
-```C++
+```cpp
 bool updateNodeSilent(FirebaseData &fbdo, <string> path, FirebaseJson &json, float priority);
 
 bool updateNodeSilentAsync(FirebaseData &fbdo, <string> path, FirebaseJson &json, float priority);
@@ -1962,7 +1962,7 @@ the function [FirebaseData object].to<int>() will return zero (0).
 If the payload returned from server is float type, 
 the function [FirebaseData object].to<int>() will return rounded integer value.
 
-```C++
+```cpp
 bool getInt(FirebaseData &fbdo, <string> path);
 ```
 
@@ -1983,7 +1983,7 @@ return **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not an integer, float and double, 
 the target variable's value will be zero (0).
 
-```C++
+```cpp
 bool getInt(FirebaseData &fbdo, <string> path,<integer> &target);
 ```
 
@@ -2008,7 +2008,7 @@ the payload returned from the server.
 If the payload returned from server is not integer or float type, 
 the function [FirebaseData object].to<int>() will return zero (0).
 
-```C++
+```cpp
 bool getFloat(FirebaseData &fbdo, <string> path);
 ```
 
@@ -2030,7 +2030,7 @@ return **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not an integer, float and double, 
 the target variable's value will be zero (0).
 
-```C++
+```cpp
 bool getFloat(FirebaseData &fbdo, <string> path, float &target);
 ```
 
@@ -2058,7 +2058,7 @@ the function [FirebaseData object].to<double>() will return zero (0).
 Due to bugs in Serial.print in Arduino, to print large double value with zero decimal place, 
 use printf("%.9lf\n", firebaseData.to<double>()); for print the returned double value up to 9 decimal places.
 
-```C++
+```cpp
 bool getDouble(FirebaseData &fbdo, <string> path);
 ```
 
@@ -2081,7 +2081,7 @@ return **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not an integer, float and double, 
 the target variable's value will be zero (0).
 
-```C++
+```cpp
 bool getDouble(FirebaseData &fbdo, <string> path, double &target);
 ```
 
@@ -2106,7 +2106,7 @@ the payload returned from the server.
 If the payload returned from server is not boolean type, 
 the function [FirebaseData object].to<bool>() will return false.
 
-```C++
+```cpp
 bool getBool(FirebaseData &fbdo, <string> path);
 ```
 
@@ -2129,7 +2129,7 @@ return **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not Boolean, 
 the target variable's value will be false.
 
-```C++
+```cpp
 bool getBool(FirebaseData &fbdo, <string> path, bool &target);
 ```
 
@@ -2154,7 +2154,7 @@ the payload returned from the server.
 If the payload returned from the server is not string type, 
 the function [FirebaseData object].to<String>() will return empty string (String object).
 
-```C++
+```cpp
 bool getString(FirebaseData &fbdo, <string> path);
 ```
 
@@ -2176,7 +2176,7 @@ return **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not a string,
 the target String object's value will be empty.
 
-```C++
+```cpp
 bool getString(FirebaseData &fbdo, <string> path, String &target);
 ```
 
@@ -2202,7 +2202,7 @@ If the type of payload returned from server is not json,
 the function [FirebaseData object].to<FirebaseJson>() will contain empty object.
 
 
-```C++
+```cpp
 bool getJSON(FirebaseData &fbdo, <string> path);
 ```
 
@@ -2226,7 +2226,7 @@ return **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not JSON,
 the target FirebaseJson object will contain an empty object.
 
-```C++
+```cpp
 bool getJSON(FirebaseData &fbdo, <string> path, FirebaseJson *target);
 ```
 
@@ -2279,7 +2279,7 @@ Call [FirebaseData object].to<FirebaseJson>() and [FirebaseData object].to<Fireb
 If the type of payload returned from server is not json,
 the function [FirebaseData object].to<FirebaseJson>() will contain empty object.
 
-```C++
+```cpp
 bool getJSON(FirebaseData &fbdo, <string> path, QueryFilter &quer);
 ```
 
@@ -2304,7 +2304,7 @@ return **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not JSON,
 the target FirebaseJson object will contain an empty object.
 
-```C++
+```cpp
 bool getJSON(FirebaseData &fbdo, <string> path, QueryFilter &query, FirebaseJson *target);
 ```
 
@@ -2331,7 +2331,7 @@ Call [FirebaseData object].to<FirebaseJsonArray>() and [FirebaseData object].to<
 If the type of payload returned from the server is not an array,
 the array element in [FirebaseData object].to<FirebaseJsonArray>() will be empty.
 
-```C++
+```cpp
 bool getArray(FirebaseData &fbdo, <string> path);
 ```
 
@@ -2352,7 +2352,7 @@ return - **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not an array,
 the target FirebaseJsonArray object will contain an empty array.
 
-```C++
+```cpp
 bool getArray(FirebaseData &fbdo, <string> path, FirebaseJsonArray *target);
 ```
 
@@ -2398,7 +2398,7 @@ If the type of payload returned from the server is not an array,
 the function [FirebaseData object].to<FirebaseJsonArray *>() will contain empty array.
 
 
-```C++
+```cpp
 bool getArray(FirebaseData &fbdo, <string> path, QueryFilter &query);
 ```
 
@@ -2420,7 +2420,7 @@ return - **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not an array,
 the target FirebaseJsonArray object will contain an empty array.
 
-```C++
+```cpp
 bool getArray(FirebaseData &fbdo, <string> path, QueryFilter &query, FirebaseJsonArray *target);
 ```
 
@@ -2446,7 +2446,7 @@ payload returned from server.
 If the payload returned from the server is not blob type, 
 the function [FirebaseData object].to<std::vector<uint8_t> *>() will return empty array.
 
-```C++
+```cpp
 bool getBlob(FirebaseData &fbdo, <string> path);
 ```
 
@@ -2468,7 +2468,7 @@ return **`Boolean`** type status indicates the success of the operation.
 If the type of payload returned from the server is not a blob,
 the target variable value will be an empty array.
 
-```C++
+```cpp
 bool getBlob(FirebaseData &fbdo, <string> path, std::vector<uint8_t> &target);
 ```
 
@@ -2496,7 +2496,7 @@ return **`Boolean`** type status indicates the success of the operation.
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
-```C++
+```cpp
 bool getFile(FirebaseData &fbdo, uint8_t storageType, <string> nodePath, <string> fileName);
 ```
 
@@ -2515,7 +2515,7 @@ param **`path`** Database path to be deleted.
 
 return **`Boolean`** type status indicates the success of the operation.*
 
-```C++
+```cpp
 bool deleteNode(FirebaseData &fbdo, <string> path);
 ```
 
@@ -2537,7 +2537,7 @@ return **`Boolean`** type status indicates the success of the operation.*
 If ETag at the defined database path does not match the provided ETag parameter,
 the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
 
-```C++
+```cpp
 bool deleteNode(FirebaseData &fbdo, <string> path, <string> ETag);
 ```
 
@@ -2585,7 +2585,7 @@ param **`path`** Database path to monitor.
 
 return **`Boolean`** type status indicates the success of the operation.*
 
-```C++
+```cpp
 bool beginStream(FirebaseData &fbdo, <string> path);
 ```
 
@@ -2603,7 +2603,7 @@ param **`parentPath`** Database parent node path to subscribe.
 
 return **`Boolean`** type status indicates the success of the operation.*
 
-```C++
+```cpp
 bool beginMultiPathStream(FirebaseData &fbdo, <string> parentPath,);
 ```
 
@@ -2627,7 +2627,7 @@ Using the same Firebase Data object for stream read/monitoring associated with r
     
 The stream will be resumed or reconnected automatically when calling readStream.
 
-```C++
+```cpp
 bool readStream(FirebaseData &fbdo);
 ```
 
@@ -2645,7 +2645,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 return **`Boolean`** type status indicates the success of the operation.
  
-```C++
+```cpp
 bool endStream(FirebaseData &fbdo);
 ```
 
@@ -2678,7 +2678,7 @@ store in the database.
 Call [streamData object].xxxData will return the appropriate data type of
 the payload returned from the server.
 
-```C++
+```cpp
 void setStreamCallback(FirebaseData &fbdo, StreamEventCallback dataAvailablecallback, StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
 ```
 
@@ -2713,7 +2713,7 @@ The properties [MultiPathStreamData object].value, [MultiPathStreamData object].
 
 These properties will store the result from calling the function [MultiPathStreamData object].get.
 
-```C++
+```cpp
 void setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStreamEventCallback multiPathDataCallback, StreamTimeoutCallback timeoutCallback = NULL, size_t streamTaskStackSize = 8192);
 ```
 
@@ -2729,7 +2729,7 @@ void setMultiPathStreamCallback(FirebaseData &fbdo, MultiPathStreamEventCallback
 
 param **`fbdo`** Firebase Data Object to hold data and instances.
 
-```C++
+```cpp
 void removeStreamCallback(FirebaseData &fbdo);
 ```
 
@@ -2743,7 +2743,7 @@ void removeStreamCallback(FirebaseData &fbdo);
 
 param **`fbdo`** Firebase Data Object to hold data and instances.
 
-```C++
+```cpp
 void removeMultiPathStreamCallback(FirebaseData &fbdo);
 ```
 
@@ -2767,7 +2767,7 @@ return **`Boolean`** type status indicates the success of the operation.
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
-```C++
+```cpp
 bool backup(FirebaseData &fbdo, uint8_t storageType, <string> nodePath, <string> fileName);
 ```
 
@@ -2789,7 +2789,7 @@ return **`Boolean`** type status indicates the success of the operation.
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
-```C++
+```cpp
 bool restore(FirebaseData &fbdo, uint8_t storageType <string> nodePath, <string> fileName);
 ```
 
@@ -2805,7 +2805,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`num`** The maximum retry.
 
-```C++
+```cpp
 void setMaxRetry(FirebaseData &fbdo, uint8_t num);
 ```
 
@@ -2821,7 +2821,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`num`** The maximum Firebase Error Queues.
 
-```C++
+```cpp
 void setMaxErrorQueue(FirebaseData &fbdo, uint8_t num);
 ```
 
@@ -2841,7 +2841,7 @@ param **`storageType`** Type of storage to save file, StorageType::FLASH or Stor
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
     
-```C++
+```cpp
 bool saveErrorQueue(FirebaseData &fbdo, <string> filename, uint8_t storageType);
 ```
    
@@ -2858,7 +2858,7 @@ param **`storageType`** Type of storage to save file, StorageType::FLASH or Stor
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
     
-```C++
+```cpp
 bool deleteStorageFile(<string> filename, uint8_t storageType);
 ```
 
@@ -2876,7 +2876,7 @@ param **`storageType`** Type of storage to read file, StorageType::FLASH or Stor
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
     
-```C++
+```cpp
 bool restoreErrorQueue(FirebaseData &fbdo, <string> filename, uint8_t storageType);
 ```
 
@@ -2896,7 +2896,7 @@ return **`Number`** (0-255) of queues store in defined FLASH file.
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
-```C++
+```cpp
 uint8_t errorQueueCount(FirebaseData &fbdo, <string> filename, uint8_t storageType);
 ```
 
@@ -2911,7 +2911,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 return **`Number`** (0-255) of queues in Firebase Data object queue collection.
 
-```C++
+```cpp
 uint8_t errorQueueCount(FirebaseData &fbdo);
 ```
 
@@ -2926,7 +2926,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 return **`Boolean`** type status indicates whether the  Firebase Error Queues collection was full or not.
 
-```C++
+```cpp
 bool isErrorQueueFull(FirebaseData &fbdo);
 ```
 
@@ -2941,7 +2941,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`callback`** Callback function that accepts QueueInfo parameter.
   
-```C++
+```cpp
 void processErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback = NULL);
 ```
 
@@ -2958,7 +2958,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
     
 return **`Number`** of Queue ID.
 
-```C++
+```cpp
 uint32_t getErrorQueueID(FirebaseData &fbdo);
 ```
 
@@ -2973,7 +2973,7 @@ param **`errorQueueID`** The Firebase Error Queue ID get from getErrorQueueID.
     
 return - **`Boolean type`** status indicates the queue existence.
 
-```C++
+```cpp
 bool isErrorQueueExisted(FirebaseData &fbdo, uint32_t errorQueueID);
 ```
 
@@ -3004,7 +3004,7 @@ The following functions are available from QueueInfo Object accepted by callback
 **queueInfo.path()**, get a string of the Firebase call path that being process of current Error Queue.
 
 
-```C++
+```cpp
 void beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback = NULL, size_t queueTaskStackSize = 8192);
 ```
 
@@ -3017,7 +3017,7 @@ void beginAutoRunErrorQueue(FirebaseData &fbdo, QueueInfoCallback callback = NUL
 param **`fbdo`** Firebase Data Object to hold data and instances.
 
 
-```C++
+```cpp
 void endAutoRunErrorQueue(FirebaseData &fbdo);
 ```
 
@@ -3029,7 +3029,7 @@ void endAutoRunErrorQueue(FirebaseData &fbdo);
 param **`fbdo`** Firebase Data Object to hold data and instances.
 
 
-```C++
+```cpp
 void clearErrorQueue(FirebaseData &fbdo);
 ```
 
@@ -3046,7 +3046,7 @@ param **`index`** The index (starts from 0) of recipient device token which adde
     
 return - **`Boolean type`** status indicates the success of the operation.
 
-```C++
+```cpp
 bool sendMessage(FirebaseData &fbdo, uint16_t index);
 ```
 
@@ -3061,7 +3061,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
     
 return - **`Boolean type`** status indicates the success of the operation.
 
-```C++
+```cpp
 bool broadcastMessage(FirebaseData &fbdo);
 ```
 
@@ -3075,7 +3075,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
     
 return - **`Boolean type`** status indicates the success of the operation.
 
-```C++
+```cpp
 bool sendTopic(FirebaseData &fbdo);
 ```
 
@@ -3097,7 +3097,7 @@ param **`mosi`** SPI MOSI pin.
 return **`Boolean`** type status indicates the success of the operation.
 
 
-```C++
+```cpp
 void sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 ```
 
@@ -3149,7 +3149,7 @@ param **`httpCode`** The http code.
 
 param **`buff`** The C++ string buffer out.
 
-```C++
+```cpp
 void errorToString(int httpCode, std::string &buff);
 ```
 
@@ -3165,7 +3165,7 @@ void errorToString(int httpCode, std::string &buff);
 
 param **`len`** The server response buffer size limit (4096 is minimum). 
 
-```C++
+```cpp
 void setResponseSize(size_t len);
 ```
 
@@ -3196,7 +3196,7 @@ param **`pause`** True for pause and False for unpause.
 
 return **`Boolean`** type status indicates the success of the operation.
 
-```C++
+```cpp
 bool pauseFirebase(bool pause);
 ```
 
@@ -3211,7 +3211,7 @@ bool pauseFirebase(bool pause);
 
 return **`Boolean`** type value of pause status.
 
-```C++
+```cpp
 bool isPause();
 ```
 
@@ -3231,7 +3231,7 @@ bool isPause();
 
 return **`Internal WiFiClientSecure pointer`**.
 
-```C++
+```cpp
 WiFiClientSecure *getWiFiClient();
 ```
 
@@ -3250,7 +3250,7 @@ This will release the memory used by internal WiFi client.
 
 The next server connection will take time (a second) due to SSL/TLS handshaking
 
-```C++
+```cpp
 void stopWiFiClient();
 ```
 
@@ -3329,7 +3329,7 @@ The event type "cancel" indicated something wrong and cancel by the server.
 
 The event type "auth_revoked" indicated the provided Firebase Authentication Data (Database secret) is no longer valid.
 
-```C++
+```cpp
 String eventType();
 ```
 
@@ -3345,7 +3345,7 @@ String eventType();
 
 return **`String.`** of unique identifier.
 
-```C++
+```cpp
 String ETag();
 ```
 
@@ -3358,7 +3358,7 @@ String ETag();
 
 return **`The database streaming path.`**
 
-```C++
+```cpp
 String streamPath();
 ```
 
@@ -3375,7 +3375,7 @@ return **`The database path which belongs to server' s returned payload.`**
 The database path returned from this function in case of stream, also changed upon the child or parent's stream
 value changes.
 
-```C++
+```cpp
 String dataPath();
 ```
 
@@ -3389,7 +3389,7 @@ String dataPath();
 
 return **`The error description string (String object).`**
 
-```C++
+```cpp
 String errorReason();
 ```
 
@@ -3403,7 +3403,7 @@ String errorReason();
 
 return **`Integer value.`**
 
-```C++
+```cpp
 int intData();
 ```
 
@@ -3417,7 +3417,7 @@ int intData();
 
 return **`Float value.`**
 
-```C++
+```cpp
 float floatData();
 ```
 
@@ -3429,7 +3429,7 @@ float floatData();
 
 return **`Double value.`**
 
-```C++
+```cpp
 float doubleData();
 ```
 
@@ -3441,7 +3441,7 @@ float doubleData();
 
 return **`Boolean value.`**
 
-```C++
+```cpp
 float boolData();
 ```
 
@@ -3454,7 +3454,7 @@ float boolData();
 
 return **`String (String object).`**
 
-```C++
+```cpp
 String stringData();
 ```
 
@@ -3468,7 +3468,7 @@ String stringData();
 
 return **`String (String object).`**
 
-```C++
+```cpp
 String jsonString();
 ```
 
@@ -3480,7 +3480,7 @@ String jsonString();
 
 return **`FirebaseJson object.`**
 
-```C++
+```cpp
 FirebaseJson &jsonObject();
 ```
 
@@ -3492,7 +3492,7 @@ FirebaseJson &jsonObject();
 
 return **`FirebaseJson object `**pointer.
 
-```C++
+```cpp
 FirebaseJson *jsonObjectPtr();
 ```
 
@@ -3504,7 +3504,7 @@ FirebaseJson *jsonObjectPtr();
 
 return **`FirebaseJsonArray object`**.
 
-```C++
+```cpp
 FirebaseJsonArray &jsonArray();
 ```
 
@@ -3515,7 +3515,7 @@ FirebaseJsonArray &jsonArray();
 
 return **`FirebaseJsonArray object pointer`**.
 
-```C++
+```cpp
 FirebaseJsonArray *jsonArrayPtr();
 ```
 
@@ -3531,7 +3531,7 @@ FirebaseJsonArray *jsonArrayPtr();
 
 return **`Dynamic array`** of 8-bit unsigned integer i.e. `std::vector<uint8_t>`.
 
-```C++
+```cpp
 std::vector<uint8_t> blobData();
 ```
 
@@ -3543,7 +3543,7 @@ std::vector<uint8_t> blobData();
 
  return the **`file stream`**.
 
- ```C++
+ ```cpp
 File fileStream();
 ```
 
@@ -3558,7 +3558,7 @@ File fileStream();
 
  return the **`The object or primitive type variable`**.
 
- ```C++
+ ```cpp
 to<type>();
 
 e.g. to<String>(), to<int>(), to<bool>()
@@ -3575,7 +3575,7 @@ e.g. to<String>(), to<int>(), to<bool>()
 
 return **`String`** (String object).
 
-```C++
+```cpp
 String pushName();
 ```
 
@@ -3589,7 +3589,7 @@ String pushName();
 
 return **`Boolean`** type status indicates whether the Firebase Data object is working with a stream or not.
 
-```C++
+```cpp
 bool isStream();
 ```
 
@@ -3603,7 +3603,7 @@ bool isStream();
 
 return **`Boolean`** type status indicates whether the Firebase Data object is connected to the server or not.
 
-```C++
+```cpp
 bool httpConnected();
 ```
 
@@ -3619,7 +3619,7 @@ Nothing to do when stream connection timeout, the stream connection will be auto
 
 return **`Boolean`** type status indicates whether the stream was a timeout or not.
 
-```C++
+```cpp
 bool streamTimeout();
 ```
 
@@ -3633,7 +3633,7 @@ bool streamTimeout();
 
 return **`Boolean`** type status indicates whether the server returns the new payload or not.
 
-```C++
+```cpp
 bool dataAvailable();
 ```
 
@@ -3648,7 +3648,7 @@ bool dataAvailable();
 return **`Boolean`** type status indicates whether the server returns the stream event-data 
 payload or not.
 
-```C++
+```cpp
 bool streamAvailable();
 ```
 
@@ -3665,7 +3665,7 @@ and the server's returned payload is matched or not.
 
 Data type checking was disable by default, which can be enabled via the Firebase Config e.g. config.rtdb.data_type_stricted = true
 
-```C++
+```cpp
 bool mismatchDataType();
 ```
 
@@ -3679,7 +3679,7 @@ bool mismatchDataType();
 
 return **`Integer`** number of HTTP status.
 
-```C++
+```cpp
 int httpCode();
 ```
 
@@ -3694,7 +3694,7 @@ int httpCode();
 
 return **`Integer`** number of payload length.
 
-```C++
+```cpp
 int payloadLength();
 ```
 
@@ -3709,7 +3709,7 @@ int payloadLength();
 
 return **`Integer`** number of max payload length.
 
-```C++
+```cpp
 int maxPayloadLength();
 ```
 
@@ -3729,7 +3729,7 @@ return **`Boolean`** of the overflow status.
 Total default HTTP response buffer size is 400 bytes which can be set through Firebase.setResponseSize.
 
 
-```C++
+```cpp
 bool bufferOverflow();
 ```
 
@@ -3743,7 +3743,7 @@ bool bufferOverflow();
 
 return **`String`** (String object) of the file name that stores on SD card after backup operation.
 
-```C++
+```cpp
 String getBackupFilename();
 ```
 
@@ -3757,7 +3757,7 @@ String getBackupFilename();
 
 return **`Number of byte`** of backup file in byte after backup operation.
 
-```C++
+```cpp
 size_t getBackupFileSize();
 ```
 
@@ -3769,7 +3769,7 @@ size_t getBackupFileSize();
 
 #### Clear or empty data in Firebase Data object.
 
-```C++
+```cpp
 void clear();
 ```
 
@@ -3783,7 +3783,7 @@ void clear();
 
 return **`Error description string* (String object).`**
 
-```C++
+```cpp
 String fileTransferError();
 ```
 
@@ -3797,7 +3797,7 @@ String fileTransferError();
 
 return **`Payload string* (String object).`**
 
-```C++
+```cpp
 String payload();
 ```
 
@@ -3808,12 +3808,38 @@ String payload();
 ## Firebase Cloud Messaging Object Functions
 
 
+
 #### Store Firebase Cloud Messaging's authentication credentials.
     
 param **`serverKey`** Server key found on Console: Project settings > Cloud Messaging
 
-```C++
-void begin(<string> serverKey);
+param **`spi_ethernet_module`** SPI_ETH_Module struct data, optional for ESP8266 use with Ethernet module.
+
+ SPI_ETH_Module struct data is for ESP8266 Ethernet supported module lwip interface.
+
+The usage example for Ethernet.
+
+```cpp
+#include <ENC28J60lwIP.h>
+
+#define ETH_CS_PIN 16 //GPIO 16 connected to Ethernet module (ENC28J60) CS pin
+ 
+ENC28J60lwIP eth(ETH_CS_PIN);
+
+FirebaseData fbdo;
+
+SPI_ETH_Module spi_ethernet_module;
+
+//in setup()
+
+spi_ethernet_module.enc28j60 = &eth;
+
+fbdo.fcm.begin(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
+
+```
+
+```cpp
+void begin(<string> serverKey, SPI_ETH_Module *spi_ethernet_module = NULL);
 ```
 
 
@@ -3825,7 +3851,7 @@ void begin(<string> serverKey);
     
 param **`deviceToken`** Recipient's device registration token to add that message will be sent to.
 
-```C++
+```cpp
 void addDeviceToken(<string> deviceToken);
 ```
 
@@ -3837,7 +3863,7 @@ void addDeviceToken(<string> deviceToken);
     
 param **`index`** Index (start from zero) of recipient's device registration token that added to FCM Data Object of Firebase Data object.
 
-```C++
+```cpp
 void removeDeviceToken(uint16_t index);
 ```
 
@@ -3846,7 +3872,7 @@ void removeDeviceToken(uint16_t index);
 
 #### Clear all recipient's device registration tokens.
     
- ```C++
+ ```cpp
  void clearDeviceToken();
 ```
 
@@ -3860,7 +3886,7 @@ param **`title`** The title text of notification message.
 
 param **`body`** The body text of notification message.
 
-```C++
+```cpp
 void setNotifyMessage(<string> title, <string> body);
 ```
 
@@ -3875,7 +3901,7 @@ param **`body`** The body text of notification message.
 
 param **`icon`** The name and/or included URI/URL of the icon to show on notifying the message.
 
-```C++
+```cpp
 void setNotifyMessage(<string> title, <string> body, <string> icon);
 ```
 
@@ -3893,7 +3919,7 @@ param **`icon`** The name and/or included URI/URL of the icon to show on notifyi
 
 param **`click_action`** The URL or intent to accept click event on the notification message.
 
-```C++
+```cpp
 void setNotifyMessage(<string> title, <string> body, <string> icon, <string> click_action);
 ```
 
@@ -3908,7 +3934,7 @@ param **`key`** The key field in notification message.
 
 param **`value`** The value field in the notification message.
 
-```C++
+```cpp
 void addCustomNotifyMessage(<string> key, <string> value);
 ```
 
@@ -3919,7 +3945,7 @@ void addCustomNotifyMessage(<string> key, <string> value);
 
 #### Clear all notify message information.
     
-```C++
+```cpp
 void clearNotifyMessage();
 ```
 
@@ -3931,7 +3957,7 @@ void clearNotifyMessage();
     
 param **`jsonString`** The JSON structured data string.
 
-```C++
+```cpp
 void setDataMessage(<string> jsonString);
 ```
 
@@ -3943,7 +3969,7 @@ void setDataMessage(<string> jsonString);
     
 param **`json`** The FirebaseJson object.
 
-```C++
+```cpp
 void setDataMessage(FirebaseJson &json);
 ```
 
@@ -3953,7 +3979,7 @@ void setDataMessage(FirebaseJson &json);
 
 #### Clear custom data message type information
     
-```C++
+```cpp
 void clearDataMessage();
 ```
 
@@ -3965,7 +3991,7 @@ void clearDataMessage();
     
 param **`priority`** The priority string i.e. normal and high.
 
-```C++
+```cpp
 void setPriority(<string> priority);
 ```
 
@@ -3978,7 +4004,7 @@ void setPriority(<string> priority);
     
 param **`key`** String of collapse key.
 
-```C++
+```cpp
 void setCollapseKey(<string> key);
 ```
 
@@ -3990,7 +4016,7 @@ void setCollapseKey(<string> key);
     
 param **`seconds`** Number of seconds from 0 to 2,419,200 (4 weeks).
 
-```C++
+```cpp
 void setTimeToLive(uint32_t seconds);
 ```
 
@@ -4001,7 +4027,7 @@ void setTimeToLive(uint32_t seconds);
     
 param **`topic - Topic string.
 
-```C++
+```cpp
 void setTopic(<string> topic);
 ```
 
@@ -4012,7 +4038,7 @@ void setTopic(<string> topic);
     
 return **`const char*`** of payload returned from the server.
 
-```C++
+```cpp
 const char* getSendResult();
 ```
 
@@ -4032,7 +4058,7 @@ return **`bool`** value represents the successful operation.
 
 Call FirebaseJson.errorPosition to get the error.
 
-```C++
+```cpp
 bool setJsonData(<string> data);
 ```
 
@@ -4046,7 +4072,7 @@ bool setJsonData(<string> data);
     
 return **`instance of an object.`**
 
-```C++
+```cpp
 FirebaseJson &clear();
 ```
 
@@ -4061,7 +4087,7 @@ param **`client`** The pointer to or instance of Client object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(Client *client);
 
 bool readFrom(Client &client);
@@ -4080,7 +4106,7 @@ param **`client`** The pointer to or instance of WiFiClient object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(WiFiClient *client);
 
 bool readFrom(WiFiClient &client);
@@ -4098,7 +4124,7 @@ param **`client`** The pointer to or instance of WiFiClientSecure object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(WiFiClientSecure *client);
 
 bool readFrom(WiFiClientSecure &client);
@@ -4119,7 +4145,7 @@ param **`timeoutMS`** The timeout in millisecond to wait for Serial data to be c
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(HardwareSerial &ser, uint32_t timeoutMS = 5000);
 
 bool readFrom(SoftwareSerial &ser, uint32_t timeoutMS = 5000);
@@ -4137,7 +4163,7 @@ param **`file`** The File object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(fs::File &file);
 ```
 
@@ -4153,7 +4179,7 @@ param **`key`** The new key string that null to be added.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 FirebaseJson &add(<string> key);
 ```
 
@@ -4172,7 +4198,7 @@ return **`instance of an object.`**
 
 The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR), String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers, boolean, FirebaseJson object and array.
 
-```C++
+```cpp
 FirebaseJson &add(<string> key, <type> value);
 ```
 
@@ -4191,7 +4217,7 @@ param **`topic`** The MQTT topic (LWMQTT).
 
 param **`prettify`** Boolean flag for return the pretty format string i.e. with text indentation and newline. 
 
-```C++
+```cpp
 void toString(<type> out, bool prettify = false);
 
 void toString(<type> out, <string> topic, bool prettify = false);
@@ -4251,7 +4277,7 @@ FirebaseJson::BOOL = 7 and
 
 FirebaseJson::NULL = 8
  
- ```C++
+ ```cpp
  bool get(FirebaseJsonData &result, <string> path, bool prettify = false);
  ```
 
@@ -4285,7 +4311,7 @@ Path can be wildcard with * in search path and * should use as key in part and d
 
 **`searchAll`** - The boolean option to search all occurrences of elements.
 
-```C++
+```cpp
 size_t search(SearchCriteria &criteria);
 
 size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false);
@@ -4306,7 +4332,7 @@ param **`searchAll`** Search all occurrences.
 
 return **`full path string`** in case of found.
 
-```C++
+```cpp
 String getPath(<string> path, bool searchAll = false);
 ```
 
@@ -4322,7 +4348,7 @@ param **`path`** The key or path of child element check.
 
 return **`boolean`** status indicated the existence of element.
 
-```C++
+```cpp
 bool isMember(<string> path);
 ```
 
@@ -4335,7 +4361,7 @@ bool isMember(<string> path);
 
 return **`number`** of child/array elements in FirebaseJson object.
 
- ```C++
+ ```cpp
  size_t iteratorBegin();
  ```
 
@@ -4354,7 +4380,7 @@ param **`key`** The string which holds the key/name of the object, can return em
 
 param **`value`** The string which holds the value for the element key or array.   
 
- ```C++
+ ```cpp
  void iteratorGet(size_t index, int &type, String &key, String &value);
  ```
 
@@ -4378,7 +4404,7 @@ int type
 String key
 String value
 
- ```C++
+ ```cpp
  IteratorValue valueAt(size_t index);
  ```
 
@@ -4390,7 +4416,7 @@ String value
 
 #### Clear all iterator buffer (should be called since iteratorBegin was called).
 
- ```C++
+ ```cpp
  void iteratorEnd();
  ```
 
@@ -4406,7 +4432,7 @@ param **`path`** The relative path that null to be set.
 The relative path can be mixed with array index (number placed inside square brackets) and node names e.g. /myRoot/[2]/Sensor1/myData/[3].
 
 
-```C++
+```cpp
 void set(<string> path);
 ```
 
@@ -4426,7 +4452,7 @@ e.g. /myRoot/[2]/Sensor1/myData/[3].
 
 The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR), String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers, boolean, FirebaseJson object and array.
 
-```C++
+```cpp
 void set(<string> path, <type> value);
 ```
 
@@ -4442,7 +4468,7 @@ param **`path`** The relative path to remove its contents/children.
 
 return **`bool`** value represents the successful operation.
 
-```C++
+```cpp
 bool remove(<string> path);
 ```
 
@@ -4456,7 +4482,7 @@ bool remove(<string> path);
 
 return **`raw JSON string`**
 
-```C++
+```cpp
 const char *raw();
 ```
 
@@ -4470,7 +4496,7 @@ return **`the position of error in JSON object literal`**
 
 Return -1 when for no parsing error.
 
-```C++
+```cpp
 int errorPosition();
 ```
 
@@ -4486,7 +4512,7 @@ param **`prettify`** The text indentation and new line serialization option.
 
 return **`size in byte of buffer`**
 
-```C++
+```cpp
 size_t serializedBufferLength(bool prettify = false);
 ```
 
@@ -4500,7 +4526,7 @@ size_t serializedBufferLength(bool prettify = false);
 
 param **`digits`** The number of decimal places.
 
-```C++
+```cpp
 void setFloatDigits(uint8_t digits);
 ```
 
@@ -4513,7 +4539,7 @@ void setFloatDigits(uint8_t digits);
 
 param **`digits`** The number of decimal places.
 
-```C++
+```cpp
 void setDoubleDigits(uint8_t digits);
 ```
 
@@ -4526,7 +4552,7 @@ void setDoubleDigits(uint8_t digits);
 
 return **`the response code`** of reading JSON data from WiFi/Ethernet Client 
 
-```C++
+```cpp
 int responseCode();
 ```
 
@@ -4548,7 +4574,7 @@ return **`bool`** value represents the successful operation.
 
 Call FirebaseJsonArray.errorPosition to get the error.
 
-```C++
+```cpp
 bool setJsonArrayData(<string> data);
 ```
 
@@ -4562,7 +4588,7 @@ bool setJsonArrayData(<string> data);
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 FirebaseJsonArray &add();
 ```
 
@@ -4580,7 +4606,7 @@ return **`instance of an object.`**
 The value that can be added is the following supported types e.g. flash string (PROGMEM and FPSTR), String, C/C++ std::string, const char*, char array, string literal, all integer and floating point numbers, boolean, FirebaseJson object and array.
 
 
-```C++
+```cpp
 FirebaseJsonArray &add(<type> value);
 ```
 
@@ -4599,7 +4625,7 @@ return **`instance of an object.`**
 
 e.g. add("a","b",1,2)
 
-```C++
+```cpp
 FirebaseJsonArray &add(First v, Next... n);
 ```
 
@@ -4615,7 +4641,7 @@ param **`client`** The pointer to or instance of Client object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(Client *client);
 
 bool readFrom(Client &client);
@@ -4634,7 +4660,7 @@ param **`client`** The pointer to or instance of WiFiClient object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(WiFiClient *client);
 
 bool readFrom(WiFiClient &client);
@@ -4652,7 +4678,7 @@ param **`client`** The pointer to or instance of WiFiClientSecure object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(WiFiClientSecure *client);
 
 bool readFrom(WiFiClientSecure &client);
@@ -4673,7 +4699,7 @@ param **`timeoutMS`** The timeout in millisecond to wait for Serial data to be c
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(HardwareSerial &ser, uint32_t timeoutMS = 5000);
 
 bool readFrom(SoftwareSerial &ser, uint32_t timeoutMS = 5000);
@@ -4691,7 +4717,7 @@ param **`file`** The File object.
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 bool readFrom(fs::File &file);
 ```
 
@@ -4712,7 +4738,7 @@ return **`boolean`** status of the operation.
 The relative path must begin with array index (number placed inside square brackets) followed by
 other array indexes or node names e.g. /[2]/myData would get the data from myData key inside the array indexes 2
 
-```C++
+```cpp
 bool get(FirebaseJsonData &result, <int or string> index_or_path);
 ```
 
@@ -4746,7 +4772,7 @@ Path can be wildcard with * in search path and * should use as key in part and d
 
 **`searchAll`** - The boolean option to search all occurrences of elements.
 
-```C++
+```cpp
 size_t search(SearchCriteria &criteria);
 
 size_t search(FirebaseJsonData &result, SearchCriteria &criteria, bool prettify = false);
@@ -4765,7 +4791,7 @@ param **`searchAll`** Search all occurrences.
 
 return **`full path string`** in case of found.
 
-```C++
+```cpp
 String getPath(<string> path, bool searchAll = false);
 ```
 
@@ -4781,7 +4807,7 @@ param **`path`** The key or path of child element check.
 
 return **`boolean`** status indicated the existence of element.
 
-```C++
+```cpp
 bool isMember(<string> path);
 ```
 
@@ -4795,7 +4821,7 @@ bool isMember(<string> path);
 
 return **`number`** of child/array elements in FirebaseJsonArray object.
 
- ```C++
+ ```cpp
  size_t iteratorBegin();
  ```
 
@@ -4814,7 +4840,7 @@ param **`key`** The string which holds the key/name of the object, can return em
 
 param **`value`** The string which holds the value for the element key or array.   
 
- ```C++
+ ```cpp
  void iteratorGet(size_t index, int &type, String &key, String &value);
  ```
 
@@ -4838,7 +4864,7 @@ int type
 String key
 String value
 
- ```C++
+ ```cpp
  IteratorValue valueAt(size_t index);
  ```
 
@@ -4850,7 +4876,7 @@ String value
 
 #### Clear all iterator buffer (should be called since iteratorBegin was called).
 
- ```C++
+ ```cpp
  void iteratorEnd();
  ```
 
@@ -4863,7 +4889,7 @@ String value
 
 return **`length of the array.`**
 
-```C++
+```cpp
 size_t size();
 ```
 
@@ -4880,7 +4906,7 @@ param **`out`** The writable object e.g. String, std::string, char array, Stream
 
 param **`prettify`** Boolean flag for return the pretty format string i.e. with text indentation and newline. 
 
-```C++
+```cpp
 void toString(<type> out, bool prettify = false);
 ```
 
@@ -4891,7 +4917,7 @@ void toString(<type> out, bool prettify = false);
 
 return **`raw JSON Array string`**
 
-```C++
+```cpp
 const char *raw();
 ```
 
@@ -4907,7 +4933,7 @@ param **`prettify`** The text indentation and new line serialization option.
 
 return **`size in byte of buffer`**
 
-```C++
+```cpp
 size_t serializedBufferLength(bool prettify = false);
 ```
 
@@ -4920,7 +4946,7 @@ size_t serializedBufferLength(bool prettify = false);
 
 return **`instance of an object.`**
 
-```C++
+```cpp
 FirebaseJsonArray &clear();
 ```
 
@@ -4934,7 +4960,7 @@ FirebaseJsonArray &clear();
     
 param **`index_or_path`** The array index or path that null to be set.
 
-```C++
+```cpp
 void set(<int or string> index_or_path);
 ```
 
@@ -4951,7 +4977,7 @@ param **`index_or_path`** The array index or path that value to be set.
 param **`value`** The value to set.
 
 
-```C++
+```cpp
 void set(<int or string> index_or_path, <type> value);
 ```
 
@@ -4965,7 +4991,7 @@ param **`index_or_path`** The array index or relative path to array to be remove
 
 return **`bool`** value represents the successful operation.
 
-```C++
+```cpp
 bool remove(<int or string> index_or_path);
 ```
 
@@ -4981,7 +5007,7 @@ return **`the position of error in JSON array literal`**
 
 Return -1 when for no parsing error.
 
-```C++
+```cpp
 int errorPosition();
 ```
 
@@ -4994,7 +5020,7 @@ int errorPosition();
 
 param **`digits`** The number of decimal places.
 
-```C++
+```cpp
 void setFloatDigits(uint8_t digits);
 ```
 
@@ -5007,7 +5033,7 @@ void setFloatDigits(uint8_t digits);
 
 param **`digits`** The number of decimal places.
 
-```C++
+```cpp
 void setDoubleDigits(uint8_t digits);
 ```
 
@@ -5025,7 +5051,7 @@ return **`bool`** status for successful operation.
 
 This should call after pares or get functions.
 
-```C++
+```cpp
 bool getArray(FirebaseJsonArray &jsonArray);
 ```
 
@@ -5045,7 +5071,7 @@ return **`bool`** status for successful operation.
 
 This should call after pares or get functions.
 
-```C++
+```cpp
 bool getArray(<string> source, FirebaseJsonArray &jsonArray);
 ```
 
@@ -5063,7 +5089,7 @@ return **`bool`** status for successful operation.
 
 This should call after pares or get functions.
 
-```C++
+```cpp
 bool getJSON(FirebaseJson &json);
 ```
 
@@ -5082,7 +5108,7 @@ return **`bool`** status for successful operation.
 
 This should call after pares or get functions.
 
-```C++
+```cpp
 bool getJSON(<string> source, FirebaseJson &json);
 ```
 
@@ -5096,7 +5122,7 @@ bool getJSON(<string> source, FirebaseJson &json);
 
  return the **`The object or primitive type variable`**.
 
- ```C++
+ ```cpp
 to<type>();
 
 e.g. to<String>(), to<int>(), to<bool>()

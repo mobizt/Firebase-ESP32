@@ -247,6 +247,7 @@ FireSense_Channel   KEYWORD3
 Firesense_Channel_Type  KEYWORD3
 FireSense_Condition KEYWORD3
 FireSense_Data_Type KEYWORD3
+SPI_ETH_Module  KEYWORD3
 
 #######################################
 # FirebaseJson Struct (KEYWORD3)
