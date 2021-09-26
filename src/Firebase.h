@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.0.3
+ * The Firebase class, Firebase.h v1.0.4
  * 
- *  Created September 20, 2021
+ *  Created September 26, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -1864,8 +1864,8 @@ public:
   bool beginMultiPathStream(FirebaseData &fbdo, T parentPath) { return RTDB.beginMultiPathStream(&fbdo, parentPath); }
 
   /** Deprecated */
-  template <typename T = const char*>
-  bool beginMultiPathStream(FirebaseData &fbdo, T parentPath, const String *childPath, size_t size) { return mBeginMultiPathStream(fbdo, toString(parentPath)); }
+  template <typename T1 = const char *, typename T2 = const char *>
+  bool beginMultiPathStream(FirebaseData &fbdo, T1 parentPath, T2 childPath, size_t size) { return RTDB.beginMultiPathStream(&fbdo, parentPath); }
 
   /** Read the stream event data at the defined database path. 
    * Once beginStream was called e.g. in setup(), the readStream function 

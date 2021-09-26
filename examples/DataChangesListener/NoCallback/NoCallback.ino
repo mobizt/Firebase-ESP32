@@ -133,7 +133,7 @@ void loop()
 
   if (stream.streamTimeout())
   {
-    Serial.println("stream timeout, resuming...\n");
+    Serial.println("stream timed out, resuming...\n");
 
     if (!stream.httpConnected())
       Serial.printf("error code: %d, reason: %s\n\n", stream.httpCode(), stream.errorReason().c_str());

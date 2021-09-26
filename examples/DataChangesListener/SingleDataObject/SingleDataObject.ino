@@ -114,7 +114,7 @@ void loop()
 
     if (fbdo.streamTimeout())
     {
-      Serial.println("stream timeout, resuming...\n");
+      Serial.println("stream timed out, resuming...\n");
 
       if (!fbdo.httpConnected())
         Serial.printf("error code: %d, reason: %s\n\n", fbdo.httpCode(), fbdo.errorReason().c_str());
