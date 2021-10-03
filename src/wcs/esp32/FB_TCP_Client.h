@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.11
+ * Firebase TCP Client v1.1.12
  * 
- * Created September 20, 2001
+ * Created October 3, 2001
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -82,7 +82,16 @@ public:
 
     sslclient->handshake_timeout = handshakeTO;
 
+#if __has_include(<esp_idf_version.h>)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(3, 3, 0)
     int ret = start_ssl_client(sslclient, host, port, _timeout, _CA_cert, NULL, NULL, NULL, NULL, _use_insecure);
+#else
+    int ret = start_ssl_client(sslclient, host, port, _timeout, _CA_cert, NULL, NULL, NULL, NULL);
+#endif
+#else
+    int ret = start_ssl_client(sslclient, host, port, _timeout, _CA_cert, NULL, NULL, NULL, NULL);
+#endif
+    
     _lastError = ret;
     if (ret < 0)
     {

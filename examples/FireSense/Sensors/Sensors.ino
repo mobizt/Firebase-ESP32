@@ -30,7 +30,7 @@
  * 
  * time                 To get the device timestamp
  * 
- * time {TIMESTAMP}  To set the device timestamp {TIMESTAMP}
+ * time {TIMESTAMP}     To set the device timestamp {TIMESTAMP}
  * 
  * config               To load the config from database. If no config existed in database, 
  *                      the default config may load within the user default config callback function.
@@ -202,12 +202,12 @@ void setup()
     fsConfig.deviceId = "Node1";
     fsConfig.time_zone = 3; //change for your local time zone
     fsConfig.daylight_offset_in_sec = 0;
-    fsConfig.last_seen_interval = 60 * 1000;     //for store timestamp and time string in database
-    fsConfig.log_interval = 60 * 1000;           //store data to database log every 60 seconds
-    fsConfig.condition_process_interval = 20;    // check the conditions every 20 mSec
-    fsConfig.dataRetainingPeriod = 24 * 60 * 60; //keep the log data within 1 day
-    fsConfig.shared_fbdo = &fbdo1;               //for store/restore database values
-    fsConfig.stream_fbdo = &fbdo2;               //for stream connection object, set this stream_fbdo to nullptr for less memory usage, the stream will connected through shared Firebase Data object.
+    fsConfig.last_seen_interval = 60 * 1000;     //store timestamp
+    fsConfig.log_interval = 60 * 1000;           //store log data every 60 seconds
+    fsConfig.condition_process_interval = 20;    //check conditions every 20 mSec
+    fsConfig.dataRetainingPeriod = 24 * 60 * 60; //keep the log data for 1 day
+    fsConfig.shared_fbdo = &fbdo1;               //for store/restore the data
+    fsConfig.stream_fbdo = &fbdo2;               //for stream, if set this stream_fbdo to nullptr, the stream will connected through shared FirebaseData object.
     fsConfig.debug = true;
 
     //Add the user variable that will bind to the channels

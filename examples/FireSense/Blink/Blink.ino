@@ -33,7 +33,7 @@
  * 
  * time                 To get the device timestamp
  * 
- * time {TIMESTAMP}  To set the device timestamp {TIMESTAMP}
+ * time {TIMESTAMP}     To set the device timestamp {TIMESTAMP}
  * 
  * config               To load the config from database. If no config existed in database, 
  *                      the default config may load within the user default config callback function.
@@ -186,14 +186,14 @@ void setup()
     fsConfig.deviceId = "Node1";
     fsConfig.time_zone = 3; //change for your local time zone
     fsConfig.daylight_offset_in_sec = 0;
-    fsConfig.last_seen_interval = 60 * 1000;     //for store timestamp and time string in database
-    fsConfig.log_interval = 60 * 1000;           //store data to database log every 60 seconds
-    fsConfig.condition_process_interval = 0;     // check the conditions continuously without delay
-    fsConfig.dataRetainingPeriod = 24 * 60 * 60; //keep the log data within 1 day
-    fsConfig.shared_fbdo = &fbdo1;               //for store/restore database values
+    fsConfig.last_seen_interval = 60 * 1000;     //store timestamp
+    fsConfig.log_interval = 60 * 1000;           //store log data every 60 seconds
+    fsConfig.condition_process_interval = 0;     //check the conditions instantly
+    fsConfig.dataRetainingPeriod = 24 * 60 * 60; //keep the log data for 1 day
+    fsConfig.shared_fbdo = &fbdo1;               //for store/restore the data
 
     //This new config added to disable internal command streaming when the fsConfig.stream_fbdo was not assigned.
-    //This allows the session to be reuse for faster data sending.
+    //This allows the session to be reused for faster data sending.
     //The seesion will not close and open for usage changed between internal stream and normal data sending.
     fsConfig.disable_command = true;
 

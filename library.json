@@ -1,0 +1,16 @@
+{
+  "name": "Firebase ESP32 Client",
+  "version": "3.11.9",
+  "keywords": "communication, REST, esp32, arduino",
+  "description": "This client library provides the complete, fast, secured and reliable operations to read, store, update, delete, monitor the value changes, backup, restore, read and modify the security rules of the Firebase Realtime database.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mobizt/Firebase-ESP32.git"
+  },
+  "authors": [{
+    "name": "Mobizt",
+    "email": "k_suwatchai@hotmail.com"
+  }],
+  "frameworks": "arduino",
+  "platforms": "espressif32"
+}
