@@ -84,12 +84,19 @@ void setup()
   //config.database_url = DATABASE_URL;
   //config.signer.tokens.legacy_token = "<database secret>";
 
+  //////////////////////////////////////////////////////////////////////////////////////////////
+  //Please make sure the device free Heap is not lower than 80 k for ESP32 and 10 k for ESP8266,
+  //otherwise the SSL connection will fail.
+  //////////////////////////////////////////////////////////////////////////////////////////////
+
   Firebase.begin(&config, &auth);
 
   //Comment or pass false value when WiFi reconnection will control by your code or third party library
   Firebase.reconnectWiFi(true);
 
   Firebase.setDoubleDigits(5);
+
+  
 
   /** Timeout options, below is default config.
 

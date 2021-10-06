@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.9
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.10
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -35,13 +35,23 @@ Please try it here https://github.com/mobizt/Firebase-ESP-Client
 
 
 
-## Unsupported Mobile network modem bridge
+## Unsupported AT command and mobile modem bridge
 
-The library access the internet through WiFi or Ethernet connection, the ESP32 based module that may has Mobile
-network modem i.e. 2G (GPRS), 3G or 4G built-in modules cannot use if it accesses the internet trourgh these 
-modules by sending the AT commands.
+The library required the access to the Firebase server through the native WiFi or Ethernet for the internet connection.  
 
-The others UART/Serial bridge mobile network modem which work with AT commands and ESP32 AT commands were unsupported.
+The library does not support the mobile GPRS/3G/4G modem connected to MCU via serial port or any stand alone, all in one ESP32/GSM module.
+
+There are incompatibilities and security concerns when adding mobile modem with this library.
+ 
+Mobile modem is not native and it required library (driver) to handle network connection using AT commands.
+ 
+The library focused on WiFi and Ethernet operations, adding the ability for mobile modem breaks the compatibilities among the network connections.
+
+To make this library to support all-in-one module that has ESP32 and GSM modem on board, devided this library into small variant which is not compatible with native connectivity and can make the library too complicated. 
+ 
+In addition, some mobile modem can’t handle the SSL certificate and out date TLS supported. 
+
+Creating the new Firebase library that specific to only GSM connectivity concerns the scope of supported MCUs and the SSL library to use on that device and memory available which are most important.
 
 
 
@@ -328,6 +338,39 @@ To get the database URL and secret (legacy token).
 ![Firebase Host](/media/images/RTDB_URL.png)
 
 ![Firebase Auth](/media/images/RTDB_Secret.png)
+
+
+For server SSL authentication by providing the server root certificate.
+
+Server SSL certificate verification is the process to ensure that the server that client is being connected is a trusted (valid) server instead of fake server.
+
+The Google's GlobalSign R2 root certificate can be download from https://pki.goog/repository/
+
+Select the .PEM (base-64 encoded string) or .DER (binary) file to download.
+
+From the test as of July 2021, GlobalSign Root CA was missing from Google server, the certificate chain, GTS Root R1 can be used instead of root certificate.
+
+![Firebase Host](/media/images/PEM_Download.png)
+
+Below is how to assign the certificate data for server verification.
+
+```cpp
+  /* In case the certificate data was used  */
+  config.cert.data = rootCACert;
+
+  //Or custom set the root certificate for each FirebaseData object
+  fbdo.setCert(rootCACert);
+
+  /* Or assign the certificate file */
+
+  /** From the test as of July 2021, GlobalSign Root CA was missing from Google server
+   * as described above, GTS Root R1 (gsr1.pem or gsr1.der) can be used instead.
+   * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
+   * ESP8266 SDK supports both PEM and DER format certificates.
+  */
+  //config.cert.file = "/gsr1.pem";
+  //config.cert.file_storage = StorageType::FLASH;   //or StorageType::SD
+```
 
 
 

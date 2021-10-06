@@ -127,13 +127,13 @@ void setup()
 
   /* Or assign the certificate file */
 
-  /** From the test on July 2021, GlobalSign Root CA was missing from Google server
+  /** From the test as of July 2021, GlobalSign Root CA was missing from Google server
    * as described above, GTS Root R1 (gsr1.pem or gsr1.der) can be used instead.
    * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
    * ESP8266 SDK supports both PEM and DER format certificates.
   */
   //config.cert.file = "/gsr1.pem";
-  //config.cert.file_storage = mem_storage_type_flash; //or mem_storage_type_sd
+  //config.cert.file_storage = StorageType::FLASH;   //or StorageType::SD
 
   //Or use legacy authenticate method
   //config.database_url = DATABASE_URL;

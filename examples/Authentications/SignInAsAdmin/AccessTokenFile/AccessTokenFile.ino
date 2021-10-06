@@ -76,11 +76,11 @@ void setup()
   Serial.printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
 
   /* Assign the certificate file (optional) */
-  /** From the test on July 2021, GlobalSign Root CA was missing from Google server
+  /** From the test as of July 2021, GlobalSign Root CA was missing from Google server
    * when checking with https://www.sslchecker.com/sslchecker.
    * The certificate chain, GTS Root R1 can be used instead.
    * 
-   * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
+   * ESP32 Arduino SDK supports PEM format only even mbedTLS supports DER format too.
    * ESP8266 SDK supports both PEM and DER format certificates.
   */
   config.cert.file = "/gsr1.pem";
