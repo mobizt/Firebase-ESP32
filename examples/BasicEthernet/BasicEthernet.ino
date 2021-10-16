@@ -145,6 +145,8 @@ void setupFirebase()
 
     firebaseConfigReady = true;
 
+    //For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+
     /* Assign the api key (required) */
     config.api_key = API_KEY;
 

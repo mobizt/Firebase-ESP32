@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.11
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.12
 
 
 
@@ -76,6 +76,8 @@ bool ready();
 #### Provide the grant access status for Firebase Services.
 
 return **`Boolean`** type status indicates the device can access to the services.
+
+This returns false if ready() returns false (token generation is not ready).
 
 ```cpp
 bool authenticated();

@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.11
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.11.12
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -1119,6 +1119,19 @@ Firebase.saveErrorQueue(fbdo, "/test.txt", StorageType::FLASH);
 ```
 
 
+## FireSense, The Programmable Data Logging and IO Control (Add On)
+
+This add on library is for the advance usages and works with Firebase RTDB.
+
+With this add on library, you can remotely program your device to control its IOs or do some task or call predefined functions on the fly.
+
+This allows you to change your device behaviour and functions without to flash a new firmware via serial or OTA.
+
+See [examples/FireSense](examples/FireSense) for the usage.
+
+For FireSense function description, see [src/addons/FireSense/README.md](src/addons/FireSense/README.md).
+
+
 
 ## Firebase Cloud Messaging (FCM)
 
@@ -1302,6 +1315,10 @@ Function `FirebaseJsonArray.setFloatDigits` is for float number precision when s
 
 Function `FirebaseJsonArray.setDoubleDigits` is for double number precision when serialized to string.
 
+
+See [examples/FirebaseJson](examples/FirebaseJson) for the usage.
+
+For FirebaseJson function description, see [FirebaseJSON object Functions](src#firebasejson-object-functions).
 
 
 The following example shows how to use FirebaseJson.
