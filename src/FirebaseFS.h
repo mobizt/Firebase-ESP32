@@ -43,4 +43,11 @@
 //Comment to exclude Firebase Cloud Messaging
 #define ENABLE_FCM
 
+/** Use PSRAM for supported ESP32 module */
+#define FIREBASE_USE_PSRAM
+
+//tempolary fix the Google server side issue
+//https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941
+#define FIX_FIRERBASE_RTDB_PRINT_SILENT
+
 #endif

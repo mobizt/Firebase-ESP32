@@ -42,6 +42,11 @@
 #include "FirebaseFS.h"
 #include <WiFiClientSecure.h>
 
+#if defined(FIREBASE_USE_PSRAM)
+#define FIREBASEJSON_USE_PSRAM
+#endif
+#include "./json/FirebaseJson.h"
+
 #if __has_include(<esp_idf_version.h>)
 #include <esp_idf_version.h>
 #endif
@@ -72,7 +77,6 @@ struct fb_esp_sd_config_info_t
 class FB_WCS : public WiFiClientSecure
 {
 public:
-
   FB_WCS(){};
   ~FB_WCS(){};
 
@@ -91,7 +95,7 @@ public:
 #else
     int ret = start_ssl_client(sslclient, host, port, _timeout, _CA_cert, NULL, NULL, NULL, NULL);
 #endif
-    
+
     _lastError = ret;
     if (ret < 0)
     {
@@ -161,16 +165,16 @@ public:
 
 private:
   std::unique_ptr<FB_WCS> _wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
-  std::string _host = "";
+  MBSTRING _host;
   uint16_t _port = 0;
 
   //lwIP socket connection timeout
   unsigned long socketConnectionTO = 30 * 1000;
-  
+
   //mbedTLS SSL handshake timeout
   unsigned long sslHandshakeTO = 2 * 60 * 1000;
 
-  std::string _CAFile = "";
+  MBSTRING _CAFile;
   uint8_t _CAFileStoreageType = 0;
   int _certType = -1;
   bool _clockReady = false;

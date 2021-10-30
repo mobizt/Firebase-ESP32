@@ -86,7 +86,7 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     if (cfg->database_url.length() > 0)
     {
         ut->getUrlInfo(cfg->database_url.c_str(), uinfo);
-        cfg->database_url = uinfo.host;
+        cfg->database_url = uinfo.host.c_str();
     }
 
     if (cfg->cert.file.length() > 0)
@@ -402,7 +402,7 @@ bool FIREBASE_CLASS::handleFCMRequest(FirebaseData &fbdo, fb_esp_fcm_msg_type me
     FirebaseJson *json = fbdo.to<FirebaseJson *>();
     json->setJsonData(fbdo.fcm.raw);
 
-    std::string s;
+    MBSTRING s;
     ut->appendP(s, fb_esp_pgm_str_577, true);
 
     json->get(data, s.c_str());
