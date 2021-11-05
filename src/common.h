@@ -1,6 +1,6 @@
 
 /**
- * Created October 25, 2021
+ * Created November 2, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -77,11 +77,8 @@ class QueryFilter;
 #define MAX_WIFI_RECONNECT_TIMEOUT 5 * 60 * 1000
 
 #define MIN_SOCKET_CONN_TIMEOUT 1 * 1000
-#define DEFAULT_SOCKET_CONN_TIMEOUT 30 * 1000
+#define DEFAULT_SOCKET_CONN_TIMEOUT 10 * 1000
 #define MAX_SOCKET_CONN_TIMEOUT 60 * 1000
-
-#define MIN_SSL_HANDSHAKE_TIMEOUT 1 * 1000
-#define MAX_SSL_HANDSHAKE_TIMEOUT 2 * 60 * 1000
 
 #define MIN_SERVER_RESPONSE_TIMEOUT 1 * 1000
 #define DEFAULT_SERVER_RESPONSE_TIMEOUT 10 * 1000
@@ -657,6 +654,8 @@ struct fb_esp_token_signer_resources_t
     int step = 0;
     int attempts = 0;
     bool signup = false;
+    bool anonymous = false;
+    bool idTokenCutomSet = false;
     bool tokenTaskRunning = false;
     unsigned long lastReqMillis = 0;
     unsigned long preRefreshSeconds = 60;
@@ -689,6 +688,7 @@ struct fb_esp_token_signer_resources_t
     struct fb_esp_auth_token_error_t verificationError;
     struct fb_esp_auth_token_error_t resetPswError;
     struct fb_esp_auth_token_error_t signupError;
+    struct fb_esp_auth_token_error_t deleteError;
 };
 
 #ifdef ENABLE_RTDB
@@ -812,11 +812,11 @@ struct fb_esp_client_timeout_t
     //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
     uint16_t wifiReconnect = MIN_WIFI_RECONNECT_TIMEOUT;
 
-    //Socket begin connection timeout (ESP32) or data transfer timeout (ESP8266) in ms (1 sec - 1 min).
+    //Socket connection and ssl handshake timeout in ms (1 sec - 1 min).
     unsigned long socketConnection = DEFAULT_SOCKET_CONN_TIMEOUT;
 
-    //ESP32 SSL handshake in ms (1 sec - 2 min). This option doesn't allow in ESP8266 core library.
-    unsigned long sslHandshake = MAX_SSL_HANDSHAKE_TIMEOUT;
+    //unused.
+    unsigned long sslHandshake = 0;
 
     //Server response read timeout in ms (1 sec - 1 min).
     unsigned long serverResponse = DEFAULT_SERVER_RESPONSE_TIMEOUT;
@@ -844,6 +844,7 @@ struct fb_esp_cfg_t
     MBSTRING database_url;
     MBSTRING api_key;
     float time_zone = 0;
+    uint8_t tcp_data_sending_retry = 1;
     size_t async_close_session_max_request = 100;
     struct fb_esp_auth_cert_t cert;
     struct fb_esp_token_signer_resources_t signer;
@@ -2103,6 +2104,7 @@ static const char fb_esp_pgm_str_578[] PROGMEM = "\n** WARNING!, in stream conne
 static const char fb_esp_pgm_str_579[] PROGMEM = "Missing data.";
 static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials e.g. path, config.database_url and auth token.";
 static const char fb_esp_pgm_str_581[] PROGMEM = "Security rules is not a valid JSON";
+static const char fb_esp_pgm_str_582[] PROGMEM = "/v1/accounts:delete?key=";
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

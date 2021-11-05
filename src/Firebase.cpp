@@ -1,7 +1,7 @@
 /**
- * The Firebase class, Firebase.cpp v1.0.5
+ * The Firebase class, Firebase.cpp v1.0.8
  * 
- *  Created October 6, 2021
+ *  Created November 5, 2021
  * 
  * The MIT License (MIT)
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -50,7 +50,6 @@ Firebase_ESP_Client::~Firebase_ESP_Client()
 
 void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
 {
-
     init(config, auth);
 
     if (cfg->service_account.json.path.length() > 0)
@@ -69,12 +68,14 @@ void Firebase_ESP_Client::begin(FirebaseConfig *config, FirebaseAuth *auth)
     }
     else if (Signer.tokenSigninDataReady())
     {
+        cfg->signer.idTokenCutomSet = false;
+
         if (auth->token.uid.length() == 0)
             Signer.setTokenType(token_type_oauth2_access_token);
         else
             Signer.setTokenType(token_type_custom_token);
     }
-    else if (Signer.userSigninDataReady())
+    else if (Signer.userSigninDataReady() || cfg->signer.anonymous)
         Signer.setTokenType(token_type_id_token);
 
     struct fb_esp_url_info_t uinfo;
@@ -115,6 +116,42 @@ bool Firebase_ESP_Client::authenticated()
     return Signer.authenticated;
 }
 
+void Firebase_ESP_Client::setIdToken(FirebaseConfig *config, const char *idToken, size_t expire)
+{
+    if (!config)
+        return;
+
+    if (idToken)
+    {
+        if (strlen(idToken) == 0 || strcmp(config->_int.auth_token.c_str(), idToken) == 0)
+            return;
+
+        MBSTRING copy = idToken;
+        config->_int.auth_token = copy;
+        copy.clear();
+        config->_int.atok_len = config->_int.auth_token.length();
+        config->_int.ltok_len = 0;
+
+        if (expire > 3600)
+            expire = 3600;
+
+        config->signer.tokens.expires += time(nullptr) + expire;
+
+        config->signer.tokens.status = token_status_ready;
+        config->signer.attempts = 0;
+        config->signer.step = fb_esp_jwt_generation_step_begin;
+        config->_int.fb_last_jwt_generation_error_cb_millis = 0;
+        config->signer.tokens.token_type = token_type_id_token;
+        config->signer.anonymous = true;
+        config->signer.idTokenCutomSet = true;
+    }
+}
+
+bool Firebase_ESP_Client::isTokenExpired()
+{
+    return Signer.isExpired();
+}
+
 void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
 {
     this->auth = auth;
@@ -152,7 +189,13 @@ void Firebase_ESP_Client::init(FirebaseConfig *config, FirebaseAuth *auth)
 
     cfg->signer.lastReqMillis = 0;
     cfg->signer.tokens.expires = 0;
-    ut->clearS(cfg->_int.auth_token);
+
+    //don't clear auth token if anonymous sign in
+    if (!cfg->signer.anonymous)
+        ut->clearS(cfg->_int.auth_token);
+
+    if (auth->user.email.length() > 0 && auth->user.password.length() > 0)
+        cfg->signer.idTokenCutomSet = false;
 
     cfg->signer.signup = false;
     Signer.begin(ut, cfg, auth);
@@ -328,6 +371,42 @@ bool FIREBASE_CLASS::authenticated()
     return Signer.authenticated;
 }
 
+void FIREBASE_CLASS::setIdToken(FirebaseConfig *config, const char *idToken, size_t expire)
+{
+    if (!config)
+        return;
+
+    if (idToken)
+    {
+        if (strlen(idToken) == 0 || strcmp(config->_int.auth_token.c_str(), idToken) == 0)
+            return;
+
+        MBSTRING copy = idToken;
+        config->_int.auth_token = copy;
+        copy.clear();
+        config->_int.atok_len = config->_int.auth_token.length();
+        config->_int.ltok_len = 0;
+
+        if (expire > 3600)
+            expire = 3600;
+
+        config->signer.tokens.expires += time(nullptr) + expire;
+
+        config->signer.tokens.status = token_status_ready;
+        config->signer.attempts = 0;
+        config->signer.step = fb_esp_jwt_generation_step_begin;
+        config->_int.fb_last_jwt_generation_error_cb_millis = 0;
+        config->signer.tokens.token_type = token_type_id_token;
+        config->signer.anonymous = true;
+        config->signer.idTokenCutomSet = true;
+    }
+}
+
+bool FIREBASE_CLASS::isTokenExpired()
+{
+    return Signer.isExpired();
+}
+
 void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
 {
     if (!this->auth)
@@ -353,9 +432,14 @@ void FIREBASE_CLASS::init(FirebaseConfig *config, FirebaseAuth *auth)
 
     cfg->signer.lastReqMillis = 0;
     cfg->signer.tokens.expires = 0;
-    ut->clearS(cfg->_int.auth_token);
 
-    cfg->signer.signup = false;
+    //don't clear auth token if anonymous sign in
+    if (!cfg->signer.anonymous)
+        ut->clearS(cfg->_int.auth_token);
+
+    if (auth->user.email.length() > 0 && auth->user.password.length() > 0)
+        cfg->signer.idTokenCutomSet = false;
+
     cfg->signer.signup = false;
     Signer.begin(ut, this->cfg, this->auth);
     ut->clearS(cfg->signer.tokens.error.message);

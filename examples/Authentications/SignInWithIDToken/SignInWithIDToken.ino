@@ -10,15 +10,7 @@
  *
 */
 
-/** This example will show how to authenticate as a anonymous user.
- * 
- * You need to enable Anonymous provider.
- * In Firebase console, select Authentication, select Sign-in method tab, 
- * under the Sign-in providers list, enable Anonymous provider.
- * 
- * Warning: this example will create a new anonymous user with 
- * different UID every time you run this example.
-*/
+/* This example shows how to authenticate using the ID token generated from other app. */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -64,7 +56,6 @@ FirebaseConfig config;
 
 unsigned long dataMillis = 0;
 int count = 0;
-bool signupOK = false;
 
 void setup()
 {
@@ -110,59 +101,22 @@ void setup()
      * https://stackoverflow.com/questions/39640574/how-to-bulk-delete-firebase-anonymous-users
      */
 
-    Serial.print("Sign up new user... ");
+    
 
-    /* Sign up */
-    if (Firebase.signUp(&config, &auth, "", ""))
-    {
-        Serial.println("ok");
-        signupOK = true;
-
-        /** if the database rules were set as in the example "EmailPassword.ino"
-         * This new user can be access the following location.
-         * 
-         * "/UserData/<user uid>"
-         * 
-         * The new user UID or <user uid> can be taken from auth.token.uid
-        */
-    }
-    else
-        Serial.printf("%s\n", config.signer.signupError.message.c_str());
-
-    //If the signupError.message showed "ADMIN_ONLY_OPERATION", you need to enable Anonymous provider in project's Authentication.
-
+    /* Set ID token */
+    Firebase.setIdToken(&config, "<ID Token>", 3600 /* expiry time */);
+ 
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
-    /** The id token (C++ string) will be available from config.signer.tokens.id_token
-     * if the sig-up was successful. 
-     * 
-     * Now you can initialize the library using the internal created credentials.
-     * 
-     * If the sign-up was failed, the following function will initialize because 
-     * the internal authentication credentials are not created.
-    */
     Firebase.begin(&config, &auth);
 }
 
 void loop()
 {
-    if (millis() - dataMillis > 5000 && signupOK && Firebase.ready())
+    if (millis() - dataMillis > 5000 && Firebase.ready())
     {
         dataMillis = millis();
-        String path = auth.token.uid.c_str(); //<- user uid
-        path += "/test/int";
-        Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, path.c_str(), count++) ? "ok" : fbdo.errorReason().c_str());
-
-        if (count == 10)
-        {
-            Serial.print("Delete user... ");
-            if (Firebase.deleteUser(&config, &auth /* third argument can be the id token of active user to delete or leave it blank to delete current user */))
-            {
-                Serial.println("ok");
-            }
-            else
-                Serial.printf("%s\n", config.signer.deleteError.message.c_str());
-        }
+        Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, "/test/int", count++) ? "ok" : fbdo.errorReason().c_str());
     }
 }

@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.0
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.1
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -316,6 +316,16 @@ To use Email/Password sign-in authentication as in the examples, the Email/Passw
 Add Email and password for first user in your project then use this Email and password to sign in.
 
 ![Enable Email/Password Sign-in provider](/media/images/Enable_Email_Password_Provider3.png)
+
+
+
+To use Anonymous sign-in, the Anonymous Sign-in provider must be enabled by follow the below steps.
+
+![Enable Anonymous Sign-in provider](/media/images/Anonymous1.png)
+
+![Enable Anonymous Sign-in provider](/media/images/Anonymous2.png)
+
+![Enable Anonymous Sign-in provider](/media/images/Anonymous3.png)
 
 
 

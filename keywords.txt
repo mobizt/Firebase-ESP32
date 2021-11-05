@@ -26,6 +26,9 @@ FirebaseAuth    KEYWORD1
 ###############################################
 
 begin   KEYWORD2
+setIdToken  KEYWORD2
+isTokenExpired  KEYWORD2
+deleteUser  KEYWORD2
 reconnectWiFi   KEYWORD2
 setFloatDigits  KEYWORD2
 setDoubleDigits KEYWORD2
