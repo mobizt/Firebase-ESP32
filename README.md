@@ -95,6 +95,12 @@ For PlatfoemIO IDE, ESP32 Core SDK can be installed through **PIO Home** > **Pla
 ## Installation
 
 
+### Important Note
+
+If you are already installed this [Firebase ESP Client Library](https://github.com/mobizt/Firebase-ESP-Client), please remove or uninstall it from your Arduino libraries folder or project included libraries in PlatformIO.
+
+Installing of these two libraries will cause the compiler error in including incorrect files from other Firebase library i.e. the libraries included the same header and source files e.g. Firebase.h and Firebase.cpp which are guarded to use in the specific library i.e. Firebase-ESP8266 or Firebase-ESP32 and Firebase ESP Client which its APIs are different.
+
 
 ### Using Library Manager
 
