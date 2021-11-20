@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.2
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.3
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -94,12 +94,12 @@ For PlatfoemIO IDE, ESP32 Core SDK can be installed through **PIO Home** > **Pla
 
 ## Installation
 
-
 ### Important Note
 
-If you are already installed this [Firebase ESP Client Library](https://github.com/mobizt/Firebase-ESP-Client), please remove or uninstall it from your Arduino libraries folder or project included libraries in PlatformIO.
+Since library v3.12.0, the [Google server issue workaround](https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941) as applied, many functions are affected, now the issue has been solved on server side, this workaround has been removed from the library since v3.12.3.
 
-Installing of these two libraries will cause the compiler error in including incorrect files from other Firebase library i.e. the libraries included the same header and source files e.g. Firebase.h and Firebase.cpp which are guarded to use in the specific library i.e. Firebase-ESP8266 or Firebase-ESP32 and Firebase ESP Client which its APIs are different.
+The library v3.12.3 and later are recommended.
+
 
 
 ### Using Library Manager
@@ -1085,10 +1085,10 @@ void errorQueueCallback (QueueInfo queueinfo){
   Serial.println(queueinfo.dataType()); 
 
   Serial.print("Method: ");
-  Serial.println(queueinfo.method());
+  Serial.println(queueinfo.firebaseMethod());
 
   Serial.print("Path: ");
-  Serial.println(queueinfo.path());
+  Serial.println(queueinfo.dataType());
 
   Serial.println();
 }
