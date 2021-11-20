@@ -96,7 +96,7 @@ For PlatfoemIO IDE, ESP32 Core SDK can be installed through **PIO Home** > **Pla
 
 ### Important Note
 
-Since library v3.12.0, the [Google server issue workaround](https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941) as applied, many functions are affected, now the issue has been solved on server side, this workaround has been removed from the library since v3.12.3.
+Since library v3.12.0, the [Google server issue workaround](https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941) was applied, many functions are affected, now the issue has been solved on server side, this workaround has been removed from the library since v3.12.3.
 
 The library v3.12.3 and later are recommended.
 
