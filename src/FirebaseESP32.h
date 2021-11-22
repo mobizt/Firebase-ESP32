@@ -1,14 +1,14 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.12.3"
+#define FIREBASE_CLIENT_VERSION "3.12.4"
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.12.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.12.4
  *
- * Created November 20, 2021
+ * Created November 22, 2021
  *
  *   Updates:
- * - Remove server bug workaround.
+ * - Fixed token refreshment issue for anonymous sign in.
  * 
  *
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
