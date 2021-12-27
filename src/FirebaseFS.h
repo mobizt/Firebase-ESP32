@@ -47,5 +47,7 @@
 /** Use PSRAM for supported ESP32 module */
 #define FIREBASE_USE_PSRAM
 
+// To enable OTA updates
+#define ENABLE_OTA_FIRMWARE_UPDATE
 
 #endif

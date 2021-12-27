@@ -1,6 +1,6 @@
 
 /**
- * Created December 20, 2021
+ * Created December 27, 2021
  * 
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2021 K. Suwatchai (Mobizt)
@@ -54,6 +54,13 @@
 #endif
 #include "json/FirebaseJson.h"
 
+#if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
+#if defined(ESP32)
+#include <Update.h>
+#elif defined(ESP8266)
+#include <Updater.h>
+#endif
+#endif
 
 #if defined(FIREBASE_ESP_CLIENT)
 #define FIREBASE_STREAM_CLASS FirebaseStream
@@ -157,6 +164,7 @@ enum fb_esp_data_type
     d_array,
     d_blob,
     d_file,
+    d_file_ota,
     d_timestamp,
     d_shallow,
     d_std_string,
@@ -311,7 +319,8 @@ enum fb_esp_gcs_request_type
     fb_esp_gcs_request_type_get_metadata,
     fb_esp_gcs_request_type_set_metadata,
     fb_esp_gcs_request_type_update_metadata,
-    fb_esp_gcs_request_type_list
+    fb_esp_gcs_request_type_list,
+    fb_esp_gcs_request_type_download_ota
 };
 
 enum fb_esp_gcs_upload_type
@@ -341,7 +350,8 @@ enum fb_esp_fcs_request_type
     fb_esp_fcs_request_type_download,
     fb_esp_fcs_request_type_get_meta,
     fb_esp_fcs_request_type_delete,
-    fb_esp_fcs_request_type_list
+    fb_esp_fcs_request_type_list,
+    fb_esp_fcs_request_type_download_ota
 };
 #endif
 
@@ -1591,7 +1601,7 @@ static const char fb_esp_pgm_str_79[] PROGMEM = ";";
 static const char fb_esp_pgm_str_80[] PROGMEM = "Content-Disposition: ";
 static const char fb_esp_pgm_str_81[] PROGMEM = "application/octet-stream";
 static const char fb_esp_pgm_str_82[] PROGMEM = "attachment";
-static const char fb_esp_pgm_str_83[] PROGMEM = "The backup file is not exist";
+static const char fb_esp_pgm_str_83[] PROGMEM = "File not found";
 static const char fb_esp_pgm_str_84[] PROGMEM = "The SD card is in use";
 static const char fb_esp_pgm_str_85[] PROGMEM = "The SD card is not available";
 static const char fb_esp_pgm_str_86[] PROGMEM = "Could not read/write the backup file";
@@ -2112,6 +2122,14 @@ static const char fb_esp_pgm_str_580[] PROGMEM = "Missing required credentials e
 static const char fb_esp_pgm_str_581[] PROGMEM = "Security rules is not a valid JSON";
 static const char fb_esp_pgm_str_582[] PROGMEM = "/v1/accounts:delete?key=";
 static const char fb_esp_pgm_str_583[] PROGMEM = "error_description";
+#if defined(FIREBASE_ESP_CLIENT)
+static const char fb_esp_pgm_str_584[] PROGMEM = "Invalid Firmware";
+static const char fb_esp_pgm_str_585[] PROGMEM = "Too low free sketch space";
+static const char fb_esp_pgm_str_586[] PROGMEM = "Bin size does not fit the free flash space";
+static const char fb_esp_pgm_str_587[] PROGMEM = "Updater begin() failed";
+static const char fb_esp_pgm_str_588[] PROGMEM = "Updater write() failed.";
+static const char fb_esp_pgm_str_589[] PROGMEM = "Updater end() failed.";
+#endif
 
 static const unsigned char fb_esp_base64_table[65] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 static const char fb_esp_boundary_table[] PROGMEM = "=_abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";

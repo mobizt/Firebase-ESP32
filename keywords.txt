@@ -143,6 +143,7 @@ removeQueryIndex    KEYWORD2
 authenticated   KEYWORD2
 ready   KEYWORD2
 setSystemTime   KEYWORD2
+downloadOTA KEYWORD2
 
 #############################################
 # Methods for Firebase Data object (KEYWORD2)

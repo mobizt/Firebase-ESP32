@@ -54,6 +54,7 @@ jobs:
         - "examples/Queue/Queue.ino"
         - "examples/ShallowedData/ShallowedData.ino"
         - "examples/Timestamp/Timestamp.ino"
+        - "examples/DownloadFileOTA/DownloadFileOTA.ino"
     steps:
     - uses: actions/checkout@v2
     - name: Cache pip

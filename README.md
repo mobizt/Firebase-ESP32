@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.8
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.9
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -60,6 +60,10 @@ Creating the new Firebase library that specific to only GSM connectivity concern
 * **Complete and secure Firebase RTDB's REST APIs Client**
 
 * **Supports database read, store, update, delete and value changes listener**
+
+* **Support Test Mode (No Auth)**
+
+* **Supports Firmware OTA updates**
 
 * **Supports Firebase Cloud Messaging.**
 
@@ -448,6 +452,11 @@ ENABLE_RTDB
 
 ENABLE_FCM
 
+To disable OTA update, comment this macro.
+
+```
+ENABLE_OTA_FIRMWARE_UPDATE
+```
 
 
 ### Read Data

@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.8
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.9
 
 
 
@@ -2296,6 +2296,21 @@ The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```cpp
 bool getFile(FirebaseData &fbdo, uint8_t storageType, <string> nodePath, <string> fileName);
+```
+
+
+#### Download a firmware file from the database.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`fileName`** The firmware file path includes its name.
+
+return **`Boolean`** value, indicates the success of the operation.
+
+Note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
+
+```cpp
+bool downloadOTA(FirebaseData *fbdo, <string> fileName);
 ```
 
 
