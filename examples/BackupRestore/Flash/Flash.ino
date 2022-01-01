@@ -5,11 +5,12 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
 //This example shows how to backup and restore database data
+
 #if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>

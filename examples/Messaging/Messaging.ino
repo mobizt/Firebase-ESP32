@@ -5,7 +5,7 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
@@ -26,7 +26,6 @@
 // https://github.com/firebase/quickstart-android/tree/master/messaging
 // https://github.com/firebase/quickstart-ios
 // https://github.com/firebase/quickstart-js
-
 
 #include <WiFi.h>
 #include <FirebaseESP32.h>

@@ -6,13 +6,14 @@
  * 
  * Github: https://github.com/mobizt
  * 
- * Copyright (c) 2021 mobizt
+ * Copyright (c) 2022 mobizt
  *
 */
 
 /** This example will show how to authenticate using 
  * the legacy token or database secret with the new APIs (using config and auth data).
 */
+
 #if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
