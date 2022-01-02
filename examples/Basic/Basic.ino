@@ -4,7 +4,7 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt
+ * Github: https://github.com/mobizt/Firebase-ESP32
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -86,6 +86,9 @@ void setup()
   //config.database_url = DATABASE_URL;
   //config.signer.tokens.legacy_token = "<database secret>";
 
+  //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
+
+
   //////////////////////////////////////////////////////////////////////////////////////////////
   //Please make sure the device free Heap is not lower than 80 k for ESP32 and 10 k for ESP8266,
   //otherwise the SSL connection will fail.
@@ -131,52 +134,50 @@ void setup()
 
 void loop()
 {
-  //Flash string (PROGMEM and  (FPSTR), String, C/C++ string, const char, char array, string literal are supported
-  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
 
-    Serial.printf("Set bool... %s\n", Firebase.setBool(fbdo, "/test/bool", count % 2 == 0) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set bool... %s\n", Firebase.setBool(fbdo, F("/test/bool"), count % 2 == 0) ? "ok" : fbdo.errorReason().c_str());
 
-    Serial.printf("Get bool... %s\n", Firebase.getBool(fbdo, "/test/bool") ? fbdo.to<bool>() ? "true" : "false" : fbdo.errorReason().c_str());
+    Serial.printf("Get bool... %s\n", Firebase.getBool(fbdo, FPSTR("/test/bool")) ? fbdo.to<bool>() ? "true" : "false" : fbdo.errorReason().c_str());
 
     bool bVal;
-    Serial.printf("Get bool ref... %s\n", Firebase.getBool(fbdo, "/test/bool", &bVal) ? bVal ? "true" : "false" : fbdo.errorReason().c_str());
+    Serial.printf("Get bool ref... %s\n", Firebase.getBool(fbdo, F("/test/bool"), &bVal) ? bVal ? "true" : "false" : fbdo.errorReason().c_str());
 
-    Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, "/test/int", count) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, F("/test/int"), count) ? "ok" : fbdo.errorReason().c_str());
 
-    Serial.printf("Get int... %s\n", Firebase.getInt(fbdo, "/test/int") ? String(fbdo.to<int>()).c_str() : fbdo.errorReason().c_str());
+    Serial.printf("Get int... %s\n", Firebase.getInt(fbdo, F("/test/int")) ? String(fbdo.to<int>()).c_str() : fbdo.errorReason().c_str());
 
     int iVal = 0;
-    Serial.printf("Get int ref... %s\n", Firebase.getInt(fbdo, "/test/int", &iVal) ? String(iVal).c_str() : fbdo.errorReason().c_str());
+    Serial.printf("Get int ref... %s\n", Firebase.getInt(fbdo, F("/test/int"), &iVal) ? String(iVal).c_str() : fbdo.errorReason().c_str());
 
-    Serial.printf("Set float... %s\n", Firebase.setFloat(fbdo, "/test/float", count + 10.2) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set float... %s\n", Firebase.setFloat(fbdo, F("/test/float"), count + 10.2) ? "ok" : fbdo.errorReason().c_str());
 
-    Serial.printf("Get float... %s\n", Firebase.getFloat(fbdo, "/test/float") ? String(fbdo.to<float>()).c_str() : fbdo.errorReason().c_str());
+    Serial.printf("Get float... %s\n", Firebase.getFloat(fbdo, F("/test/float")) ? String(fbdo.to<float>()).c_str() : fbdo.errorReason().c_str());
 
-    Serial.printf("Set double... %s\n", Firebase.setDouble(fbdo, "/test/double", count + 35.517549723765) ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set double... %s\n", Firebase.setDouble(fbdo, F("/test/double"), count + 35.517549723765) ? "ok" : fbdo.errorReason().c_str());
 
-    Serial.printf("Get double... %s\n", Firebase.getDouble(fbdo, "/test/double") ? String(fbdo.to<double>()).c_str() : fbdo.errorReason().c_str());
+    Serial.printf("Get double... %s\n", Firebase.getDouble(fbdo, F("/test/double")) ? String(fbdo.to<double>()).c_str() : fbdo.errorReason().c_str());
 
-    Serial.printf("Set string... %s\n", Firebase.setString(fbdo, "/test/string", "Hello World!") ? "ok" : fbdo.errorReason().c_str());
+    Serial.printf("Set string... %s\n", Firebase.setString(fbdo, F("/test/string"), "Hello World!") ? "ok" : fbdo.errorReason().c_str());
 
-    Serial.printf("Get string... %s\n", Firebase.getString(fbdo, "/test/string") ? fbdo.to<const char *>() : fbdo.errorReason().c_str());
+    Serial.printf("Get string... %s\n", Firebase.getString(fbdo, F("/test/string")) ? fbdo.to<const char *>() : fbdo.errorReason().c_str());
 
-    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse.ino
     FirebaseJson json;
 
     if (count == 0)
     {
-      json.set("value/round/" + String(count), "cool!");
-      json.set("vaue/ts/.sv", "timestamp");
-      Serial.printf("Set json... %s\n", Firebase.set(fbdo, "/test/json", json) ? "ok" : fbdo.errorReason().c_str());
+      json.set("value/round/" + String(count), F("cool!"));
+      json.set(F("vaue/ts/.sv"), F("timestamp"));
+      Serial.printf("Set json... %s\n", Firebase.set(fbdo, F("/test/json"), json) ? "ok" : fbdo.errorReason().c_str());
     }
     else
     {
       json.add(String(count), "smart!");
-      Serial.printf("Update node... %s\n", Firebase.updateNode(fbdo, "/test/json/value/round", json) ? "ok" : fbdo.errorReason().c_str());
+      Serial.printf("Update node... %s\n", Firebase.updateNode(fbdo, F("/test/json/value/round"), json) ? "ok" : fbdo.errorReason().c_str());
     }
 
     Serial.println();

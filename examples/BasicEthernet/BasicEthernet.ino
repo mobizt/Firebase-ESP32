@@ -4,7 +4,7 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt
+ * Github: https://github.com/mobizt/Firebase-ESP32
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -200,12 +200,16 @@ void setupFirebase()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
+    //Or use legacy authenticate method
+    //config.database_url = DATABASE_URL;
+    //config.signer.tokens.legacy_token = "<database secret>";
+
+    //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
+
     config.max_token_generation_retry = 30;
 
     Firebase.begin(&config, &auth);
 
-    //Or use legacy authenticate method
-    //Firebase.begin(DATABASE_URL, DATABASE_SECRET);
 
     Firebase.reconnectWiFi(true);
 
@@ -213,8 +217,6 @@ void setupFirebase()
 
 void testFirebase()
 {
-    //Flash string (PROGMEM and  (FPSTR), String,, String C/C++ string, const char, char array, string literal are supported
-    //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
     Serial.printf("Set bool... %s\n", Firebase.setBool(fbdo, "/test/bool", count % 2 == 0) ? "ok" : fbdo.errorReason().c_str());
 
@@ -242,7 +244,7 @@ void testFirebase()
 
     Serial.printf("Get string... %s\n", Firebase.getString(fbdo, "/test/string") ? fbdo.to<const char *>() : fbdo.errorReason().c_str());
 
-    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create.ino
+    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse.ino
     FirebaseJson json;
 
     if (count == 0)

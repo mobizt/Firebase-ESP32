@@ -3,7 +3,7 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt
+ * Github: https://github.com/mobizt/Firebase-ESP32
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -113,6 +113,8 @@ void setup()
   //config.database_url = DATABASE_URL;
   //config.signer.tokens.legacy_token = "<database secret>";
 
+  //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
+
   Firebase.begin(&config, &auth);
 
   Firebase.reconnectWiFi(true);
@@ -156,8 +158,6 @@ void setup()
 
 void loop()
 {
-  //Flash string (PROGMEM and  (FPSTR), String, C/C++ string, const char, char array, string literal are supported
-  //in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
