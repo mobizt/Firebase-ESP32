@@ -107,7 +107,7 @@ void setup()
 
   Firebase.reconnectWiFi(true);
 
-  if (!DEFAULT_FLASH_FS.begin())
+    if (!DEFAULT_FLASH_FS.begin())
   {
     Serial.println("SPIFFS/LittleFS initialization failed.");
     Serial.println("For Arduino IDE, please select flash size from menu Tools > Flash size");
@@ -133,6 +133,48 @@ void setup()
   file.close();
 }
 
+//The Firebase download callback function
+void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
+{
+  if (info.status == fb_esp_rtdb_download_status_init)
+  {
+    Serial.printf("Downloading file %s (%d) to %s\n", info.remotePath.c_str(), info.size, info.localFileName.c_str());
+  }
+  else if (info.status == fb_esp_rtdb_download_status_download)
+  {
+    Serial.printf("Downloaded %d%s\n", (int)info.progress, "%");
+  }
+  else if (info.status == fb_esp_rtdb_download_status_complete)
+  {
+    Serial.println("Download completed\n");
+  }
+  else if (info.status == fb_esp_rtdb_download_status_error)
+  {
+    Serial.printf("Download failed, %s\n", info.errorMsg.c_str());
+  }
+}
+
+//The Firebase upload callback function
+void rtdbUploadCallback(RTDB_UploadStatusInfo info)
+{
+  if (info.status == fb_esp_rtdb_upload_status_init)
+  {
+    Serial.printf("Uploading file %s (%d) to %s\n", info.localFileName.c_str(), info.size, info.remotePath.c_str());
+  }
+  else if (info.status == fb_esp_rtdb_upload_status_upload)
+  {
+    Serial.printf("Uploaded %d%s\n", (int)info.progress, "%");
+  }
+  else if (info.status == fb_esp_rtdb_upload_status_complete)
+  {
+    Serial.println("Upload completed\n");
+  }
+  else if (info.status == fb_esp_rtdb_upload_status_error)
+  {
+    Serial.printf("Upload failed, %s\n", info.errorMsg.c_str());
+  }
+}
+
 void loop()
 {
 
@@ -141,9 +183,13 @@ void loop()
     taskCompleted = true;
 
     //File name must be in 8.3 DOS format (max. 8 bytes file name and 3 bytes file extension)
-    Serial.printf("Set file... %s\n", Firebase.setFile(fbdo, StorageType::FLASH, "test/file/data", "/file1.txt") ? "ok" : fbdo.errorReason().c_str());
+    Serial.println("\nSet file...");
+    if (!Firebase.setFile(fbdo, StorageType::FLASH, "test/file/data", "/file1.txt", rtdbUploadCallback /* callback function*/))
+      Serial.println(fbdo.errorReason());
 
-    Serial.printf("Get file... %s\n", Firebase.getFile(fbdo, StorageType::FLASH, "test/file/data", "/file2.txt") ? "ok" : fbdo.errorReason().c_str());
+    Serial.println("\nGet file...");
+    if (!Firebase.getFile(fbdo, StorageType::FLASH, "test/file/data", "/file2.txt", rtdbDownloadCallback /* callback function*/))
+      Serial.println(fbdo.errorReason());
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
     {

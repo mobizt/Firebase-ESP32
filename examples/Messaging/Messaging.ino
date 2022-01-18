@@ -94,7 +94,10 @@ void sendMessage()
 
     fbdo.fcm.setNotifyMessage("Notification", "Hello World! " + String(count));
 
-    fbdo.fcm.setDataMessage("{\"myData\":" + String(count) + "}");
+    FirebaseJson msg;
+    msg.add("myData", count);
+
+    fbdo.fcm.setDataMessage(msg.raw());
 
     //Firebase.broadcastMessage(fbdo)
     //Firebase.sendTopic(fbdo)

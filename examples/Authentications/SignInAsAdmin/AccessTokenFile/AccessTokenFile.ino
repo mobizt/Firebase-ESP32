@@ -4,7 +4,7 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt/Firebase-ESP32
+ * Github: https://github.com/mobizt/Firebase-ESP8266
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -80,10 +80,10 @@ void setup()
    * when checking with https://www.sslchecker.com/sslchecker.
    * The certificate chain, GTS Root R1 can be used instead.
    * 
-   * ESP32 Arduino SDK supports PEM format only even mbedTLS supports DER format too.
+   * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
    * ESP8266 SDK supports both PEM and DER format certificates.
   */
-  config.cert.file = "/gsr1.pem";
+  config.cert.file = "/gtsr1.pem";
   config.cert.file_storage = StorageType::FLASH; //or StorageType::SD
 
   /* The file systems for flash and SD/SDMMC can be changed in FirebaseFS.h. */
@@ -93,7 +93,7 @@ void setup()
   config.service_account.json.storage_type = StorageType::FLASH;   //or StorageType::SD
 
   /** The user UID set to empty to sign in as admin */
-  auth.token.uid = "";
+  //auth.token.uid.clear();
 
   /* Assign the RTDB URL */
   config.database_url = DATABASE_URL;
@@ -138,6 +138,8 @@ void setup()
 
 void loop()
 {
+  //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+
   if (Firebase.ready() && millis() - dataMillis > 5000)
   {
     dataMillis = millis();

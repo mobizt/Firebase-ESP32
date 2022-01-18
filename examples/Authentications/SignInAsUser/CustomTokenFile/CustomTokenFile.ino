@@ -4,7 +4,7 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt/Firebase-ESP32
+ * Github: https://github.com/mobizt/Firebase-ESP8266
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -106,7 +106,7 @@ void setup()
 
     /* Assign the sevice account JSON file and the file storage type (required) */
     config.service_account.json.path = "/service_account_file.json";   //change this for your json file
-    config.service_account.json.storage_type = StorageType::FLASH;     //or  StorageType::SD
+    config.service_account.json.storage_type = StorageType::FLASH;     //or StorageType::SD
 
     /** Assign the unique user ID (uid) (required)
      * This uid will be compare to the auth.uid variable in the database rules.
@@ -187,7 +187,7 @@ void setup()
     */
     String var = "$userId";
     String val = "($userId === auth.uid && auth.token.premium_account === true && auth.token.admin === true)";
-    Firebase.setReadWriteRules(fbdo, base_path.c_str(), var.c_str(), val.c_str(), val.c_str(), DATABASE_SECRET);
+    Firebase.setReadWriteRules(fbdo, base_path, var, val, val, DATABASE_SECRET);
 
     /** 
      * The custom token which created internally in this library will use 
@@ -204,12 +204,14 @@ void setup()
 
 void loop()
 {
+    //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+
     if (millis() - dataMillis > 5000 && Firebase.ready())
     {
         dataMillis = millis();
         String path = "/UsersData/";
         path += auth.token.uid.c_str(); //<- user uid is "Node1"
         path += "/test/int";
-        Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, path.c_str(), count++) ? "ok" : fbdo.errorReason().c_str());
+        Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, path, count++) ? "ok" : fbdo.errorReason().c_str());
     }
 }

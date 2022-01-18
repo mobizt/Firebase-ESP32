@@ -4,7 +4,7 @@
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt/Firebase-ESP32
+ * Github: https://github.com/mobizt/Firebase-ESP8266
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -108,7 +108,7 @@ void setup()
      * 
      * https://stackoverflow.com/questions/38694015/what-happens-to-firebase-anonymous-users
      * https://stackoverflow.com/questions/39640574/how-to-bulk-delete-firebase-anonymous-users
-    */
+     */
 
     Serial.print("Sign up new user... ");
 
@@ -147,12 +147,14 @@ void setup()
 
 void loop()
 {
+    //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+
     if (millis() - dataMillis > 5000 && signupOK && Firebase.ready())
     {
         dataMillis = millis();
         String path = auth.token.uid.c_str(); //<- user uid
         path += "/test/int";
-        Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, path.c_str(), count++) ? "ok" : fbdo.errorReason().c_str());
+        Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, path, count++) ? "ok" : fbdo.errorReason().c_str());
 
         if (count == 10)
         {

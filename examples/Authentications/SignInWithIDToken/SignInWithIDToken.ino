@@ -1,10 +1,9 @@
-
 /**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt/Firebase-ESP32
+ * Github: https://github.com/mobizt/Firebase-ESP8266
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -101,11 +100,9 @@ void setup()
      * https://stackoverflow.com/questions/39640574/how-to-bulk-delete-firebase-anonymous-users
      */
 
-    
-
     /* Set ID token */
     Firebase.setIdToken(&config, "<ID Token>", 3600 /* expiry time */);
- 
+
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
 
@@ -114,6 +111,8 @@ void setup()
 
 void loop()
 {
+    //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+
     if (millis() - dataMillis > 5000 && Firebase.ready())
     {
         dataMillis = millis();

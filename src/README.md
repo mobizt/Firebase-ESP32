@@ -1,7 +1,7 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.10
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.14.0
 
 
 
@@ -319,7 +319,7 @@ void setwriteSizeLimit(FirebaseData &fbdo, <string> size);
 
 
 
-#### Read the database rules
+#### Read the database rules.
 
 param **`fbdo`** Firebase Data Object to hold data and instances.
 
@@ -331,7 +331,25 @@ bool getRules(FirebaseData &fbdo);
 
 
 
-#### Write the database rules
+#### Save the database rules to file.
+
+param **`fbdo`** Firebase Data Object to hold data and instances.
+
+param **`storageType`** Type of storage to read file data, StorageType::FLASH or StorageType::SD.
+
+param **`filename`** Filename to save rules.
+
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
+return - **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+ getRules(FirebaseData &fbdo, uint8_t storageType, <string> filename, RTDB_DownloadProgressCallback callback = NULL)
+```
+
+
+
+#### Write the database rules.
 
 param **`fbdo`** Firebase Data Object to hold data and instances.
 
@@ -342,6 +360,25 @@ return - **`Boolean`** type status indicates the success of the operation.
 ```cpp
 bool setRules(FirebaseData &fbdo, <string> rules);
 ```
+
+
+
+#### Restore the database rules from file.
+
+param **`fbdo`** Firebase Data Object to hold data and instances.
+
+param **`storageType`** Type of storage to read file data, StorageType::FLASH or StorageType::SD.
+
+param **`filename`** Filename to read the rules from.
+
+param **`callback`** Optional. The callback function that accept RTDB_UploadStatusInfo data.
+
+return - **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+bool setRules(FirebaseData &fbdo, uint8_t storageType, <string> filename, RTDB_UploadProgressCallback callback = NULL)
+```
+
 
 
 
@@ -825,6 +862,8 @@ param **`path`** Target database path in which binary data from the file will be
 
 param **`fileName`** File name included its path in SD card/Flash memory.
 
+param **`callback`**callback Optional. The callback function that accept RTDB_UploadStatusInfo data.
+
 return **`Boolean`** type status indicates the success of the operation.
 
 The new appended node's key will be stored in Firebase Data object, 
@@ -833,9 +872,9 @@ which its value can be accessed via function \<FirebaseData\>.pushName().
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```cpp
-bool pushFile(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName);
+bool pushFile(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
 
-bool pushFileAsync(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName);
+bool pushFileAsync(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
 ```
 
 
@@ -1626,6 +1665,8 @@ param **`path`** Target database path in which binary data from the file will be
 
 param **`fileName`** File name included its path in SD card/Flash memory.
 
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
 return **`Boolean`** type status indicates the success of the operation.
 
 
@@ -1635,9 +1676,9 @@ No payload returned from the server.
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```cpp
-bool setFile(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName);
+bool setFile(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 
-bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName);
+bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -1654,6 +1695,8 @@ param **`fileName`** File name included its path in SD card/Flash memory.
 
 param **`ETag`** Known unique identifier string (ETag) of defined database path.
 
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
 return **`Boolean`** type status indicates the success of the operation.
 
 
@@ -1666,9 +1709,9 @@ the operation will fail with HTTP code 412, Precondition Failed (ETag is not mat
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```cpp
-bool setFile(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, <string> ETag);
+bool setFile(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, <string> ETag, RTDB_UploadProgressCallback callback = NULL);
 
-bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, <string> ETag);
+bool setFileAsync(FirebaseData &fbdo, uint8_t storageType, <string> path, <string> fileName, <string> ETag, RTDB_UploadProgressCallback callback = NULL);
 ```
 
 
@@ -2290,27 +2333,34 @@ param **`nodePath`** Database path that file data will be downloaded.
 
 param **`fileName`** File name included its path in SD card/Flash memory.
 
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
 return **`Boolean`** type status indicates the success of the operation.
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```cpp
-bool getFile(FirebaseData &fbdo, uint8_t storageType, <string> nodePath, <string> fileName);
+bool getFile(FirebaseData &fbdo, uint8_t storageType, <string> nodePath, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 ```
+
 
 
 #### Download a firmware file from the database.
 
 param **`fbdo`** The pointer to Firebase Data Object.
 
-param **`fileName`** The firmware file path includes its name.
+param **`fwPath`** The firmware data path.
+
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
 
 return **`Boolean`** value, indicates the success of the operation.
 
 Note: In ESP8266, this function will allocate 16k+ memory for internal SSL client.
 
+Firmware data is the bin file that stored on datanbase using pushFile or setFile function. 
+
 ```cpp
-bool downloadOTA(FirebaseData *fbdo, <string> fileName);
+bool downloadOTA(FirebaseData *fbdo, <string> fwPath, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -2519,12 +2569,14 @@ param **`nodePath`** Database path to be back up.
 
 param **`fileName`** File name to save.
 
+param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
+
 return **`Boolean`** type status indicates the success of the operation.
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```cpp
-bool backup(FirebaseData &fbdo, uint8_t storageType, <string> nodePath, <string> fileName);
+bool backup(FirebaseData &fbdo, uint8_t storageType, <string> nodePath, <string> fileName, RTDB_DownloadProgressCallback callback = NULL);
 ```
 
 
@@ -2539,13 +2591,18 @@ param **`nodePath`** Database path to be restored.
 
 param **`fileName`** File name to read.
 
+param **`callback`** Optional. The callback function that accept RTDB_UploadStatusInfo data.
+
 return **`Boolean`** type status indicates the success of the operation.
 
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```cpp
-bool restore(FirebaseData &fbdo, uint8_t storageType <string> nodePath, <string> fileName);
+bool restore(FirebaseData &fbdo, uint8_t storageType <string> nodePath, <string> fileName, RTDB_UploadProgressCallback callback = NULL);
 ```
+
+
+
 
 
 
@@ -2795,7 +2852,8 @@ bool sendTopic(FirebaseData &fbdo);
 ```
 
 
-#### SD card config with GPIO pins
+
+#### SD card config with GPIO pins.
 
 param **`ss`** SPI Chip/Slave Select pin.
 
@@ -2807,10 +2865,45 @@ param **`mosi`** SPI MOSI pin.
 
 return **`Boolean`** type status indicates the success of the operation.
 
+```cpp
+bool sdBegin( int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+```
+
+
+
+#### SD card config with chip select and SPI configuration.
+
+param **`ss`** SPI Chip/Slave Select pin.
+
+param **`spiConfig`** The pointer to SPIClass object for SPI configuartion.
+
+return **`Boolean`** type status indicates the success of the operation.
 
 ```cpp
-void sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr);
 ```
+
+
+
+
+#### SD card config with SdFat SPI and pins configurations.
+
+param **`sdFatSPIConfig`** The pointer to SdSpiConfig object for SdFat SPI configuration.
+
+param **`ss`** SPI Chip/Slave Select pin.
+
+param **`sck`** SPI Clock pin.
+
+param **`miso`** SPI MISO pin.
+
+param **`mosi`** SPI MOSI pin.
+
+return **`Boolean`** type status indicates the success of the operation.
+
+```cpp
+bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+```
+
 
 
 #### Initialize the SD_MMC card.
@@ -2826,6 +2919,7 @@ return **`Boolean`** type status indicates the success of the operation.
 ```cpp
 bool sdMMCBegin(<string> mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
 ```
+
 
 
 #### Set system time with timestamp.

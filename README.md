@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.12.10
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.14.0
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -99,13 +99,6 @@ For PlatfoemIO IDE, ESP32 Core SDK can be installed through **PIO Home** > **Pla
 
 
 ## Installation
-
-### Important Note
-
-Since library v3.12.0, the [Google server issue workaround](https://github.com/mobizt/Firebase-ESP-Client/discussions/165#discussioncomment-1561941) was applied, many functions are affected, now the issue has been solved on server side, this workaround has been removed from the library since v3.12.3.
-
-The library v3.12.3 and later are recommended.
-
 
 
 ### Using Library Manager
@@ -210,28 +203,33 @@ Firebase.enableClassicRequest(fbdo, true);
 fbdo.setResponseSize(8192); //minimum size is 4096 bytes
 ```
 
-### Use PSRAM
 
+## Memory Options for ESP32
 
-To enable PSRAM in ESP32 module with on-board PSRAM chip, in Arduino IDE
+In ESP32 module that has PSRAM installed, you can enable it and set the library to use this external memory instead.
+
+### Arduino IDE
+
+To enable PSRAM in ESP32 module.
 
 ![Enable PSRAM in ESP32](/media/images/ESP32-PSRAM.png)
 
 
-In PlatformIO in VSCode IDE, add the following build_flags in your project's platformio.ini file
+### PlatformIO IDE
+
+
+In PlatformIO on VSCode or Atom IDE, add the following build_flags in your project's platformio.ini file.
 
 ```ini
 build_flags = -DBOARD_HAS_PSRAM -mfix-esp32-psram-cache-issue
 ```
 
-*When config the IDE or add the build flags to use PSRAM in the ESP32 dev boards that do not have on-board PSRAM chip, your device will be crashed (reset).
-
-
-Since v3.12.0, this library supports PSRAM for internal memory allocation which you can config to use it via [**FirebaseFS.h**](src/FirebaseFS.h) with this macro.
+Once the external Heap memory was enabled in IDE, to allow the library to use the external memory, you can set it in [**FirebaseFS.h**](src/FirebaseFS.h) by define this macro.
 
 ```cpp
 #define FIREBASE_USE_PSRAM
 ```
+
 
 
 

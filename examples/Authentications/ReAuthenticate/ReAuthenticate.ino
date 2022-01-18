@@ -1,10 +1,9 @@
-
 /**
  * Created by K. Suwatchai (Mobizt)
  * 
  * Email: k_suwatchai@hotmail.com
  * 
- * Github: https://github.com/mobizt/Firebase-ESP32
+ * Github: https://github.com/mobizt/Firebase-ESP8266
  * 
  * Copyright (c) 2022 mobizt
  *
@@ -122,13 +121,15 @@ void loop()
     {
         dataMillis = millis();
 
+        //Firebase.ready works for authentication management and should be called repeatedly in the loop.
+
         if (Firebase.ready())
         {
             String path = "/UsersData/";
             path += auth.token.uid.c_str(); //<- user uid of current user that sign in with Emal/Password
             path += "/test/int";
             Serial.printf("Current UID: %s\n", auth.token.uid.c_str());
-            Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, path.c_str(), count++) ? "ok" : fbdo.errorReason().c_str());
+            Serial.printf("Set int... %s\n", Firebase.setInt(fbdo, path, count++) ? "ok" : fbdo.errorReason().c_str());
 
             //Swap users every 5 times
             if (count % 5 == 0)
