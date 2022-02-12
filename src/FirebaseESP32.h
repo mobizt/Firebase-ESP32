@@ -3,16 +3,12 @@
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.14.4
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.14.5
  *
- * Created February 10, 2022
+ * Created February 12, 2022
  *
  *   Updates:
- * - Add supports custom (external) Clients.
- * - Add support $key in deleteNodesByTimestamp.
- * - Fixed the SdFat filesystem issue.
- * - Fixed download file OTA issues.
- * - Fixed RTDB Query filter issue.
+ * - Fixed custom Client timestamp issue.
  *
  *
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
