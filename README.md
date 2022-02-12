@@ -4,7 +4,7 @@
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
 
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.14.3
+Google's Firebase Realtime Database Arduino Library for ESP32 v3.14.4
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
@@ -35,23 +35,15 @@ Please try it here https://github.com/mobizt/Firebase-ESP-Client
 
 
 
-## Unsupported AT command and mobile modem bridge
+## Other Arduino Devices supported using external Clients.
 
-The library required the access to the Firebase server through the native WiFi or Ethernet for the internet connection.  
+Since version 3.14.4, library allows you to use external Arduino Clients network interfaces e.g. WiFiClient, EthernetClient and GSMClient, the Arduino supported devices that have enough flash size (> 128k) and memory can now use this library.
 
-The library does not support the mobile GPRS/3G/4G modem connected to MCU via serial port or any stand alone, all in one ESP32/GSM module.
+To use external Client, see the [ExternalClient examples](/examples/ExternalClient).
 
-There are incompatibilities and security concerns when adding mobile modem with this library.
- 
-Mobile modem is not native and it required library (driver) to handle network connection using AT commands.
- 
-The library focused on WiFi and Ethernet operations, adding the ability for mobile modem breaks the compatibilities among the network connections.
+The authentication with OAuth2.0 and custom auth tokens, RTDB error queue and downloadFileOTA features are not supported for other Arduino devices using external Clients.
 
-To make this library to support all-in-one module that has ESP32 and GSM modem on board, devided this library into small variant which is not compatible with native connectivity and can make the library too complicated. 
- 
-In addition, some mobile modem can’t handle the SSL certificate and out date TLS supported. 
-
-Creating the new Firebase library that specific to only GSM connectivity concerns the scope of supported MCUs and the SSL library to use on that device and memory available which are most important.
+The flash and SD filesystems supports depend on the devices and third party filesystems libraries installed.
 
 
 

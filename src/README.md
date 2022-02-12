@@ -250,6 +250,30 @@ const char *getToken();
 
 
 
+
+#### Get free Heap memory.
+
+param **`int *`** of free Heap memory size.
+
+```cpp
+int getFreeHeap();
+```
+
+
+
+
+#### Get current timestamp.
+
+param **`time_t *`** of current timestamp.
+
+```cpp
+time_t getCurrentTime();
+```
+
+
+
+
+
 #### Set the decimal places for float value to be stored in database.
 
 param **`digits`** The decimal places. 
@@ -1487,20 +1511,10 @@ return **`Boolean`** type status indicates the success of the operation.
 
 
 
-Call \<FirebaseData\>.dataType to determine what type of data successfully stores in the database. 
+Call \<FirebaseData\>.dataType or \<FirebaseData\>.dataTypeNum to determine what type of data successfully stores in the database. 
 
+Call \<FirebaseData\>.to<FirebaseJson>() and \<FirebaseData\>.to<FirebaseJson *>() will return reference to object and pointer to FirebaseJson object from payload.
 
-If ETag at the defined database path does not match the provided ETag parameter,
-the operation will fail with HTTP code 412, Precondition Failed (ETag is not matched).
-
-If the operation failed due to ETag is not match, call \<FirebaseData\>.ETag() to get the current ETag value.
-Also call \<FirebaseData\>.jsonData to get the current JSON string value \<FirebaseData\>.to<FirebaseJson>() 
-to get the FirebaseJson object.
-
-Also call \<FirebaseData\>.jsonData will return the JSON string value of
-the payload returned from the server.
-
-And \<FirebaseData\>.to<FirebaseJson>() and \<FirebaseData\>.to<FirebaseJson *>() will return reference to object and pointer to FirebaseJson object from payload.
 
 
 ```cpp
@@ -2948,7 +2962,43 @@ void errorToString(int httpCode, std::string &buff);
 
 
 
-## FirebaseData Object Functions
+## Firebase Data Object Functions
+
+
+
+#### Assign external Arduino Client.
+
+param **`client`** The pointer to Arduino Client derived class e.g. WiFiClient, WiFiClientSecure, EthernetClient or GSMClient. 
+
+```cpp
+void setExternalClient(Client *client);
+```
+
+
+
+#### Assign the callback functions required for external Client usage.
+
+param **`tcpConnectionCB`** The function that handles the server connection. 
+
+param **`networkConnectionCB`** The function that handles the network connection. 
+
+param **`networkStatusCB`** The function that handle the network connection status acknowledgement.
+
+```cpp
+void setExternalClientCallbacks(FB_TCPConnectionRequestCallback tcpConnectionCB, FB_NetworkConnectionRequestCallback networkConnectionCB, FB_NetworkStatusRequestCallback networkStatusCB);
+```
+
+
+
+
+#### Set the network status acknowledgement.
+
+param **`status`** The network status. 
+
+```cpp
+void setNetworkStatus(bool status);
+```
+
 
 
 
@@ -3222,6 +3272,26 @@ return **`FirebaseJsonArray object pointer`**.
 ```cpp
 FirebaseJsonArray *jsonArrayPtr();
 ```
+
+
+#### Return the internal Firebase JSON Data object.
+
+return **`FirebaseJsonData object`**.
+
+```cpp
+FirebaseJsonData &jsonData();
+```
+
+
+
+#### Return the pointer to internal Firebase JSON Data object.
+
+return **`FirebaseJsonData object pointer`**.
+
+```cpp
+FirebaseJsonData *jsonDataPtr();
+```
+
 
 
 

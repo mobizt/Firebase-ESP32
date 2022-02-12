@@ -1,16 +1,19 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.14.3"
+#define FIREBASE_CLIENT_VERSION "3.14.4"
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.14.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.14.4
  *
- * Created January 21, 2022
+ * Created February 10, 2022
  *
  *   Updates:
- * - Improve Server data sending process.
- * - Improve Data upload/download progressing reports.
- * 
+ * - Add supports custom (external) Clients.
+ * - Add support $key in deleteNodesByTimestamp.
+ * - Fixed the SdFat filesystem issue.
+ * - Fixed download file OTA issues.
+ * - Fixed RTDB Query filter issue.
+ *
  *
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
  * DELETE data from/to with Google's Firebase database using get, set, update
@@ -45,6 +48,6 @@
  * WHETHER
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-*/
+ */
 
 #include "Firebase.h"

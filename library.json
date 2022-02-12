@@ -1,6 +1,6 @@
 {
   "name": "Firebase ESP32 Client",
-  "version": "3.14.3",
+  "version": "3.14.4",
   "keywords": "communication, REST, esp32, arduino",
   "description": "The secure, fast and reliable Firebase Realtime database library to read, store, update, delete, listen, backup, and restore data. You can also read and modify the database security rules with this library.",
   "repository": {
@@ -12,5 +12,5 @@
     "email": "k_suwatchai@hotmail.com"
   }],
   "frameworks": "arduino",
-  "platforms": "espressif32"
+  "platforms": "espressif32, espressif8266, atmelsam, raspberrypi, atmelavr, atmelmegaavr, ststm32, teensy"
 }
