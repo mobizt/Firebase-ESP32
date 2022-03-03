@@ -1,5 +1,6 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
+![](/media/images/flag.svg)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
 
