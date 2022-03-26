@@ -1,9 +1,8 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4390772.svg)](https://doi.org/10.5281/zenodo.4390772)
+![Compile](https://github.com/mobizt/Firebase-ESP32/actions/workflows/compile_library.yml/badge.svg) ![Examples](https://github.com/mobizt/Firebase-ESP32/actions/workflows/compile_examples.yml/badge.svg)
 
-
-Google's Firebase Realtime Database Arduino Library for ESP32 v3.15.5
+[![arduino-library-badge](https://www.ardu-badge.com/badge/Firebase%20ESP32%20Client.svg?)](https://www.ardu-badge.com/ESP%20Mail%20Client) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/Firebase%20ESP32%20Client.svg) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6329777.svg)](https://doi.org/10.5281/zenodo.6329777)
 
 
 This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
