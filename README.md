@@ -1,6 +1,6 @@
 # Firebase Realtime Database Arduino Library for ESP32
 
-![Compile](https://github.com/mobizt/Firebase-ESP32/actions/workflows/compile_library.yml/badge.svg) ![Examples](https://github.com/mobizt/Firebase-ESP32/actions/workflows/compile_examples.yml/badge.svg)
+![Compile](https://github.com/mobizt/Firebase-ESP32/actions/workflows/compile_library.yml/badge.svg) ![Examples](https://github.com/mobizt/Firebase-ESP32/actions/workflows/compile_examples.yml/badge.svg) [![Github Stars](https://img.shields.io/github/stars/mobizt/Firebase-ESP32?logo=github)](https://github.com/mobizt/Firebase-ESP32/stargazers) ![Github Issues](https://img.shields.io/github/issues/mobizt/Firebase-ESP32?logo=github)
 
 ![arduino-library-badge](https://www.ardu-badge.com/badge/Firebase%20ESP32%20Client.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/Firebase%20ESP32%20Client.svg) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6329777.svg)](https://doi.org/10.5281/zenodo.6329777)
 
