@@ -110,7 +110,8 @@ For PlatformIO IDE, using the following command.
 Or at **PIO Home** -> **Library** -> **Registry** then search **Firebase ESP32 Client**.
 
 
-[More on PlatformIO...](https://platformio.org/lib/show/6217/Firebase%20ESP32%20Client/examples)
+If you ever installed this library in Global storage in PlatformIO version prior to v2.0.0 and you have updated the PlatformIO to v2.0.0 and later, the global library installation was not available, the sources files of old library version still be able to search by the library dependency finder (LDF), you needed to remove the library from folder **C:\Users\\<UserName>\\.platformio\lib** to prevent unexpected behavior when compile and run.
+
 
 
 
