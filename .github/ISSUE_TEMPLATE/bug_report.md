@@ -30,8 +30,8 @@ If applicable, add screenshots to help explain your problem.
  - Arduino, PlatformIO
  - Version [e.g. 1.8.9]
 
-**ESP8266 Arduino Core SDK version**
- - Version [e.g. 2.5.1]
+**ESP32 Arduino Core SDK version**
+ - Version [e.g. 2.0.2]
 
 **Additional context**
 Add any other context about the problem here.
