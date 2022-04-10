@@ -1,15 +1,15 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP32
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-//This example shows how to send Firebase Cloud Messaging.
+// This example shows how to send Firebase Cloud Messaging.
 
 // Library allows your ESP device to interact with FCM server through FCM Server
 // protocols.
@@ -37,7 +37,7 @@
 #define FIREBASE_FCM_DEVICE_TOKEN_1 "RECIPIENT_DEVICE_TOKEN"
 #define FIREBASE_FCM_DEVICE_TOKEN_2 "ANOTHER_RECIPIENT_DEVICE_TOKEN"
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 unsigned long lastTime = 0;
@@ -99,13 +99,13 @@ void sendMessage()
 
     fbdo.fcm.setDataMessage(msg.raw());
 
-    //Firebase.broadcastMessage(fbdo)
-    //Firebase.sendTopic(fbdo)
+    // Firebase.broadcastMessage(fbdo)
+    // Firebase.sendTopic(fbdo)
     Serial.printf("Send message... %s\n", Firebase.sendMessage(fbdo, 0) ? "ok" : fbdo.errorReason().c_str());
 
     if (fbdo.httpCode() == FIREBASE_ERROR_HTTP_CODE_OK)
         Serial.println(fbdo.fcm.getSendResult());
-        
+
     Serial.println();
 
     count++;

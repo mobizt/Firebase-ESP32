@@ -12,15 +12,13 @@
 
 /** This example shows the basic RTDB usage with external Client.
  * This example used SAMD21 device and WiFiNINA as the client.
-*/
-
+ */
 
 #if defined(ARDUINO_ARCH_SAMD)
 #include <WiFiNINA.h>
 #endif
 
 #include <FirebaseESP32.h>
-
 
 // Provide the token generation process info.
 #include <addons/TokenHelper.h>
@@ -151,7 +149,7 @@ void setup()
 void loop()
 {
 
-    // Firebase.ready works for authentication management and should be called repeatedly in the loop.
+    // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
     if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
     {

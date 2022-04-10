@@ -27,7 +27,6 @@
 static const char esp_idf_branch_str[] PROGMEM = "release/v";
 #endif
 
-
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <WiFiClientSecure.h>
@@ -51,7 +50,7 @@ static const char esp_idf_branch_str[] PROGMEM = "release/v";
 #error Your ESP8266 Arduino Core SDK is outdated, please update. From Arduino IDE go to Boards Manager and search 'esp8266' then select the latest version.
 #endif
 
-//2.6.1 BearSSL bug
+// 2.6.1 BearSSL bug
 #if ARDUINO_ESP8266_GIT_VER == 0x482516e3
 #error Due to bugs in BearSSL in ESP8266 Arduino Core SDK version 2.6.1, please update ESP8266 Arduino Core SDK to newer version. The issue was found here https:\/\/github.com/esp8266/Arduino/issues/6811.
 #endif

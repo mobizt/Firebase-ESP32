@@ -1,14 +1,14 @@
 
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP32
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -18,17 +18,17 @@
 #include <FirebaseESP8266.h>
 #endif
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
-//Provide the RTDB payload printing info and other helper functions.
+// Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-//For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+// For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
 /* 2. Define the API Key */
 #define API_KEY "API_KEY"
@@ -45,7 +45,7 @@
 /** From the test on July 2021, GlobalSign Root CA was missing from Google server
  * when checking with https://www.sslchecker.com/sslchecker.
  * The certificate chain, GTS Root R1 can be used instead.
-*/
+ */
 
 const char rootCACert[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
                                   "MIIFVzCCAz+gAwIBAgINAgPlk28xsBNJiGuiFzANBgkqhkiG9w0BAQwFADBHMQsw\n"
@@ -79,7 +79,7 @@ const char rootCACert[] PROGMEM = "-----BEGIN CERTIFICATE-----\n"
                                   "bP6MvPJwNQzcmRk13NfIRmPVNnGuV/u3gm3c\n"
                                   "-----END CERTIFICATE-----\n";
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
@@ -119,12 +119,12 @@ void setup()
   config.database_url = DATABASE_URL;
 
   /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
   /* In case the certificate data was used  */
   config.cert.data = rootCACert;
 
-  //Or custom set the root certificate for each FirebaseData object
+  // Or custom set the root certificate for each FirebaseData object
   fbdo.setCert(rootCACert);
 
   /* Or assign the certificate file */
@@ -133,21 +133,20 @@ void setup()
    * as described above, GTS Root R1 (gsr1.pem or gsr1.der) can be used instead.
    * ESP32 Arduino SDK supports PEM format only even mBedTLS supports DER format too.
    * ESP8266 SDK supports both PEM and DER format certificates.
-  */
-  //config.cert.file = "/gsr1.pem";
-  //config.cert.file_storage = StorageType::FLASH;   //or StorageType::SD
+   */
+  // config.cert.file = "/gsr1.pem";
+  // config.cert.file_storage = StorageType::FLASH;   //or StorageType::SD
 
-  //Or use legacy authenticate method
-  //config.database_url = DATABASE_URL;
-  //config.signer.tokens.legacy_token = "<database secret>";
+  // Or use legacy authenticate method
+  // config.database_url = DATABASE_URL;
+  // config.signer.tokens.legacy_token = "<database secret>";
 
-  //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
+  // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
 
-  //Comment or pass false value when WiFi reconnection will control by your code or third party library
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library
   Firebase.reconnectWiFi(true);
-  
 
   Firebase.setDoubleDigits(5);
 
@@ -173,7 +172,7 @@ void setup()
   config.timeout.rtdbStreamError = 3 * 1000;
 
   Note:
-  The function that starting the new TCP session i.e. first time server connection or previous session was closed, the function won't exit until the 
+  The function that starting the new TCP session i.e. first time server connection or previous session was closed, the function won't exit until the
   time of config.timeout.socketConnection.
 
   You can also set the TCP data sending retry with
@@ -184,6 +183,7 @@ void setup()
 
 void loop()
 {
+  // Firebase.ready() should be called repeatedly to handle authentication tasks.
 
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
@@ -215,7 +215,7 @@ void loop()
 
     Serial.printf("Get string... %s\n", Firebase.getString(fbdo, "/test/string") ? fbdo.to<const char *>() : fbdo.errorReason().c_str());
 
-    //For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse.ino
+    // For the usage of FirebaseJson, see examples/FirebaseJson/BasicUsage/Create_Edit_Parse.ino
     FirebaseJson json;
 
     if (count == 0)
@@ -229,24 +229,24 @@ void loop()
       json.add(String(count), "smart!");
       Serial.printf("Update node... %s\n", Firebase.updateNode(fbdo, "/test/json/value/round", json) ? "ok" : fbdo.errorReason().c_str());
     }
-    
+
     Serial.println();
-    
-    //For generic set/get functions.
 
-    //For generic set, use Firebase.set(fbdo, <path>, <any variable or value>)
+    // For generic set/get functions.
 
-    //For generic get, use Firebase.get(fbdo, <path>).
-    //And check its type with fbdo.dataType() or fbdo.dataTypeEnum() and
-    //cast the value from it e.g. fbdo.to<int>(), fbdo.to<std::string>().
+    // For generic set, use Firebase.set(fbdo, <path>, <any variable or value>)
 
-    //The function, fbdo.dataType() returns types String e.g. string, boolean,
-    //int, float, double, json, array, blob, file and null.
+    // For generic get, use Firebase.get(fbdo, <path>).
+    // And check its type with fbdo.dataType() or fbdo.dataTypeEnum() and
+    // cast the value from it e.g. fbdo.to<int>(), fbdo.to<std::string>().
 
-    //The function, fbdo.dataTypeEnum() returns type enum (number) e.g. fb_esp_rtdb_data_type_null (1),
-    //fb_esp_rtdb_data_type_integer, fb_esp_rtdb_data_type_float, fb_esp_rtdb_data_type_double,
-    //fb_esp_rtdb_data_type_boolean, fb_esp_rtdb_data_type_string, fb_esp_rtdb_data_type_json,
-    //fb_esp_rtdb_data_type_array, fb_esp_rtdb_data_type_blob, and fb_esp_rtdb_data_type_file (10)
+    // The function, fbdo.dataType() returns types String e.g. string, boolean,
+    // int, float, double, json, array, blob, file and null.
+
+    // The function, fbdo.dataTypeEnum() returns type enum (number) e.g. fb_esp_rtdb_data_type_null (1),
+    // fb_esp_rtdb_data_type_integer, fb_esp_rtdb_data_type_float, fb_esp_rtdb_data_type_double,
+    // fb_esp_rtdb_data_type_boolean, fb_esp_rtdb_data_type_string, fb_esp_rtdb_data_type_json,
+    // fb_esp_rtdb_data_type_array, fb_esp_rtdb_data_type_blob, and fb_esp_rtdb_data_type_file (10)
 
     count++;
   }
@@ -254,43 +254,43 @@ void loop()
 
 /// PLEASE AVOID THIS ////
 
-//Please avoid the following inappropriate and inefficient use cases
+// Please avoid the following inappropriate and inefficient use cases
 /**
- * 
+ *
  * 1. Call get repeatedly inside the loop without the appropriate timing for execution provided e.g. millis() or conditional checking,
  * where delay should be avoided.
- * 
- * Everytime get was called, the request header need to be sent to server which its size depends on the authentication method used, 
+ *
+ * Everytime get was called, the request header need to be sent to server which its size depends on the authentication method used,
  * and costs your data usage.
- * 
+ *
  * Please use stream function instead for this use case.
- * 
- * 2. Using the single FirebaseData object to call different type functions as above example without the appropriate 
+ *
+ * 2. Using the single FirebaseData object to call different type functions as above example without the appropriate
  * timing for execution provided in the loop i.e., repeatedly switching call between get and set functions.
- * 
+ *
  * In addition to costs the data usage, the delay will be involved as the session needs to be closed and opened too often
- * due to the HTTP method (GET, PUT, POST, PATCH and DELETE) was changed in the incoming request. 
- * 
- * 
+ * due to the HTTP method (GET, PUT, POST, PATCH and DELETE) was changed in the incoming request.
+ *
+ *
  * Please reduce the use of swithing calls by store the multiple values to the JSON object and store it once on the database.
- * 
- * Or calling continuously "set" or "setAsync" functions without "get" called in between, and calling get continuously without set 
+ *
+ * Or calling continuously "set" or "setAsync" functions without "get" called in between, and calling get continuously without set
  * called in between.
- * 
- * If you needed to call arbitrary "get" and "set" based on condition or event, use another FirebaseData object to avoid the session 
+ *
+ * If you needed to call arbitrary "get" and "set" based on condition or event, use another FirebaseData object to avoid the session
  * closing and reopening.
- * 
+ *
  * 3. Use of delay or hidden delay or blocking operation to wait for hardware ready in the third party sensor libraries, together with stream functions e.g. Firebase.RTDB.readStream and fbdo.streamAvailable in the loop.
- * 
+ *
  * Please use non-blocking mode of sensor libraries (if available) or use millis instead of delay in your code.
- * 
+ *
  * 4. Blocking the token generation process.
- * 
+ *
  * Let the authentication token generation to run without blocking, the following code MUST BE AVOIDED.
- * 
+ *
  * while (!Firebase.ready()) <---- Don't do this in while loop
  * {
  *     delay(1000);
  * }
- * 
+ *
  */

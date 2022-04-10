@@ -1,15 +1,15 @@
 /**
  * Created by K. Suwatchai (Mobizt)
- * 
+ *
  * Email: k_suwatchai@hotmail.com
- * 
+ *
  * Github: https://github.com/mobizt/Firebase-ESP32
- * 
+ *
  * Copyright (c) 2022 mobizt
  *
-*/
+ */
 
-//This example shows how to send data fast and continuously.
+// This example shows how to send data fast and continuously.
 
 #if defined(ESP32)
 #include <WiFi.h>
@@ -19,17 +19,17 @@
 #include <FirebaseESP8266.h>
 #endif
 
-//Provide the token generation process info.
+// Provide the token generation process info.
 #include <addons/TokenHelper.h>
 
-//Provide the RTDB payload printing info and other helper functions.
+// Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
 /* 1. Define the WiFi credentials */
 #define WIFI_SSID "WIFI_AP"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 
-//For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
+// For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
 /* 2. Define the API Key */
 #define API_KEY "API_KEY"
@@ -43,7 +43,7 @@
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-//Define Firebase Data object
+// Define Firebase Data object
 FirebaseData fbdo;
 
 FirebaseAuth auth;
@@ -85,13 +85,13 @@ void setup()
   config.database_url = DATABASE_URL;
 
   /* Assign the callback function for the long running token generation task */
-  config.token_status_callback = tokenStatusCallback; //see addons/TokenHelper.h
+  config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-  //Or use legacy authenticate method
-  //config.database_url = DATABASE_URL;
-  //config.signer.tokens.legacy_token = "<database secret>";
+  // Or use legacy authenticate method
+  // config.database_url = DATABASE_URL;
+  // config.signer.tokens.legacy_token = "<database secret>";
 
-  //To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
+  // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
 
@@ -104,6 +104,8 @@ void setup()
 void loop()
 {
 
+  // Firebase.ready() should be called repeatedly to handle authentication tasks.
+
   if (Firebase.ready() && (millis() - sendDataPrevMillis > 15000 || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
@@ -112,8 +114,8 @@ void loop()
 
     for (size_t i = 0; i < 10; i++)
     {
-      //The response is ignored in this async function, it may return true as long as the connection is established.
-      //The purpose for this async function is to set, push and update data instantly.
+      // The response is ignored in this async function, it may return true as long as the connection is established.
+      // The purpose for this async function is to set, push and update data instantly.
       Firebase.setIntAsync(fbdo, "/test/int", count);
       count++;
     }
