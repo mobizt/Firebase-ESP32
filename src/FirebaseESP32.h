@@ -1,17 +1,16 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "3.15.7"
+#define FIREBASE_CLIENT_VERSION "3.15.8"
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v3.15.7
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v3.15.8
  *
- * Created April 19, 2022
+ * Created April 22, 2022
  *
  *   Updates:
- * - Fixed FirebaseJson double to string conversion issue.
- * - Fixed FirebaseJson array's set by index issue.
- * - Add support FirebaseJson non-object type data via setJsonData and setJsonArrayData functions.
- * - Remove Nagle disable from TCP client.
+ * - Fixed token initialization blocking loop issue caused by NTP server time synching.
+ * - Add support token initialization resuming and error info debugging.
+ * - Fixed RTDB stream can't begin while setting the callback when authentication is not ready due to connection lost.
  *
  *
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
