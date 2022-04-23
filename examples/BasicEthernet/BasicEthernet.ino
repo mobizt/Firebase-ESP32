@@ -206,8 +206,6 @@ void setupFirebase()
 
     // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
-    config.max_token_generation_retry = 30;
-
     Firebase.begin(&config, &auth);
 
     Firebase.reconnectWiFi(true);
