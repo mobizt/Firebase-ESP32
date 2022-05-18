@@ -1,10 +1,13 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.2.5
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.6
  *
- * Created April 19, 2022
+ * Created May 18, 2022
  *
  * Changes Log
+ * 
+ * v1.2.6
+ * - Update trim() function
  *
  * v1.2.5
  * - Fixed double string issue and add support long double
@@ -929,14 +932,14 @@ public:
         int p1 = 0, p2 = length() - 1;
         while (p1 < (int)length())
         {
-            if (buf[p1] != ' ')
+            if (buf[p1] > 32)
                 break;
             p1++;
         }
 
         while (p2 >= 0)
         {
-            if (buf[p2] != ' ')
+            if (buf[p2] > 32)
                 break;
             p2--;
         }
@@ -1417,7 +1420,6 @@ public:
     static const size_t npos = -1;
 
 private:
-
 #if defined(ARDUINO_ARCH_SAMD) || defined(__AVR_ATmega4809__) || defined(ARDUINO_NANO_RP2040_CONNECT)
 
     char *int32Str(signed long value)
