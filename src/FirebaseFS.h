@@ -78,4 +78,5 @@ static SdFat sd_fat_fs;   //should declare as static here
 // To enable OTA updates
 #define ENABLE_OTA_FIRMWARE_UPDATE
 
+
 #endif

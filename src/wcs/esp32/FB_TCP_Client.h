@@ -1,7 +1,7 @@
 /**
- * Firebase TCP Client v1.1.19
+ * Firebase TCP Client v1.1.20
  *
- * Created February 20, 2022
+ * Created June 2, 2022
  *
  * The MIT License (MIT)
  * Copyright (c) 2022 K. Suwatchai (Mobizt)
@@ -103,7 +103,6 @@ public:
   bool connect();
 
 private:
-
   std::unique_ptr<FB_WCS> wcs = std::unique_ptr<FB_WCS>(new FB_WCS());
   char *cert = NULL;
 
