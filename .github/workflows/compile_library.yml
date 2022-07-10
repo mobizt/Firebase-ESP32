@@ -43,7 +43,7 @@ jobs:
 
     - name: Unstall library
       run: | 
-        pio lib --global uninstall \
+        pio pkg uninstall \
         https://github.com/mobizt/Firebase-ESP32
 
     - name: Create main file
