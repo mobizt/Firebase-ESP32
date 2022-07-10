@@ -40,7 +40,7 @@
 #include <functional>
 #endif
 
-#include "FB_Net.h"
+#include "FB_Network.h"
 #include "FirebaseFS.h"
 #include "./mbfs/MB_FS.h"
 
@@ -637,7 +637,7 @@ typedef struct fb_esp_spi_ethernet_module_t
 #ifdef INC_ENC28J60_LWIP
     ENC28J60lwIP *enc28j60;
 #endif
-#ifdef INC_W5100_LWIP
+#ifdef INC_W5100_LWIP 
     Wiznet5100lwIP *w5100;
 #endif
 #ifdef INC_W5500_LWIP

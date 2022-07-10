@@ -2872,60 +2872,80 @@ bool sendTopic(FirebaseData &fbdo);
 
 
 
-#### SD card config with GPIO pins.
 
-param **`ss`** SPI Chip/Slave Select pin.
+#### Initiate SD card with SPI port configuration.
 
-param **`sck`** SPI Clock pin.
+param **`ss`** The SPI Chip/Slave Select pin.
 
-param **`miso`** SPI MISO pin.
+param **`sck`** The SPI Clock pin.
 
-param **`mosi`** SPI MOSI pin.
+param **`miso`** The SPI MISO pin.
 
-return **`Boolean`** type status indicates the success of the operation.
+param **`mosi`** The SPI MOSI pin.
+
+aram **`frequency`** The SPI frequency.
+
+return **`boolean`** The boolean value indicates the success of operation.
 
 ```cpp
-bool sdBegin( int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+bool sdBegin(int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, uint32_t frequency = 4000000);
 ```
 
 
 
-#### SD card config with chip select and SPI configuration.
+#### Initiate SD card with chip select and SPI configuration (ESP32 only).
 
-param **`ss`** SPI Chip/Slave Select pin.
+param **`ss`** The SPI Chip/Slave Select pin.
 
 param **`spiConfig`** The pointer to SPIClass object for SPI configuartion.
 
-return **`Boolean`** type status indicates the success of the operation.
+param **`frequency`** The SPI frequency.
+
+return **`boolean`** The boolean value indicates the success of operation.
 
 ```cpp
-bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr);
+bool sdBegin(int8_t ss, SPIClass *spiConfig = nullptr, uint32_t frequency = 4000000);
 ```
 
 
 
 
-#### SD card config with SdFat SPI and pins configurations.
+#### Initiate SD card with SdFat SPI and pins configurations (with SdFat included only).
 
 param **`sdFatSPIConfig`** The pointer to SdSpiConfig object for SdFat SPI configuration.
 
-param **`ss`** SPI Chip/Slave Select pin.
+param **`ss`** The SPI Chip/Slave Select pin.
 
-param **`sck`** SPI Clock pin.
+param **`sck`** The SPI Clock pin.
 
-param **`miso`** SPI MISO pin.
+param **`miso`** The SPI MISO pin.
 
-param **`mosi`** SPI MOSI pin.
+param **`mosi`** The SPI MOSI pin.
 
-return **`Boolean`** type status indicates the success of the operation.
+return **`boolean`** The boolean value indicates the success of operation.
 
 ```cpp
-bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
+ bool sdBegin(SdSpiConfig *sdFatSPIConfig, int8_t ss = -1, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1);
 ```
 
 
 
-#### Initialize the SD_MMC card.
+
+
+#### Initiate SD card with SdFat SDIO configuration (with SdFat included only).
+
+param **`sdFatSDIOConfig`** The pointer to SdioConfig object for SdFat SDIO configuration.
+
+return **`boolean`** The boolean value indicates the success of operation.
+
+```cpp
+ bool sdBegin(SdioConfig *sdFatSDIOConfig);
+```
+
+
+
+
+#### Initialize the SD_MMC card (ESP32 only).
 
 param **`mountpoint`** The mounting point.
 
@@ -2936,7 +2956,7 @@ param **`format_if_mount_failed`** Format SD_MMC card if mount failed.
 return **`Boolean`** type status indicates the success of the operation.
 
 ```cpp
-bool sdMMCBegin(<string> mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
+bool sdMMCBegin(const char *mountpoint = "/sdcard", bool mode1bit = false, bool format_if_mount_failed = false);
 ```
 
 

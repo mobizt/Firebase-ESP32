@@ -41,6 +41,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install --upgrade platformio
 
+    - name: Unstall library
+      run: | 
+        pio lib --global uninstall \
+        https://github.com/mobizt/Firebase-ESP32
+
     - name: Create main file
       run: |
         echo "#include <Arduino.h>" >> src/main.ino

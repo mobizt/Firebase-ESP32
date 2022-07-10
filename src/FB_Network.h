@@ -1,11 +1,9 @@
 /**
- * Created January 18, 2022
+ * Created July 10, 2022
  */
 
-#ifndef FB_Net_H
-#define FB_Net_H
-
-#pragma once
+#ifndef FB_Network_H
+#define FB_Network_H
 
 #include "FirebaseFS.h"
 
@@ -24,8 +22,8 @@
 #if __has_include(<esp_idf_version.h>)
 #include <esp_idf_version.h>
 #endif
-static const char esp_idf_branch_str[] PROGMEM = "release/v";
 #endif
+
 
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
@@ -50,7 +48,7 @@ static const char esp_idf_branch_str[] PROGMEM = "release/v";
 #error Your ESP8266 Arduino Core SDK is outdated, please update. From Arduino IDE go to Boards Manager and search 'esp8266' then select the latest version.
 #endif
 
-// 2.6.1 BearSSL bug
+//2.6.1 BearSSL bug
 #if ARDUINO_ESP8266_GIT_VER == 0x482516e3
 #error Due to bugs in BearSSL in ESP8266 Arduino Core SDK version 2.6.1, please update ESP8266 Arduino Core SDK to newer version. The issue was found here https:\/\/github.com/esp8266/Arduino/issues/6811.
 #endif
@@ -66,8 +64,12 @@ static const char esp_idf_branch_str[] PROGMEM = "release/v";
 #include <ENC28J60lwIP.h>
 #endif
 
-#if __has_include(<W5100lwIP.h>)
-#define INC_W5100_LWIP
+
+#if __has_include(<W5100lwIP.h>) && defined(ENABLE_ESP8266_W5100_ETH)
+
+#define INC_W5100_LWIP 
+
+// PIO compilation error
 #include <W5100lwIP.h>
 #endif
 
