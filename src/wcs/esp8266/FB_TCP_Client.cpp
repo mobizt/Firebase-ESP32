@@ -135,9 +135,6 @@ int FB_TCP_Client::hostByName(const char *name, IPAddress &ip)
 
 void FB_TCP_Client::setTimeout(uint32_t timeoutmSec)
 {
-  if (wcs)
-    wcs->setTimeout(timeoutmSec);
-
   baseSetTimeout(timeoutmSec / 1000);
 }
 

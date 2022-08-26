@@ -1,15 +1,15 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.0.3"
+#define FIREBASE_CLIENT_VERSION "4.0.4"
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v4.0.3
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v4.0.4
  *
- * Created July 10, 2022
+ * Created August 26, 2022
  *
  *   Updates:
- * - Rename MillisTimer class to MB_MillisTimer to prevent compilation error in Teensy.
- * - Add support SdFat SDIO interface.
+ * - Fixed Firebase.getString issue.
+ * - Fixed SSL client warning.
  *
  *
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
