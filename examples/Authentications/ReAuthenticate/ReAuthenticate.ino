@@ -74,7 +74,7 @@ void signIn(const char *email, const char *password)
     auth.user.password = password;
 
     /* Reset stored authen and config */
-    // Firebase.reset(&config);
+    Firebase.reset(&config);
 
     /* Initialize the library with the Firebase authen and config */
     Firebase.begin(&config, &auth);
