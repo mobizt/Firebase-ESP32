@@ -40,12 +40,60 @@ void setIdToken(FirebaseConfig *config, <string> idToken, size_t expire = 3600, 
 
 
 
+
+
+#### Setup the access token for authentication.
+
+param **`param config`** The pointer to FirebaseConfig data.
+
+param **`param`** accessToken The access Token.
+
+param **`param`** expire The expired interval in seeconds (max.3600 sec).
+
+param **`param`** refreshToken The refresh token for token refreshment.
+
+param **`param`** clientId The The client identifier issued to the client during the registration process.
+
+param **`param`** clientSecret The client secret.
+
+note For FirebaseConfig and FirebaseAuth data usage, see the examples.
+
+```cpp
+void setAccessToken(FirebaseConfig *config, <string> accessToken, size_t expire = 3600, <string> refreshToken = "", <string> clientId = "", <string> clientSecret = "");
+```
+
+
+
+
+
 #### Check for token expiry status.
 
 return **`bool`** of expiry status.
 
 ```cpp
 bool isTokenExpired();
+```
+
+
+
+
+#### Force the token to expire immediately and refresh.
+
+param **`param config`** The pointer to FirebaseConfig data.
+
+```cpp
+void refreshToken(FirebaseConfig *config);
+```
+
+
+
+
+#### Reset stored config and auth credentials.
+
+param **`param config`** The pointer to FirebaseConfig data.
+
+```cpp
+void reset(FirebaseConfig *config);
 ```
 
 
@@ -252,6 +300,18 @@ return **`constant char*`** of currently used auth token.
 ```cpp
 const char *getToken();
 ```
+
+
+
+
+#### Get refresh token string.
+
+param **`constant char*`** of refresh token.
+
+```cpp
+const char *getRefreshToken();
+```
+
 
 
 
