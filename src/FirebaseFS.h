@@ -78,5 +78,8 @@ static SdFat sd_fat_fs;   //should declare as static here
 // To enable OTA updates
 #define ENABLE_OTA_FIRMWARE_UPDATE
 
+// To enable external Client for ESP8266.
+// This will enable automatically for other devices.
+// #define FB_ENABLE_EXTERNAL_CLIENT
 
 #endif
