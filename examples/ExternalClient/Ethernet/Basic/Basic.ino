@@ -25,16 +25,13 @@
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
 
-/* 1. install EthernetLarge library */
-// https://github.com/OPEnSLab-OSU/EthernetLarge
-// Include EthernetLarge.h
-#include <EthernetLarge.h>
+#include <Ethernet.h>
 
-/* 2. Install SSLClient library */
+/* 1. Install SSLClient library */
 // https://github.com/OPEnSLab-OSU/SSLClient
 #include <SSLClient.h>
 
-/* 3. Create Trus anchors for the server i.e. www.google.com */
+/* 2. Create Trus anchors for the server i.e. www.google.com */
 // https://github.com/OPEnSLab-OSU/SSLClient/blob/master/TrustAnchors.md
 // or generate using this site https://openslab-osu.github.io/bearssl-certificate-utility/
 #include "trust_anchors.h"
@@ -44,30 +41,30 @@
 
 // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
-/* 4. Define the API Key */
+/* 3. Define the API Key */
 #define API_KEY "API_KEY"
 
-/* 5. Define the RTDB URL */
+/* 4. Define the RTDB URL */
 #define DATABASE_URL "URL" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
 
-/* 6. Define the user Email and password that alreadey registerd or added in your project */
+/* 5. Define the user Email and password that alreadey registerd or added in your project */
 #define USER_EMAIL "USER_EMAIL"
 #define USER_PASSWORD "USER_PASSWORD"
 
-/* 7. Defined the Ethernet module connection */
+/* 6. Defined the Ethernet module connection */
 #define WIZNET_RESET_PIN 26 // Connect W5500 Reset pin to GPIO 26 of ESP32
 #define WIZNET_CS_PIN 5     // Connect W5500 CS pin to GPIO 5 of ESP32
 #define WIZNET_MISO_PIN 19  // Connect W5500 MISO pin to GPIO 19 of ESP32
 #define WIZNET_MOSI_PIN 23  // Connect W5500 MOSI pin to GPIO 23 of ESP32
 #define WIZNET_SCLK_PIN 18  // Connect W5500 SCLK pin to GPIO 18 of ESP32
 
-/* 8. Define the analog GPIO pin to pull random bytes from, used in seeding the RNG for SSLClient */
+/* 7. Define the analog GPIO pin to pull random bytes from, used in seeding the RNG for SSLClient */
 const int analog_pin = 34; // ESP32 GPIO 34 (Analog pin)
 
-/* 9. Define MAC */
+/* 8. Define MAC */
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 
-/* 10. Define IP (Optional) */
+/* 9. Define IP (Optional) */
 IPAddress Eth_IP(192, 168, 1, 104);
 
 // Define Firebase Data object
