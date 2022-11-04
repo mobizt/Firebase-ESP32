@@ -1,16 +1,15 @@
 #ifndef FIREBASE_CLIENT_VERSION
-#define FIREBASE_CLIENT_VERSION "4.2.0"
+#define FIREBASE_CLIENT_VERSION "4.2.1"
 #endif
 
 /**
- * Google's Firebase Realtime Database Arduino Library for ESP32, v4.2.0
+ * Google's Firebase Realtime Database Arduino Library for ESP32, v4.2.1
  *
- * Created November 2, 2022
+ * Created November 4, 2022
  *
  *   Updates:
- * - Fix redundant TCP connections issue.
- * - Fix possible memory errors.
- * - Using share TCP client for authentication process.
+ * - Add suuport Arduino StringSumHelper class for Arduino String concatenation used in function arguments and config.
+ * - Update external Client examples to use built-in SSL Client.
  *
  *
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
