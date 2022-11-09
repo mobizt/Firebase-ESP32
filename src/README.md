@@ -26,11 +26,11 @@ void begin(FirebaseConfig *config, FirebaseAuth *auth);
 
 param **`param config`** The pointer to FirebaseConfig data.
 
-param **`param`** idToken The ID Token.
+param **`idToken`** The ID Token.
 
-param **`param`** expire The expired interval in seeconds (max.3600 sec).
+param **`expire`** The expired interval in seeconds (max.3600 sec).
 
-param **`param`** refreshToken The refresh token for token refreshment.
+param **`refreshToken`** The refresh token for token refreshment.
 
 note For FirebaseConfig and FirebaseAuth data usage, see the examples.
 
@@ -44,17 +44,17 @@ void setIdToken(FirebaseConfig *config, <string> idToken, size_t expire = 3600, 
 
 #### Setup the access token for authentication.
 
-param **`param config`** The pointer to FirebaseConfig data.
+param **`config`** The pointer to FirebaseConfig data.
 
-param **`param`** accessToken The access Token.
+param **`accessToken`** The access Token.
 
-param **`param`** expire The expired interval in seeconds (max.3600 sec).
+param **`expire`** The expired interval in seeconds (max.3600 sec).
 
-param **`param`** refreshToken The refresh token for token refreshment.
+param **`refreshToken`** The refresh token for token refreshment.
 
-param **`param`** clientId The The client identifier issued to the client during the registration process.
+param **`clientId`** The The client identifier issued to the client during the registration process.
 
-param **`param`** clientSecret The client secret.
+param **`clientSecret`** The client secret.
 
 note For FirebaseConfig and FirebaseAuth data usage, see the examples.
 
@@ -62,6 +62,25 @@ note For FirebaseConfig and FirebaseAuth data usage, see the examples.
 void setAccessToken(FirebaseConfig *config, <string> accessToken, size_t expire = 3600, <string> refreshToken = "", <string> clientId = "", <string> clientSecret = "");
 ```
 
+
+
+
+#### Setup the custom token for authentication.
+
+param **`config`** The pointer to FirebaseConfig data.
+
+param **`customToken`** The Identity Platform custom token.
+
+If the refresh token from Custom token verification or sign in, was assigned here instead of 
+custom token (signed JWT token), the token refresh process will be performed immediately.
+
+Any token that is not in the form header.payload.signature i.e., xxxxx.yyyyy.zzzzz will be treated as refresh token.
+
+note For FirebaseConfig and FirebaseAuth data usage, see the examples.
+
+```cpp
+void setCustomToken(FirebaseConfig *config, <string> customToken);
+```
 
 
 
@@ -79,7 +98,7 @@ bool isTokenExpired();
 
 #### Force the token to expire immediately and refresh.
 
-param **`param config`** The pointer to FirebaseConfig data.
+param **`config`** The pointer to FirebaseConfig data.
 
 ```cpp
 void refreshToken(FirebaseConfig *config);
@@ -90,11 +109,12 @@ void refreshToken(FirebaseConfig *config);
 
 #### Reset stored config and auth credentials.
 
-param **`param config`** The pointer to FirebaseConfig data.
+param **`config`** The pointer to FirebaseConfig data.
 
 ```cpp
 void reset(FirebaseConfig *config);
 ```
+
 
 
 
@@ -175,14 +195,19 @@ param **`caCertFile`** Root CA certificate DER file (binary).
 
 param **`StorageType`** Type of storage, StorageType::SD and StorageType::FLASH.
 
+param **`GMTOffset`** GMT time offset in hour is required to set time in order to make BearSSL 
+data decryption/encryption to work.
+
+
+
 The file systems for flash and sd memory can be changed in FirebaseFS.h.
 
 ```cpp
 void begin(<string> databaseURL, <string> databaseSecret);
 
-void begin(<string> databaseURL, <string> databaseSecret, <char array> caCert);
+void begin(<string> databaseURL, <string> databaseSecret, <char array> caCert, float GMTOffset = 0.0);
 
-void begin(<string> databaseURL, <string> databaseSecret, <string> caCertFile, uint8_t storageType);
+void begin(<string> databaseURL, <string> databaseSecret, <string> caCertFile, uint8_t storageType, float GMTOffset = 0.0);
 ```
 
 
@@ -245,8 +270,6 @@ bool deleteUser(FirebaseConfig *config, FirebaseAuth *auth, const char* idToken 
 
 
 
-
-
 #### Send a user a verification Email.
 
 param **`config`** The pointer to FirebaseConfig data.
@@ -306,7 +329,7 @@ const char *getToken();
 
 #### Get refresh token string.
 
-param **`constant char*`** of refresh token.
+return **`constant char*`** of refresh token.
 
 ```cpp
 const char *getRefreshToken();
@@ -318,7 +341,7 @@ const char *getRefreshToken();
 
 #### Get free Heap memory.
 
-param **`int *`** of free Heap memory size.
+return **`int *`** of free Heap memory size.
 
 ```cpp
 int getFreeHeap();
@@ -326,15 +349,13 @@ int getFreeHeap();
 
 
 
-
 #### Get current timestamp.
 
-param **`time_t *`** of current timestamp.
+return **`time_t *`** of current timestamp.
 
 ```cpp
 time_t getCurrentTime();
 ```
-
 
 
 
@@ -412,7 +433,7 @@ void setwriteSizeLimit(FirebaseData &fbdo, <string> size);
 
 param **`fbdo`** Firebase Data Object to hold data and instances.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 ```cpp
 bool getRules(FirebaseData &fbdo);
@@ -430,7 +451,7 @@ param **`filename`** Filename to save rules.
 
 param **`callback`** Optional. The callback function that accept RTDB_DownloadStatusInfo data.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 ```cpp
  getRules(FirebaseData &fbdo, uint8_t storageType, <string> filename, RTDB_DownloadProgressCallback callback = NULL)
@@ -444,7 +465,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`rules`** Database rules in jSON String format.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 ```cpp
 bool setRules(FirebaseData &fbdo, <string> rules);
@@ -462,7 +483,7 @@ param **`filename`** Filename to read the rules from.
 
 param **`callback`** Optional. The callback function that accept RTDB_UploadStatusInfo data.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 ```cpp
 bool setRules(FirebaseData &fbdo, uint8_t storageType, <string> filename, RTDB_UploadProgressCallback callback = NULL)
@@ -485,7 +506,7 @@ param **`writeVal`** The child node key .write value.
 
 param **`databaseSecret`** The database secret.
 
-return - **`Boolean`** value, indicates the success of the operation.
+return **`Boolean`** value, indicates the success of the operation.
 
 note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in. 
 
@@ -505,7 +526,7 @@ param **`node`** The child node key that being query.
 
 param **`databaseSecret`** The database secret.
 
-return - **`Boolean`** value, indicates the success of the operation.
+return **`Boolean`** value, indicates the success of the operation.
 
 note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in.
 
@@ -523,7 +544,7 @@ param **`path`** The parent path of child's node that the index is being removed
 
 param **`databaseSecret`** The database secret.
 
-return - **`Boolean`** value, indicates the success of the operation.
+return **`Boolean`** value, indicates the success of the operation.
 
 note: The databaseSecret can be empty if the auth type is OAuth2.0 or legacy and required if auth type is Email/Password sign-in.
 
@@ -539,7 +560,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`path`** Database path to be checked.
 
-return - **`Boolean`** type result indicates whether the defined database path has existed or not.
+return **`Boolean`** type result indicates whether the defined database path has existed or not.
 
 ```cpp
 bool pathExisted(FirebaseData &dataObj, <string> path);
@@ -563,7 +584,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`path`** Database path being read the data.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 
 
@@ -604,7 +625,7 @@ param **`path`** Target database path which to set the priority value.
 
 param **`priority`** The priority value.
     
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 
 
@@ -627,7 +648,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`path`** Target database path which to set the priority value.
     
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 The priority value from server can read from function `<FirebaseData>.priority()`.
 
@@ -974,7 +995,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`path`** Target database path which timestamp will be appended.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
     
 The new appended node's key will be stored in Firebase Data object, 
 which its value can be accessed via function `<FirebaseData>.pushName()`.
@@ -1175,7 +1196,7 @@ param **`value`** Integer value to set.
 
 param **`ETag`** Known unique identifier string (ETag) of defined database path.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 
 
@@ -1329,7 +1350,7 @@ param **`value`** Double value to set.
 
 param **`ETag`** Known unique identifier string (ETag) of defined database path.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 
 
@@ -1610,7 +1631,7 @@ param **`path`** Target database path which key and value in FirebaseJsonArray o
 
 param **`arr`** The FirebaseJsonArray object.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 Call `<FirebaseData>.dataType` or `<FirebaseData>.dataTypeNum` to determine what type of data that successfully
 stores in the database.
@@ -1647,7 +1668,7 @@ param **`arr`** The FirebaseJsonArray object.
 
 param **`ETag`** Known unique identifier string (ETag) of defined database path.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 
 
@@ -1801,7 +1822,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`path`** Target database path which timestamp will be set.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 
 
@@ -1892,7 +1913,7 @@ param **`fbdo`** The pointer to Firebase Data Object.
 
 param **`path`** The path to the node.
 
-return - **`Boolean`** value, indicates the success of the operation.
+return **`Boolean`** value, indicates the success of the operation.
 
 
 
@@ -2253,7 +2274,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`path`** Database path in which the array is being read.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 
 
@@ -2278,7 +2299,7 @@ param **`path`** Database path in which the array is being read.
 
 param **`target - The FirebaseJsonArray object pointer to get array value.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 If the type of payload returned from the server is not an array,
 the target FirebaseJsonArray object will contain an empty array.
@@ -2297,7 +2318,7 @@ param **`path`** Database path in which the array is being read.
 
 param **`query`** QueryFilter class to set query parameters to filter data.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 
 
@@ -2344,7 +2365,7 @@ param **`path`** Database path in which the array is being read.
 
 param **`target`** The FirebaseJsonArray object to get array value.
 
-return - **`Boolean`** type status indicates the success of the operation.
+return **`Boolean`** type status indicates the success of the operation.
 
 If the type of payload returned from the server is not an array,
 the target FirebaseJsonArray object will contain an empty array.
@@ -2833,7 +2854,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`errorQueueID`** The Firebase Error Queue ID get from getErrorQueueID.
     
-return - **`Boolean type`** status indicates the queue existence.
+return **`Boolean type`** status indicates the queue existence.
 
 ```cpp
 bool isErrorQueueExisted(FirebaseData &fbdo, uint32_t errorQueueID);
@@ -2900,7 +2921,7 @@ param **`fbdo`** Firebase Data Object to hold data and instances.
 
 param **`index`** The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
     
-return - **`Boolean type`** status indicates the success of the operation.
+return **`Boolean type`** status indicates the success of the operation.
 
 ```cpp
 bool sendMessage(FirebaseData &fbdo, uint16_t index);
@@ -2912,7 +2933,7 @@ bool sendMessage(FirebaseData &fbdo, uint16_t index);
 
 param **`fbdo`** Firebase Data Object to hold data and instances.
     
-return - **`Boolean type`** status indicates the success of the operation.
+return **`Boolean type`** status indicates the success of the operation.
 
 ```cpp
 bool broadcastMessage(FirebaseData &fbdo);
@@ -2924,7 +2945,7 @@ bool broadcastMessage(FirebaseData &fbdo);
 
 param **`fbdo`** Firebase Data Object to hold data and instances.
     
-return - **`Boolean type`** status indicates the success of the operation.
+return **`Boolean type`** status indicates the success of the operation.
 
 ```cpp
 bool sendTopic(FirebaseData &fbdo);
