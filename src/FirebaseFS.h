@@ -82,4 +82,44 @@ static SdFat sd_fat_fs;   //should declare as static here
 // This will enable automatically for other devices.
 // #define FB_ENABLE_EXTERNAL_CLIENT
 
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
+// You can create your own header file "CustomFirebaseFS.h" in the same diectory of 
+// "FirebaseFS.h" and put your own custom config to overwrite or 
+// change the default config in "FirebaseFS.h".
+//::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::://
+
+/** This is an example of "CustomFirebaseFS.h" 
+
+#pragma once
+
+#ifndef CustomFirebaseFS_H
+#define CustomFirebaseFS_H
+
+// Use external client instead of internal client
+#define FB_ENABLE_EXTERNAL_CLIENT // define to use external client
+
+// Use LittleFS instead of SPIFFS
+#include "LittleFS.h"
+#undef DEFAULT_FLASH_FS // remove Flash FS defined macro
+#define DEFAULT_FLASH_FS LittleFS
+
+// Use SD_MMC instead of SD
+#include <SD_MMC.h>
+#undef DEFAULT_SD_FS // remove SD defined macro
+#undef CARD_TYPE_SD // remove SD defined macro
+#define DEFAULT_SD_FS SD_MMC
+#define CARD_TYPE_SD_MMC 1
+
+
+// Disable Error Queue and FCM.
+#undef ENABLE_ERROR_QUEUE
+#undef ENABLE_FCM
+
+#endif
+
+*/
+#if __has_include("CustomFirebaseFS.h")
+#include "CustomFirebaseFS.h"
+#endif
+
 #endif

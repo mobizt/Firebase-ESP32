@@ -10,10 +10,7 @@
  */
 
 /** This example shows the RTDB data changed notification with external Client.
- * This example used ESP32 and WIZnet W5500 (Ethernet) devices which built-in SSL Client will be used as the external Client.
- * 
- * For other non-espressif (ESP32 and ESP8266) devices, this SSL Client library can be used
- * https://github.com/OPEnSLab-OSU/SSLClient
+ * This example used ESP32 and WIZnet W5500 (Ethernet) devices which ESP_SSLClient will be used as the external Client.
  * 
  * Don't gorget to define this in FirebaseFS.h
  * #define FB_ENABLE_EXTERNAL_CLIENT
@@ -29,10 +26,8 @@
 
 #include <Ethernet.h>
 
-// Include built-in SSL Client which supports other network interfaces
-#include "sslclient/esp32/MB_ESP32_SSLClient.h"
-
-// You can use MB_ESP32_SSLClient.h in your ESP32 project in the same way as normal WiFiClientSecure
+// https://github.com/mobizt/ESP_SSLClient
+#include <ESP_SSLClient.h>
 
 // For NTP time client
 #include "MB_NTP.h"
@@ -82,9 +77,9 @@ EthernetClient basic_client1;
 
 EthernetClient basic_client2;
 
-MB_ESP32_SSLClient ssl_client1;
+ESP_SSLClient ssl_client1;
 
-MB_ESP32_SSLClient ssl_client2;
+ESP_SSLClient ssl_client2;
 
 // For NTP client
 EthernetUDP udpClient;
