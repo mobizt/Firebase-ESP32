@@ -326,9 +326,14 @@ namespace URLHelper
         }
     }
 
-    inline void addGAPIPath(MB_String &uri)
+    inline void addGAPIv1Path(MB_String &uri)
     {
         uri += fb_esp_pgm_str_326; // "/v1/projects/"
+    }
+
+    inline void addGAPIv1beta1Path(MB_String &uri)
+    {
+        uri += fb_esp_pgm_str_477; // "/v1beta1/projects/"
     }
 #endif
 
@@ -455,7 +460,7 @@ namespace JsonHelper
     }
 
     /* convert comma separated tokens into JSON Array and set/add to JSON object */
-    inline void addTokens(FirebaseJson *json, PGM_P key, const MB_String &tokens)
+    inline void addTokens(FirebaseJson *json, PGM_P key, const MB_String &tokens, const char *pre = "")
     {
         if (json && tokens.length() > 0)
         {
@@ -463,7 +468,16 @@ namespace JsonHelper
             MB_VECTOR<MB_String> ta;
             StringHelper::splitTk(tokens, ta, ",");
             for (size_t i = 0; i < ta.size(); i++)
-                arr.add(ta[i].c_str());
+            {
+                if (strlen(pre))
+                {
+                    MB_String s = pre;
+                    s += ta[i];
+                    arr.add(s);
+                }
+                else
+                    arr.add(ta[i]);
+            }
 
             if (ta.size() > 0)
             {
@@ -1940,6 +1954,16 @@ namespace Utils
         if (sub)
             path += sub;
         return path;
+    }
+
+    inline MB_String makeDocPath(struct fb_esp_firestore_req_t &req, const MB_String &projectId)
+    {
+         MB_String str = fb_esp_pgm_str_395; // "projects/"
+        str += req.projectId.length() == 0 ? projectId : req.projectId;
+        str += fb_esp_pgm_str_341; // "/databases/"
+        str += req.databaseId.length() > 0 ? req.databaseId : fb_esp_pgm_str_342 /* "(default)" */;
+        str += fb_esp_pgm_str_351; // "/documents"
+        return str;
     }
 
     inline size_t getUploadBufSize(FirebaseConfig *config, fb_esp_con_mode mode)
