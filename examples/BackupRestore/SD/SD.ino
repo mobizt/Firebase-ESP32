@@ -14,11 +14,15 @@
 // If SD Card used for storage, assign SD card type and FS used in src/FirebaseFS.h and
 // change the config for that card interfaces in src/addons/SDHelper.h
 
+#include <Arduino.h>
 #if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#elif defined(PICO_RP2040)
+#include <WiFi.h>
 #include <FirebaseESP8266.h>
 #endif
 

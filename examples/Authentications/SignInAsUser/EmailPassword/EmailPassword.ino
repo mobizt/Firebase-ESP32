@@ -23,11 +23,15 @@
  * guard the unauthorized access with the user Email.
  */
 
+#include <Arduino.h>
 #if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#elif defined(PICO_RP2040)
+#include <WiFi.h>
 #include <FirebaseESP8266.h>
 #endif
 

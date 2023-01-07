@@ -12,11 +12,15 @@
 
 /* This example shows how to authenticate using the Identity Platform custom token (custom claims signed JWT token) generated from other app. */
 
+#include <Arduino.h>
 #if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
+#include <FirebaseESP8266.h>
+#elif defined(PICO_RP2040)
+#include <WiFi.h>
 #include <FirebaseESP8266.h>
 #endif
 
@@ -25,6 +29,7 @@
 
 // Provide the RTDB payload printing info and other helper functions.
 #include <addons/RTDBHelper.h>
+
 
 /** 1. Define the API key
  *

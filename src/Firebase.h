@@ -1,8 +1,8 @@
 
 /**
- * The Firebase class, Firebase.h v1.2.2
+ * The Firebase class, Firebase.h v1.2.3
  *
- *  Created December 19, 2022
+ *  Created January 7, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -29,19 +29,19 @@
 #ifndef Firebase_H
 #define Firebase_H
 
+#include <Arduino.h>
+
 #include "FirebaseFS.h"
 
-#if !defined(ESP32) && !defined(ESP8266)
+#if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040)
 #ifndef FB_ENABLE_EXTERNAL_CLIENT
 #define FB_ENABLE_EXTERNAL_CLIENT
 #endif
 #endif
 
-#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+#if defined(ESP8266) || defined(ESP32) || defined(FB_ENABLE_EXTERNAL_CLIENT) || defined(PICO_RP2040)
 
-#include <Arduino.h>
-
-#if !defined(ESP32) && !defined(ESP8266)
+#if !defined(ESP32) && !defined(ESP8266) && !defined(PICO_RP2040)
 #ifdef __arm__
 // should use uinstd.h to define sbrk but Due causes a conflict
 extern "C" char *sbrk(int incr);
@@ -2460,17 +2460,17 @@ public:
    * Call [streamData object].xxxData will return the appropriate data type of
    * the payload returned from the server.
    */
-#if defined(ESP8266) || defined(FB_ENABLE_EXTERNAL_CLIENT)
-  void setStreamCallback(FirebaseData &fbdo, FirebaseData::StreamEventCallback dataAvailablecallback,
-                         FirebaseData::StreamTimeoutCallback timeoutCallback = NULL)
-  {
-    RTDB.setStreamCallback(&fbdo, dataAvailablecallback, timeoutCallback);
-  }
-#elif defined(ESP32)
+#if defined(ESP32) || (defined(PICO_RP2040) && defined(ENABLE_PICO_FREE_RTOS))
   void setStreamCallback(FirebaseData &fbdo, FirebaseData::StreamEventCallback dataAvailablecallback,
                          FirebaseData::StreamTimeoutCallback timeoutCallback, size_t streamTaskStackSize = 8192)
   {
     RTDB.setStreamCallback(&fbdo, dataAvailablecallback, timeoutCallback, streamTaskStackSize);
+  }
+#elif defined(ESP8266) || defined(PICO_RP2040) || defined(FB_ENABLE_EXTERNAL_CLIENT)
+  void setStreamCallback(FirebaseData &fbdo, FirebaseData::StreamEventCallback dataAvailablecallback,
+                         FirebaseData::StreamTimeoutCallback timeoutCallback = NULL)
+  {
+    RTDB.setStreamCallback(&fbdo, dataAvailablecallback, timeoutCallback);
   }
 #endif
   /** Set the multiple paths stream callback functions.
@@ -2518,6 +2518,15 @@ public:
    * @param fbdo Firebase Data Object to hold data and instance.
    */
   void removeMultiPathStreamCallback(FirebaseData &fbdo) { RTDB.removeMultiPathStreamCallback(&fbdo); }
+
+  /** Run stream manually.
+   * To manually triggering the stream callback function, this should call repeatedly in loop().
+   */
+  void runStream()
+  {
+    RTDB.mStopStreamLoopTask();
+    RTDB.mRunStream();
+  }
 
   /** Backup (download) database at the defined database path to SD card/Flash memory.
    *

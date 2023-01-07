@@ -10,13 +10,14 @@
  *
  */
 
-#if defined(ESP32)
+#include <Arduino.h>
+#if defined(ESP32) || defined(PICO_RP2040)
 #include <WiFi.h>
-#include <FirebaseESP32.h>
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
-#include <FirebaseESP8266.h>
 #endif
+
+#include <Firebase_ESP_Client.h>
 
 // Provide the token generation process info.
 #include <addons/TokenHelper.h>
@@ -94,6 +95,8 @@ void setup()
 
 void loop()
 {
+    // Flash string (PROGMEM and  (FPSTR), String C/C++ string, const char, char array, string literal are supported
+    // in all Firebase and FirebaseJson functions, unless F() macro is not supported.
 
     // Firebase.ready() should be called repeatedly to handle authentication tasks.
 

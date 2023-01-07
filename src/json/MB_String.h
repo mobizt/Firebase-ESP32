@@ -1,6 +1,6 @@
 
 /**
- * Mobizt's SRAM/PSRAM supported String, version 1.2.8
+ * Mobizt's SRAM/PSRAM supported String, version 1.2.9
  *
  * Created December 3, 2022
  *
