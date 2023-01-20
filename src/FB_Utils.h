@@ -2,7 +2,7 @@
  *
  * This library supports Espressif ESP8266, ESP32 and Raspberry Pi Pico (RP2040)
  *
- * Created January 8, 2023
+ * Created January 17, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -39,9 +39,27 @@
 #include <Schedule.h>
 #endif
 
+#if defined(ESP8266)
+#if __has_include(<core_esp8266_version.h>)
+#include <core_esp8266_version.h>
+#endif
+#endif
+
 using namespace mb_string;
 
 #define stringPtr2Str(p) (MB_String().appendPtr(p).c_str())
+
+namespace Utils
+{
+    inline void idle()
+    {
+#if defined(ARDUINO_ESP8266_MAJOR) && defined(ARDUINO_ESP8266_MINOR) && defined(ARDUINO_ESP8266_REVISION) && ((ARDUINO_ESP8266_MAJOR == 3 && ARDUINO_ESP8266_MINOR >= 1) || ARDUINO_ESP8266_MAJOR > 3)
+           esp_yield();
+#else
+        delay(0);
+#endif
+    }
+};
 
 namespace MemoryHelper
 {
@@ -125,7 +143,6 @@ namespace StringHelper
 
             previous = current + 1;
             current = str.find(delim, previous);
-            delay(0);
         }
 
         s.clear();
@@ -1071,7 +1088,7 @@ namespace HttpHelper
             if (!client)
                 break;
 
-            delay(0);
+            Utils::idle();
 
             res = client->read();
             if (res > -1)
@@ -1100,7 +1117,7 @@ namespace HttpHelper
             if (!client)
                 break;
 
-            delay(0);
+            Utils::idle();
 
             res = client->read();
             if (res > -1)
@@ -1135,6 +1152,7 @@ namespace HttpHelper
         return val;
     }
 
+    // Returns -1 when complete
     inline int readChunkedData(MB_FS *mbfs, Client *client, char *out1, MB_String *out2,
                                struct fb_esp_tcp_response_handler_t &tcpHandler)
     {
@@ -1238,7 +1256,8 @@ namespace HttpHelper
                         olen = readLen;
                     }
                 }
-                else
+                // if all chunks read, returns -1
+                else if (tcpHandler.chunkState.dataLen == tcpHandler.chunkState.chunkedSize)
                     olen = -1;
 
                 if (out1)
@@ -1683,26 +1702,26 @@ namespace OtaHelper
 namespace TimeHelper
 {
 
-    inline time_t getTime(uint32_t *mb_ts)
+    inline time_t getTime(uint32_t *mb_ts, uint32_t *mb_ts_offset)
     {
         uint32_t &tm = *mb_ts;
 
-#if defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040)
-            tm = time(nullptr);
+#if !defined(FB_ENABLE_EXTERNAL_CLIENT) && (defined(ESP8266) || defined(ESP32) || defined(PICO_RP2040))
+        tm = time(nullptr);
 #else
-        tm = millis() / 1000;
+        tm = *mb_ts_offset + millis() / 1000;
 #endif
 
         return tm;
     }
 
-    inline bool syncClock(uint32_t *mb_ts, float gmtOffset, FirebaseConfig *config)
+    inline bool syncClock(MB_NTP *ntp, uint32_t *mb_ts, uint32_t *mb_ts_offset, float gmtOffset, FirebaseConfig *config)
     {
 
         if (!config)
             return false;
 
-        time_t now = getTime(mb_ts);
+        time_t now = getTime(mb_ts, mb_ts_offset);
 
         config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
 
@@ -1714,16 +1733,36 @@ namespace TimeHelper
             if (config->internal.fb_clock_rdy && gmtOffset != config->internal.fb_gmt_offset)
                 config->internal.fb_clock_synched = false;
 
-#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
             if (!config->internal.fb_clock_synched)
             {
                 config->internal.fb_clock_synched = true;
+
+#if defined(FB_ENABLE_EXTERNAL_CLIENT)
+
+                if (*mb_ts_offset == 0)
+                {
+                    *mb_ts_offset = ntp->getTime(2000 /* wait 2000 ms */);
+                    if (*mb_ts_offset > 0)
+                        *mb_ts_offset = *mb_ts_offset - millis() / 1000;
+                }
+
+#else
+#if defined(ESP32) || defined(ESP8266) || defined(PICO_RP2040)
+
+#if defined(PICO_RP2040)
+                NTP.begin("pool.ntp.org", "time.nist.gov");
+                NTP.waitSet();
+#else
                 configTime(gmtOffset * 3600, 0, "pool.ntp.org", "time.nist.gov");
-            }
 #endif
+
+#endif
+
+#endif
+            }
         }
 
-        now = getTime(mb_ts);
+        now = getTime(mb_ts, mb_ts_offset);
 
         config->internal.fb_clock_rdy = (unsigned long)now > ESP_DEFAULT_TS;
         if (config->internal.fb_clock_rdy)
@@ -1856,7 +1895,7 @@ namespace Utils
                 httpCode = FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED;
                 return false;
             }
-            delay(0);
+            Utils::idle();
         }
 #endif
         return true;
@@ -1884,11 +1923,6 @@ namespace Utils
         return mbfs->calCRC(buf);
     }
 
-    inline void idle()
-    {
-        delay(0);
-    }
-
     inline void makePath(MB_String &path)
     {
         if (path.length() > 0)
@@ -1907,14 +1941,16 @@ namespace Utils
         return path;
     }
 
+#if defined(FIREBASE_ESP_CLIENT)
     inline MB_String makeFCMMessagePath(PGM_P sub = NULL)
     {
-        MB_String path = fb_esp_pgm_str_575; // "message"
+        MB_String path = fb_esp_pgm_str_295; // "message"
         path += fb_esp_pgm_str_1;            // "/"
         if (sub)
             path += sub;
         return path;
     }
+#endif
 
     inline void addFCMNotificationPath(MB_String &path, PGM_P sub = NULL)
     {
@@ -1994,6 +2030,45 @@ namespace Utils
             bufLen = 1024 * 16;
 
         return bufLen;
+    }
+
+    inline bool isNoContent(server_response_data_t *response)
+    {
+        return !response->isChunkedEnc && response->contentLen == 0;
+    }
+
+    inline bool isResponseTimeout(fb_esp_tcp_response_handler_t *tcpHandler, bool &complete)
+    {
+        if (millis() - tcpHandler->dataTime > 5000)
+        {
+            // Read all remaining data
+            tcpHandler->client->flush();
+            complete = true;
+        }
+        return complete;
+    }
+
+    inline bool isResponseComplete(fb_esp_tcp_response_handler_t *tcpHandler, server_response_data_t *response, bool &complete, bool check = true)
+    {
+        if (check && !response->isChunkedEnc &&
+            (tcpHandler->bufferAvailable < 0 || tcpHandler->payloadRead >= response->contentLen))
+        {
+            complete = true;
+            return true;
+        }
+        return false;
+    }
+
+    inline bool isChunkComplete(fb_esp_tcp_response_handler_t *tcpHandler, server_response_data_t *response, bool &complete)
+    {
+        if (response->isChunkedEnc && tcpHandler->bufferAvailable < 0)
+        {
+            // Read all remaining data
+            tcpHandler->client->flush();
+            complete = true;
+            return true;
+        }
+        return false;
     }
 };
 

@@ -76,22 +76,6 @@ void networkStatusRequestCallback()
     fbdo.setNetworkStatus(WiFi.status() == WL_CONNECTED);
 }
 
-// Define the callback function to handle server connection
-void tcpConnectionRequestCallback(const char *host, int port)
-{
-
-    // You may need to set the system timestamp to use for
-    // auth token expiration checking.
-
-    Serial.print("Connecting to server via external Client... ");
-    if (!ssl_client.connect(host, port))
-    {
-        Serial.println("failed.");
-        return;
-    }
-    Serial.println("success.");
-}
-
 void setup()
 {
 
@@ -122,7 +106,7 @@ void setup()
     fbdo.setExternalClient(&ssl_client);
 
     /* Assign the required callback functions */
-    fbdo.setExternalClientCallbacks(tcpConnectionRequestCallback, networkConnection, networkStatusRequestCallback);
+    fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
 
     // Comment or pass false value when WiFi reconnection will control by your code or third party library
     Firebase.reconnectWiFi(true);

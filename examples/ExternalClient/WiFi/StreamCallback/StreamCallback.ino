@@ -81,38 +81,6 @@ void networkStatusRequestCallback()
     stream.setNetworkStatus(WiFi.status() == WL_CONNECTED);
 }
 
-// Define the callback function to handle server connection
-void tcpConnectionRequestCallback1(const char *host, int port)
-{
-
-    // You may need to set the system timestamp to use for
-    // auth token expiration checking.
-
-    Serial.print("Connecting to server via external Client... ");
-    if (!ssl_client1.connect(host, port))
-    {
-        Serial.println("failed.");
-        return;
-    }
-    Serial.println("success.");
-}
-
-// Define the callback function to handle server connection
-void tcpConnectionRequestCallback2(const char *host, int port)
-{
-
-    // You may need to set the system timestamp to use for
-    // auth token expiration checking.
-
-    Serial.print("Connecting to server via external Client... ");
-    if (!ssl_client2.connect(host, port))
-    {
-        Serial.println("failed.");
-        return;
-    }
-    Serial.println("success.");
-}
-
 void streamCallback(StreamData data)
 {
     Serial_Printf("sream path, %s\nevent path, %s\ndata type, %s\nevent type, %s\n\n",
@@ -181,13 +149,13 @@ void setup()
     fbdo.setExternalClient(&ssl_client1);
 
     /* Assign the required callback functions */
-    fbdo.setExternalClientCallbacks(tcpConnectionRequestCallback1, networkConnection, networkStatusRequestCallback);
+    fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
 
     /* Assign the pointer to global defined external SSL Client object */
     stream.setExternalClient(&ssl_client2);
 
     /* Assign the required callback functions */
-    stream.setExternalClientCallbacks(tcpConnectionRequestCallback2, networkConnection, networkStatusRequestCallback);
+    stream.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
 
     Firebase.reconnectWiFi(true);
 

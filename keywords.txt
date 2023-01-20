@@ -73,6 +73,7 @@ setExternalClientCallbacks  KEYWORD2
 setNetworkStatus    KEYWORD2
 getFreeHeap KEYWORD2
 getCurrentTime  KEYWORD2
+setUDPClient    KEYWORD2
 
 set KEYWORD2
 push    KEYWORD2
