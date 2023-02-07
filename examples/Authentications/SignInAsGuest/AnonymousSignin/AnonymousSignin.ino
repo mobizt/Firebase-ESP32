@@ -27,7 +27,7 @@
 #elif defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <FirebaseESP8266.h>
-#elif defined(PICO_RP2040)
+#elif defined(ARDUINO_RASPBERRY_PI_PICO_W)
 #include <WiFi.h>
 #include <FirebaseESP8266.h>
 #endif
