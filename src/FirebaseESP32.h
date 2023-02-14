@@ -8,7 +8,7 @@
  * Created February 14, 2023
  *
  *   Updates:
- * - Add mising connection status error event during token refreshing when WiFi reconnection was disabled.
+ * - Add missing connection status error event during token refreshing when WiFi reconnection was disabled.
  *
  *
  * This library provides ESP32 to perform REST API by GET PUT, POST, PATCH,
