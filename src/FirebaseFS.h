@@ -4,6 +4,7 @@
 #pragma once
 
 #include <Arduino.h>
+#include "mbfs/MB_MCU.h"
 
 #define FIREBASE_ESP32_CLIENT 1
 
