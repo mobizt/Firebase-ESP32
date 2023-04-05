@@ -1,3 +1,8 @@
+#include "Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40309)
+#error "Mixed versions compilation."
+#endif
+
 #ifndef FirebaseFS_H
 #define FirebaseFS_H
 
@@ -61,6 +66,13 @@ static SdFat sd_fat_fs;   //should declare as static here
 #define DEFAULT_SD_FS SD
 #define CARD_TYPE_SD 1
 #endif
+
+// For RTDB legacy token usage only
+// #define USE_LEGACY_TOKEN_ONLY
+
+// Enable the error string from fbdo.errorReason */
+// You can get the error code from fbdo.errorCode() when disable this option
+#define ENABLE_ERROR_STRING
 
 // For ESP32, format SPIFFS or FFat if mounting failed
 #define FORMAT_FLASH_IF_MOUNT_FAILED 1
