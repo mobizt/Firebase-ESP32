@@ -97,6 +97,10 @@ void setup()
 
   Firebase.reconnectWiFi(true);
 
+  // You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
+  // https://github.com/mobizt/Firebase-ESP32#enable-tcp-keepalive-for-reliable-http-streaming
+  // fbdo.keepAlive(5, 5, 1);
+
   // The data under the node being stream (parent path) should keep small
   // Large stream payload leads to the parsing error due to memory allocation.
   if (!Firebase.beginStream(fbdo, "/test/stream/data"))

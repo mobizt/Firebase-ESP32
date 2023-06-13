@@ -459,6 +459,40 @@ ENABLE_OTA_FIRMWARE_UPDATE
 ```
 
 
+### About FirebaseData object
+
+`FirebaseData` class used as the application and user data container. It used widely in this library to handle everything related to data in the server/client transmission.
+
+The WiFiClientSecure instance was created in `FirebaseData` object when connecting to server. The response payload will store in this object that allows user to acquire and process leter.
+
+The memory consumed during server connection state is relatively large which depends on the SSL engine used in device Core SDK e.g., as much as 50k for ESP32 using mbedTLS SSL engine library.
+
+This library will send HTTP Keep-Alive header for session reuse by default as the macro `USE_CONNECTION_KEEP_ALIVE_MODE` defined in FirebaseFS.h and memory will be reserved as long as server connected.
+
+
+With HTTP Keep-Alive mode, you can take the benefit of TCP KeepAlive which will probe the server connection periodically.
+
+
+The disadvantage when using TCP KeepAlive is little or more data bandwidth consumed which depends on the TCP KeepAlive options set in `FirebaseData` object.
+
+The TCP KeepAlive can be enable from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
+
+`tcpKeepIdleSeconds`, `tcpKeepIntervalSeconds` and `tcpKeepCount`.
+
+Ex.
+
+```cpp
+fbdo.keepAlive(5 /* tcp KeepAlive idle 5 seconds */, 5 /* tcp KeeAalive interval 5 seconds */, 1 /* tcp KeepAlive count 1 */);
+```
+
+For the TCP (KeepAlive) options, see [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
+
+You can check the server connecting status, by exexuting `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
+
+ 
+For External Client, this TCP KeepAlive option is not appliable and should be managed by external Client library.
+
+
 
 ### Read Data
 
@@ -859,6 +893,28 @@ Keep in mind that `FirebaseData` object will create the SSL client inside of HTT
 
 
 
+### Enable TCP KeepAlive for reliable HTTP Streaming
+
+In general, the RTDB stream timed out occurred when no data included keep-alive event data received in the specific period (45 seconds) which can be set via `config.timeout.rtdbKeepAlive`.
+
+Now you can take the pros of TCP KeepAlive in Stream mode by brobing the server connection at some intervals to help the stream time out more reliable.
+
+You can check the server connecting status, by exexuting `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
+
+As previousely described, using [TCP KeepAlive in `FirebaseData` object](#about-firebasedata-object) in Stream has pros and cons.
+
+The TCP KeepAlive can be enable from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
+
+`tcpKeepIdleSeconds`, `tcpKeepIntervalSeconds` and `tcpKeepCount`.
+
+Ex.
+
+```cpp
+stream.keepAlive(5 /* tcp KeepAlive idle 5 seconds */, 5 /* tcp KeeAalive interval 5 seconds */, 1 /* tcp KeepAlive count 1 */);
+```
+
+
+### HTTP Streaming examples
 
 
 The following example showed how to subscribe to the data changes at node "/test/data" with a callback function.

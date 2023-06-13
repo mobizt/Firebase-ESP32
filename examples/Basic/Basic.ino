@@ -104,6 +104,10 @@ void setup()
 
   Firebase.setDoubleDigits(5);
 
+  // You can use TCP KeepAlive in FirebaseData object and tracking the server connection status, please read this for detail.
+  // https://github.com/mobizt/Firebase-ESP32#about-firebasedata-object
+  // fbdo.keepAlive(5, 5, 1);
+
   /** Timeout options.
 
   //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
