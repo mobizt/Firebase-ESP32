@@ -1275,7 +1275,7 @@ Firebase.saveErrorQueue(fbdo, "/test.txt", StorageType::FLASH);
 ```
 
 
-## FireSense, The Programmable Data Logging and IO Control (Add On)
+## FireSense, The Programmable Data Logging and IO Control (Deprecated Add On)
 
 This add on library is for the advance usages and works with Firebase RTDB.
 
@@ -1283,9 +1283,9 @@ With this add on library, you can remotely program your device to control its IO
 
 This allows you to change your device behaviour and functions without to flash a new firmware via serial or OTA.
 
-See [examples/FireSense](examples/FireSense) for the usage.
-
 For FireSense function description, see [src/addons/FireSense/README.md](src/addons/FireSense/README.md).
+
+FireSense is now inactive development and deprecated.
 
 
 

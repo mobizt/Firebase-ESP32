@@ -159,7 +159,7 @@ getCurrentTime  KEYWORD2
 getFreeHeap KEYWORD2
 
 #############################################
-# Methods for Firebase Data object (KEYWORD2)
+# Methods for FirebaseData object (KEYWORD2)
 #############################################
 
 getWiFiClient   KEYWORD2
