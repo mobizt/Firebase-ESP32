@@ -492,7 +492,7 @@ To check the KeepAlive status, use `<FirebaseData>.isKeepAlive`.
 
 For the TCP (KeepAlive) options, see [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
 
-You can check the server connecting status, by exexuting `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
+You can check the server connecting status, by executing `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
 
  
 For External Client, this TCP KeepAlive option is not appliable and should be managed by external Client library.
@@ -904,7 +904,7 @@ In general, the RTDB stream timed out occurred when no data included keep-alive 
 
 Now you can take the pros of TCP KeepAlive in Stream mode by brobing the server connection at some intervals to help the stream time out more reliable.
 
-You can check the server connecting status, by exexuting `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
+You can check the server connecting status, by executing `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
 
 As previousely described, using [TCP KeepAlive in `FirebaseData` object](#about-firebasedata-object) in Stream has pros and cons.
 
