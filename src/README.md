@@ -3643,6 +3643,17 @@ void keepAlive(int tcpKeepIdleSeconds, int tcpKeepIntervalSeconds, int tcpKeepCo
 ```
 
 
+
+#### Get TCP KeepAlive status.
+
+return **`Boolean`** status of TCP Keepalive.
+
+```cpp
+bool isKeepAlive();
+```
+
+
+
 ## Firebase Cloud Messaging Object Functions
 
 

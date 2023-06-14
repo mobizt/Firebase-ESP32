@@ -461,7 +461,7 @@ ENABLE_OTA_FIRMWARE_UPDATE
 
 ### About FirebaseData object
 
-`FirebaseData` class used as the application and user data container. It used widely in this library to handle everything related to data in the server/client transmission.
+`FirebaseData` class used as the application and user data container. It used widely in this library to handle everything related to data in the server/client data transmission.
 
 The WiFiClientSecure instance was created in `FirebaseData` object when connecting to server. The response payload will store in this object that allows user to acquire and process leter.
 
@@ -483,7 +483,12 @@ Ex.
 
 ```cpp
 fbdo.keepAlive(5 /* tcp KeepAlive idle 5 seconds */, 5 /* tcp KeeAalive interval 5 seconds */, 1 /* tcp KeepAlive count 1 */);
+
+// If one of three arguments is zero, the KeepAlive will be disabled.
 ```
+
+To check the KeepAlive status, use `<FirebaseData>.isKeepAlive`.
+
 
 For the TCP (KeepAlive) options, see [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
 
