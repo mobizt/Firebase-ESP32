@@ -137,7 +137,7 @@ void setup()
 
   // You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
   // https://github.com/mobizt/Firebase-ESP32#enable-tcp-keepalive-for-reliable-http-streaming
-  // stream.keepAlive(5, 5, 1);
+  stream.keepAlive(5, 5, 1);
 
   // The data under the node being stream (parent path) should keep small
   // Large stream payload leads to the parsing error due to memory allocation.
@@ -202,5 +202,11 @@ void loop()
     }
 
     Serial.println("ok\n");
+  }
+
+  // After calling stream.keepAlive, now we can track the server connecting status
+  if (!stream.httpConnected())
+  {
+    // Server was disconnected!
   }
 }

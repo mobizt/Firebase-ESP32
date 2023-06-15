@@ -1,5 +1,5 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
@@ -94,7 +94,7 @@ static SdFat sd_fat_fs;   //should declare as static here
 // Use Keep Alive connection mode
 #define USE_CONNECTION_KEEP_ALIVE_MODE
 
-// To enable external Client for ESP8266.
+// To enable external Client for ESP32.
 // This will enable automatically for other devices.
 // #define FB_ENABLE_EXTERNAL_CLIENT
 

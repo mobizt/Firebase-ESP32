@@ -130,7 +130,7 @@ void setup()
 
   // You can use TCP KeepAlive For more reliable stream operation and tracking the server connection status, please read this for detail.
   // https://github.com/mobizt/Firebase-ESP32#enable-tcp-keepalive-for-reliable-http-streaming
-  // stream.keepAlive(5, 5, 1);
+  stream.keepAlive(5, 5, 1);
 
   if (!Firebase.beginStream(stream, "/test/stream/data"))
     Serial.printf("sream begin error, %s\n\n", stream.errorReason().c_str());
@@ -177,5 +177,11 @@ void loop()
     json.add("data", "hello");
     json.add("num", count);
     Serial.printf("Set json... %s\n\n", Firebase.setJSON(fbdo, "/test/stream/data/json", json) ? "ok" : fbdo.errorReason().c_str());
+  }
+
+  // After calling stream.keepAlive, now we can track the server connecting status
+  if (!stream.httpConnected())
+  {
+    // Server was disconnected!
   }
 }

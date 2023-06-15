@@ -1,10 +1,10 @@
 #include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40312)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40313)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Created June 9, 2023
+ * Created June 15, 2023
  *
  * This work is a part of Firebase ESP Client library
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -43,14 +43,20 @@
 #include <functional>
 #endif
 
-#include "FB_Network.h"
 #include "FirebaseFS.h"
-#include "./mbfs/MB_FS.h"
+#include "FB_Network.h"
+
+#if defined(DEFAULT_FLASH_FS) || defined(DEFAULT_SD_FS)
+#define FIREBASEJSON_USE_FS
+#endif
 
 #if defined(FIREBASE_USE_PSRAM)
 #define FIREBASEJSON_USE_PSRAM
 #endif
-#include "json/FirebaseJson.h"
+
+// FirebaseJson was already included in MB_FS.h
+#include "./mbfs/MB_FS.h"
+
 #include "MB_NTP.h"
 
 #if defined(ENABLE_OTA_FIRMWARE_UPDATE) && (defined(ENABLE_RTDB) || defined(ENABLE_FB_STORAGE) || defined(ENABLE_GC_STORAGE))
