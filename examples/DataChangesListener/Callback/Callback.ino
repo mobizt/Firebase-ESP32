@@ -185,3 +185,12 @@ void loop()
     // Server was disconnected!
   }
 }
+
+// To pause stream
+// stream.pauseFirebase(true);
+// stream.clear(); // close session and release memory
+
+
+// To resume stream with callback
+// stream.pauseFirebase(false);
+// Firebase.setStreamCallback(stream, streamCallback, streamTimeoutCallback);
