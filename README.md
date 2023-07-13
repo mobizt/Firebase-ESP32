@@ -441,21 +441,33 @@ Below is how to assign the certificate data for server verification.
 
 ## Excludes the unused classes to save memory
 
+You can gain up to 9% free flash space.
+
 
 The internal classes, RTDB and FCM in this library can be excluded or disabled to save memory usage through [**FirebaseFS.h**](/src/FirebaseFS.h).
 
 By comment the following macros.
 
 
-
 ENABLE_RTDB
 
 ENABLE_FCM
+
+ENABLE_ERROR_STRING
 
 To disable OTA update, comment this macro.
 
 ```
 ENABLE_OTA_FIRMWARE_UPDATE
+```
+
+By excluding the filesystems e.g. SPIFFS and SD will gain more program space.
+
+
+And use only RTDB database secret, by define this will also gain free space.
+
+```
+#define USE_LEGACY_TOKEN_ONLY
 ```
 
 
