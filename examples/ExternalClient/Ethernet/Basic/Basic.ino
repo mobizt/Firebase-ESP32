@@ -11,10 +11,7 @@
  */
 
 /** This example shows the basic RTDB usage with external Client.
- * This example used ESP32 and WIZnet W5500 (Ethernet) devices which ESP_SSLClient will be used as the external Client.
- *
- * Don't gorget to define this in FirebaseFS.h
- * #define FB_ENABLE_EXTERNAL_CLIENT
+ * This example used ESP32 and WIZnet W5500 module.
  */
 
 #include <FirebaseESP32.h>
@@ -26,12 +23,6 @@
 #include <addons/RTDBHelper.h>
 
 #include <Ethernet.h>
-
-// https://github.com/mobizt/ESP_SSLClient
-#include <ESP_SSLClient.h>
-
-// For NTP time client
-#include "MB_NTP.h"
 
 // For the following credentials, see examples/Authentications/SignInAsUser/EmailPassword/EmailPassword.ino
 
@@ -70,77 +61,14 @@ int count = 0;
 
 volatile bool dataChanged = false;
 
-EthernetClient basic_client;
-
-ESP_SSLClient ssl_client;
-
-// For NTP client
-EthernetUDP udpClient;
-
-MB_NTP ntpClient(&udpClient, "pool.ntp.org" /* NTP host */, 123 /* NTP port */, 0 /* timezone offset in seconds */);
-
-uint32_t timestamp = 0;
-
-void ResetEthernet()
-{
-    Serial.println("Resetting WIZnet W5500 Ethernet Board...  ");
-    pinMode(WIZNET_RESET_PIN, OUTPUT);
-    digitalWrite(WIZNET_RESET_PIN, HIGH);
-    delay(200);
-    digitalWrite(WIZNET_RESET_PIN, LOW);
-    delay(50);
-    digitalWrite(WIZNET_RESET_PIN, HIGH);
-    delay(200);
-}
-
-void networkConnection()
-{
-    Ethernet.init(WIZNET_CS_PIN);
-
-    ResetEthernet();
-
-    Serial.println("Starting Ethernet connection...");
-    Ethernet.begin(Eth_MAC);
-
-    unsigned long to = millis();
-
-    while (Ethernet.linkStatus() == LinkOFF || millis() - to < 2000)
-    {
-        delay(100);
-    }
-
-    if (Ethernet.linkStatus() == LinkON)
-    {
-        Serial.print("Connected with IP ");
-        Serial.println(Ethernet.localIP());
-    }
-    else
-    {
-        Serial.println("Can't connect");
-    }
-}
-
-// Define the callback function to handle server status acknowledgement
-void networkStatusRequestCallback()
-{
-    // Set the network status
-    fbdo.setNetworkStatus(Ethernet.linkStatus() == LinkON);
-}
+EthernetClient eth;
 
 void setup()
 {
 
     Serial.begin(115200);
 
-    networkConnection();
-
     Serial_Printf("Firebase Client v%s\n\n", FIREBASE_CLIENT_VERSION);
-    
-    /* Assign the basic Client (Ethernet) pointer to the SSL Client */
-    ssl_client.setClient(&basic_client);
-
-    /* Similar to WiFiClientSecure */
-    ssl_client.setInsecure();
 
     /* Assign the api key (required) */
     config.api_key = API_KEY;
@@ -155,16 +83,14 @@ void setup()
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-    /* fbdo.setExternalClient and fbdo.setExternalClientCallbacks must be called before Firebase.begin */
-
     /* Assign the pointer to global defined external SSL Client object */
-    fbdo.setExternalClient(&ssl_client);
-
-    /* Assign the required callback functions */
-    fbdo.setExternalClientCallbacks(networkConnection, networkStatusRequestCallback);
+    fbdo.setEthernetClient(&eth, Eth_MAC, WIZNET_CS_PIN, WIZNET_RESET_PIN); // The staIP can be assigned to the fifth param
 
     // Comment or pass false value when WiFi reconnection will control by your code or third party library
     Firebase.reconnectWiFi(true);
+
+    // required for large file data, increase Rx size as needed.
+    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
     Firebase.setDoubleDigits(5);
 

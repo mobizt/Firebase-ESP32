@@ -258,56 +258,6 @@ The authenticate using the legacy token (database secret) does not have these de
 
 
 
-### Speed of data transfer
-
-This library focuses on the user privacy and user data protection which follows Google authentication processes. Setting the security rules to allow public access read and write, is not recommended even the data transmision time in this case was significantly reduced as it does not require any auth token then the overall data size was reduced, but anyone can steal, modify, or delete data in your database.
-
-
-Once the auth token is important and when it was created and ready for authentication process, the data transmission time will depend on the time used in SSL/TLS handshake process (only for new session opening), the size of http header (included auth token size) and payload to be transmitted and the SSL client buffer reserved size especially in ESP8266.
-
-
-The legacy token size is relatively small, only 40 bytes, result in smallest header to send, while the size of id token generated using Email/Password is quite large, approx. 900 bytes. result in larger header to send.
-
-
-There is a compromise between the speed of data transfer and the Rx/Tx buffer which then reduced the free memory available especially in ESP8266.
-
-
-When the reserved SSL client Rx/Tx buffer is smaller than the size of data to be transmitted, the data need to be sent as multiple chunks which required more transmission time.
-
-This affected especially in ESP8266 which has the limited free memory.
-
-
-To speed up the data transmission in ESP8266, the larger reserved Rx/Tx buffer size is necessary.
-
-
-The reserved SSL Rx/Tx buffer size in ESP8266 can be set through the function \<Firebase Data object\>.setBSSLBufferSize, e.g. **fbdo.setBSSLBufferSize(2048, 2048);**
-
-
-The larger BearSSL buffer reserved for ESP8266, the lower free memory available as long as the session opened (server connection).
-
-
-Therefore the time for data transfer will be varied from approx. neary 200 ms to 500 ms based on the reserved SSL client Rx/Tx buffer size and the size of data to transmit.
-
-
-In ESP8266, when the free memory and speed are concerned, the legacy token should be used instead of other authentication to reduce the header size and the lower SSL Rx/Tx buffer i.e. 1024 for Rx and 512 for Tx are enough.
-
-
-When the session was reused (in this library), the SSL handshake process will be ignored in the subsequence requests.
-
-
-The session was close when the host or ip changes or server closed or the session timed out in 3 minutes. 
-
-
-When the new session need to be opened, the SSL handshake will be processed again and used the time approx 1 - 2 seconds to be done.
-
-
-For post (push) or put (set) request in RTDB, to speed up the data transfer, use pushAsync or setAsync instead.
-
-
-With pushAsync and setAsync, the payload response will be ignored and the next data will be processed immediately.
-
-
-
 ### Access in Test Mode (No Auth)
 
 In Test Mode, token generation will be ignored and no authentication applied to the request.
@@ -439,53 +389,77 @@ Below is how to assign the certificate data for server verification.
 
 
 
-## Excludes the unused classes to save memory
+## Library Build Options 
 
-You can gain up to 9% free flash space.
+The library build options are defined as preprocessor macros (`#define name`).
 
+Some options can be disabled to reduce program space.
 
-The internal classes, RTDB and FCM in this library can be excluded or disabled to save memory usage through [**FirebaseFS.h**](/src/FirebaseFS.h).
+### Predefined Options
 
-By comment the following macros.
+The predefined options that are already set in [**FirebaseFS.h**](src/FirebaseFS.h) are following.
 
-
-ENABLE_RTDB
-
-ENABLE_FCM
-
-ENABLE_ERROR_STRING
-
-To disable OTA update, comment this macro.
-
-```
-ENABLE_OTA_FIRMWARE_UPDATE
-```
-
-By excluding the filesystems e.g. SPIFFS and SD will gain more program space.
-
-
-And use only RTDB database secret, by define this will also gain free space.
-
-```
-#define USE_LEGACY_TOKEN_ONLY
+```cpp
+ENABLE_NTP_TIME // For enabling the device or library time setup from NTP server
+ENABLE_ERROR_STRING // For enabling the error string from error reason
+FIREBASE_ENABLE_RTDB // For RTDB class compilation
+FIREBASE_ENABLE_ERROR_QUEUE // For RTDB Error Queue compilation
+FIREBASE_ENABLE_FCM // For Firebase Cloud Messaging compilation
+FIREBASE_USE_PSRAM // For enabling PSRAM support
+ENABLE_OTA_FIRMWARE_UPDATE // For enabling OTA updates support via RTDB, Firebase Storage and Google Cloud Storage buckets
+USE_CONNECTION_KEEP_ALIVE_MODE // For enabling Keep Alive connection mode
 ```
 
+### Optional Options
 
-### About FirebaseData object
+The following options are not yet defined in [**FirebaseFS.h**](src/FirebaseFS.h) and can be assigned by user.
 
-`FirebaseData` class used as the application and user data container. It used widely in this library to handle everything related to data in the server/client data transmission.
-
-The WiFiClientSecure instance was created in `FirebaseData` object when connecting to server. The response payload will store in this object that allows user to acquire and process leter.
-
-The memory consumed during server connection state is relatively large which depends on the SSL engine used in device Core SDK e.g., as much as 50k for ESP32 using mbedTLS SSL engine library.
-
-This library will send HTTP Keep-Alive header for session reuse by default as the macro `USE_CONNECTION_KEEP_ALIVE_MODE` defined in FirebaseFS.h and memory will be reserved as long as server connected.
-
-
-With HTTP Keep-Alive mode, you can take the benefit of TCP KeepAlive which will probe the server connection periodically.
+```cpp
+FIREBASE_DISABLE_ONBOARD_WIFI // For disabling on-board WiFI functionality in case external Client usage
+FIREBASE_DISABLE_NATIVE_ETHERNET // For disabling native (sdk) Ethernet functionality in case external Client usage
+FIREBASE_DEFAULT_DEBUG_PORT // For debug port assignment
+```
 
 
-The disadvantage when using TCP KeepAlive is little or more data bandwidth consumed which depends on the TCP KeepAlive options set in `FirebaseData` object.
+You can assign the optional build options using one of the following methods.
+
+- By creating user config file `CustomFirebaseFS.h` in library installed folder and define these optional options.
+
+- By adding compiler build flags with `-D name`.
+
+In PlatformIO IDE, using `build_flags` in PlatformIO IDE's platformio.ini is more convenient 
+
+```ini
+build_flags = -D DISABLE_FCM
+              -D EFIREBASE_DISABLE_ONBOARD_WIFI
+```
+
+For disabling predefined options instead of editing the [**FirebaseFS.h**](src/FirebaseFS.h) or using `#undef` in `CustomFirebaseFS.h`, you can define these build flags with these names or macros in `CustomFirebaseFS.h`.
+
+```cpp
+DISABLE_NTP_TIME // For disabling the NTP time setting
+DISABLE_ERROR_STRING // For disabling the error string from error reason
+DISABLE_RTDB // For disabling RTDB support
+DISABLE_ERROR_QUEUE // For disabling RTDB Error Queue support
+DISABLE_FCM // For disabling Firebase Cloud Messaging support
+DISABLE_PSRAM // For disabling PSRAM support
+DISABLE_OTA // For disabling OTA updates support
+DISABLE_KEEP_ALIVE // For disabling TCP Keep Alive support (See TCP Keep Alive)
+DISABLE_SD // For disabling flash filesystem support
+DISABLE_FLASH // For disabling SD filesystem support
+DISABLE_DEBUG // For disable debug port
+
+FIREBASE_DISABLE_ALL_OPTIONS // For disabling all predefined build options above
+```
+
+Note that, `CustomFirebaseFS.h` for user config should be placed in the library install folder inside src folder.
+
+This `CustomFirebaseFS.h` will not change or overwrite when update the library.
+
+
+
+### TCP Keep Alive
+
 
 The TCP KeepAlive can be enabled from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
 
@@ -505,6 +479,15 @@ To check the KeepAlive status, use `<FirebaseData>.isKeepAlive`.
 For the TCP (KeepAlive) options, see [here](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/lwip.html#tcp-options).
 
 You can check the server connecting status, by executing `<FirebaseData>.httpConnected()` which will return true when connection to the server is still alive. 
+
+
+The TCP KeepAlive was currently available in ESP32 unless in ESP8266, [this ESP8266 PR #8940](https://github.com/esp8266/Arduino/pull/8940) should be merged in the [ESP8266 Arduino Core SDK](https://github.com/esp8266/Arduino/releases), i.e., it will be supported in the ESP8266 core version newer than v3.1.2.
+
+
+In ESP8266 core v3.1.2 and older, the error can be occurred when executing `<FirebaseData>.keepAlive` because of object slicing.
+
+
+The Arduino Pico is currently not support TCP KeepAlive until it's implemented in WiFiClientSecure library as in ESP8266.
 
  
 For External Client, this TCP KeepAlive option is not appliable and should be managed by external Client library.
@@ -534,7 +517,7 @@ The data type of returning payload can be determined by `fbdo.dataType()` which 
 
 The String of type returns from `fbdo.dataType()` can be string, boolean, int, float, double, json, array, blob, file and null.
 
-The enum value type, fb_esp_rtdb_data_type returns from `fbdo.dataTypeEnum()` can be fb_esp_rtdb_data_type_null (1), fb_esp_rtdb_data_type_integer, fb_esp_rtdb_data_type_float, fb_esp_rtdb_data_type_double, fb_esp_rtdb_data_type_boolean, fb_esp_rtdb_data_type_string, fb_esp_rtdb_data_type_json, fb_esp_rtdb_data_type_array, fb_esp_rtdb_data_type_blob, and fb_esp_rtdb_data_type_file (10)
+The enum value type, firebase_rtdb_data_type returns from `fbdo.dataTypeEnum()` can be firebase_rtdb_data_type_null (1), firebase_rtdb_data_type_integer, firebase_rtdb_data_type_float, firebase_rtdb_data_type_double, firebase_rtdb_data_type_boolean, firebase_rtdb_data_type_string, firebase_rtdb_data_type_json, firebase_rtdb_data_type_array, firebase_rtdb_data_type_blob, and firebase_rtdb_data_type_file (10)
 
 
 
@@ -611,7 +594,7 @@ The following example showed how to read integer value from node "/test/int".
 ```cpp
   if (Firebase.getInt(fbdo, "/test/int")) {
 
-      if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_integer) {
+      if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_integer) {
       Serial.println(fbdo.to<int>());
     }
 
@@ -968,22 +951,22 @@ void streamCallback(StreamData data)
   // Print out the value
   // Stream data can be many types which can be determined from function dataType
 
-  if (data.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
+  if (data.dataTypeEnum() == firebase_rtdb_data_type_integer)
       Serial.println(data.to<int>());
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_float)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_float)
       Serial.println(data.to<float>(), 5);
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_double)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_double)
       printf("%.9lf\n", data.to<double>());
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_boolean)
       Serial.println(data.to<bool>()? "true" : "false");
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_string)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_string)
       Serial.println(data.to<String>());
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_json)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_json)
   {
       FirebaseJson *json = data.to<FirebaseJson *>();
       Serial.println(json->raw());
   }
-  else if (data.dataTypeEnum() == fb_esp_rtdb_data_type_array)
+  else if (data.dataTypeEnum() == firebase_rtdb_data_type_array)
   {
       FirebaseJsonArray *arr = data.to<FirebaseJsonArray *>();
       Serial.println(arr->raw());
@@ -1044,22 +1027,22 @@ if (fbdo.streamTimeout())
 if (fbdo.streamAvailable())
 {
 
-  if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_integer)
+  if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_integer)
     Serial.println(fbdo.to<int>());
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_float)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_float)
     Serial.println(fbdo.to<float>(), 5);
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_double)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_double)
     printf("%.9lf\n", fbdo.to<double>());
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_boolean)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_boolean)
     Serial.println(fbdo.to<bool>() ? "true" : "false");
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_string)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_string)
     Serial.println(fbdo.to<String>());
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_json)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_json)
   {
       FirebaseJson *json = fbdo.to<FirebaseJson *>();
       Serial.println(json->raw());
   }
-  else if (fbdo.dataTypeEnum() == fb_esp_rtdb_data_type_array)
+  else if (fbdo.dataTypeEnum() == firebase_rtdb_data_type_array)
   {
       FirebaseJsonArray *arr = fbdo.to<FirebaseJsonArray *>();
       Serial.println(arr->raw());
@@ -1301,74 +1284,72 @@ FireSense is now inactive development and deprecated.
 
 
 
+
 ## Firebase Cloud Messaging (FCM)
 
-Two types of FCM message data can be sent using this library e.g. **notification** and **custom data**.
+The library acts as a app server to sends the message to registeration devices by sending request to the Google's FCM backend via the legacy HTTP and HTTPv1 APIs.
 
-These two types of data can send all together or separately.
+The functions available are setServerKey, send, subscibeTopic, unsubscibeTopic, appInstanceInfo and regisAPNsTokens.
 
-Function `Firebase.sendMessage` will send a message to one recipient.
+Function `Firebase.FCM.setServerKey` to setup the Server Key which required by the legacy protocols.
 
-Function `Firebase.broadcastMessage` will broadcast or send a message to multiple recipients.  
+Function `Firebase.FCM.send` to send the message with the selectable legacy and HTTPv1 messages constructors.  
 
-Function `Firebase.sendTopic` will send a message to any recipient who subscribed to the topic.
+Function `Firebase.FCM.subscribeTopic` to add the subscription for instance ID (IID) tokens to the defined topic.
 
-The FCM message itself offers a broad range of messaging options and capabilities for various recipient device platforms. 
+Function `Firebase.FCM.unsubscribeTopic` to remove the subscription for instance ID (IID) tokens from the defined topic.
 
-For Android, iOS and web platforms, these basic options can be set and work for all platforms. 
+Function `Firebase.FCM.appInstanceInfo` to get the app instance info for a device. This also provides the subscribed topics info.
 
+Function `Firebase.FCM.regisAPNsTokens` to create the registration tokens for iOS APNs tokens.
 
-Function `fbdo.fcm.begin` used to assign the server key of your Firebase project.
+The library provides two message constructors that hold the data to construct the JSON object payload internally.
 
-Function `fbdo.fcm.addDeviceToken` used to add recipient registered device token which wants to send message to. 
+For legacy message, see https://firebase.google.com/docs/cloud-messaging/http-server-ref
 
-Functions `fbdo.fcm.removeDeviceToken` and `fbdo.fcm.clearDeviceToken` used to remove or clear recipient device.
+For HTTPv1 message, see ttps://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages
 
-
-For the notification message, title, body, icon (optional), and click_action (optional) can be set through `fbdo.fcm.setNotifyMessage`. 
-
-And clear these notify message data with `fbdo.fcm.clearNotifyMessage`.
-
-For the data message, provide your custom data as JSON object (FirebaseJson object or string) to `fbdo.fcm.setDataMessage` which can be clear with `fbdo.fcm.clearDataMessage`.
-
-The other options are `priority`, `collapse key`, `Time to Live` of the message and `topic` to send messages to, can be set from the following functions.
-
-Call `fbdo.fcm.setPriority` for priority ("normal" or "high"), `fbdo.fcm.setCollapseKey` for collapse key setup, `fbdo.fcm.setTimeToLive` for life span of message setup between 0 sec. to 2,419,200 sec.  (or 4 weeks), and `fbdo.fcm.setTopic` for assigning the topic that message to send to.
+The HTTPv1 APIs requires OAUth2.0 authentication using the Service Account credential.
 
 
 
 The following example showed how to send FCM message.
 
 ```cpp
-// Provide your Firebase project's server key here
-fbdo.fcm.begin(FIREBASE_FCM_SERVER_KEY);
+// Provide your Firebase project's server key to send messsage using the legacy protocols
+Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY);
 
-// Prvide one or more the recipient registered token or instant ID token
-fbdo.fcm.addDeviceToken(FIREBASE_FCM_DEVICE_TOKEN);
+// Construct the legacy message
+FCM_HTTPv1_JSON_Message msg;
 
-// Provide the priority (optional)
-fbdo.fcm.setPriority("normal");
+// Assign the device registration token
+msg.token = DEVICE_REGISTRATION_ID_TOKEN;
 
-// Provide the time to live (optional)
-fbdo.fcm.setTimeToLive(5000);
+// Assign the notification payload
+msg.notification.body = "Notification body";
+msg.notification.title = "Notification title";
 
-// Set the notification message data
-fbdo.fcm.setNotifyMessage("Notification", "Hello World!", "firebase-logo.png", "http://www.google.com");
+FirebaseJson json;
+String payload;
 
-// Set the custom message data
-fbdo.fcm.setDataMessage("{\"myData\":\"myValue\"}");
+// Assign the data payload
+// all data key-values should be in string
+json.add("humidity", "70");
+json.toString(payload);
+msg.data = payload.c_str();
 
-// Send message to one recipient with inddex 1 (index starts from 0)
-if (Firebase.sendMessage(fbdo, 1))
+// Send message
+if (Firebase.FCM.send(&fbdo, &msg))
 {
-  // Success, print the result returned from server
-  Serial.println(fbdo.fcm.getSendResult());
+   erial.println("Message sent to FCM backend.");
+   Serial.println(Firebase.FCM.payload(&fbdo));
 }
 else
 {
-  // Failed, print the error reason
-  Serial.println(fbdo.errorReason());
+   Serial.println("Something wrong, can't send request to FCM backend.");
+   Serial.println(fbdo.errorReason());
 }
+
 ```
 
 

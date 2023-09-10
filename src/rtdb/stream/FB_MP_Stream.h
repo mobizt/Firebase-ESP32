@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.1.6
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.h version 1.1.7
  *
- * This library supports Espressif ESP8266 and ESP32
- *
- * Created December 19, 2022
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -35,22 +30,16 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "FirebaseFS.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef FIREBASE_MULTIPATH_STREAM_SESSION_H
 #define FIREBASE_MULTIPATH_STREAM_SESSION_H
 #include <Arduino.h>
-#include "FB_Utils.h"
-#include "signer/Signer.h"
+#include "./FB_Utils.h"
+#include "./core/FirebaseCore.h"
 #include "FB_Stream.h"
-
-#if defined(FIREBASE_ESP_CLIENT)
-#define FIREBASE_MP_STREAM_CLASS MultiPathStream
-#elif defined(FIREBASE_ESP32_CLIENT) || defined(FIREBASE_ESP8266_CLIENT)
-#define FIREBASE_MP_STREAM_CLASS MultiPathStreamData
-#endif
 
 using namespace mb_string;
 
@@ -70,8 +59,8 @@ public:
     String eventType;
 
 private:
-    struct fb_esp_stream_info_t *sif = nullptr;
-    void begin(struct fb_esp_stream_info_t *s);
+    struct firebase_stream_info_t *sif = nullptr;
+    void begin(struct firebase_stream_info_t *s);
     void empty();
     bool checkPath(MB_String &root, MB_String &branch);
 };

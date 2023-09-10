@@ -11,16 +11,8 @@
  */
 
 #include <Arduino.h>
-#if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <FirebaseESP8266.h>
-#elif defined(ARDUINO_RASPBERRY_PI_PICO_W)
-#include <WiFi.h>
-#include <FirebaseESP8266.h>
-#endif
 
 // Provide the token generation process info.
 #include <addons/TokenHelper.h>
@@ -86,6 +78,11 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
+  Firebase.reconnectWiFi(true);
+
+  // required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
   // Or use legacy authenticate method
   // config.database_url = DATABASE_URL;
   // config.signer.tokens.legacy_token = "<database secret>";
@@ -98,9 +95,6 @@ void setup()
   //////////////////////////////////////////////////////////////////////////////////////////////
 
   Firebase.begin(&config, &auth);
-
-  // Comment or pass false value when WiFi reconnection will control by your code or third party library
-  Firebase.reconnectWiFi(true);
 
   Firebase.setDoubleDigits(5);
 
@@ -202,10 +196,10 @@ void loop()
     // The function, fbdo.dataType() returns types String e.g. string, boolean,
     // int, float, double, json, array, blob, file and null.
 
-    // The function, fbdo.dataTypeEnum() returns type enum (number) e.g. fb_esp_rtdb_data_type_null (1),
-    // fb_esp_rtdb_data_type_integer, fb_esp_rtdb_data_type_float, fb_esp_rtdb_data_type_double,
-    // fb_esp_rtdb_data_type_boolean, fb_esp_rtdb_data_type_string, fb_esp_rtdb_data_type_json,
-    // fb_esp_rtdb_data_type_array, fb_esp_rtdb_data_type_blob, and fb_esp_rtdb_data_type_file (10)
+    // The function, fbdo.dataTypeEnum() returns type enum (number) e.g. firebase_rtdb_data_type_null (1),
+    // firebase_rtdb_data_type_integer, firebase_rtdb_data_type_float, firebase_rtdb_data_type_double,
+    // firebase_rtdb_data_type_boolean, firebase_rtdb_data_type_string, firebase_rtdb_data_type_json,
+    // firebase_rtdb_data_type_array, firebase_rtdb_data_type_blob, and firebase_rtdb_data_type_file (10)
 
     count++;
   }

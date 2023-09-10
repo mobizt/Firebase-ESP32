@@ -1,17 +1,12 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.6
+ * Google's Firebase MultiPathStream class, FB_MP_Stream.cpp version 1.1.7
  *
- * This library supports Espressif ESP8266 and ESP32
- *
- * Created December 19, 2022
- *
- * This work is a part of Firebase ESP Client library
- * Copyright (c) 2023 K. Suwatchai (Mobizt)
+ * Created September 9, 2023
  *
  * The MIT License (MIT)
  * Copyright (c) 2023 K. Suwatchai (Mobizt)
@@ -35,9 +30,9 @@
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 
-#include "FirebaseFS.h"
+#include "./FirebaseFS.h"
 
-#ifdef ENABLE_RTDB
+#if defined(ENABLE_RTDB) || defined(FIREBASE_ENABLE_RTDB)
 
 #ifndef FIREBASE_MULTIPATH_STREAM_SESSION_CPP
 #define FIREBASE_MULTIPATH_STREAM_SESSION_CPP
@@ -52,7 +47,7 @@ FIREBASE_MP_STREAM_CLASS::~FIREBASE_MP_STREAM_CLASS()
 {
 }
 
-void FIREBASE_MP_STREAM_CLASS::begin(struct fb_esp_stream_info_t *s)
+void FIREBASE_MP_STREAM_CLASS::begin(struct firebase_stream_info_t *s)
 {
     sif = s;
 }
@@ -63,9 +58,9 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path /* child path */)
     type.remove(1, type.length());
     dataPath.remove(1, dataPath.length());
     bool res = false;
-    if (sif->data_type == fb_esp_data_type::d_json)
+    if (sif->data_type == firebase_data_type::d_json)
     {
-        bool r = strcmp(sif->path.c_str(), pgm2Str(fb_esp_pgm_str_1/* "/" */)) == 0;
+        bool r = strcmp(sif->path.c_str(), pgm2Str(firebase_pgm_str_1/* "/" */)) == 0;
         if (r)
         {
             FirebaseJsonData data;
@@ -73,7 +68,7 @@ bool FIREBASE_MP_STREAM_CLASS::get(const String &path /* child path */)
             if (data.success)
             {
                 type = data.type;
-                if (strcmp(type.c_str(), pgm2Str(fb_esp_rtdb_pgm_str_40/* "object" */)) == 0)
+                if (strcmp(type.c_str(), pgm2Str(firebase_rtdb_pgm_str_40/* "object" */)) == 0)
                     type = sif->data_type_str.c_str();
                 eventType = sif->event_type_str.c_str();
                 value = data.to<const char *>();

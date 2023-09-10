@@ -13,16 +13,8 @@
 /* This example shows how to authenticate using the OAuth2.0 access token generated from other app. */
 
 #include <Arduino.h>
-#if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <FirebaseESP8266.h>
-#elif defined(ARDUINO_RASPBERRY_PI_PICO_W)
-#include <WiFi.h>
-#include <FirebaseESP8266.h>
-#endif
 
 // Provide the token generation process info.
 #include <addons/TokenHelper.h>
@@ -73,6 +65,9 @@ void setup()
 
     Firebase.reconnectWiFi(true);
 
+    // required for large file data, increase Rx size as needed.
+    fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
     /* Assign the callback function for the long running token generation task */
     config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
@@ -82,7 +77,7 @@ void setup()
     /* Set access token */
     // The access token obtained from other apps using OAuth2.0 authentication.
 
-    // The APIs scopes that cover all library applications should include the following 
+    // The APIs scopes that cover all library applications should include the following
     // https://www.googleapis.com/auth/devstorage.full_control
     // https://www.googleapis.com/auth/datastore
     // https://www.googleapis.com/auth/userinfo.email
@@ -92,7 +87,7 @@ void setup()
 
     // Refresh token, Client ID and Client Secret are required for OAuth2.0 token refreshing.
     // The Client ID and Client Secret can be taken from https://console.developers.google.com/apis/credentials
-    
+
     // If Refresh token was not assigned or empty string, the id token will not refresh when it expired.
     Firebase.setAccessToken(&config, "<Access Token>" /* access token */, 3600 /* expiry time */, "<Refresh Token>" /* refresh token */, "<Client ID>" /* client id */, "<Client Secret>" /* client secret */);
 

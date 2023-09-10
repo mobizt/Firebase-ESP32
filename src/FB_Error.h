@@ -1,10 +1,10 @@
-#include "Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40319)
+#include "./core/Firebase_Client_Version.h"
+#if !FIREBASE_CLIENT_VERSION_CHECK(40400)
 #error "Mixed versions compilation."
 #endif
 
 /**
- * Created April 5, 2023
+ * Created September 5, 2023
  */
 
 #ifndef FB_Error_H
@@ -16,28 +16,23 @@
 /// TCP client errors
 // Server does not response to the request in time
 #define FIREBASE_ERROR_TCP_ERROR_CONNECTION_REFUSED (-1)
-// Not used
+
 #define FIREBASE_ERROR_TCP_ERROR_SEND_REQUEST_FAILED (-2)
 // The session (server disconnected) was closed during reading the response.
 #define FIREBASE_ERROR_TCP_ERROR_NOT_CONNECTED (-3)
 // Network was disconnected
 #define FIREBASE_ERROR_TCP_ERROR_CONNECTION_LOST (-4)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_NO_STREAM (-5)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_NO_HTTP_SERVER (-6)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_TOO_LESS_RAM (-7)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_ENCODING (-8)
-// Not used
-#define FIREBASE_ERROR_TCP_ERROR_STREAM_WRITE (-9)
 // The session was already opened for other connection
-#define FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED (-10)
+#define FIREBASE_ERROR_TCP_ERROR_CONNECTION_INUSED (-5)
 // Response payload is too large or internet is too slow or not responding to complete reading in time 
-#define FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT (-11)
+#define FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT (-6)
 // Similar to FIREBASE_ERROR_TCP_RESPONSE_PAYLOAD_READ_TIMED_OUT but not used
-#define FIREBASE_ERROR_TCP_RESPONSE_READ_FAILED (-12)
+#define FIREBASE_ERROR_TCP_RESPONSE_READ_FAILED (-7)
+
+
+#define FIREBASE_ERROR_TCP_CLIENT_MISSING_NETWORK_CONNECTION_CB -8
+#define FIREBASE_ERROR_TCP_CLIENT_MISSING_NETWORK_STATUS_CB -9
+#define FIREBASE_ERROR_TCP_CLIENT_NOT_INITIALIZED -10
 
 
 /// HTTP codes see RFC7231
@@ -85,11 +80,11 @@
 #define FIREBASE_ERROR_OAUTH2_REQUIRED /*          */ (FB_ERROR_RANGE - 8)
 #define FIREBASE_ERROR_TCP_MAX_REDIRECT_REACHED /*          */ (FB_ERROR_RANGE - 9)
 #define FIREBASE_ERROR_EXPECTED_JSON_DATA /*          */ (FB_ERROR_RANGE - 10)
-#define FIREBASE_ERROR_CANNOT_CONFIG_TIME /*          */ (FB_ERROR_RANGE - 11)
+#define FIREBASE_ERROR_NTP_TIMEOUT /*          */ (FB_ERROR_RANGE - 11)
 #define FIREBASE_ERROR_SSL_RX_BUFFER_SIZE_TOO_SMALL /*          */ (FB_ERROR_RANGE - 12)
 #define FIREBASE_ERROR_ARCHIVE_NOT_FOUND /*          */ (FB_ERROR_RANGE - 13)
 #define FIREBASE_ERROR_UNINITIALIZED /*          */ (FB_ERROR_RANGE - 14)
-#define FIREBASE_ERROR_TOKEN_SET_TIME /*          */ (FB_ERROR_RANGE - 15)
+#define FIREBASE_ERROR_NO_WIFI_TIME /*          */ (FB_ERROR_RANGE - 15)
 #define FIREBASE_ERROR_TOKEN_CREATE_HASH /*          */ (FB_ERROR_RANGE - 16)
 #define FIREBASE_ERROR_TOKEN_PARSE_PK /*          */ (FB_ERROR_RANGE - 17)
 #define FIREBASE_ERROR_TOKEN_SIGN /*          */ (FB_ERROR_RANGE - 18)
@@ -109,11 +104,11 @@
 #define FIREBASE_ERROR_FW_UPDATE_BEGIN_FAILED /*          */ (FB_ERROR_RANGE - 32)
 #define FIREBASE_ERROR_FW_UPDATE_WRITE_FAILED /*          */ (FB_ERROR_RANGE - 33)
 #define FIREBASE_ERROR_FW_UPDATE_END_FAILED /*          */ (FB_ERROR_RANGE - 34)
-#define FIREBASE_ERROR_SYS_TIME_IS_NOT_READY /*          */ (FB_ERROR_RANGE - 35)
-#define FIREBASE_ERROR_NTP_SYNC_TIMED_OUT /*          */ (FB_ERROR_RANGE - 36)
-#define FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY /*          */ (FB_ERROR_RANGE - 37)
-#define FIREBASE_ERROR_TOKEN_COMPLETE_UNNOTIFY /*          */ (FB_ERROR_RANGE - 38)
-#define FIREBASE_ERROR_TOKEN_ERROR_UNNOTIFY /*          */ (FB_ERROR_RANGE - 39)
-#define FIREBASE_ERROR_UDP_CLIENT_REQUIRED /*          */ (FB_ERROR_RANGE - 40)
+#define FIREBASE_ERROR_TOKEN_COMPLETE_NOTIFY /*          */ (FB_ERROR_RANGE - 35)
+#define FIREBASE_ERROR_TOKEN_COMPLETE_UNNOTIFY /*          */ (FB_ERROR_RANGE - 36)
+#define FIREBASE_ERROR_TOKEN_ERROR_UNNOTIFY /*          */ (FB_ERROR_RANGE - 37)
+#define FIREBASE_ERROR_USER_TIME_SETTING_REQUIRED /*          */ (FB_ERROR_RANGE - 38)
+#define FIREBASE_ERROR_SYS_TIME_IS_NOT_READY /*          */ (FB_ERROR_RANGE - 39)
+#define FIREBASE_ERROR_USER_PAUSE /*          */ (FB_ERROR_RANGE - 40)
 
 #endif

@@ -690,9 +690,9 @@ bool push(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size);
 
 bool pushAsync(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size);
 
-bool push(FirebaseData &fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool push(FirebaseData &fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName);
 
-bool pushAsync(FirebaseData &fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool pushAsync(FirebaseData &fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName);
 ```
 
 
@@ -1039,9 +1039,9 @@ bool set(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size);
 
 bool setAsync(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size);
 
-bool set(FirebaseData &fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool set(FirebaseData &fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName);
 
-bool setAsync(FirebaseData &fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName);
+bool setAsync(FirebaseData &fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName);
 ```
 
 
@@ -1110,9 +1110,9 @@ bool set(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size, <string>
 
 bool setAsync(FirebaseData &fbdo, <string> path, uint8_t *blob, size_t size, <string> ETag);
 
-bool set(FirebaseData &fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
+bool set(FirebaseData &fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
 
-bool setAsync(FirebaseData &fbdo, fb_esp_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
+bool setAsync(FirebaseData &fbdo, firebase_mem_storage_type storageType, <string> path, <string> fileName, <string> ETag);
 ```
 
 
@@ -2926,44 +2926,6 @@ void clearErrorQueue(FirebaseData &fbdo);
 
 
 
-#### Send Firebase Cloud Messaging to device with first registeration token which added by firebaseData.fcm.addDeviceToken
-
-param **`fbdo`** Firebase Data Object to hold data and instances.
-
-param **`index`** The index (starts from 0) of recipient device token which added by firebaseData.fcm.addDeviceToken
-    
-return **`Boolean type`** status indicates the success of the operation.
-
-```cpp
-bool sendMessage(FirebaseData &fbdo, uint16_t index);
-```
-
-
-
-#### Send Firebase Cloud Messaging to all devices (multicast) which added by firebaseData.fcm.addDeviceToken
-
-param **`fbdo`** Firebase Data Object to hold data and instances.
-    
-return **`Boolean type`** status indicates the success of the operation.
-
-```cpp
-bool broadcastMessage(FirebaseData &fbdo);
-```
-
-
-
-#### Send Firebase Cloud Messaging to devices that subscribed to a topic
-
-param **`fbdo`** Firebase Data Object to hold data and instances.
-    
-return **`Boolean type`** status indicates the success of the operation.
-
-```cpp
-bool sendTopic(FirebaseData &fbdo);
-```
-
-
-
 
 #### Initiate SD card with SPI port configuration.
 
@@ -3078,32 +3040,248 @@ void errorToString(int httpCode, std::string &buff);
 ```
 
 
+## Firebase Cloud Messaging Functions
+
+These functions can be called directly from FCM object in the Firebase object e.g. Firebase.FCM.\<function name\>
+
+
+#### Set the server key.
+
+param **`serverKey`** Server key found on Console: Project settings > Cloud Messaging
+
+param **`spi_ethernet_module`** SPI_ETH_Module struct data, optional for ESP8266 use with Ethernet module.
+
+
+
+note: This server key required for sending message via legacy HTTP API.
+
+SPI_ETH_Module struct data is for ESP8266 Ethernet supported module lwip interface.
+
+The usage example for Ethernet.
+
+```cpp
+#include <ENC28J60lwIP.h>
+
+#define ETH_CS_PIN 16 //GPIO 16 connected to Ethernet module (ENC28J60) CS pin
+ 
+ENC28J60lwIP eth(ETH_CS_PIN);
+
+FirebaseData fbdo;
+
+SPI_ETH_Module spi_ethernet_module;
+
+//in setup()
+
+spi_ethernet_module.enc28j60 = &eth;
+
+Firebase.FCM.setServerKey(FIREBASE_FCM_SERVER_KEY, &spi_ethernet_module);
+
+```
+
+The API key created in the Google Cloud console, cannot be used for authorizing FCM requests. 
+
+```cpp
+void setServerKey(<string> serverKey, SPI_ETH_Module *spi_ethernet_module = NUL);
+```
+
+
+
+#### Send Firebase Cloud Messaging to the devices with JSON payload using the FCM legacy API.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`msg`** The pointer to the message to send which is the FCM_Legacy_JSON_Message type data.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+
+
+The FCM_Legacy_JSON_Message properties are
+
+targets - The targets of messages e.g. to, registration_ids, condition.
+
+options - The options of message contained the sub-properties e.g, collapse_key, priority, content_available, 
+mutable_content,time_to_live, restricted_package_name, and dry_run.
+
+The sub-properties value of the options should be assigned in string.
+
+payloads - The two payloads i.e. notification and data.
+
+
+
+The payloads.notification properties are available e.g.
+
+| Name | Type | Platform |
+| ----- | ----- | ----- |
+| title | string | all |
+| body | string | all |
+| icon | string | Andoid, web |
+| click_action | string | all |
+| sound | string | iOS, Android |
+| badge | number | iOS |
+| subtitle | string | iOS |
+| body_loc_key | string | iOS, Android |
+| body_loc_args | JSON array of string | iOS, Android |
+| title_loc_key | string  iOS, Android |
+| title_loc_args | JSON array of string | iOS, Android |
+| android_channel_id | string | Android |
+| tag | string | Android |
+| color | string | Android |
+
+The payloads.data is the JSON object. 
+
+Read more details about legacy HTTP API here https://firebase.google.com/docs/cloud-messaging/http-server-ref
+
+```cpp
+bool send(FirebaseData *fbdo, FCM_Legacy_HTTP_Message *msg);
+```
+
+
+
+#### Send Firebase Cloud Messaging to the devices using the FCM HTTP v1 API.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`msg`** The pointer to the message to send which is the FCM_HTTPv1_JSON_Message type data.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+Read more details about HTTP v1 API here https://firebase.google.com/docs/reference/fcm/rest/v1/projects.messages
+```cpp
+bool send(FirebaseData *fbdo, FCM_HTTPv1_JSON_Message *msg);
+```
+
+
+
+#### Subscribe the devices to the topic.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`topic`** The topic to subscribe.
+
+param **`IID`** The instance ID tokens or registration tokens array.
+
+param **`numToken`** The size of instance ID tokens array.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+```cpp
+bool subscribeTopic(FirebaseData *fbdo, <string> topic, <string> IID[], size_t numToken);
+```
+
+
+
+#### Unsubscribe the devices from the topic.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`topic`** The topic to romove the subscription.
+
+param **`IID`** The instance ID tokens or registration tokens array.
+
+param **`numToken`** The size of instance ID tokens array.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+```cpp
+bool unsubscribeTopic(FirebaseData *fbdo, <string> topic, <string> IID[], size_t numToken);
+```
+
+
+
+#### Get the app instance info.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`IID`** The instance ID token of device.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+```cpp
+bool appInstanceInfo(FirebaseData *fbdo, <string> IID);
+```
+
+
+
+#### Create registration tokens for APNs tokens.
+
+param **`fbdo`** The pointer to Firebase Data Object.
+
+param **`application`** The Bundle id of the app.
+
+param **`sandbox`** The Boolean to indicate sandbox environment (TRUE) or production (FALSE).
+
+param **`APNs`** The iOS APNs tokens array.
+
+param **`numToken`** The size of instance ID tokens array.
+
+return **`Boolean`** value, indicates the success of the operation. 
+
+```cpp
+bool regisAPNsTokens(FirebaseData *fbdo, <string> application, bool sandbox, <string> APNs[], size_t numToken);
+```
+
+
 
 ## Firebase Data Object Functions
 
 
 
-#### Assign external Arduino Client.
 
-param **`client`** The pointer to Arduino Client derived class e.g. WiFiClient, WiFiClientSecure, EthernetClient or GSMClient. 
+### Assign external Arduino generic client.
 
-```cpp
-void setExternalClient(Client *client);
-```
+param **`client`** The pointer to Arduino Client.
 
-
-
-#### Assign the callback functions required for external Client usage.
-
-param **`tcpConnectionCB`** The function that handles the server connection. 
-
-param **`networkConnectionCB`** The function that handles the network connection. 
+param **`networkConnectionCB`** The function that handles the network connection.
 
 param **`networkStatusCB`** The function that handle the network connection status acknowledgement.
 
 ```cpp
-void setExternalClientCallbacks(FB_TCPConnectionRequestCallback tcpConnectionCB, FB_NetworkConnectionRequestCallback networkConnectionCB, FB_NetworkStatusRequestCallback networkStatusCB);
+void setGenericClient(Client *client, FB_NetworkConnectionRequestCallback networkConnectionCB,
+                        FB_NetworkStatusRequestCallback networkStatusCB);
 ```
+
+
+
+
+#### Assign TinyGsm Clients.
+
+param **`client`** The pointer to TinyGsmClient.
+
+param **`modem`** The pointer to TinyGsm modem object. Modem should be initialized and/or set mode before transfering data.
+
+param **`pin`** The SIM pin.
+
+param **`apn`** The GPRS APN (Access Point Name).
+
+param **`user`** The GPRS user.
+
+param **`password`** The GPRS password.
+
+```cpp
+void setGSMClient(Client *client, void *modem, const char *pin, const char *apn, const char *user, const char *password);
+```
+
+
+
+
+
+#### Assign external Ethernet Client.
+
+param **`client`** The pointer to Ethernet client object.
+
+param **`macAddress`** The Ethernet MAC address.
+
+param **`csPin`** The Ethernet module SPI chip select pin.
+
+param **`resetPin`** The Ethernet module reset pin.
+
+param **`staticIP`** (Optional) The pointer to `Firebase_StaticIP` object which included these IPAddress properties ipAddress, netMask, defaultGateway and dnsServer.
+
+```cpp
+ void setEthernetClient(Client *client, uint8_t macAddress[6], int csPin, int resetPin, Firebase_StaticIP *staticIP = nullptr);
+```
+
 
 
 
@@ -3119,12 +3297,56 @@ void setNetworkStatus(bool status);
 
 
 
-#### Set the HTTP response size limit.
+#### Set the receive and transmit buffer memory size for secured mode BearSSL WiFi client.
 
-param **`len`** The server response buffer size limit (4096 is minimum). 
+param **`rx`** The number of bytes for receive buffer memory for secured mode BearSSL (512 is minimum, 16384 is maximum).
+
+param **`tx`** The number of bytes for transmit buffer memory for secured mode BearSSL (512 is minimum, 16384 is maximum). 
+
+
+Set this option to false to support get large Blob and File operations.
 
 ```cpp
-void setResponseSize(size_t len);
+void void setBSSLBufferSize(uint16_t rx, uint16_t tx);
+```
+
+
+
+#### Set the http response size limit.
+
+param **`len`** The server response buffer size limit.
+
+```cpp
+void setResponseSize(uint16_t len);
+```
+
+
+
+#### Get WiFi client instance
+
+return **`WiFi client instance`**.
+
+```cpp
+ESP_SSLClient *getWiFiClient();
+```
+
+
+
+#### Close the keep-alive connection of the internal SSL client.
+
+note: This will release the memory used by internal SSL client.
+
+```cpp
+void stopWiFiClient();
+```
+
+
+
+
+#### Close the internal flash temporary file.
+
+```cpp
+void closeFile();
 ```
 
 
@@ -3195,29 +3417,29 @@ String dataType();
 
 #### Get the data type of payload returned from the server (RTDB only).
 
-return **`The enumeration value of fb_esp_rtdb_data_type.`**
+return **`The enumeration value of firebase_rtdb_data_type.`**
 
 
 
-fb_esp_rtdb_data_type_null or 1,
+firebase_rtdb_data_type_null or 1,
 
-fb_esp_rtdb_data_type_integer or 2,
+firebase_rtdb_data_type_integer or 2,
 
-fb_esp_rtdb_data_type_float or 3,
+firebase_rtdb_data_type_float or 3,
 
-fb_esp_rtdb_data_type_double or 4,
+firebase_rtdb_data_type_double or 4,
 
-fb_esp_rtdb_data_type_boolean or 5,
+firebase_rtdb_data_type_boolean or 5,
 
-fb_esp_rtdb_data_type_string or 6,
+firebase_rtdb_data_type_string or 6,
 
-fb_esp_rtdb_data_type_json or 7,
+firebase_rtdb_data_type_json or 7,
 
-fb_esp_rtdb_data_type_array or 8,
+firebase_rtdb_data_type_array or 8,
 
-fb_esp_rtdb_data_type_blob or 9,
+firebase_rtdb_data_type_blob or 9,
 
-fb_esp_rtdb_data_type_file or 10
+firebase_rtdb_data_type_file or 10
 
 ```cpp
 uint8_t dataTypeEnum();

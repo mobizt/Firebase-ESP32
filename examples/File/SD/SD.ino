@@ -15,16 +15,8 @@
 // change the config for that card interfaces in src/addons/SDHelper.h
 
 #include <Arduino.h>
-#if defined(ESP32)
 #include <WiFi.h>
 #include <FirebaseESP32.h>
-#elif defined(ESP8266)
-#include <ESP8266WiFi.h>
-#include <FirebaseESP8266.h>
-#elif defined(ARDUINO_RASPBERRY_PI_PICO_W)
-#include <WiFi.h>
-#include <FirebaseESP8266.h>
-#endif
 
 // Provide the token generation process info.
 #include <addons/TokenHelper.h>
@@ -95,10 +87,11 @@ void setup()
   /* Assign the callback function for the long running token generation task */
   config.token_status_callback = tokenStatusCallback; // see addons/TokenHelper.h
 
-#if defined(ESP8266)
-                                                      // required for large file data, increase Rx size as needed.
-  fbdo.setBSSLBufferSize(2048 /* Rx buffer size in bytes from 512 - 16384 */, 512 /* Tx buffer size in bytes from 512 - 16384 */);
-#endif
+  // Comment or pass false value when WiFi reconnection will control by your code or third party library
+  Firebase.reconnectWiFi(true);
+
+  // required for large file data, increase Rx size as needed.
+  fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
   // Or use legacy authenticate method
   // config.database_url = DATABASE_URL;
@@ -107,8 +100,6 @@ void setup()
   // To connect without auth in Test Mode, see Authentications/TestMode/TestMode.ino
 
   Firebase.begin(&config, &auth);
-
-  Firebase.reconnectWiFi(true);
 
   // Mount SD card.
   SD_Card_Mounting(); // See src/addons/SDHelper.h
@@ -146,19 +137,19 @@ void setup()
 // The Firebase download callback function
 void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
 {
-  if (info.status == fb_esp_rtdb_download_status_init)
+  if (info.status == firebase_rtdb_download_status_init)
   {
     Serial.printf("Downloading file %s (%d) to %s\n", info.remotePath.c_str(), info.size, info.localFileName.c_str());
   }
-  else if (info.status == fb_esp_rtdb_download_status_download)
+  else if (info.status == firebase_rtdb_download_status_download)
   {
     Serial.printf("Downloaded %d%s\n", (int)info.progress, "%");
   }
-  else if (info.status == fb_esp_rtdb_download_status_complete)
+  else if (info.status == firebase_rtdb_download_status_complete)
   {
     Serial.println("Download completed\n");
   }
-  else if (info.status == fb_esp_rtdb_download_status_error)
+  else if (info.status == firebase_rtdb_download_status_error)
   {
     Serial.printf("Download failed, %s\n", info.errorMsg.c_str());
   }
@@ -167,19 +158,19 @@ void rtdbDownloadCallback(RTDB_DownloadStatusInfo info)
 // The Firebase upload callback function
 void rtdbUploadCallback(RTDB_UploadStatusInfo info)
 {
-  if (info.status == fb_esp_rtdb_upload_status_init)
+  if (info.status == firebase_rtdb_upload_status_init)
   {
     Serial.printf("Uploading file %s (%d) to %s\n", info.localFileName.c_str(), info.size, info.remotePath.c_str());
   }
-  else if (info.status == fb_esp_rtdb_upload_status_upload)
+  else if (info.status == firebase_rtdb_upload_status_upload)
   {
     Serial.printf("Uploaded %d%s\n", (int)info.progress, "%");
   }
-  else if (info.status == fb_esp_rtdb_upload_status_complete)
+  else if (info.status == firebase_rtdb_upload_status_complete)
   {
     Serial.println("Upload completed\n");
   }
-  else if (info.status == fb_esp_rtdb_upload_status_error)
+  else if (info.status == firebase_rtdb_upload_status_error)
   {
     Serial.printf("Upload failed, %s\n", info.errorMsg.c_str());
   }
