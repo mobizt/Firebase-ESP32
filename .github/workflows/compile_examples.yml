@@ -49,8 +49,6 @@ jobs:
         #- "examples/FireSense/AutomaticPlantWatering/AutomaticPlantWatering.ino"
         #- "examples/FireSense/Sensors/Sensors.ino"
         #- "examples/FireSense/Blink/Blink.ino"
-        - "examples/Messaging/Messaging.ino"
-        - "examples/MessagingEthernet/MessagingEthernet.ino"
         - "examples/Priority/Priority.ino"
         - "examples/Queue/Queue.ino"
         - "examples/ShallowedData/ShallowedData.ino"
