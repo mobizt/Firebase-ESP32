@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40401)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40402)
 #error "Mixed versions compilation."
 #endif
 
@@ -683,6 +683,7 @@ void FirebaseCore::tokenProcessingTask()
     {
 
         FBUtils::idle();
+        internal.fb_clock_rdy = timeReady();
 
         if (!internal.fb_clock_rdy && (config->cert.data != NULL || config->cert.file.length() > 0 || config->signer.tokens.token_type == token_type_oauth2_access_token || config->signer.tokens.token_type == token_type_custom_token))
         {

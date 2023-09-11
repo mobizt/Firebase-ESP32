@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40401)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40402)
 #error "Mixed versions compilation."
 #endif
 
@@ -15,6 +15,10 @@
 
 #if __has_include(<esp_idf_version.h>)
 #include <esp_idf_version.h>
+#endif
+
+#if __has_include(<IPAddress.h>)
+#include <IPAddress.h>
 #endif
 
 #if defined(ESP8266) || defined(MB_ARDUINO_PICO)
