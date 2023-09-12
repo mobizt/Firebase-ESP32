@@ -54,7 +54,7 @@ void networkConnection()
 void networkStatusRequestCallback()
 {
     // Set the network status based on your network client
-    fbdo.setNetworkStatus(true/* or false */);
+    fbdo.setNetworkStatus(false /* or true */);
 }
 
 void setup()
