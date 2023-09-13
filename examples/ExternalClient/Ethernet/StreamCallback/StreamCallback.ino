@@ -42,14 +42,17 @@
 #define WIZNET_MOSI_PIN 23  // Connect W5500 MOSI pin to GPIO 23 of ESP32
 #define WIZNET_SCLK_PIN 18  // Connect W5500 SCLK pin to GPIO 18 of ESP32
 
-/* 5. Define the analog GPIO pin to pull random bytes from, used in seeding the RNG for SSLClient */
-const int analog_pin = 34; // ESP32 GPIO 34 (Analog pin)
-
-/* 6. Define MAC */
+/* 5. Define MAC */
 uint8_t Eth_MAC[] = {0x02, 0xF0, 0x0D, 0xBE, 0xEF, 0x01};
 
-/* 7. Define IP (Optional) */
-IPAddress Eth_IP(192, 168, 1, 104);
+/* 6. Define the static IP (Optional)
+IPAddress localIP(192, 168, 1, 104);
+IPAddress subnet(255, 255, 0, 0);
+IPAddress gateway(192, 168, 1, 1);
+IPAddress dnsServer(8, 8, 8, 8);
+bool optional = false; // Use this static IP only no DHCP
+Firebase_StaticIP staIP(localIP, subnet, gateway, dnsServer, optional);
+*/
 
 // Define Firebase Data object
 FirebaseData stream;
