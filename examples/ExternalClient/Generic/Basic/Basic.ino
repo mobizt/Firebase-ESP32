@@ -12,7 +12,6 @@
 
 /** This example shows the basic RTDB usage with external network Client. */
 
-
 #include <FirebaseESP32.h>
 
 // Provide the token generation process info.
@@ -87,10 +86,11 @@ void setup()
     /* Assign the pointer to global defined external SSL Client object and callbacls */
     fbdo.setGenericClient(&client, networkConnection, networkStatusRequestCallback);
 
-        // Comment or pass false value when WiFi reconnection will control by your code or third party library
-    Firebase.reconnectWiFi(true);
+    // Comment or pass false value when WiFi reconnection will control by your code or third party library
+    Firebase.reconnectNetwork(true);
 
-    // required for large file data, increase Rx size as needed.
+    // Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
+    // Large data transmission may require larger RX buffer, otherwise the data read time out can be occurred.
     fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
     Firebase.setDoubleDigits(5);

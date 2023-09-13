@@ -123,9 +123,10 @@ void setup()
   // Or custom set the root certificate for each FirebaseData object
   fbdo.setCert(rootCACert);
 
-  Firebase.reconnectWiFi(true);
+  Firebase.reconnectNetwork(true);
 
-  // required for large file data, increase Rx size as needed.
+  // Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
+  // Large data transmission may require larger RX buffer, otherwise the data read time out can be occurred.
   fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
 
   /* Or assign the certificate file */
@@ -154,8 +155,8 @@ void setup()
 
   /** Timeout options.
 
-  //WiFi reconnect timeout (interval) in ms (10 sec - 5 min) when WiFi disconnected.
-  config.timeout.wifiReconnect = 10 * 1000;
+  //Network reconnect timeout (interval) in ms (10 sec - 5 min) when network or WiFi disconnected.
+  config.timeout.networkReconnect = 10 * 1000;
 
   //Socket connection and SSL handshake timeout in ms (1 sec - 1 min).
   config.timeout.socketConnection = 10 * 1000;
