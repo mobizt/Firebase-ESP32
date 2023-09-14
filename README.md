@@ -14,16 +14,103 @@ This library supports ESP32 MCU from Espressif. The following are platforms in w
 * [Arduino WiFi Shield 101 and Arduino MKR1000 WIFI](https://github.com/mobizt/Firebase-Arduino-WiFi101)
 
 
+## Contents
 
-## New library for ESP8266 and ESP32 is available
+[1. Features](#features)
 
-The Firebase Client for ESP8266 and ESP32 supports Cloud Firestore, Firebase Storage, Google Cloud Storage and new API Cloud Messaging and Cloud Functions for Firebase is now available.
+[2. Supported Devices](#supported-devices)
 
-Please try it here https://github.com/mobizt/Firebase-ESP-Client
+[3. Dependencies](#dependencies)
+
+[4. Installation](#installation)
+
+- [Using Library Manager](#using-library-manager)
+
+- [Manual installation](#manual-installation)
+
+[5. Usages](#usages)
+
+- [Initialization](#initialization)
+
+[6. Memory Options](#memory-options)
+
+- [Memory Options for ESP32](#memory-options-for-esp32)
+
+- [Arduino IDE](#arduino-ide)
+
+- [PlatformIO IDE](#platformio-ide)
+
+[7. Authentication](#authentication)
+
+- [Access in Test Mode (No Auth)](#access-in-test-mode-no-auth)
+
+- [The authenication credentials and prerequisites](#the-authenication-credentials-and-prerequisites)
+
+[8. Library Build Options](#library-build-options)
+
+- [Predefined Options](#predefined-options)
+
+- [Optional Options](#optional-options)
+
+[9. TCP Keep Alive](#tcp-keep-alive)
+
+[10. Realtime Database](#realtime-database)
+
+- [Read Data](#read-data)
+
+- [Store Data](#store-data)
+
+- [Append Data](#append-data)
+
+- [Patch Data](#patch-data)
+
+- [Delete Data](#delete-data)
+
+- [Filtering Data](#filtering-data)
+
+- [Monitoring data](#monitoring-data)
+
+- [Enable TCP KeepAlive for reliable HTTP Streaming](#enable-tcp-keepalive-for-reliable-http-streaming)
+
+- [HTTP Streaming examples](#http-streaming-examples)
+
+- [Backup and Restore Data](#backup-and-restore-data)
+
+- [Database Error Handling](#database-error-handling)
+
+[11. Add On](#add-on)
+
+- [FireSense, The Programmable Data Logging and IO Control (Deprecated)](#firesense-the-programmable-data-logging-and-io-control-deprecated)
+
+[12. Firebase Cloud Messaging (FCM)](#firebase-cloud-messaging-fcm)
+
+[13. Create, Edit, Serializing and Deserializing the JSON Objects](#create-edit-serializing-and-deserializing-the-json-objects)
+
+[14. License](#license)
 
 
+## Features
 
-## Tested Devices
+* Supports ESP32 devices.
+
+* Supports external Heap via SRAM/PSRAM.
+
+* TinyGSMClient and Ethernet Client integration.
+
+* Faster server reconnection with SSL Session Resumption.
+
+* Supports external network module.
+
+* Supports Firebase Realtime database.
+
+* Supports Firebase Cloud Messaging.
+
+* Supports Test Mode (No Auth).
+
+* Supports Firmware OTA updates.
+
+
+## Supported Devices
 
  * NodeMCU-32
  * WEMOS LOLIN32
@@ -32,59 +119,14 @@ Please try it here https://github.com/mobizt/Firebase-ESP-Client
  Most ESP32 boards are supported unless Sparkfun ESP32 Thing ([old version](https://www.sparkfun.com/products/13907)) is not recommended due to it built with non-standard 26 MHz clock on board instead of 40 MHz which causes the bugs and unstable network connection.
 
 
-
-## Other Arduino Devices supported using external Clients.
-
-Since version 3.14.4, library allows you to use external Arduino Clients network interfaces e.g. WiFiClient, EthernetClient and GSMClient, the Arduino supported devices that have enough flash size (> 128k) and memory can now use this library.
-
-To use external Client, see the [ExternalClient examples](/examples/ExternalClient).
-
-The authentication with OAuth2.0 and custom auth tokens, RTDB error queue and downloadFileOTA features are not supported for other Arduino devices using external Clients.
-
-The flash and SD filesystems supports depend on the devices and third party filesystems libraries installed.
-
-
-
-## Features
-
-* **Complete and secure Firebase RTDB's REST APIs Client**
-
-* **Supports database read, store, update, delete and value changes listener**
-
-* **Supports Test Mode (No Auth)**
-
-* **Supports Firmware OTA updates**
-
-* **Supports Firebase Cloud Messaging.**
-
-* **Built-in JSON editor and deserializer.**
-
-* **Supports external Heap via PSRAM.**
-
-* **Supports ethernet using LAN8720, TLK110 and IP101 Ethernet modules.**
-
-
-
-## Basic Examples
-
-Don't be confused with other Firebase Arduino libraries, this library has different working functions, the following examples provide the basic usages.
-
-
-[ESP32 | FLUTTER | FIREBASE - Temperature & Humidity Check App](https://www.youtube.com/watch?v=nVrACWPXi8g&feature=youtu.be)
-
-[Serverless IoTs with Firebase Realtime Database and ESP32 - Part 1](https://medium.com/@vibrologic/serverless-iots-with-firebase-realtime-database-and-esp32-2d86eda06ff1)
-
-[Serverless IoTs with Firebase Realtime Database and ESP32 - Part 2](https://medium.com/@vibrologic/serverless-iots-with-firebase-realtime-database-and-esp32-def049181b57)
-
-
-
 ## Dependencies
 
-This library required **ESP32 Core SDK version 1.0.1 or above**.
+
+This library required **Platform's Core SDK** to be installed.
 
 For Arduino IDE, ESP32 Core SDK can be installed through **Boards Manager**. 
 
-For PlatfoemIO IDE, ESP32 Core SDK can be installed through **PIO Home** > **Platforms** > **Espressif 32**.
+For PlatfoemIO IDE, ESP32 Core SDK can be installed through **PIO Home** > **Platforms** > **Espressif 8266 or Espressif 32**.
 
 
 
@@ -95,8 +137,7 @@ For PlatfoemIO IDE, ESP32 Core SDK can be installed through **PIO Home** > **Pla
 
 At Arduino IDE, go to menu **Sketch** -> **Include Library** -> **Manage Libraries...**
 
-
-In Library Manager Window, search **"firebase"** in the search form then select **"Firebase ESP32 Client"** 
+In Library Manager Window, search **"firebase"** in the search form then select **"FirebaseESP32"**. 
 
 Click **"Install"** button.
 
@@ -104,14 +145,9 @@ Click **"Install"** button.
 
 For PlatformIO IDE, using the following command.
 
-**pio lib install "Firebase ESP32 Client"**
+**pio lib install "FirebaseESP32""**
 
-
-Or at **PIO Home** -> **Library** -> **Registry** then search **Firebase ESP32 Client**.
-
-
-If you ever installed this library in Global storage in PlatformIO version prior to v2.0.0 and you have updated the PlatformIO to v2.0.0 and later, the global library installation was not available, the sources files of old library version still be able to search by the library dependency finder (LDF), you needed to remove the library from folder **C:\Users\\<UserName\>\\.platformio\lib** to prevent unexpected behavior when compile and run.
-
+Or at **PIO Home** -> **Library** -> **Registry** then search **FirebaseESP32**.
 
 
 
@@ -121,25 +157,12 @@ For Arduino IDE, download zip file from the repository (Github page) by select *
 
 From Arduino IDE, select menu **Sketch** -> **Include Library** -> **Add .ZIP Library...**.
 
-Choose **Firebase-ESP32-master.zip** that previously downloaded.
+Choose **FirebaseESP32-master.zip** that previously downloaded.
 
-Rename **Firebase-ESP32-master** folder to **Firebase_ESP32_Client**.
+Rename **FirebaseESP32-master** folder to **FirebaseESP32**.
 
-Go to menu **Files** -> **Examples** -> **Firebase-ESP32-master** and choose one from examples.
+Go to menu **Files** -> **Examples** -> **FirebaseESP32-master** and choose one from examples.
 
-
-For PlatformIO, in folder **"lib"**, create new folder named **"Firebase-ESP32"** and add **[these files](https://github.com/mobizt/Firebase-ESP32/tree/master/src)** in that folder.
-
-
-### Important Note for Manual Installation in Arduino IDE
-
-Folder renaming to **Firebase_ESP32_Client** was required for making the library can be updated via Library Manager without problems.
-
-Without folder renaming, when you update the library via Library Manager, library will be updated to the another folder named  **Firebase_ESP32_Client** which leads to compilation error when there are two different versions of library found in the libraries folder and can cause the conflicts when file structures and functions changed in the newer version. 
-
-For example, the library version 3.12.10 and earlier were installed manually by downloading ZIP file and extracted to **Firebase-ESP32-master** folder. If the library was later updated to v3.14.2 and newer via Library Manager, the compilation error will take place because the newer version files structures and functions changed and compiler is trying to compile these two versions of source files together. 
-
-In this case, you need to delete **Firebase-ESP32-master** folder from libraries folder.
 
 
 
@@ -152,16 +175,14 @@ See [function description](/src/README.md) for all available functions.
 
 
 
-
 ### Initialization
 
 
 ```cpp
 
-// Include WiFi.h
+#include <Arduino.h>
 #include <WiFi.h>
 
-// Include Firebase ESP32 library (this library)
 #include <FirebaseESP32.h>
 
 // Define the Firebase Data object
@@ -173,14 +194,13 @@ FirebaseAuth auth;
 // Define the FirebaseConfig data for config data
 FirebaseConfig config;
 
-// Assign the project host and api key (required)
+// Assign the project host and api key 
 config.host = FIREBASE_HOST;
 
 config.api_key = API_KEY;
 
 // Assign the user sign in credentials
 auth.user.email = USER_EMAIL;
-
 auth.user.password = USER_PASSWORD;
 
 // Initialize the library with the Firebase authen and config.
@@ -195,29 +215,37 @@ Firebase.setMaxRetry(fbdo, 3);
 // Optional, set number of error resumable queues
 Firebase.setMaxErrorQueue(fbdo, 30);
 
-// Optional, use classic HTTP GET and POST requests. 
-// This option allows get and delete functions (PUT and DELETE HTTP requests) works for 
-// device connected behind the Firewall that allows only GET and POST requests.   
+// Optional, use classic HTTP GET and POST requests.
+// This option allows get and delete functions (PUT and DELETE HTTP requests) works for
+// device connected behind the Firewall that allows only GET and POST requests.
 Firebase.enableClassicRequest(fbdo, true);
 
-// Optional, set the size of HTTP response buffer
-// Prevent out of memory for large payload but data may be truncated and can't determine its type.
-fbdo.setResponseSize(8192); // minimum size is 4096 bytes
+// Since v4.4.x, BearSSL engine was used, the SSL buffer need to be set.
+// Large data transmission may require larger RX buffer, otherwise connection issue or data read time out can be occurred.
+fbdo.setBSSLBufferSize(4096 /* Rx buffer size in bytes from 512 - 16384 */, 1024 /* Tx buffer size in bytes from 512 - 16384 */);
+
+// Limit the size of response payload to be collected in FirebaseData
+fbdo.setResponseSize(2048);
+
 ```
+See [other authentication examples](/examples/Authentications) for more sign in methods.
 
 
-## Memory Options for ESP32
+## Memory Options
+
+
+### Memory Options for ESP32
 
 In ESP32 module that has PSRAM installed, you can enable it and set the library to use this external memory instead.
 
-### Arduino IDE
+#### Arduino IDE
 
 To enable PSRAM in ESP32 module.
 
 ![Enable PSRAM in ESP32](/media/images/ESP32-PSRAM.png)
 
 
-### PlatformIO IDE
+#### PlatformIO IDE
 
 
 In PlatformIO on VSCode or Atom IDE, add the following build_flags in your project's platformio.ini file.
@@ -408,18 +436,34 @@ FIREBASE_ENABLE_FCM // For Firebase Cloud Messaging compilation
 FIREBASE_USE_PSRAM // For enabling PSRAM support
 ENABLE_OTA_FIRMWARE_UPDATE // For enabling OTA updates support via RTDB, Firebase Storage and Google Cloud Storage buckets
 USE_CONNECTION_KEEP_ALIVE_MODE // For enabling Keep Alive connection mode
+DEFAULT_FLASH_FS // For enabling Flash filesystem support
+DEFAULT_SD_FS // For enabling SD filesystem support 
+CARD_TYPE_SD or CARD_TYPE_SD_MMC // The SD card type for SD filesystem
 ```
+
+The Flash and SD filesystems are predefined.
+
+SD is the default SD filesystem for all devices.
+
+For ESP8266 and Arduino Pico, LittleFS is the default flash filesystem.
+
+For ESP32 since v2.0.x, LittleFS is the default flash filesystem otherwise SPIFFS is the default flash filesystem.
+
+In otherr devices, SPIFFS is the default flash filesystem.
+
+User can change `DEFAULT_FLASH_FS` and `DEFAULT_SD_FS` with `CARD_TYPE_SD` or `CARD_TYPE_SD_MMC` defined values for other filesystems.
 
 ### Optional Options
 
 The following options are not yet defined in [**FirebaseFS.h**](src/FirebaseFS.h) and can be assigned by user.
 
 ```cpp
+FIREBASE_ETHERNET_MODULE_LIB `"EthernetLibrary.h"` // For the Ethernet library to work with external Ethernet module
+FIREBASE_ETHERNET_MODULE_CLASS EthernetClass // For the Ethernet class object of Ethernet library to work with external Ethernet module
 FIREBASE_DISABLE_ONBOARD_WIFI // For disabling on-board WiFI functionality in case external Client usage
 FIREBASE_DISABLE_NATIVE_ETHERNET // For disabling native (sdk) Ethernet functionality in case external Client usage
 FIREBASE_DEFAULT_DEBUG_PORT // For debug port assignment
 ```
-
 
 You can assign the optional build options using one of the following methods.
 
@@ -433,6 +477,13 @@ In PlatformIO IDE, using `build_flags` in PlatformIO IDE's platformio.ini is mor
 build_flags = -D DISABLE_FCM
               -D EFIREBASE_DISABLE_ONBOARD_WIFI
 ```
+
+For external Ethernet module integation used with function `setEthernetClient`, both `FIREBASE_ETHERNET_MODULE_LIB` and `FIREBASE_ETHERNET_MODULE_CLASS` should be defined.
+
+`FIREBASE_ETHERNET_MODULE_LIB` is the Ethernet library name with extension (.h) and should be inside `""` or `<>` e.g. `"Ethernet.h"`.
+
+`FIREBASE_ETHERNET_MODULE_CLASS` is the name of static object defined from class e.g. `Ethernet`.
+
 
 For disabling predefined options instead of editing the [**FirebaseFS.h**](src/FirebaseFS.h) or using `#undef` in `CustomFirebaseFS.h`, you can define these build flags with these names or macros in `CustomFirebaseFS.h`.
 
@@ -458,7 +509,7 @@ This `CustomFirebaseFS.h` will not change or overwrite when update the library.
 
 
 
-### TCP Keep Alive
+## TCP Keep Alive
 
 
 The TCP KeepAlive can be enabled from executing `<FirebaseData>.keepAlive` with providing TCP options as arguments, i.e.,
@@ -493,6 +544,9 @@ The Arduino Pico is currently not support TCP KeepAlive until it's implemented i
 For External Client, this TCP KeepAlive option is not appliable and should be managed by external Client library.
 
 
+## Realtime Database
+
+See [RTDB examples](/examples) for complete usages.
 
 ### Read Data
 
@@ -846,7 +900,7 @@ query.clear();
 
 
 
-### Server Data Changes Listener with Server-Sent Events or HTTP Streaming
+### Monitoring Data
 
 
 This library uses HTTP GET request with `text/event-stream` header to make [**HTTP streaming**](https://en.wikipedia.org/wiki/Server-sent_events) connection.
@@ -1269,8 +1323,10 @@ Firebase.saveErrorQueue(fbdo, "/test.txt", StorageType::FLASH);
 
 ```
 
+## Add On
 
-## FireSense, The Programmable Data Logging and IO Control (Deprecated Add On)
+
+### FireSense, The Programmable Data Logging and IO Control (Deprecated)
 
 This add on library is for the advance usages and works with Firebase RTDB.
 

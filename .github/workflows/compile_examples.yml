@@ -42,7 +42,6 @@ jobs:
         - "examples/DataFilter/DataFilter.ino"
         - "examples/DataRetaining/DataRetaining.ino"
         - "examples/ETag/ETag.ino"
-        - "examples/FastSend/FastSend.ino"
         - "examples/File/Flash/Flash.ino"
         - "examples/File/SD/SD.ino"
         #- "examples/FireSense/AnalogRead/AnalogRead.ino"

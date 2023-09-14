@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40406)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
 #error "Mixed versions compilation."
 #endif
 
@@ -43,11 +43,35 @@
  */
 #define FIREBASE_ENABLE_ERROR_QUEUE
 
+/**📍 For Firestore compilation
+ * ⛔ Use following build flag to disable.
+ * -D DISABLE_FIRESTORE
+ */
+#define FIREBASE_ENABLE_FIRESTORE
+
 /**📍 For Firebase Cloud Messaging compilation
  * ⛔ Use following build flag to disable.
  * -D DISABLE_FCM
  */
 #define FIREBASE_ENABLE_FCM
+
+/**📍 For Firebase Storage compilation
+ * ⛔ Use following build flag to disable.
+ * -D DISABLE_FB_STORAGE
+ */
+#define FIREBASE_ENABLE_FB_STORAGE
+
+/**📍 For Google Cloud Storage compilation
+ * ⛔ Use following build flag to disable.
+ * -D DISABLE_GC_STORAGE
+ */
+#define FIREBASE_ENABLE_GC_STORAGE
+
+/**📍 For Functions for Firebase compilation
+ * ⛔ Use following build flag to disable.
+ * -D DISABLE_FB_FUNCTIONS
+ */
+#define FIREBASE_ENABLE_FB_FUNCTIONS
 
 /**📍 For enabling PSRAM support
  * ⛔ Use following build flag to disable.
@@ -126,8 +150,8 @@
  *
  * 📍 For SD MMC (ESP32)
  * #include <SD_MMC.h>
- * #define CARD_TYPE_SD_MMC SD_MMC //For ESP32 SDMMC
- * #define ESP_MAIL_CARD_TYPE_SD_MMC 1
+ * #define DEFAULT_SD_FS SD_MMC //For ESP32 SDMMC
+ * #define CARD_TYPE_SD_MMC 1
  *
  * 📍 For SdFat on ESP32 and other devices except for ESP8266
  * #include <SdFat.h> //https://github.com/greiman/SdFat
@@ -153,6 +177,14 @@
 
 /** 🔖 Optional Build Options
  *
+ * 🏷️ For external Ethernet module support.
+ * - Should define both library name and class object name.
+ * - FIREBASE_ETHERNET_MODULE_LIB is the Ethernet library name with extension (.h) and
+ *   should be inside "" or <> e.g. "Ethernet.h".
+ * - FIREBASE_ETHERNET_MODULE_CLASS is the name of static object defined from class e.g. Ethernet.
+ * 
+ * #define FIREBASE_ETHERNET_MODULE_LIB "EthernetLib.h"
+ * #define FIREBASE_ETHERNET_MODULE_CLASS EthernetClass
  *
  * 🏷️ For disabling on-board WiFI functionality in case external Client usage
  * #define FIREBASE_DISABLE_ONBOARD_WIFI
@@ -160,10 +192,11 @@
  * 🏷️ For disabling native (sdk) Ethernet functionality in case external Client usage
  * #define FIREBASE_DISABLE_NATIVE_ETHERNET
  * 
- * 🏷️ For debug port assignment
+ * 🏷️ For debug port assignment.
  * #define FIREBASE_DEFAULT_DEBUG_PORT Serial
  *
  */
+#define ENABLE_ESP8266_ENC28J60_ETH
 
 #if __has_include("CustomFirebaseFS.h")
 #include "CustomFirebaseFS.h"
