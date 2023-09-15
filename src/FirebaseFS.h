@@ -1,5 +1,5 @@
 #include "./core/Firebase_Client_Version.h"
-#if !FIREBASE_CLIENT_VERSION_CHECK(40407)
+#if !FIREBASE_CLIENT_VERSION_CHECK(40408)
 #error "Mixed versions compilation."
 #endif
 
@@ -182,9 +182,11 @@
  * - FIREBASE_ETHERNET_MODULE_LIB is the Ethernet library name with extension (.h) and
  *   should be inside "" or <> e.g. "Ethernet.h".
  * - FIREBASE_ETHERNET_MODULE_CLASS is the name of static object defined from class e.g. Ethernet.
+ * - FIREBASE_ETHERNET_MODULE_TIMEOUT is the time out in milliseconds to wait network connection.
  * 
  * #define FIREBASE_ETHERNET_MODULE_LIB "EthernetLib.h"
  * #define FIREBASE_ETHERNET_MODULE_CLASS EthernetClass
+ * #define FIREBASE_ETHERNET_MODULE_TIMEOUT 2000
  *
  * 🏷️ For disabling on-board WiFI functionality in case external Client usage
  * #define FIREBASE_DISABLE_ONBOARD_WIFI

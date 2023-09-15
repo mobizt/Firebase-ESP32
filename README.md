@@ -5,14 +5,16 @@
 ![arduino-library-badge](https://www.ardu-badge.com/badge/Firebase%20ESP32%20Client.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/Firebase%20ESP32%20Client.svg) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6462672.svg)](https://doi.org/10.5281/zenodo.6462672)
 
 
-This library supports ESP32 MCU from Espressif. The following are platforms in which libraries are also available.
+This library provides Firebase Realtime database and Firebase Cloud Messaging functions and supports only ESP32 MCU from Espressif with or without External network module. The ESP8266 version is available [here](https://github.com/mobizt/Firebase-ESP8266).
 
-* [ESP8266 Firebase Arduino library]( https://github.com/mobizt/Firebase-ESP8266)
+The features can be configurable to add and exclude some unused features, see [Library Build Options](#library-build-options).
 
-* [Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000 and Arduino UNO WiFi Rev.2](https://github.com/mobizt/Firebase-Arduino-WiFiNINA)
+If you use other Arduino devices or you want to use more Firebase services included Cloud Firestore database, Firebase Storage, Google Cloud Storage and Cloud Functions for Firebase, please use [Firebase-ESP-Client](https://github.com/mobizt/Firebase-ESP-Client) library instead.
 
-* [Arduino WiFi Shield 101 and Arduino MKR1000 WIFI](https://github.com/mobizt/Firebase-Arduino-WiFi101)
 
+The RTDB (Realtime database), FCM (Cloud Messaing) and core code used in `Firebase-ESP-Client`, `FirebaseESP8266` and `FirebaseESP32` libraries are the same unless the syntaxes are different. Please see the library examples for usage guidlines.
+
+The `FirebaseESP8266` and `FirebaseESP32` libraries are the old and limited features Firebase client library while `Firebase-ESP-Client` is the newver version of Firebase client library that developed to support more Firebase services.
 
 ## Contents
 
@@ -460,6 +462,7 @@ The following options are not yet defined in [**FirebaseFS.h**](src/FirebaseFS.h
 ```cpp
 FIREBASE_ETHERNET_MODULE_LIB `"EthernetLibrary.h"` // For the Ethernet library to work with external Ethernet module
 FIREBASE_ETHERNET_MODULE_CLASS EthernetClass // For the Ethernet class object of Ethernet library to work with external Ethernet module
+FIREBASE_ETHERNET_MODULE_TIMEOUT 2000 // For the time out in milliseconds to wait external Ethernet module to connect to network
 FIREBASE_DISABLE_ONBOARD_WIFI // For disabling on-board WiFI functionality in case external Client usage
 FIREBASE_DISABLE_NATIVE_ETHERNET // For disabling native (sdk) Ethernet functionality in case external Client usage
 FIREBASE_DEFAULT_DEBUG_PORT // For debug port assignment
@@ -484,6 +487,7 @@ For external Ethernet module integation used with function `setEthernetClient`, 
 
 `FIREBASE_ETHERNET_MODULE_CLASS` is the name of static object defined from class e.g. `Ethernet`.
 
+`FIREBASE_ETHERNET_MODULE_TIMEOUT` is the time out in milliseconds to wait network connection.
 
 For disabling predefined options instead of editing the [**FirebaseFS.h**](src/FirebaseFS.h) or using `#undef` in `CustomFirebaseFS.h`, you can define these build flags with these names or macros in `CustomFirebaseFS.h`.
 
