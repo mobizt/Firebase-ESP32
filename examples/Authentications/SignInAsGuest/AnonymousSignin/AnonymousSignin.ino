@@ -10,6 +10,8 @@
  *
  */
 
+/*░D░O░ ░N░O░T░ ░U░S░E░ ░T░H░I░S░ ░I░N░ ░P░R░O░D░U░T░I░O░N░*/
+
 /** This example will show how to authenticate as a anonymous user.
  *
  * You need to enable Anonymous provider.
@@ -112,6 +114,8 @@ void setup()
      */
 
     Serial.print("Sign up new user... ");
+
+    /*░D░O░ ░N░O░T░ ░U░S░E░ ░T░H░I░S░ ░I░N░ ░P░R░O░D░U░T░I░O░N░*/
 
     /* Sign up */
     if (Firebase.signUp(&config, &auth, "", ""))
