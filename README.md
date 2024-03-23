@@ -16,9 +16,7 @@ The RTDB (Realtime database), FCM (Cloud Messaing) and core code used in `Fireba
 
 The `FirebaseESP8266` and `FirebaseESP32` libraries are the old and limited features Firebase client library while `Firebase-ESP-Client` is the newver version of Firebase client library that developed to support more Firebase services.
 
-Try the beta version of new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library which is faster and more reliable.
-
-The new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) is currently support Realtime Database.
+The new version of new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library is availavle for you to try.
 
 ## Contents
 
