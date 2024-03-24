@@ -9,14 +9,18 @@ This library provides Firebase Realtime database and Firebase Cloud Messaging fu
 
 The features can be configurable to add and exclude some unused features, see [Library Build Options](#library-build-options).
 
-If you use other Arduino devices or you want to use more Firebase services included Cloud Firestore database, Firebase Storage, Google Cloud Storage and Cloud Functions for Firebase, please use [Firebase-ESP-Client](https://github.com/mobizt/Firebase-ESP-Client) library instead.
 
+## We're moving to the new library
 
-The RTDB (Realtime database), FCM (Cloud Messaing) and core code used in `Firebase-ESP-Client`, `FirebaseESP8266` and `FirebaseESP32` libraries are the same unless the syntaxes are different. Please see the library examples for usage guidlines.
+The new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library is now availavle in Arduino IDE and PlatformIO's Library Manager.
 
-The `FirebaseESP8266` and `FirebaseESP32` libraries are the old and limited features Firebase client library while `Firebase-ESP-Client` is the newver version of Firebase client library that developed to support more Firebase services.
+It will be the old Firebase libraries (Firebase-ESP-Client, Firebase-ESP8266 and FirebaseESP32) replacement.
 
-The new version of new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library is availavle for you to try.
+The new library provides simpler APIs interface, faster and more reliable operations.  It can use in both sync and async operations.
+
+All old Firebase libraries will be deprecated soon this year and we recommended to upgrade your current code to work with new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library instead.
+
+For Arduino NANO 33 IoT, Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000, Arduino Nano RP2040 Connect, we recommend to use new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library instead of this old [Firebase-Arduino-WiFiNINA](https://github.com/mobizt/Firebase-Arduino-WiFiNINA) library.
 
 ## Contents
 
