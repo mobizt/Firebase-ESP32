@@ -4,12 +4,6 @@
 
 ![arduino-library-badge](https://www.ardu-badge.com/badge/Firebase%20ESP32%20Client.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/Firebase%20ESP32%20Client.svg) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6462672.svg)](https://doi.org/10.5281/zenodo.6462672)
 
-
-This library provides Firebase Realtime database and Firebase Cloud Messaging functions and supports only ESP32 MCU from Espressif with or without External network module. The ESP8266 version is available [here](https://github.com/mobizt/Firebase-ESP8266).
-
-The features can be configurable to add and exclude some unused features, see [Library Build Options](#library-build-options).
-
-
 ## We're moving to the new library
 
 > [!WARNING] 
