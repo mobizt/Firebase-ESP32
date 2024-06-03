@@ -1,21 +1,19 @@
-# Firebase Realtime Database Arduino Library for ESP32
+# [Deprecated] Firebase Realtime Database Arduino Library for ESP32
 
 ![Compile](https://github.com/mobizt/Firebase-ESP32/actions/workflows/compile_library.yml/badge.svg) ![Examples](https://github.com/mobizt/Firebase-ESP32/actions/workflows/compile_examples.yml/badge.svg) [![Github Stars](https://img.shields.io/github/stars/mobizt/Firebase-ESP32?logo=github)](https://github.com/mobizt/Firebase-ESP32/stargazers) ![Github Issues](https://img.shields.io/github/issues/mobizt/Firebase-ESP32?logo=github)
 
 ![arduino-library-badge](https://www.ardu-badge.com/badge/Firebase%20ESP32%20Client.svg) ![PlatformIO](https://badges.registry.platformio.org/packages/mobizt/library/Firebase%20ESP32%20Client.svg) [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.6462672.svg)](https://doi.org/10.5281/zenodo.6462672)
 
-## We're moving to the new library
+## We have moved to the new library
 
 > [!WARNING] 
-> Due to the issues that cannot be fixed, this This library is now obsoleted and replaced by the new [FirebaseClient](https://github.com/mobizt/FirebaseClient) library.
+> This This library is now deprecated but no further supports for feature request.
+> We recommended the [FirebaseClient](https://github.com/mobizt/FirebaseClient) library for ongoing supports.
+> You have to read the library documentation thoroughly before use.
 
 The new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library is now availavle in Arduino IDE and PlatformIO's Library Manager.
 
-It will be the old Firebase libraries (Firebase-ESP-Client, Firebase-ESP8266 and FirebaseESP32) replacement.
-
 The new library provides simpler APIs interface, faster and more reliable operations.  It can use in both sync and async operations.
-
-All old Firebase libraries will be deprecated soon this year and we recommended to upgrade your current code to work with new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library instead.
 
 For Arduino NANO 33 IoT, Arduino MKR WiFi 1010, Arduino MKR VIDOR 4000, Arduino Nano RP2040 Connect, we recommend to use new async [FirebaseClient](https://github.com/mobizt/FirebaseClient) library instead of this old [Firebase-Arduino-WiFiNINA](https://github.com/mobizt/Firebase-Arduino-WiFiNINA) library.
 
